@@ -1,0 +1,3 @@
+-- Saved search matching v2: territory-aware matching for neighborhood/street,
+-- with guarded UUID/numeric filter parsing to prevent malformed filter values
+-- from raising database errors.

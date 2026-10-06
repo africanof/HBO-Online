@@ -1,0 +1,4 @@
+-- Conversation participant RLS hardening.
+-- Only the conversation creator can add participants.
+-- Participants can only read/update/delete their own participant row.
+-- Applied to the Huambo Online Supabase project foqsmszwbhiyqqtuwypg.

@@ -1,0 +1,3 @@
+-- Conversation creation is protected by:
+-- conversations.created_by = auth.uid() on INSERT.
+-- Core also rejects an empty creator identity and de-duplicates participant IDs.

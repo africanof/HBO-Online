@@ -1,0 +1,3 @@
+-- Security hardening for conversation message RLS.
+-- The participant check must correlate the participant row with messages.conversation_id.
+-- This migration is already applied to the Huambo Online Supabase project.

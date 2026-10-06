@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Huambo Online",
+    "slug": "huambo-online",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "huamboonline",
+    "userInterfaceStyle": "automatic",
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

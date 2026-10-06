@@ -1,0 +1,2 @@
+-- Prevent duplicate saved-search notifications for the same saved search + listing.
+-- The notification trigger uses an idempotent INSERT ... ON CONFLICT.

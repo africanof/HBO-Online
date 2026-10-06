@@ -1,0 +1,12 @@
+{
+  "name": "huambo-online",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.17.1",
+  "scripts": {
+    "dev:web": "pnpm --filter @huambo-online/web dev",
+    "dev:mobile": "pnpm --filter @huambo-online/mobile start",
+    "build:web": "pnpm --filter @huambo-online/web build",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

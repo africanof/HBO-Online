@@ -1,0 +1,3 @@
+-- Lock SECURITY DEFINER notification functions.
+-- create_notification is callable only by service_role.
+-- notify_new_message is trigger-internal and not executable by client roles.

@@ -1,0 +1,5 @@
+-- Saved-search territorial hierarchy v3.
+-- Matches street -> neighborhood -> municipality -> province -> country.
+-- Province matching respects provinces.active so inactive future territories
+-- remain disabled until intentionally activated.
+-- Filter casts are guarded; malformed UUID/price values do not abort matching.

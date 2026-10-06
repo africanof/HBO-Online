@@ -1,0 +1,3 @@
+-- Saved search notification frequency.
+-- immediate: notify each newly matched listing (still deduplicated).
+-- daily: at most one notification per 24-hour quiet window.

@@ -1,0 +1,3 @@
+export type AuctionStatus="draft"|"scheduled"|"live"|"ended"|"cancelled";
+export interface Auction { id:string;sellerId:string;productId?:string;title:string;description?:string;currency:"AOA";startingPrice:number;reservePrice?:number;minIncrement:number;currentPrice:number;startsAt:string;endsAt:string;status:AuctionStatus;winnerId?:string; }
+export interface AuctionBid { id:string;auctionId:string;bidderId:string;amount:number;createdAt:string; }
