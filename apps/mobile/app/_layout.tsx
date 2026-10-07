@@ -1,2 +1,8 @@
+import { useEffect } from "react";
 import { Stack } from "expo-router";
-export default function Layout(){return <Stack screenOptions={{headerShown:false}}/>}
+import { startAuthAutoRefresh } from "../lib/supabase";
+
+export default function Layout() {
+  useEffect(() => startAuthAutoRefresh(), []);
+  return <Stack screenOptions={{ headerShown: false }} />;
+}

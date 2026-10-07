@@ -1,9 +1,61 @@
 "use client";
-import {useEffect,useState} from "react";
-import {createSupabaseClient} from "@huambo-online/supabase";
-import {getCurrentUserProfile,updateCurrentUserProfile,signOutCurrentUser,changeCurrentUserPassword,requestPasswordReset,deleteCurrentUserAccount} from "@huambo-online/core";
-export default function ContaPage(){const[p,setP]=useState<any>(null);const[form,setForm]=useState({displayName:"",phone:"",countryCode:"AO",avatarUrl:""});const[msg,setMsg]=useState("");const[pw,setPw]=useState("");const[pw2,setPw2]=useState("");const[del,setDel]=useState("");const[deleting,setDeleting]=useState(false);const client=()=>createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL??"",process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY??"");
-useEffect(()=>{void (async()=>{const r=await getCurrentUserProfile(client());if(r.error||!r.data){setMsg("Inicie sessão para gerir a sua conta.");return}setP(r.data);setForm({displayName:r.data.displayName,phone:r.data.phone??"",countryCode:r.data.countryCode,avatarUrl:r.data.avatarUrl??""});})();},[]);
-async function save(e:any){e.preventDefault();const r=await updateCurrentUserProfile(client(),form);if(r.error)setMsg(r.error.message);else{setMsg("Perfil atualizado.");setP(r.data)}}
-async function logout(){await signOutCurrentUser(client());window.location.href="/conta/login"}
-return <main style={{maxWidth:700,margin:"0 auto",padding:40}}><a href="/">← Huambo Online</a><h1>A sua conta</h1>{msg&&<p role="status">{msg}</p>}{p?<><form onSubmit={save} style={{display:"grid",gap:14}}><label>Nome<input value={form.displayName} onChange={e=>setForm({...form,displayName:e.target.value})} required/></label><label>Telefone<input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></label><label>País<input value={form.countryCode} onChange={e=>setForm({...form,countryCode:e.target.value})} maxLength={2}/></label><label>Foto URL<input value={form.avatarUrl} onChange={e=>setForm({...form,avatarUrl:e.target.value})}/></label><button>Guardar alterações</button></form><hr/><h2>Segurança</h2><form onSubmit={async e=>{e.preventDefault();const r=await changeCurrentUserPassword(client(),pw,pw2);setMsg(r.error?r.error.message:"Palavra-passe alterada com sucesso.");if(!r.error){setPw("");setPw2("");}}} style={{display:"grid",gap:10}}><input type="password" minLength={8} value={pw} onChange={e=>setPw(e.target.value)} placeholder="Nova palavra-passe" required/><input type="password" minLength={8} value={pw2} onChange={e=>setPw2(e.target.value)} placeholder="Confirmar palavra-passe" required/><button>Alterar palavra-passe</button></form><form onSubmit={async e=>{e.preventDefault();const u=await client().auth.getUser();const r=await requestPasswordReset(client(),u.data.user?.email??"",`${window.location.origin}/conta/recuperar`);setMsg(r.error?r.error.message:"E-mail de recuperação solicitado.");}}><button type="submit">Enviar e-mail de recuperação</button></form><hr/><h2>Privacidade</h2><p>Eliminar a conta remove permanentemente os seus dados associados à conta.</p><form onSubmit={async e=>{e.preventDefault();setDeleting(true);const r=await deleteCurrentUserAccount(client(),del);setDeleting(false);if(r.error)setMsg(r.error.message);else window.location.href="/";}} style={{display:"grid",gap:10}}><input value={del} onChange={e=>setDel(e.target.value)} placeholder="Escreva ELIMINAR para confirmar" required/><button disabled={deleting} type="submit">{deleting?"A eliminar…":"Eliminar a minha conta"}</button></form><div style={{display:"flex",gap:12}}><a href="/guardados">⭐ Guardados</a><a href="/mensagens">💬 Mensagens</a><a href="/notificacoes">🔔 Notificações</a></div><button onClick={logout} style={{marginTop:20}}>Terminar sessão</button></>:<p>{msg}</p>}</main>}
+import { useEffect, useState } from "react";
+import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError } from "@huambo-online/core";
+import { supabase } from "../../lib/supabase";
+
+export default function ContaPage() {
+  const [email, setEmail] = useState("");
+  const [loaded, setLoaded] = useState(false);
+  const [form, setForm] = useState<{ fullName: string; phone: string; municipality: string } | null>(null);
+  const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
+  const [pw, setPw] = useState(""); const [pw2, setPw2] = useState(""); const [del, setDel] = useState(""); const [busy, setBusy] = useState(false);
+
+  useEffect(() => { void (async () => {
+    const c = supabase();
+    const u = await c.auth.getUser();
+    setEmail(u.data.user?.email ?? "");
+    const r = await getCurrentUserProfile(c);
+    if (r.error && u.data.user) setErr(friendlyError(r.error));
+    if (r.data) setForm({ fullName: r.data.fullName, phone: r.data.phone ?? "", municipality: r.data.municipality });
+    setLoaded(true);
+  })(); }, []);
+
+  async function run(fn: () => Promise<{ error: any }>, okMsg: string) {
+    setBusy(true); setMsg(""); setErr("");
+    const r = await fn(); setBusy(false);
+    if (r.error) setErr(friendlyError(r.error)); else setMsg(okMsg);
+    return !r.error;
+  }
+
+  if (!loaded) return <main><p>A carregar…</p></main>;
+  if (!email) return <main><a href="/">← Huambo Online</a><h1>A sua conta</h1><p>Inicie sessão para gerir a sua conta.</p><div className="row"><a className="btn" href="/conta/login">Entrar</a><a className="btn secondary" href="/conta/criar">Criar conta</a></div></main>;
+
+  return <main className="stack" style={{ maxWidth: 640 }}>
+    <a href="/">← Huambo Online</a>
+    <h1>A sua conta</h1>
+    <p>Sessão iniciada como <strong>{email}</strong></p>
+    <nav className="row"><a className="btn secondary" href="/meus-anuncios">📋 Os meus anúncios</a><a className="btn secondary" href="/guardados">⭐ Guardados</a><a className="btn secondary" href="/mensagens">💬 Mensagens</a><a className="btn secondary" href="/notificacoes">🔔 Notificações</a></nav>
+    {msg && <p className="ok" role="status">{msg}</p>}
+    {err && <p className="error" role="alert">{err}</p>}
+    {form && <form className="stack card" onSubmit={async e => { e.preventDefault(); await run(() => updateCurrentUserProfile(supabase(), form), "Perfil atualizado."); }}>
+      <h2 style={{ margin: 0 }}>Dados pessoais</h2>
+      <label>Nome<input value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} /></label>
+      <label>Telefone<input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></label>
+      <label>Município<input value={form.municipality} onChange={e => setForm({ ...form, municipality: e.target.value })} /></label>
+      <button disabled={busy}>Guardar alterações</button>
+    </form>}
+    <form className="stack card" onSubmit={async e => { e.preventDefault(); if (await run(() => changeCurrentUserPassword(supabase(), pw, pw2), "Palavra-passe alterada com sucesso.")) { setPw(""); setPw2(""); } }}>
+      <h2 style={{ margin: 0 }}>Segurança</h2>
+      <label>Nova palavra-passe<input type="password" autoComplete="new-password" value={pw} onChange={e => setPw(e.target.value)} /></label>
+      <label>Confirmar palavra-passe<input type="password" autoComplete="new-password" value={pw2} onChange={e => setPw2(e.target.value)} /></label>
+      <button disabled={busy}>Alterar palavra-passe</button>
+    </form>
+    <form className="stack card" onSubmit={async e => { e.preventDefault(); if (await run(() => deleteCurrentUserAccount(supabase(), del), "Conta eliminada.")) window.location.href = "/"; }}>
+      <h2 style={{ margin: 0 }}>Privacidade</h2>
+      <p>Eliminar a conta remove permanentemente os seus dados.</p>
+      <label>Escreva ELIMINAR para confirmar<input value={del} onChange={e => setDel(e.target.value)} /></label>
+      <button className="danger" disabled={busy}>Eliminar a minha conta</button>
+    </form>
+    <button className="secondary" onClick={async () => { await signOutCurrentUser(supabase()); window.location.href = "/conta/login"; }}>Terminar sessão</button>
+  </main>;
+}

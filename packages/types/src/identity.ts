@@ -2,10 +2,10 @@ export type AccountCapability = "customer" | "provider" | "seller" | "business_o
 
 export interface UserProfile {
   id: string;
-  displayName: string;
+  fullName: string;
   phone?: string;
-  avatarUrl?: string;
-  countryCode: string;
+  province: string;
+  municipality: string;
 }
 
 export interface OrganizationSummary {
