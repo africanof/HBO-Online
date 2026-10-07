@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
-  reportClassifiedListing, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS } from "@huambo-online/core";
+  reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ui } from "../../../lib/ui";
 import { Button, Message } from "../../../components/Ui";
@@ -13,6 +13,7 @@ export default function ClassifiedDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [item, setItem] = useState<any>(null);
   const [place, setPlace] = useState("");
+  const [seller, setSeller] = useState("");
   const [uid, setUid] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -36,6 +37,8 @@ export default function ClassifiedDetail() {
         const m = await c.from("municipalities").select("name,provinces(name)").eq("id", t.municipalityId).maybeSingle();
         if (m.data) setPlace(m.data.name + ((m.data as any).provinces?.name ? ", " + (m.data as any).provinces.name : ""));
       }
+      const p = await getPublicProfile(c, r.data.owner_id);
+      if (p.data?.full_name) setSeller(p.data.full_name);
       const u = await c.auth.getUser();
       if (u.data.user) {
         setUid(u.data.user.id);
@@ -84,6 +87,7 @@ export default function ClassifiedDetail() {
     <Text style={ui.h1}>{item.title}</Text>
     <Text style={ui.price}>{formatPrice(item.price, item.currency)}</Text>
     <Text style={ui.text}>{LISTING_TYPE_LABELS[item.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? item.listing_type} · {PURPOSE_LABELS[item.purpose as keyof typeof PURPOSE_LABELS] ?? item.purpose}{place ? " · 📍 " + place : ""}</Text>
+    {!!seller && <Text style={ui.text}>Anunciante: {seller}</Text>}
     {media.length > 0 && <View style={{ gap: 8 }}>
       <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: "#eee" }} resizeMode="contain" accessibilityLabel={`Fotografia ${photo + 1} de ${media.length}`} />
       {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} accessibilityLabel={`Ver fotografia ${i + 1}`} style={{ borderWidth: 3, borderColor: i === photo ? "#111" : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}

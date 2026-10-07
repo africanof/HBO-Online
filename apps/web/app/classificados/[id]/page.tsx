@@ -2,13 +2,14 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
-  reportClassifiedListing, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS } from "@huambo-online/core";
+  reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 
 export default function ClassifiedDetail() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<any>(null);
   const [place, setPlace] = useState("");
+  const [seller, setSeller] = useState("");
   const [uid, setUid] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -32,6 +33,8 @@ export default function ClassifiedDetail() {
         const m = await c.from("municipalities").select("name,provinces(name)").eq("id", t.municipalityId).maybeSingle();
         if (m.data) setPlace(m.data.name + ((m.data as any).provinces?.name ? ", " + (m.data as any).provinces.name : ""));
       }
+      const p = await getPublicProfile(c, r.data.owner_id);
+      if (p.data?.full_name) setSeller(p.data.full_name);
       const u = await c.auth.getUser();
       if (u.data.user) {
         setUid(u.data.user.id);
@@ -81,6 +84,7 @@ export default function ClassifiedDetail() {
     <h1>{item.title}</h1>
     <p className="price">{formatPrice(item.price, item.currency)}</p>
     <p>{LISTING_TYPE_LABELS[item.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? item.listing_type} · {PURPOSE_LABELS[item.purpose as keyof typeof PURPOSE_LABELS] ?? item.purpose}{place && <> · 📍 {place}</>}</p>
+    {seller && <p>Anunciante: <strong>{seller}</strong></p>}
     {media.length > 0 && <section className="stack">
       <img src={media[photo]} alt={`Fotografia ${photo + 1} de ${media.length}`} style={{ width: "100%", maxHeight: 520, objectFit: "contain", background: "#f2f2f2", borderRadius: 12 }} />
       {media.length > 1 && <div className="row">{media.map((m, i) => <button key={m} type="button" className={i === photo ? "" : "secondary"} onClick={() => setPhoto(i)} aria-label={`Ver fotografia ${i + 1}`} style={{ padding: 0, width: 72, height: 72, overflow: "hidden" }}><img src={m} alt="" style={{ width: 72, height: 72, objectFit: "cover" }} /></button>)}</div>}

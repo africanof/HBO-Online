@@ -49,3 +49,10 @@ export async function updateCurrentUserProfile(client: SupabaseClient, input: Pr
 }
 
 export async function signOutCurrentUser(client: SupabaseClient) { return client.auth.signOut(); }
+
+export type PublicProfile = { id: string; full_name: string; avatar_url: string | null; province: string | null; municipality: string | null; created_at: string };
+
+/** Nome e município do anunciante (só dados públicos). */
+export async function getPublicProfile(client: SupabaseClient, userId: string) {
+  return client.rpc("get_public_profile", { p_user_id: userId }).maybeSingle<PublicProfile>();
+}
