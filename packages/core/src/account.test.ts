@@ -37,3 +37,14 @@ describe("search filters", () => {
     expect(normalizeSearchFilters({ provinceId: "p", maxPrice: NaN })).toEqual({ attributes: { provinceId: "p" } });
   });
 });
+
+import { getPublicProfile } from "./profile";
+describe("getPublicProfile", () => {
+  it("calls the public profile function with the owner id", async () => {
+    const calls: any[] = [];
+    const client: any = { rpc: (fn: string, args: any) => { calls.push([fn, args]); return { maybeSingle: async () => ({ data: { full_name: "Ana" }, error: null }) }; } };
+    const r = await getPublicProfile(client, "u1");
+    expect(calls).toEqual([["get_public_profile", { p_user_id: "u1" }]]);
+    expect(r.data?.full_name).toBe("Ana");
+  });
+});
