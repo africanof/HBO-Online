@@ -1,8 +1,73 @@
 "use client";
-import {useState} from "react";import {createSupabaseClient} from "@huambo-online/supabase";import {searchClassifiedListings,saveClassifiedSearch} from "@huambo-online/core";
-const url=process.env.NEXT_PUBLIC_SUPABASE_URL??"";const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY??"";
-export default function ExplorarPage(){const[q,setQ]=useState("");const[purpose,setPurpose]=useState("");const[type,setType]=useState("");const[min,setMin]=useState("");const[max,setMax]=useState("");const[name,setName]=useState("");const[items,setItems]=useState<any[]>([]);const[error,setError]=useState("");
-function filters(){return{query:q,purpose:purpose||undefined,listingType:type||undefined,minPrice:min?Number(min):undefined,maxPrice:max?Number(max):undefined};}
-async function search(){setError("");const c=createSupabaseClient(url,key);const r=await searchClassifiedListings(c,filters() as any);if(r.error)setError(r.error.message);else setItems((r.data??[]) as any[]);}
-async function save(){setError("");const c=createSupabaseClient(url,key);const u=await c.auth.getUser();if(!u.data.user){setError("Inicie sessão para guardar pesquisas.");return}if(!name.trim()){setError("Dê um nome à pesquisa.");return}const r=await saveClassifiedSearch(c,name,filters());if(r.error)setError(r.error.message);else setName("");}
-return <main style={{maxWidth:1120,margin:"0 auto",padding:40}}><a href="/">← Huambo Online</a><h1>Explorar classificados</h1><p>Pesquise anúncios e guarde os filtros para receber alertas.</p><section style={{display:"grid",gap:10,gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))"}}><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Pesquisar"/><select value={purpose} onChange={e=>setPurpose(e.target.value)}><option value="">Finalidade</option><option value="sale">Venda</option><option value="rent">Aluguer</option><option value="lease">Leasing</option></select><input value={type} onChange={e=>setType(e.target.value)} placeholder="Tipo de anúncio"/><input value={min} onChange={e=>setMin(e.target.value)} placeholder="Preço mínimo" inputMode="numeric"/><input value={max} onChange={e=>setMax(e.target.value)} placeholder="Preço máximo" inputMode="numeric"/></section><div style={{marginTop:14,display:"flex",gap:10}}><button onClick={search}>Pesquisar</button><input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome da pesquisa"/><button onClick={save}>⭐ Guardar pesquisa</button></div>{error&&<p>{error}</p>}<section aria-label="Resultados" style={{marginTop:24}}>{items.map(x=><article key={x.id} style={{border:"1px solid #ddd",borderRadius:14,padding:16,marginTop:10}}><h2>{x.title}</h2><p>{x.description}</p><strong>{x.price??"Preço sob consulta"} {x.currency??""}</strong><div style={{marginTop:12}}><a href={`/classificados/${x.id}`}>Ver anúncio →</a></div></article>)}</section></main>}
+import { useEffect, useState } from "react";
+import { searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyError, parsePrice,
+  LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, type ClassifiedSearchFilters } from "@huambo-online/core";
+import { supabase } from "../../lib/supabase";
+
+type Option = { id: string; name: string };
+
+export default function ExplorarPage() {
+  const [q, setQ] = useState(""); const [purpose, setPurpose] = useState(""); const [type, setType] = useState("");
+  const [categoryId, setCategoryId] = useState(""); const [provinceId, setProvinceId] = useState(""); const [municipalityId, setMunicipalityId] = useState("");
+  const [min, setMin] = useState(""); const [max, setMax] = useState(""); const [name, setName] = useState("");
+  const [categories, setCategories] = useState<Option[]>([]); const [provinces, setProvinces] = useState<Option[]>([]); const [municipalities, setMunicipalities] = useState<Option[]>([]);
+  const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const c = supabase();
+    void c.from("categories").select("id,name").eq("active", true).order("name").then(({ data }) => setCategories(data ?? []));
+    void listProvinces(c).then(({ data }) => setProvinces((data ?? []) as Option[]));
+    void search();
+  }, []);
+  useEffect(() => {
+    if (!provinceId) { setMunicipalities([]); return; }
+    void listMunicipalities(supabase(), provinceId).then(({ data }) => setMunicipalities((data ?? []) as Option[]));
+  }, [provinceId]);
+
+  function filters(): ClassifiedSearchFilters {
+    return { query: q, purpose: (purpose || undefined) as any, listingType: (type || undefined) as any, categoryId: categoryId || undefined,
+      provinceId: provinceId || undefined, municipalityId: municipalityId || undefined, minPrice: parsePrice(min), maxPrice: parsePrice(max) };
+  }
+  async function search(e?: React.FormEvent) {
+    e?.preventDefault(); setError(""); setNotice(""); setBusy(true);
+    const r = await searchClassifiedListings(supabase(), filters());
+    setBusy(false);
+    if (r.error) setError(friendlyError(r.error)); else setItems((r.data ?? []) as any[]);
+  }
+  async function save() {
+    setError(""); setNotice("");
+    const c = supabase(); const u = await c.auth.getUser();
+    if (!u.data.user) { setError("Inicie sessão para guardar pesquisas."); return; }
+    if (!name.trim()) { setError("Dê um nome à pesquisa."); return; }
+    const r = await saveClassifiedSearch(c, name, filters());
+    if (r.error) setError(friendlyError(r.error)); else { setName(""); setNotice("Pesquisa guardada. Vai receber alertas de novos anúncios."); }
+  }
+
+  return <main className="stack">
+    <a href="/">← Huambo Online</a>
+    <h1>Explorar classificados</h1>
+    <form onSubmit={search} className="grid" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))" }}>
+      <label>Pesquisar<input value={q} onChange={e => setQ(e.target.value)} placeholder="Ex.: casa, Hilux…" /></label>
+      <label>Finalidade<select value={purpose} onChange={e => setPurpose(e.target.value)}><option value="">Todas</option>{PUBLISHABLE_PURPOSES.map(p => <option key={p} value={p}>{PURPOSE_LABELS[p]}</option>)}</select></label>
+      <label>Tipo<select value={type} onChange={e => setType(e.target.value)}><option value="">Todos</option>{Object.entries(LISTING_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+      <label>Categoria<select value={categoryId} onChange={e => setCategoryId(e.target.value)}><option value="">Todas</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+      <label>Província<select value={provinceId} onChange={e => { setProvinceId(e.target.value); setMunicipalityId(""); }}><option value="">Todas</option>{provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+      <label>Município<select value={municipalityId} disabled={!provinceId} onChange={e => setMunicipalityId(e.target.value)}><option value="">Todos</option>{municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
+      <label>Preço mínimo (Kz)<input value={min} onChange={e => setMin(e.target.value)} inputMode="numeric" /></label>
+      <label>Preço máximo (Kz)<input value={max} onChange={e => setMax(e.target.value)} inputMode="numeric" /></label>
+      <button type="submit" disabled={busy} style={{ alignSelf: "end" }}>{busy ? "A pesquisar…" : "Pesquisar"}</button>
+    </form>
+    <div className="row"><input value={name} onChange={e => setName(e.target.value)} placeholder="Nome para guardar esta pesquisa" style={{ maxWidth: 360 }} /><button type="button" className="secondary" onClick={save}>⭐ Guardar pesquisa</button></div>
+    {error && <p className="error" role="alert">{error}</p>}
+    {notice && <p className="ok" role="status">{notice}</p>}
+    {items?.length === 0 && <p>Nenhum anúncio encontrado. <a href="/classificados/publicar">Publique o primeiro!</a></p>}
+    <section className="grid" aria-label="Resultados">
+      {items?.map(x => <a key={x.id} href={`/classificados/${x.id}`} className="card" style={{ color: "inherit", textDecoration: "none" }}>
+        {Array.isArray(x.media) && x.media[0] ? <img className="thumb" src={x.media[0]} alt="" /> : <div className="thumb" />}
+        <strong style={{ fontSize: 19 }}>{x.title}</strong>
+        <span className="price">{formatPrice(x.price, x.currency)}</span>
+        <span>{LISTING_TYPE_LABELS[x.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? x.listing_type} · {PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] ?? x.purpose}</span>
+      </a>)}
+    </section>
+  </main>;
+}

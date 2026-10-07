@@ -6,6 +6,8 @@ export interface SignUpInput {
   fullName: string;
   phone?: string;
   municipality?: string;
+  /** Página para onde o link de confirmação do email leva. */
+  emailRedirectTo?: string;
 }
 
 export async function signUp(client: SupabaseClient, input: SignUpInput) {
@@ -13,6 +15,7 @@ export async function signUp(client: SupabaseClient, input: SignUpInput) {
     email: input.email.trim().toLowerCase(),
     password: input.password,
     options: {
+      ...(input.emailRedirectTo ? { emailRedirectTo: input.emailRedirectTo } : {}),
       data: {
         full_name: input.fullName.trim(),
         phone: input.phone?.trim() || null,

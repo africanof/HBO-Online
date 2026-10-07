@@ -17,8 +17,7 @@ export interface BusinessSummary { id: string; name: string; category: string; v
 export interface ServiceSummary { id: string; title: string; providerId: string; category: string; priceFrom?: number; currency: "AOA"; location?: Location; }
 export interface ProductSummary { id: string; name: string; sellerId: string; price: number; currency: "AOA"; stock: number; }
 
-export type ClassifiedListingType = string;
-export type ClassifiedPurpose = string;
+export type { ClassifiedListingType, ClassifiedPurpose, ClassifiedStatus, ClassifiedListing } from "./classified-listings";
 export type PaymentMethod = string;
 export type FulfillmentType = string;
 export type NotificationType = string;

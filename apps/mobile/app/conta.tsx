@@ -1,12 +1,68 @@
-import {useEffect,useState} from "react";
-import {Link,useRouter} from "expo-router";
-import {Pressable,StyleSheet,Text,TextInput,View} from "react-native";
-import {createSupabaseClient} from "@huambo-online/supabase";
-import {getCurrentUserProfile,updateCurrentUserProfile,signOutCurrentUser,changeCurrentUserPassword,requestPasswordReset,deleteCurrentUserAccount} from "@huambo-online/core";
-const url=process.env.EXPO_PUBLIC_SUPABASE_URL??"";const key=process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY??"";
-export default function Conta(){const router=useRouter();const[p,setP]=useState<any>(null);const[form,setForm]=useState({displayName:"",phone:"",countryCode:"AO",avatarUrl:""});const[msg,setMsg]=useState("Carregando…");const[pw,setPw]=useState("");const[pw2,setPw2]=useState("");const[del,setDel]=useState("");const[deleting,setDeleting]=useState(false);
-useEffect(()=>{void(async()=>{const r=await getCurrentUserProfile(createSupabaseClient(url,key));if(r.error||!r.data){setMsg("Inicie sessão para gerir a sua conta.");return}setP(r.data);setForm({displayName:r.data.displayName,phone:r.data.phone??"",countryCode:r.data.countryCode??"AO",avatarUrl:r.data.avatarUrl??""});setMsg("")})();},[]);
-async function save(){const r=await updateCurrentUserProfile(createSupabaseClient(url,key),form);setMsg(r.error?r.error.message:"Perfil atualizado.");if(!r.error)setP(r.data)}
-async function logout(){await signOutCurrentUser(createSupabaseClient(url,key));router.replace("/conta/login" as any)}
-return <View style={s.c}><Link href="/" style={s.back}>← Huambo Online</Link><Text style={s.h}>A sua conta</Text>{msg&&<Text>{msg}</Text>}{p&&<><TextInput style={s.i} placeholder="Nome" value={form.displayName} onChangeText={v=>setForm({...form,displayName:v})}/><TextInput style={s.i} placeholder="Telefone" value={form.phone} onChangeText={v=>setForm({...form,phone:v})}/><TextInput style={s.i} placeholder="País (ex.: AO)" maxLength={2} value={form.countryCode} onChangeText={v=>setForm({...form,countryCode:v.toUpperCase()})}/><TextInput style={s.i} placeholder="URL da foto" value={form.avatarUrl} onChangeText={v=>setForm({...form,avatarUrl:v})}/><Pressable style={s.b} onPress={()=>void save()}><Text>Guardar alterações</Text></Pressable><Text style={{fontSize:22,fontWeight:"800",marginTop:12}}>Segurança</Text><TextInput style={s.i} secureTextEntry minLength={8} placeholder="Nova palavra-passe" value={pw} onChangeText={setPw}/><TextInput style={s.i} secureTextEntry minLength={8} placeholder="Confirmar palavra-passe" value={pw2} onChangeText={setPw2}/><Pressable style={s.b} onPress={async()=>{const r=await changeCurrentUserPassword(createSupabaseClient(url,key),pw,pw2);setMsg(r.error?r.error.message:"Palavra-passe alterada com sucesso.");if(!r.error){setPw("");setPw2("");}}}><Text>Alterar palavra-passe</Text></Pressable><Pressable style={s.b} onPress={async()=>{const u=await createSupabaseClient(url,key).auth.getUser();const r=await requestPasswordReset(createSupabaseClient(url,key),u.data.user?.email??"",`${process.env.EXPO_PUBLIC_APP_URL??""}/conta/recuperar`);setMsg(r.error?r.error.message:"E-mail de recuperação solicitado.");}}><Text>Enviar e-mail de recuperação</Text></Pressable><Text style={{fontSize:22,fontWeight:"800",marginTop:12}}>Privacidade</Text><Text>Eliminar a conta remove permanentemente os seus dados associados.</Text><TextInput style={s.i} value={del} onChangeText={setDel} placeholder="Escreva ELIMINAR para confirmar"/><Pressable style={s.b} disabled={deleting} onPress={async()=>{setDeleting(true);const r=await deleteCurrentUserAccount(createSupabaseClient(url,key),del);setDeleting(false);setMsg(r.error?r.error.message:"Conta eliminada.");if(!r.error)router.replace("/" as any)}}><Text>{deleting?"A eliminar…":"Eliminar a minha conta"}</Text></Pressable><View style={s.row}><Link href="/guardados" asChild><Pressable><Text>⭐ Guardados</Text></Pressable></Link><Link href="/mensagens" asChild><Pressable><Text>💬 Mensagens</Text></Pressable></Link><Link href="/notificacoes" asChild><Pressable><Text>🔔 Notificações</Text></Pressable></Link></View><Pressable onPress={()=>void logout()}><Text>Terminar sessão</Text></Pressable></>}</View>}
-const s=StyleSheet.create({c:{flex:1,padding:28,paddingTop:54,gap:14},back:{fontWeight:"700"},h:{fontSize:34,fontWeight:"800"},i:{borderWidth:1,borderColor:"#ccc",borderRadius:10,padding:12},b:{borderWidth:1,borderRadius:10,padding:14,alignItems:"center"},row:{gap:14}});
+import { useEffect, useState } from "react";
+import { Link, useRouter } from "expo-router";
+import { ScrollView, Text, TextInput, View } from "react-native";
+import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError } from "@huambo-online/core";
+import { supabase } from "../lib/supabase";
+import { ui } from "../lib/ui";
+import { Button, Message } from "../components/Ui";
+
+export default function Conta() {
+  const router = useRouter();
+  const [email, setEmail] = useState(""); const [loaded, setLoaded] = useState(false);
+  const [form, setForm] = useState<{ fullName: string; phone: string; municipality: string } | null>(null);
+  const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
+  const [pw, setPw] = useState(""); const [pw2, setPw2] = useState(""); const [del, setDel] = useState(""); const [busy, setBusy] = useState(false);
+
+  useEffect(() => { void (async () => {
+    const c = supabase();
+    const u = await c.auth.getUser();
+    setEmail(u.data.user?.email ?? "");
+    const r = await getCurrentUserProfile(c);
+    if (r.error && u.data.user) setErr(friendlyError(r.error));
+    if (r.data) setForm({ fullName: r.data.fullName, phone: r.data.phone ?? "", municipality: r.data.municipality });
+    setLoaded(true);
+  })(); }, []);
+
+  async function run(fn: () => Promise<{ error: any }>, okMsg: string) {
+    setBusy(true); setMsg(""); setErr("");
+    const r = await fn(); setBusy(false);
+    if (r.error) setErr(friendlyError(r.error)); else setMsg(okMsg);
+    return !r.error;
+  }
+
+  if (!loaded) return <View style={ui.screen}><Text style={ui.text}>A carregar…</Text></View>;
+  if (!email) return <View style={ui.screen}><Link href="/" style={ui.link}>← Huambo Online</Link><Text style={ui.h1}>A sua conta</Text><Text style={ui.text}>Inicie sessão para gerir a sua conta.</Text><Button title="Entrar" onPress={() => router.push("/login")} /><Button title="Criar conta" variant="secondary" onPress={() => router.push("/criar-conta")} /></View>;
+
+  return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
+    <Link href="/" style={ui.link}>← Huambo Online</Link>
+    <Text style={ui.h1}>A sua conta</Text>
+    <Text style={ui.text}>Sessão iniciada como {email}</Text>
+    <View style={{ gap: 8 }}>
+      <Button title="📋 Os meus anúncios" variant="secondary" onPress={() => router.push("/meus-anuncios" as any)} />
+      <Button title="⭐ Guardados" variant="secondary" onPress={() => router.push("/guardados")} />
+      <Button title="💬 Mensagens" variant="secondary" onPress={() => router.push("/mensagens")} />
+      <Button title="🔔 Notificações" variant="secondary" onPress={() => router.push("/notificacoes")} />
+    </View>
+    <Message error={err} ok={msg} />
+    {form && <View style={ui.card}>
+      <Text style={ui.h2}>Dados pessoais</Text>
+      <Text style={ui.label}>Nome</Text><TextInput style={ui.input} value={form.fullName} onChangeText={v => setForm({ ...form, fullName: v })} />
+      <Text style={ui.label}>Telefone</Text><TextInput style={ui.input} keyboardType="phone-pad" value={form.phone} onChangeText={v => setForm({ ...form, phone: v })} />
+      <Text style={ui.label}>Município</Text><TextInput style={ui.input} value={form.municipality} onChangeText={v => setForm({ ...form, municipality: v })} />
+      <Button title="Guardar alterações" disabled={busy} onPress={() => void run(() => updateCurrentUserProfile(supabase(), form), "Perfil atualizado.")} />
+    </View>}
+    <View style={ui.card}>
+      <Text style={ui.h2}>Segurança</Text>
+      <Text style={ui.label}>Nova palavra-passe</Text><TextInput style={ui.input} secureTextEntry value={pw} onChangeText={setPw} />
+      <Text style={ui.label}>Confirmar palavra-passe</Text><TextInput style={ui.input} secureTextEntry value={pw2} onChangeText={setPw2} />
+      <Button title="Alterar palavra-passe" disabled={busy} onPress={async () => { if (await run(() => changeCurrentUserPassword(supabase(), pw, pw2), "Palavra-passe alterada com sucesso.")) { setPw(""); setPw2(""); } }} />
+    </View>
+    <View style={ui.card}>
+      <Text style={ui.h2}>Privacidade</Text>
+      <Text style={ui.text}>Eliminar a conta remove permanentemente os seus dados.</Text>
+      <TextInput style={ui.input} value={del} onChangeText={setDel} placeholder="Escreva ELIMINAR para confirmar" />
+      <Button title={busy ? "A eliminar…" : "Eliminar a minha conta"} variant="danger" disabled={busy} onPress={async () => { if (await run(() => deleteCurrentUserAccount(supabase(), del), "Conta eliminada.")) router.replace("/"); }} />
+    </View>
+    <Button title="Terminar sessão" variant="secondary" onPress={async () => { await signOutCurrentUser(supabase()); router.replace("/login"); }} />
+  </ScrollView>;
+}

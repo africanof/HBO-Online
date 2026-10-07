@@ -1,41 +1,41 @@
 "use client";
-
 import { FormEvent, useState } from "react";
-import { createSupabaseClient, signUp } from "@huambo-online/supabase";
+import { signUp } from "@huambo-online/supabase";
+import { authErrorMessage, validateNewPassword, validateProfileInput } from "@huambo-online/core";
+import { supabase, supabaseConfigured } from "../../../lib/supabase";
 
 export default function CriarContaPage() {
-  const [form, setForm] = useState({ fullName:"", email:"", phone:"", municipality:"", password:"" });
-  const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({ fullName: "", email: "", phone: "", municipality: "", password: "", confirm: "" });
+  const [message, setMessage] = useState(""); const [ok, setOk] = useState(""); const [busy, setBusy] = useState(false);
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });
 
   async function submit(event: FormEvent) {
-    event.preventDefault();
-    setMessage("");
+    event.preventDefault(); if (busy) return; setMessage(""); setOk("");
+    if (!supabaseConfigured) { setMessage("Serviço de autenticação não configurado. Tente mais tarde."); return; }
+    const invalid = validateProfileInput(form) ?? (!/^\S+@\S+\.\S+$/.test(form.email.trim()) ? "Email inválido." : null) ?? validateNewPassword(form.password, form.confirm);
+    if (invalid) { setMessage(invalid); return; }
     setBusy(true);
     try {
-      const url = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim();
-      const key = (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "").trim();
-      if (!url || !key) throw new Error("Serviço de autenticação não configurado. Atualize o site e tente novamente.");
-      if (!/^https:\/\//i.test(url)) throw new Error("Configuração inválida do serviço de autenticação.");
-      const client = createSupabaseClient(url, key);
-      const { data, error } = await signUp(client, form);
+      const { data, error } = await signUp(supabase(), { ...form, emailRedirectTo: `${window.location.origin}/conta/login` });
       if (error) throw error;
-      setMessage(data.session ? "Conta criada com sucesso." : "Conta criada. Verifique o seu email para confirmar.");
-    } catch (error) {
-      const raw = error instanceof Error ? error.message : String(error);
-      const msg = /failed to fetch|network|fetch/i.test(raw) ? "Não foi possível contactar o serviço de autenticação. Verifique a ligação à internet e tente novamente." : raw;
-      setMessage(msg || "Não foi possível criar a conta.");
-    } finally { setBusy(false); }
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) { setMessage("Já existe uma conta com este email. Use «Entrar»."); return; }
+      if (data.session) { setOk("Conta criada com sucesso. A entrar…"); window.location.href = "/conta"; }
+      else setOk("Conta criada. Abra o email que enviámos e clique no link para confirmar a conta. Depois pode entrar.");
+    } catch (error) { setMessage(authErrorMessage(error)); } finally { setBusy(false); }
   }
 
-  const field=(label:keyof typeof form,type="text")=><label>{label}<input required={label!=="phone"&&label!=="municipality"} type={type} value={form[label]} onChange={e=>setForm({...form,[label]:e.target.value})} style={{display:"block",width:"100%",padding:12,marginTop:6,boxSizing:"border-box"}} /></label>;
-
-  return <main style={{maxWidth:480,margin:"0 auto",padding:"56px 24px"}}>
+  return <main style={{ maxWidth: 480 }}>
     <a href="/">← Huambo Online</a><h1>Criar conta</h1><p>Uma conta para descobrir, comprar, vender e prestar serviços.</p>
-    <form onSubmit={submit} style={{display:"grid",gap:14}}>
-      {field("fullName")} {field("email","email")} {field("phone")} {field("municipality")} {field("password","password")}
-      <button type="submit" disabled={busy} style={{padding:12}}>{busy ? "A criar conta..." : "Criar conta"}</button>
-      {message&&<p role="status">{message}</p>}
+    <form onSubmit={submit} className="stack" noValidate>
+      <label>Nome completo<input autoComplete="name" value={form.fullName} onChange={set("fullName")} /></label>
+      <label>Email<input type="email" autoComplete="email" value={form.email} onChange={set("email")} /></label>
+      <label>Telefone (opcional)<input type="tel" autoComplete="tel" value={form.phone} onChange={set("phone")} placeholder="923 000 000" /></label>
+      <label>Município (opcional)<input value={form.municipality} onChange={set("municipality")} placeholder="Ex.: Huambo, Caála…" /></label>
+      <label>Palavra-passe (mínimo 8 caracteres)<input type="password" autoComplete="new-password" value={form.password} onChange={set("password")} /></label>
+      <label>Confirmar palavra-passe<input type="password" autoComplete="new-password" value={form.confirm} onChange={set("confirm")} /></label>
+      <button type="submit" disabled={busy}>{busy ? "A criar conta..." : "Criar conta"}</button>
+      {message && <p className="error" role="alert">{message}</p>}
+      {ok && <p className="ok" role="status">{ok}</p>}
     </form>
     <p><a href="/conta/login">Já tenho conta</a></p>
   </main>;
