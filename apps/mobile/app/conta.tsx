@@ -40,6 +40,8 @@ export default function Conta() {
     <Text style={ui.text}>Sessão iniciada como {email}</Text>
     <View style={{ gap: 8 }}>
       <Button title="📋 Os meus anúncios" variant="secondary" onPress={() => router.push("/meus-anuncios" as any)} />
+      <Button title="🧰 Perfil profissional" variant="secondary" onPress={() => router.push("/conta/profissional" as any)} />
+      <Button title="🏪 As minhas empresas" variant="secondary" onPress={() => router.push("/conta/empresas" as any)} />
       <Button title="⭐ Guardados" variant="secondary" onPress={() => router.push("/guardados")} />
       <Button title="💬 Mensagens" variant="secondary" onPress={() => router.push("/mensagens")} />
       <Button title="🔔 Notificações" variant="secondary" onPress={() => router.push("/notificacoes")} />

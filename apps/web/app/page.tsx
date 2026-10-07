@@ -1,5 +1,7 @@
 const modules = [
   ["Explorar classificados", "Pesquisar anúncios de compra, venda e aluguer.", "/explorar"],
+  ["Profissionais e serviços", "Eletricistas, advogados, técnicos, explicadores…", "/profissionais"],
+  ["Empresas e lojas", "Farmácias, oficinas, lojas, restaurantes…", "/empresas"],
   ["Publicar anúncio", "Venda ou arrende com fotografias.", "/classificados/publicar"],
   ["Os meus anúncios", "Editar, pausar ou apagar os seus anúncios.", "/meus-anuncios"],
   ["Mensagens", "Converse com anunciantes e compradores.", "/mensagens"],
