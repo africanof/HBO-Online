@@ -6,6 +6,8 @@ import { Button } from "../components/Ui";
 
 const modules = [
   ["Explorar classificados", "Pesquisar anúncios de compra, venda e aluguer.", "/explorar"],
+  ["Profissionais e serviços", "Eletricistas, advogados, técnicos, explicadores…", "/profissionais"],
+  ["Empresas e lojas", "Farmácias, oficinas, lojas, restaurantes…", "/empresas"],
   ["Os meus anúncios", "Editar, pausar ou apagar os seus anúncios.", "/meus-anuncios"],
   ["Mensagens", "Converse com anunciantes e compradores.", "/mensagens"],
   ["Notificações", "Acompanhe alertas e novidades.", "/notificacoes"],
