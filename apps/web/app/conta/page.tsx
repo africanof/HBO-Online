@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError } from "@huambo-online/core";
+import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError, getMyAdminRole, canModerate } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
 
 export default function ContaPage() {
   const [email, setEmail] = useState("");
+  const [isStaff, setIsStaff] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [form, setForm] = useState<{ fullName: string; phone: string; municipality: string } | null>(null);
   const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
@@ -16,6 +17,7 @@ export default function ContaPage() {
     setEmail(u.data.user?.email ?? "");
     const r = await getCurrentUserProfile(c);
     if (r.error && u.data.user) setErr(friendlyError(r.error));
+    if (u.data.user) setIsStaff(canModerate(await getMyAdminRole(c)));
     if (r.data) setForm({ fullName: r.data.fullName, phone: r.data.phone ?? "", municipality: r.data.municipality });
     setLoaded(true);
   })(); }, []);
@@ -34,7 +36,7 @@ export default function ContaPage() {
     <a href="/">← Huambo Online</a>
     <h1>A sua conta</h1>
     <p>Sessão iniciada como <strong>{email}</strong></p>
-    <nav className="row"><a className="btn secondary" href="/meus-anuncios">📋 Os meus anúncios</a><a className="btn secondary" href="/guardados">⭐ Guardados</a><a className="btn secondary" href="/mensagens">💬 Mensagens</a><a className="btn secondary" href="/notificacoes">🔔 Notificações</a></nav>
+    <nav className="row"><a className="btn secondary" href="/meus-anuncios">📋 Os meus anúncios</a><a className="btn secondary" href="/guardados">⭐ Guardados</a><a className="btn secondary" href="/mensagens">💬 Mensagens</a><a className="btn secondary" href="/notificacoes">🔔 Notificações</a>{isStaff && <a className="btn" href="/admin">🛡️ Administração</a>}</nav>
     {msg && <p className="ok" role="status">{msg}</p>}
     {err && <p className="error" role="alert">{err}</p>}
     {form && <form className="stack card" onSubmit={async e => { e.preventDefault(); await run(() => updateCurrentUserProfile(supabase(), form), "Perfil atualizado."); }}>

@@ -79,6 +79,10 @@ const errorMessages: [RegExp, string][] = [
   [/LISTING_NOT_FOUND/, "Anúncio não encontrado ou já não está publicado."],
   [/CANNOT_CONTACT_SELF/, "Este anúncio é seu."],
   [/AUTH_REQUIRED|JWT|not authenticated/i, "Inicie sessão para continuar."],
+  [/ACCOUNT_SUSPENDED/, "A sua conta está suspensa. Contacte o apoio Huambo Online."],
+  [/ADMIN_ONLY/, "Só a administração pode fazer isto."],
+  [/CANNOT_CHANGE_SELF/, "Não pode alterar a sua própria conta aqui."],
+  [/duplicate key.*slug|categories_slug/i, "Já existe uma categoria com esse nome."],
   [/Payload too large|exceeded the maximum allowed size/i, "A fotografia é demasiado grande (máximo 5 MB)."],
   [/mime type|invalid_mime/i, "Só são aceites imagens (JPG, PNG, WEBP)."],
   [/failed to fetch|network request failed/i, "Sem ligação à internet. Tente novamente."]

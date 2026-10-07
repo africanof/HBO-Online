@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { ScrollView, Text, TextInput, View } from "react-native";
-import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError } from "@huambo-online/core";
+import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError, getMyAdminRole, canModerate } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
 
 export default function Conta() {
   const router = useRouter();
-  const [email, setEmail] = useState(""); const [loaded, setLoaded] = useState(false);
+  const [email, setEmail] = useState(""); const [loaded, setLoaded] = useState(false); const [isStaff, setIsStaff] = useState(false);
   const [form, setForm] = useState<{ fullName: string; phone: string; municipality: string } | null>(null);
   const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
   const [pw, setPw] = useState(""); const [pw2, setPw2] = useState(""); const [del, setDel] = useState(""); const [busy, setBusy] = useState(false);
@@ -19,6 +19,7 @@ export default function Conta() {
     setEmail(u.data.user?.email ?? "");
     const r = await getCurrentUserProfile(c);
     if (r.error && u.data.user) setErr(friendlyError(r.error));
+    if (u.data.user) setIsStaff(canModerate(await getMyAdminRole(c)));
     if (r.data) setForm({ fullName: r.data.fullName, phone: r.data.phone ?? "", municipality: r.data.municipality });
     setLoaded(true);
   })(); }, []);
@@ -42,6 +43,7 @@ export default function Conta() {
       <Button title="⭐ Guardados" variant="secondary" onPress={() => router.push("/guardados")} />
       <Button title="💬 Mensagens" variant="secondary" onPress={() => router.push("/mensagens")} />
       <Button title="🔔 Notificações" variant="secondary" onPress={() => router.push("/notificacoes")} />
+      {isStaff && <Button title="🛡️ Administração" onPress={() => router.push("/admin" as any)} />}
     </View>
     <Message error={err} ok={msg} />
     {form && <View style={ui.card}>
