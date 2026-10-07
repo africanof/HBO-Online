@@ -7,7 +7,7 @@ create index if not exists products_active_idx on public.products(created_at des
 create index if not exists products_seller_idx on public.products(seller_id);
 
 alter table public.orders
-  add column if not exists seller_id uuid references auth.users(id) on delete set null,
+  add column if not exists seller_id uuid references auth.users(id),
   add column if not exists contact_phone text,
   add column if not exists delivery_text text,
   add column if not exists buyer_note text;
@@ -25,10 +25,11 @@ create policy order_items_admin_read on public.order_items for select to authent
 create or replace function public.guard_order_write()
 returns trigger language plpgsql security invoker set search_path = public as $$
 begin
-  if current_user in ('postgres', 'supabase_admin') then return coalesce(new, old); end if;
+  if current_user in ('postgres', 'supabase_admin') then return new; end if;
   raise exception 'USE_ORDER_FUNCTIONS';
 end $$;
-create trigger trg_guard_order_write before insert or update or delete on public.orders
+-- apagar encomendas não tem regra RLS, por isso já é impossível pela API
+create trigger trg_guard_order_write before insert or update on public.orders
   for each row execute function public.guard_order_write();
 grant execute on function public.guard_order_write() to authenticated;
 
@@ -84,18 +85,17 @@ begin
   on conflict (cart_id, product_id) do update set quantity = least(public.cart_items.quantity + excluded.quantity, greatest(p.stock, 1));
 end $$;
 
+-- Tirar do carrinho: a app apaga a linha diretamente (RLS: só o próprio carrinho)
 create or replace function public.cart_set_quantity(p_product_id uuid, p_quantity integer)
 returns void language plpgsql security definer set search_path = public as $$
 declare cid uuid;
 begin
   if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
+  if coalesce(p_quantity, 0) < 1 then raise exception 'INVALID_QUANTITY'; end if;
   select id into cid from public.carts where user_id = auth.uid();
   if cid is null then return; end if;
-  if coalesce(p_quantity, 0) < 1 then
-    delete from public.cart_items where cart_id = cid and product_id = p_product_id;
-  else
-    update public.cart_items set quantity = p_quantity where cart_id = cid and product_id = p_product_id;
-  end if;
+  update public.cart_items ci set quantity = least(p_quantity, greatest(p.stock, 1))
+  from public.products p where ci.cart_id = cid and ci.product_id = p_product_id and p.id = ci.product_id;
 end $$;
 
 create or replace function public.cart_contents()
@@ -145,7 +145,6 @@ begin
     values (s.seller_id, 'order', 'Nova encomenda', 'Recebeu uma encomenda de ' || sub || ' Kz.', jsonb_build_object('order_id', oid));
     ids := ids || oid;
   end loop;
-  delete from public.cart_items where cart_id = cid;
   return ids;
 end $$;
 
@@ -207,3 +206,72 @@ begin
 end $$;
 -- checkout_cart antigo (sem vendedor por encomenda) fica desativado; usar place_orders
 revoke all on function public.checkout_cart(uuid, uuid, numeric) from public, anon, authenticated;
+
+-- Artigos já encomendados ficam marcados (ordered_at) e deixam de contar no carrinho;
+-- a app limpa-os depois. Assim uma falha da app nunca gera encomendas repetidas.
+alter table public.cart_items add column if not exists ordered_at timestamptz;
+
+create or replace function public.cart_add(p_product_id uuid, p_quantity integer default 1)
+returns void language plpgsql security definer set search_path = public as $$
+declare cid uuid; p public.products;
+begin
+  if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
+  if p_quantity is null or p_quantity < 1 then raise exception 'INVALID_QUANTITY'; end if;
+  select * into p from public.products where id = p_product_id and active;
+  if not found then raise exception 'PRODUCT_NOT_FOUND'; end if;
+  if p.seller_id = auth.uid() then raise exception 'CANNOT_BUY_OWN_PRODUCT'; end if;
+  insert into public.carts(user_id) values (auth.uid()) on conflict (user_id) do update set updated_at = now() returning id into cid;
+  insert into public.cart_items(cart_id, product_id, quantity) values (cid, p_product_id, least(p_quantity, greatest(p.stock, 1)))
+  on conflict (cart_id, product_id) do update set
+    quantity = least(case when public.cart_items.ordered_at is null then public.cart_items.quantity else 0 end + excluded.quantity, greatest(p.stock, 1)),
+    ordered_at = null;
+end $$;
+
+create or replace function public.cart_contents()
+returns table(product_id uuid, name text, price numeric, currency text, stock integer, active boolean, media jsonb,
+  seller_id uuid, seller_name text, quantity integer, line_total numeric)
+language sql stable security definer set search_path = public as $$
+  select p.id, p.name, p.price, p.currency, p.stock, p.active, p.media, p.seller_id, coalesce(nullif(pr.full_name, ''), 'Vendedor'),
+         ci.quantity, p.price * ci.quantity
+  from public.carts c join public.cart_items ci on ci.cart_id = c.id join public.products p on p.id = ci.product_id
+  left join public.profiles pr on pr.id = p.seller_id
+  where c.user_id = auth.uid() and ci.ordered_at is null
+  order by pr.full_name, p.name;
+$$;
+
+create or replace function public.place_orders(p_fulfillment text, p_payment_method text, p_contact_phone text,
+  p_delivery_text text default null, p_note text default null)
+returns uuid[] language plpgsql security definer set search_path = public as $$
+declare cid uuid; s record; oid uuid; ids uuid[] := '{}'; sub numeric;
+begin
+  if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
+  if not public.current_user_active() then raise exception 'ACCOUNT_SUSPENDED'; end if;
+  if p_fulfillment not in ('delivery','pickup') then raise exception 'INVALID_FULFILLMENT'; end if;
+  if p_payment_method not in ('cash_on_delivery','bank_transfer','mobile_money','reference') then raise exception 'INVALID_PAYMENT_METHOD'; end if;
+  if nullif(trim(p_contact_phone), '') is null then raise exception 'PHONE_REQUIRED'; end if;
+  if p_fulfillment = 'delivery' and nullif(trim(p_delivery_text), '') is null then raise exception 'DELIVERY_ADDRESS_REQUIRED'; end if;
+  select id into cid from public.carts where user_id = auth.uid();
+  if cid is null or not exists (select 1 from public.cart_items where cart_id = cid and ordered_at is null) then raise exception 'CART_EMPTY'; end if;
+  perform 1 from public.products p join public.cart_items ci on ci.product_id = p.id where ci.cart_id = cid and ci.ordered_at is null for update of p;
+  if exists (select 1 from public.cart_items ci join public.products p on p.id = ci.product_id
+             where ci.cart_id = cid and ci.ordered_at is null and (not p.active or p.stock < ci.quantity)) then raise exception 'STOCK_CHANGED'; end if;
+  for s in select distinct p.seller_id from public.cart_items ci join public.products p on p.id = ci.product_id where ci.cart_id = cid and ci.ordered_at is null loop
+    select sum(p.price * ci.quantity) into sub from public.cart_items ci join public.products p on p.id = ci.product_id
+     where ci.cart_id = cid and ci.ordered_at is null and p.seller_id = s.seller_id;
+    insert into public.orders(buyer_id, seller_id, status, currency, subtotal, delivery_fee, total, payment_status, payment_method,
+      fulfillment_type, fulfillment_status, contact_phone, delivery_text, buyer_note)
+    values (auth.uid(), s.seller_id, 'pending', 'AOA', sub, 0, sub, 'unpaid', p_payment_method,
+      p_fulfillment, 'pending', trim(p_contact_phone), nullif(trim(p_delivery_text), ''), nullif(trim(p_note), ''))
+    returning id into oid;
+    insert into public.order_items(order_id, product_id, seller_id, quantity, unit_price, line_total)
+    select oid, p.id, p.seller_id, ci.quantity, p.price, p.price * ci.quantity
+    from public.cart_items ci join public.products p on p.id = ci.product_id where ci.cart_id = cid and ci.ordered_at is null and p.seller_id = s.seller_id;
+    update public.products p set stock = p.stock - ci.quantity, updated_at = now()
+    from public.cart_items ci where ci.cart_id = cid and ci.ordered_at is null and ci.product_id = p.id and p.seller_id = s.seller_id;
+    insert into public.notifications(user_id, type, title, body, data)
+    values (s.seller_id, 'order', 'Nova encomenda', 'Recebeu uma encomenda de ' || sub || ' Kz.', jsonb_build_object('order_id', oid));
+    ids := ids || oid;
+  end loop;
+  update public.cart_items set ordered_at = now() where cart_id = cid and ordered_at is null;
+  return ids;
+end $$;

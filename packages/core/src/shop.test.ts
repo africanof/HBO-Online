@@ -27,14 +27,33 @@ describe("checkout", () => {
   });
   it("sends the order to the server only when valid", async () => {
     const calls: any[] = [];
-    const client: any = { rpc: async (fn: string, args: any) => { calls.push([fn, args]); return { data: ["o1"], error: null }; } };
+    const deleted: any[] = [];
+    const client: any = {
+      rpc: async (fn: string, args: any) => { calls.push([fn, args]); return { data: ["o1"], error: null }; },
+      from: (t: string) => ({ delete: () => ({ not: async (col: string, op: string, v: any) => { deleted.push([t, col, op, v]); return { error: null }; } }) })
+    };
     expect((await placeOrders(client, { fulfillment: "delivery", paymentMethod: "cash_on_delivery", phone: "923 000 000" })).error).toBeTruthy();
     await placeOrders(client, { fulfillment: "delivery", paymentMethod: "cash_on_delivery", phone: " 923 000 000 ", deliveryText: " Bairro X " });
     expect(calls).toEqual([["place_orders", { p_fulfillment: "delivery", p_payment_method: "cash_on_delivery", p_contact_phone: "923 000 000", p_delivery_text: "Bairro X", p_note: null }]]);
+    expect(deleted).toEqual([["cart_items", "ordered_at", "is", null]]);
   });
   it("defines the seller flow", () => {
     expect(NEXT_SELLER_STATUS.pending).toBe("confirmed");
     expect(NEXT_SELLER_STATUS.ready).toBe("completed");
     expect(NEXT_SELLER_STATUS.completed).toBeUndefined();
+  });
+});
+
+import { setCartQuantity } from "./shop";
+describe("cart quantity", () => {
+  it("removes the item when quantity is 0 and updates otherwise", async () => {
+    const log: any[] = [];
+    const client: any = {
+      rpc: async (fn: string, args: any) => { log.push(["rpc", fn, args]); return { error: null }; },
+      from: (t: string) => ({ delete: () => ({ eq: async (c: string, v: string) => { log.push(["delete", t, c, v]); return { error: null }; } }) })
+    };
+    await setCartQuantity(client, "p1", 0);
+    await setCartQuantity(client, "p1", 3);
+    expect(log).toEqual([["delete", "cart_items", "product_id", "p1"], ["rpc", "cart_set_quantity", { p_product_id: "p1", p_quantity: 3 }]]);
   });
 });

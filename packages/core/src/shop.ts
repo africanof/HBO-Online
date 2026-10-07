@@ -69,13 +69,20 @@ export async function listProductCategories(client: SupabaseClient) {
 }
 
 export async function addToMyCart(client: SupabaseClient, productId: string, quantity = 1) { return client.rpc("cart_add", { p_product_id: productId, p_quantity: quantity }); }
-export async function setCartQuantity(client: SupabaseClient, productId: string, quantity: number) { return client.rpc("cart_set_quantity", { p_product_id: productId, p_quantity: quantity }); }
+/** Quantidade 0 tira o produto do carrinho (as regras do Supabase só deixam mexer no próprio carrinho). */
+export async function setCartQuantity(client: SupabaseClient, productId: string, quantity: number) {
+  if (quantity < 1) return client.from("cart_items").delete().eq("product_id", productId);
+  return client.rpc("cart_set_quantity", { p_product_id: productId, p_quantity: quantity });
+}
 export async function getMyCart(client: SupabaseClient) { return client.rpc("cart_contents"); }
 export async function placeOrders(client: SupabaseClient, input: CheckoutInput) {
   const invalid = validateCheckout(input);
   if (invalid) return { data: null, error: new Error(invalid) };
-  return client.rpc("place_orders", { p_fulfillment: input.fulfillment, p_payment_method: input.paymentMethod, p_contact_phone: input.phone.trim(),
+  const r = await client.rpc("place_orders", { p_fulfillment: input.fulfillment, p_payment_method: input.paymentMethod, p_contact_phone: input.phone.trim(),
     p_delivery_text: input.deliveryText?.trim() || null, p_note: input.note?.trim() || null });
+  // A encomenda já está feita; os artigos ficam marcados como encomendados e saem do carrinho.
+  if (!r.error) await client.from("cart_items").delete().not("ordered_at", "is", null);
+  return r;
 }
 export async function listOrders(client: SupabaseClient, role: "buyer" | "seller") { return client.rpc("my_orders", { p_role: role }); }
 export async function changeOrderStatus(client: SupabaseClient, orderId: string, status: OrderStatus, paid?: boolean) {
