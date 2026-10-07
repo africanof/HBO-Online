@@ -46,3 +46,4 @@ export function getListingLabel(type: ListingType): string {
 export * from "./account-security";
 export * from "./admin";
 export * from "./directory";
+export * from "./shop";

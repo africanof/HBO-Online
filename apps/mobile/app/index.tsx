@@ -6,6 +6,7 @@ import { Button } from "../components/Ui";
 
 const modules = [
   ["Explorar classificados", "Pesquisar anúncios de compra, venda e aluguer.", "/explorar"],
+  ["Loja", "Comprar produtos de vendedores do Huambo.", "/loja"],
   ["Profissionais e serviços", "Eletricistas, advogados, técnicos, explicadores…", "/profissionais"],
   ["Empresas e lojas", "Farmácias, oficinas, lojas, restaurantes…", "/empresas"],
   ["Os meus anúncios", "Editar, pausar ou apagar os seus anúncios.", "/meus-anuncios"],
