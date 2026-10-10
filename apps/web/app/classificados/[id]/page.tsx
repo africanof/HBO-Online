@@ -5,6 +5,8 @@ import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, sa
   reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ShareButton, useRecordView } from "../../../components/Engage";
+import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
+import { AUCTIONABLE_TYPES } from "@huambo-online/core";
 
 export default function ClassifiedDetail() {
   const { id } = useParams<{ id: string }>();
@@ -87,7 +89,7 @@ export default function ClassifiedDetail() {
     <h1>{item.title}</h1>
     <p className="price">{formatPrice(item.price, item.currency)}</p>
     <p>{LISTING_TYPE_LABELS[item.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? item.listing_type} · {PURPOSE_LABELS[item.purpose as keyof typeof PURPOSE_LABELS] ?? item.purpose}{place && <> · 📍 {place}</>}</p>
-    {seller && <p>Anunciante: <strong>{seller}</strong></p>}
+    {seller && <p>Anunciante: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a></p>}
     {media.length > 0 && <section className="stack">
       <img src={media[photo]} alt={`Fotografia ${photo + 1} de ${media.length}`} style={{ width: "100%", maxHeight: 520, objectFit: "contain", background: "#f2f2f2", borderRadius: 12 }} />
       {media.length > 1 && <div className="row">{media.map((m, i) => <button key={m} type="button" className={i === photo ? "" : "secondary"} onClick={() => setPhoto(i)} aria-label={`Ver fotografia ${i + 1}`} style={{ padding: 0, width: 72, height: 72, overflow: "hidden" }}><img src={m} alt="" style={{ width: 72, height: 72, objectFit: "cover" }} /></button>)}</div>}
@@ -96,6 +98,8 @@ export default function ClassifiedDetail() {
     {item.status === "published" && <div className="row"><ShareButton kind="listing" id={id} title={item.title} /></div>}
     {notice && <p className="ok" role="status">{notice}</p>}
     {error && <p className="error" role="alert">{error}</p>}
+    {item.status === "published" && <AuctionPanel listingId={id} uid={uid} mine={mine} canStart={["sale", "auction"].includes(item.purpose) && AUCTIONABLE_TYPES.includes(item.listing_type)} />}
+    {!mine && item.status === "published" && ["rent", "lease"].includes(item.purpose) && <RentalRequestForm listingId={id} uid={uid} defaultPrice={item.price} />}
     {mine ? <div className="row"><a className="btn" href={`/classificados/${id}/editar`}>Editar anúncio</a><a className="btn secondary" href="/meus-anuncios">Os meus anúncios</a></div> : <>
       <button type="button" className="secondary" onClick={toggleSaved} disabled={busy}>{savedId ? "★ Guardado" : "☆ Guardar anúncio"}</button>
       <section className="card">

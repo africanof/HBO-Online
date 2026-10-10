@@ -34,7 +34,7 @@ export default function Produto() {
     <h1>{p.name}</h1>
     <p className="price">{formatPrice(p.price, p.currency)}</p>
     <p>{p.stock > 0 ? `${p.stock} em stock` : "Esgotado"} · {[p.categories?.name, p.municipalities?.name].filter(Boolean).join(" · ")}</p>
-    {seller && <p>Vendedor: <strong>{seller}</strong></p>}
+    {seller && <p>Vendedor: <a href={"/vendedor/" + p.seller_id}><strong>{seller}</strong></a></p>}
     {media.length > 0 && <section className="stack">
       <img src={media[photo]} alt={`Fotografia ${photo + 1}`} style={{ width: "100%", maxHeight: 480, objectFit: "contain", background: "#f2f2f2", borderRadius: 12 }} />
       {media.length > 1 && <div className="row">{media.map((m, i) => <button key={m} type="button" className={i === photo ? "" : "secondary"} onClick={() => setPhoto(i)} style={{ padding: 0, width: 72, height: 72, overflow: "hidden" }} aria-label={`Fotografia ${i + 1}`}><img src={m} alt="" style={{ width: 72, height: 72, objectFit: "cover" }} /></button>)}</div>}

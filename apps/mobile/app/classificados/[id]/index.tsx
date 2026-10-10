@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
-  reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS } from "@huambo-online/core";
+  reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ui } from "../../../lib/ui";
 import { Button, Message } from "../../../components/Ui";
 import { ShareButton, useRecordView } from "../../../components/Engage";
+import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
 
 export default function ClassifiedDetail() {
   const router = useRouter();
@@ -90,13 +91,15 @@ export default function ClassifiedDetail() {
     <Text style={ui.h1}>{item.title}</Text>
     <Text style={ui.price}>{formatPrice(item.price, item.currency)}</Text>
     <Text style={ui.text}>{LISTING_TYPE_LABELS[item.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? item.listing_type} · {PURPOSE_LABELS[item.purpose as keyof typeof PURPOSE_LABELS] ?? item.purpose}{place ? " · 📍 " + place : ""}</Text>
-    {!!seller && <Text style={ui.text}>Anunciante: {seller}</Text>}
+    {!!seller && <Link href={("/vendedor/" + item.owner_id) as any} style={ui.link}>Anunciante: {seller} →</Link>}
     {media.length > 0 && <View style={{ gap: 8 }}>
       <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: "#eee" }} resizeMode="contain" accessibilityLabel={`Fotografia ${photo + 1} de ${media.length}`} />
       {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} accessibilityLabel={`Ver fotografia ${i + 1}`} style={{ borderWidth: 3, borderColor: i === photo ? "#111" : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}
     </View>}
     {!!item.description && <Text style={ui.text}>{item.description}</Text>}
     {item.status === "published" && <ShareButton kind="listing" id={id} title={item.title} />}
+    {item.status === "published" && <AuctionPanel listingId={id} uid={uid} mine={mine} canStart={["sale", "auction"].includes(item.purpose) && AUCTIONABLE_TYPES.includes(item.listing_type)} />}
+    {!mine && item.status === "published" && ["rent", "lease"].includes(item.purpose) && <RentalRequestForm listingId={id} uid={uid} defaultPrice={item.price} />}
     <Message error={error} ok={notice} />
     {mine ? <View style={{ gap: 10 }}>
       <Button title="Editar anúncio" onPress={() => router.push(`/classificados/${id}/editar` as any)} />

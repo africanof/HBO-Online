@@ -38,7 +38,7 @@ export default function Produto() {
     <Text style={ui.h1}>{p.name}</Text>
     <Text style={ui.price}>{formatPrice(p.price, p.currency)}</Text>
     <Text style={ui.muted}>{p.stock > 0 ? `${p.stock} em stock` : "Esgotado"} · {[p.categories?.name, p.municipalities?.name].filter(Boolean).join(" · ")}</Text>
-    {!!seller && <Text style={ui.text}>Vendedor: {seller}</Text>}
+    {!!seller && <Link href={("/vendedor/" + p.seller_id) as any} style={ui.link}>Vendedor: {seller} →</Link>}
     {media.length > 0 && <View style={{ gap: 8 }}>
       <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: "#eee" }} resizeMode="contain" />
       {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} style={{ borderWidth: 3, borderColor: i === photo ? "#111" : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}
