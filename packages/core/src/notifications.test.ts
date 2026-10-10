@@ -21,3 +21,14 @@ describe("notification destinations",()=>{
   expect(getNotificationDestination({data:{}})).toBeNull();
  });
 });
+
+import { getNotificationLink } from "./notifications";
+describe("notification links", () => {
+  it("points orders and reviews to the right page", () => {
+    expect(getNotificationLink({ type: "order", title: "Nova encomenda", data: { order_id: uuid } })).toEqual({ href: "/encomendas?vendas=1", label: "📦 Ver venda →" });
+    expect(getNotificationLink({ type: "order", title: "Encomenda confirmada", data: { order_id: uuid } })?.href).toBe("/encomendas");
+    expect(getNotificationLink({ type: "review", title: "Nova avaliação", data: { provider_id: uuid } })?.href).toBe("/profissionais/" + uuid);
+    expect(getNotificationLink({ type: "review", title: "Nova avaliação", data: { business_id: uuid2 } })?.href).toBe("/empresas/" + uuid2);
+    expect(getNotificationLink({ type: "message", title: "x", data: {} })).toBeNull();
+  });
+});

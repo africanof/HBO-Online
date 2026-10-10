@@ -17,3 +17,12 @@ export function getNotificationListingId(n:Pick<AppNotification,"data">){const v
 export function getNotificationDestination(n:Pick<AppNotification,"data">){const conversationId=getNotificationConversationId(n);if(conversationId)return{kind:"conversation" as const,id:conversationId};const listingId=getNotificationListingId(n);if(listingId)return{kind:"listing" as const,id:listingId};const savedSearchId=getNotificationSavedSearchId(n);if(savedSearchId)return{kind:"saved_search" as const,id:savedSearchId};return null;}
 export function subscribeToNotifications(client:SupabaseClient,userId:string,onChange:()=>void){const channel=client.channel(`notifications:${userId}`).on("postgres_changes",{event:"INSERT",schema:"public",table:"notifications",filter:`user_id=eq.${userId}`},onChange).on("postgres_changes",{event:"UPDATE",schema:"public",table:"notifications",filter:`user_id=eq.${userId}`},onChange).subscribe();return()=>{void client.removeChannel(channel);};}
 export async function listSavedSearchNotifications(client:SupabaseClient,userId?:string){const u=await currentUserId(client,userId);return client.from("notifications").select(columns).eq("user_id",u).eq("type","saved_search").order("created_at",{ascending:false});}
+
+/** Ligação extra para notificações de encomendas e avaliações (igual no Site e na APP). */
+export function getNotificationLink(n: Pick<AppNotification, "data" | "type" | "title">): { href: string; label: string } | null {
+  const d = n.data ?? {};
+  if (n.type === "order" && isUuid(d.order_id)) return /^Nova encomenda/.test(n.title) ? { href: "/encomendas?vendas=1", label: "📦 Ver venda →" } : { href: "/encomendas", label: "📦 Ver encomenda →" };
+  if (n.type === "review" && isUuid(d.provider_id)) return { href: "/profissionais/" + d.provider_id, label: "⭐ Ver avaliações →" };
+  if (n.type === "review" && isUuid(d.business_id)) return { href: "/empresas/" + d.business_id, label: "⭐ Ver avaliações →" };
+  return null;
+}
