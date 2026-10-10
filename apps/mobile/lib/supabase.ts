@@ -8,7 +8,7 @@ const key = (process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "").trim();
 
 export const supabaseConfigured = Boolean(url && key && /^https:\/\//i.test(url));
 /** Endereço do Site (links de confirmação e recuperação de palavra-passe abrem no Site). */
-export const siteUrl = (process.env.EXPO_PUBLIC_SITE_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? "").trim().replace(/\/$/, "");
+export const siteUrl = (process.env.EXPO_PUBLIC_SITE_URL || process.env.EXPO_PUBLIC_APP_URL || "https://huambo-na-m-o.onrender.com").trim().replace(/\/$/, "");
 
 // A sessão fica guardada no telemóvel e é partilhada por todos os ecrãs.
 configureSupabase({ storage: AsyncStorage, detectSessionInUrl: false });
