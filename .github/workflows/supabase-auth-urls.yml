@@ -1,0 +1,38 @@
+name: Configurar endereços de autenticação do Supabase
+
+# Só corre quando alguém carrega em "Run workflow".
+# Precisa do segredo SUPABASE_ACCESS_TOKEN (chave pessoal do Supabase, criada pelo dono).
+on:
+  workflow_dispatch:
+    inputs:
+      site_url:
+        description: "Endereço do site"
+        required: false
+        default: "https://huambo-na-m-o.onrender.com"
+
+jobs:
+  auth-urls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PROJECT_REF: foqsmszwbhiyqqtuwypg
+      SITE_URL: ${{ inputs.site_url }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - name: Verificar segredo
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "Falta o segredo SUPABASE_ACCESS_TOKEN no GitHub (Settings → Secrets and variables → Actions)."; exit 1
+          fi
+      - name: Definir Site URL e Redirect URLs
+        run: |
+          body=$(jq -n --arg site "$SITE_URL" '{site_url: $site, uri_allow_list: ($site + "/**,huamboonline://**")}')
+          code=$(curl -sS -o resp.json -w '%{http_code}' -X PATCH \
+            "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" -d "$body")
+          echo "Resposta HTTP: $code"
+          if [ "$code" -ge 300 ]; then jq -r '.message // .' resp.json; exit 1; fi
+      - name: Confirmar
+        run: |
+          curl -sS "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            | jq '{site_url, uri_allow_list, mailer_autoconfirm, external_email_enabled, password_hibp_enabled}'
