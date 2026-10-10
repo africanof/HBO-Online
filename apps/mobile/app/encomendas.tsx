@@ -2,7 +2,8 @@ import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Alert, Linking, ScrollView, Text, View } from "react-native";
 import { listOrders, changeOrderStatus, formatPrice, friendlyError, ORDER_STATUS_LABELS, PAYMENT_LABELS, FULFILLMENT_LABELS, NEXT_SELLER_STATUS,
-  type OrderStatus, type PaymentMethod, type Fulfillment } from "@huambo-online/core";
+  listMyDeliveries, requestOrderDelivery, cancelDeliveryRequest, latestDeliveryByOrder, isActiveDelivery, DELIVERY_STATUS_LABELS,
+  type OrderStatus, type PaymentMethod, type Fulfillment, type DeliveryStatus } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
@@ -13,7 +14,17 @@ export default function Encomendas() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
   const [role, setRole] = useState<"buyer" | "seller">(params.vendas ? "seller" : "buyer");
   const [items, setItems] = useState<any[]>([]); const [error, setError] = useState(""); const [notice, setNotice] = useState(params.novas ? "Encomenda enviada ao vendedor." : "");
-  async function load(r = role) { const res = await listOrders(supabase(), r); if (res.error) setError(friendlyError(res.error)); else setItems((res.data as any[]) ?? []); }
+  const [deliveries, setDeliveries] = useState<Record<string, any>>({});
+  async function load(r = role) {
+    const [res, d] = await Promise.all([listOrders(supabase(), r), listMyDeliveries(supabase(), "party")]);
+    if (res.error) setError(friendlyError(res.error)); else setItems((res.data as any[]) ?? []);
+    setDeliveries(latestDeliveryByOrder((d.data as any[]) ?? []));
+  }
+  async function run(fn: () => PromiseLike<{ error: any }>, msg: string) {
+    setError(""); setNotice("");
+    const r = await fn();
+    if (r.error) setError(friendlyError(r.error)); else { setNotice(msg); await load(); }
+  }
   useFocusEffect(useCallback(() => { void currentUserId().then(id => { setUid(id); if (id) void load(); }); }, [role]));
   async function act(id: string, status: OrderStatus, paid?: boolean) {
     setError(""); setNotice("");
@@ -37,6 +48,10 @@ export default function Encomendas() {
         {(o.items ?? []).map((it: any, i: number) => <Text key={i} style={ui.text}>• {it.quantity} × {it.name} — {formatPrice(it.line_total)}</Text>)}
         {!!o.delivery_text && <Text style={ui.text}>Entrega: {o.delivery_text}</Text>}
         {!!o.buyer_note && <Text style={ui.text}>Nota: {o.buyer_note}</Text>}
+        {!!deliveries[o.id] && <Text style={ui.label}>🛵 Entrega: {DELIVERY_STATUS_LABELS[deliveries[o.id].status as DeliveryStatus]}{deliveries[o.id].courier_name ? " · Estafeta: " + deliveries[o.id].courier_name : ""}</Text>}
+        {!!deliveries[o.id]?.courier_phone && isActiveDelivery(deliveries[o.id].status) && <Button title={"📞 Estafeta " + deliveries[o.id].courier_phone} variant="secondary" onPress={() => void Linking.openURL("tel:" + deliveries[o.id].courier_phone.replace(/\s/g, ""))} />}
+        {role === "seller" && o.fulfillment_type === "delivery" && !["completed", "cancelled"].includes(o.status) && !(deliveries[o.id] && isActiveDelivery(deliveries[o.id].status)) && <Button title="🛵 Pedir estafeta" variant="secondary" onPress={() => void run(() => requestOrderDelivery(supabase(), o.id), "Pedido enviado aos estafetas.")} />}
+        {role === "seller" && !!deliveries[o.id] && ["pending", "assigned", "accepted"].includes(deliveries[o.id].status) && <Button title="Cancelar estafeta" variant="secondary" onPress={() => Alert.alert("Cancelar o pedido de estafeta?", "", [{ text: "Não", style: "cancel" }, { text: "Sim", onPress: () => void run(() => cancelDeliveryRequest(supabase(), deliveries[o.id].id), "Pedido de estafeta cancelado.") }])} />}
         {role === "seller" && !!o.contact_phone && <Button title={"📞 " + o.contact_phone} variant="secondary" onPress={() => void Linking.openURL("tel:" + o.contact_phone.replace(/\s/g, ""))} />}
         {role === "seller" && next && <Button title={`Marcar como «${ORDER_STATUS_LABELS[next]}»`} onPress={() => void act(o.id, next)} />}
         {role === "seller" && o.payment_status !== "paid" && o.status !== "cancelled" && <Button title="Marcar como paga" variant="secondary" onPress={() => void act(o.id, o.status as OrderStatus, true)} />}

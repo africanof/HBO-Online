@@ -2,7 +2,8 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { listOrders, changeOrderStatus, formatPrice, friendlyError, ORDER_STATUS_LABELS, PAYMENT_LABELS, FULFILLMENT_LABELS, NEXT_SELLER_STATUS,
-  type OrderStatus, type PaymentMethod, type Fulfillment } from "@huambo-online/core";
+  listMyDeliveries, requestOrderDelivery, cancelDeliveryRequest, latestDeliveryByOrder, isActiveDelivery, DELIVERY_STATUS_LABELS,
+  type OrderStatus, type PaymentMethod, type Fulfillment, type DeliveryStatus } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 
 function Encomendas() {
@@ -10,7 +11,17 @@ function Encomendas() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
   const [role, setRole] = useState<"buyer" | "seller">(params.get("vendas") ? "seller" : "buyer");
   const [items, setItems] = useState<any[]>([]); const [error, setError] = useState(""); const [notice, setNotice] = useState(params.get("novas") ? "Encomenda enviada ao vendedor. Vai receber notificações sobre o estado." : "");
-  async function load(r = role) { const res = await listOrders(supabase(), r); if (res.error) setError(friendlyError(res.error)); else setItems((res.data as any[]) ?? []); }
+  const [deliveries, setDeliveries] = useState<Record<string, any>>({});
+  async function load(r = role) {
+    const [res, d] = await Promise.all([listOrders(supabase(), r), listMyDeliveries(supabase(), "party")]);
+    if (res.error) setError(friendlyError(res.error)); else setItems((res.data as any[]) ?? []);
+    setDeliveries(latestDeliveryByOrder((d.data as any[]) ?? []));
+  }
+  async function run(fn: () => PromiseLike<{ error: any }>, msg: string) {
+    setError(""); setNotice("");
+    const r = await fn();
+    if (r.error) setError(friendlyError(r.error)); else { setNotice(msg); await load(); }
+  }
   useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) void load(); }); }, []);
   useEffect(() => { if (uid) void load(role); }, [role]);
   async function act(id: string, status: OrderStatus, paid?: boolean) {
@@ -40,7 +51,10 @@ function Encomendas() {
         {o.delivery_text && <span>Entrega: {o.delivery_text}</span>}
         {role === "seller" && o.contact_phone && <span>Telefone: <a href={"tel:" + o.contact_phone.replace(/\s/g, "")}>{o.contact_phone}</a></span>}
         {o.buyer_note && <span>Nota: {o.buyer_note}</span>}
+        {deliveries[o.id] && <span>🛵 Entrega: <strong>{DELIVERY_STATUS_LABELS[deliveries[o.id].status as DeliveryStatus]}</strong>{deliveries[o.id].courier_name ? " · Estafeta: " + deliveries[o.id].courier_name : ""}{deliveries[o.id].courier_phone && isActiveDelivery(deliveries[o.id].status) ? <> · <a href={"tel:" + deliveries[o.id].courier_phone.replace(/\s/g, "")}>{deliveries[o.id].courier_phone}</a></> : null}</span>}
         <div className="row">
+          {role === "seller" && o.fulfillment_type === "delivery" && !["completed", "cancelled"].includes(o.status) && !(deliveries[o.id] && isActiveDelivery(deliveries[o.id].status)) && <button className="secondary" onClick={() => { const notes = prompt("Nota para o estafeta (opcional): onde recolher, cuidados…") ?? undefined; void run(() => requestOrderDelivery(supabase(), o.id, notes), "Pedido enviado aos estafetas."); }}>🛵 Pedir estafeta</button>}
+          {role === "seller" && deliveries[o.id] && ["pending", "assigned", "accepted"].includes(deliveries[o.id].status) && <button className="secondary" onClick={() => { if (confirm("Cancelar o pedido de estafeta?")) void run(() => cancelDeliveryRequest(supabase(), deliveries[o.id].id), "Pedido de estafeta cancelado."); }}>Cancelar estafeta</button>}
           {role === "seller" && next && <button onClick={() => act(o.id, next)}>Marcar como «{ORDER_STATUS_LABELS[next]}»</button>}
           {role === "seller" && o.payment_status !== "paid" && !["cancelled"].includes(o.status) && <button className="secondary" onClick={() => act(o.id, o.status as OrderStatus, true)}>Marcar como paga</button>}
           {(role === "seller" ? !["completed", "cancelled"].includes(o.status) : o.status === "pending") && <button className="danger" onClick={() => { if (confirm("Cancelar esta encomenda?")) void act(o.id, "cancelled"); }}>Cancelar</button>}

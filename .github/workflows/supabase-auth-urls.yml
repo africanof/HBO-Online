@@ -9,6 +9,11 @@ on:
         description: "Endereço do site"
         required: false
         default: "https://huambo-na-m-o.onrender.com"
+      leaked_password_protection:
+        description: "Recusar palavras-passe que já apareceram em fugas de dados (HaveIBeenPwned)"
+        type: boolean
+        required: false
+        default: true
 
 jobs:
   auth-urls:
@@ -32,6 +37,16 @@ jobs:
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" -d "$body")
           echo "Resposta HTTP: $code"
           if [ "$code" -ge 300 ]; then jq -r '.message // .' resp.json; exit 1; fi
+      - name: Proteção contra palavras-passe expostas
+        if: ${{ inputs.leaked_password_protection }}
+        # Em alguns planos do Supabase esta opção não está disponível: avisa, mas não falha.
+        continue-on-error: true
+        run: |
+          code=$(curl -sS -o resp.json -w '%{http_code}' -X PATCH \
+            "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" -d '{"password_hibp_enabled": true}')
+          echo "Resposta HTTP: $code"
+          if [ "$code" -ge 300 ]; then echo "Não foi possível ativar:"; jq -r '.message // .' resp.json; exit 1; fi
       - name: Confirmar
         run: |
           curl -sS "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \

@@ -7,7 +7,7 @@ const d = (s: string) => new Date(s).toLocaleDateString("pt-AO");
 
 export default function Alugueres() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
-  const [role, setRole] = useState<"renter" | "owner">("renter");
+  const [role, setRole] = useState<"renter" | "owner">(typeof window !== "undefined" && new URLSearchParams(window.location.search).get("recebidos") ? "owner" : "renter");
   const [items, setItems] = useState<any[]>([]); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
   async function load(r = role) { const res = await listMyRentalRequests(supabase(), r); if (res.error) setError(friendlyError(res.error)); else setItems((res.data as any[]) ?? []); }
   useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) void load(); }); }, []);

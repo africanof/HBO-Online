@@ -5,9 +5,10 @@ import { getMyAdminRole, getAdminStats, listReports, resolveReport, listListings
   ADMIN_STAT_LABELS, REPORT_STATUS_LABELS, USER_STATUS_LABELS, ROLE_LABELS, STATUS_LABELS, CATEGORY_TYPES, CATEGORY_TYPE_LABELS,
   type AdminRole, type AdminStats, type ReportStatus, type UserStatus } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
+import { AdminCouriers } from "../../components/AdminCouriers";
 
-type Tab = "stats" | "reports" | "listings" | "users" | "categories";
-const tabs: [Tab, string][] = [["stats", "Estatísticas"], ["reports", "Denúncias"], ["listings", "Anúncios"], ["users", "Utilizadores"], ["categories", "Categorias"]];
+type Tab = "stats" | "reports" | "listings" | "users" | "categories" | "couriers";
+const tabs: [Tab, string][] = [["stats", "Estatísticas"], ["reports", "Denúncias"], ["listings", "Anúncios"], ["users", "Utilizadores"], ["categories", "Categorias"], ["couriers", "Estafetas"]];
 
 export default function AdminPage() {
   const [role, setRole] = useState<AdminRole | null>(null);
@@ -24,6 +25,7 @@ export default function AdminPage() {
 
   async function load(t: Tab) {
     setError("");
+    if (t === "couriers") return;
     const c = supabase();
     const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReports(c, reportFilter || undefined)
       : t === "listings" ? await listListingsForModeration(c, listingFilter, listingQuery) : t === "users" ? await listUsersForAdmin(c, userQuery) : await listAllCategories(c);
@@ -48,6 +50,7 @@ export default function AdminPage() {
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
 
+    {tab === "couriers" && <AdminCouriers />}
     {tab === "stats" && stats && <section className="grid">{ADMIN_STAT_LABELS.map(([k, l]) => <div key={k} className="card"><span>{l}</span><strong style={{ fontSize: 32 }}>{stats[k]}</strong></div>)}</section>}
 
     {tab === "reports" && <section className="stack">

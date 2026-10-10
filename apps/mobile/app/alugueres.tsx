@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "expo-router";
+import { Link, useLocalSearchParams } from "expo-router";
 import { Alert, ScrollView, Text, View } from "react-native";
 import { listMyRentalRequests, respondRentalRequest, cancelRentalRequest, formatPrice, friendlyError, RENTAL_STATUS_LABELS, type RentalStatus } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
@@ -10,10 +10,11 @@ const d = (s: string) => new Date(s).toLocaleDateString("pt-AO");
 
 export default function Alugueres() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
-  const [role, setRole] = useState<"renter" | "owner">("renter");
+  const params = useLocalSearchParams<{ recebidos?: string }>();
+  const [role, setRole] = useState<"renter" | "owner">(params.recebidos ? "owner" : "renter");
   const [items, setItems] = useState<any[]>([]); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
   async function load(r = role) { const res = await listMyRentalRequests(supabase(), r); if (res.error) setError(friendlyError(res.error)); else setItems((res.data as any[]) ?? []); }
-  useEffect(() => { void supabase().auth.getUser().then(({ data }) => { const id = data.user?.id ?? null; setUid(id); if (id) void load(); }); }, []);
+  useEffect(() => { void supabase().auth.getUser().then(({ data }) => { const id = data.user?.id ?? null; setUid(id); if (id) void load(params.recebidos ? "owner" : "renter"); }); }, []);
   async function act(fn: () => PromiseLike<{ error: any }>, msg: string) { setError(""); setNotice(""); const r = await fn(); if (r.error) setError(friendlyError(r.error)); else { setNotice(msg); await load(); } }
   if (uid === undefined) return <View style={ui.screen}><Text style={ui.text}>A carregar…</Text></View>;
   if (!uid) return <View style={ui.screen}><Link href="/" style={ui.link}>← Huambo Online</Link><Text style={ui.h1}>Alugueres</Text><Link href="/login" style={ui.link}>Inicie sessão</Link></View>;

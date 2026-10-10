@@ -22,6 +22,8 @@ export async function listSavedSearchNotifications(client:SupabaseClient,userId?
 export function getNotificationLink(n: Pick<AppNotification, "data" | "type" | "title">): { href: string; label: string } | null {
   const d = n.data ?? {};
   if (n.type === "order" && isUuid(d.order_id)) return /^Nova encomenda/.test(n.title) ? { href: "/encomendas?vendas=1", label: "📦 Ver venda →" } : { href: "/encomendas", label: "📦 Ver encomenda →" };
+  if (n.type === "delivery") return d.for === "courier" ? { href: "/entregas", label: "🛵 Ver entregas →" } : isUuid(d.order_id) ? { href: "/encomendas", label: "📦 Ver encomenda →" } : null;
+  if (isUuid(d.rental_id)) return { href: /^Novo pedido/.test(n.title) ? "/alugueres?recebidos=1" : "/alugueres", label: "📅 Ver alugueres →" };
   if (n.type === "review" && isUuid(d.provider_id)) return { href: "/profissionais/" + d.provider_id, label: "⭐ Ver avaliações →" };
   if (n.type === "review" && isUuid(d.business_id)) return { href: "/empresas/" + d.business_id, label: "⭐ Ver avaliações →" };
   return null;

@@ -8,11 +8,12 @@ import { getMyAdminRole, getAdminStats, listReports, resolveReport, listListings
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
+import { AdminCouriers } from "../components/AdminCouriers";
 
-type Tab = "stats" | "reports" | "listings" | "users" | "categories";
+type Tab = "stats" | "reports" | "listings" | "users" | "categories" | "couriers";
 const tabOptions: { value: Tab; label: string }[] = [
   { value: "stats", label: "Estatísticas" }, { value: "reports", label: "Denúncias" }, { value: "listings", label: "Anúncios" },
-  { value: "users", label: "Utilizadores" }, { value: "categories", label: "Categorias" }
+  { value: "users", label: "Utilizadores" }, { value: "categories", label: "Categorias" }, { value: "couriers", label: "Estafetas" }
 ];
 
 export default function Admin() {
@@ -31,6 +32,7 @@ export default function Admin() {
 
   async function load(t: Tab) {
     setError("");
+    if (t === "couriers") return;
     const c = supabase();
     const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReports(c, reportFilter || undefined)
       : t === "listings" ? await listListingsForModeration(c, "", listingQuery) : t === "users" ? await listUsersForAdmin(c, userQuery) : await listAllCategories(c);
@@ -54,6 +56,7 @@ export default function Admin() {
     <Chips options={tabOptions} value={tab} onChange={setTab} />
     <Message error={error} ok={notice} />
 
+    {tab === "couriers" && <AdminCouriers />}
     {tab === "stats" && stats && ADMIN_STAT_LABELS.map(([k, l]) => <View key={k} style={ui.card}><Text style={ui.text}>{l}</Text><Text style={ui.h1}>{stats[k]}</Text></View>)}
 
     {tab === "reports" && <View style={{ gap: 12 }}>
