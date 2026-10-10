@@ -48,3 +48,12 @@ export async function countUnreadConversations(client:SupabaseClient,userId:stri
 }
 
 export function subscribeToUserConversationMessages(client:SupabaseClient,userId:string,onChange:()=>void){const channel=client.channel(`user-conversations:${userId}`).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},onChange).subscribe();return ()=>{void client.removeChannel(channel);};}
+
+export type ConversationPartner = { conversation_id: string; other_user_id: string; other_name: string; other_avatar: string | null };
+/** Nome da outra pessoa em cada conversa (mapa conversa → pessoa). */
+export async function listConversationPartners(client: SupabaseClient): Promise<Record<string, ConversationPartner>> {
+  const { data } = await client.rpc("my_conversation_partners");
+  const map: Record<string, ConversationPartner> = {};
+  for (const row of (data as ConversationPartner[] | null) ?? []) map[row.conversation_id] = row;
+  return map;
+}

@@ -1,0 +1,25 @@
+import { useCallback, useState } from "react";
+import { Link, useFocusEffect, useRouter } from "expo-router";
+import { Image, Pressable, ScrollView, Text } from "react-native";
+import { loadHistory, clearHistory, itemHref, SAVED_KIND_LABELS, type HistoryEntry } from "@huambo-online/core";
+import { deviceStore } from "../components/Engage";
+import { ui } from "../lib/ui";
+import { Button } from "../components/Ui";
+
+export default function Historico() {
+  const router = useRouter();
+  const [items, setItems] = useState<HistoryEntry[] | null>(null);
+  useFocusEffect(useCallback(() => { void loadHistory(deviceStore).then(setItems); }, []));
+  return <ScrollView contentContainerStyle={ui.screen}>
+    <Link href="/" style={ui.link}>← Huambo Online</Link>
+    <Text style={ui.h1}>Vistos recentemente</Text>
+    <Text style={ui.muted}>Fica guardado só neste telemóvel.</Text>
+    {!!items?.length && <Button title="Limpar histórico" variant="secondary" onPress={async () => { await clearHistory(deviceStore); setItems([]); }} />}
+    {items?.length === 0 && <Text style={ui.text}>Ainda não viu nenhum anúncio, produto, profissional ou empresa.</Text>}
+    {items?.map(x => <Pressable key={x.kind + x.id} style={ui.card} accessibilityRole="link" onPress={() => router.push(itemHref(x.kind, x.id) as any)}>
+      {!!x.image && <Image source={{ uri: x.image }} style={{ width: "100%", height: 140, borderRadius: 10 }} />}
+      <Text style={ui.muted}>{SAVED_KIND_LABELS[x.kind]} · {new Date(x.at).toLocaleString("pt-AO")}</Text>
+      <Text style={ui.h2}>{x.title}</Text>
+    </Pressable>)}
+  </ScrollView>;
+}

@@ -5,6 +5,7 @@ import { getProduct, addToMyCart, getPublicProfile, formatPrice, friendlyError }
 import { supabase } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { Button, Message } from "../../components/Ui";
+import { SaveButton, ShareButton, useRecordView } from "../../components/Engage";
 
 export default function Produto() {
   const router = useRouter(); const { width } = useWindowDimensions();
@@ -19,6 +20,8 @@ export default function Produto() {
     const s = await getPublicProfile(c, r.data.seller_id); if (s.data?.full_name) setSeller(s.data.full_name);
     const u = await c.auth.getUser(); setUid(u.data.user?.id ?? null);
   })(); }, [id]);
+  useRecordView("product", p ? id : undefined, p?.name, Array.isArray(p?.media) ? p.media[0] : null);
+
   async function add() {
     if (!uid) { router.push("/login"); return; }
     setBusy(true); setError(""); setNotice("");
@@ -41,6 +44,8 @@ export default function Produto() {
       {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} style={{ borderWidth: 3, borderColor: i === photo ? "#111" : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}
     </View>}
     {!!p.description && <Text style={ui.text}>{p.description}</Text>}
+    {!mine && <SaveButton kind="product" id={id} />}
+    <ShareButton kind="product" id={id} title={p.name} />
     <Message error={error} ok={notice} />
     {!!notice && <Button title="Ver carrinho" variant="secondary" onPress={() => router.push("/carrinho" as any)} />}
     {mine ? <Button title="Gerir os meus produtos" onPress={() => router.push("/conta/produtos" as any)} /> : p.stock > 0 && <View style={{ gap: 8 }}>

@@ -13,7 +13,8 @@ const modules = [
   ["Mensagens", "Converse com anunciantes e compradores.", "/mensagens"],
   ["Notificações", "Acompanhe alertas e novidades.", "/notificacoes"],
   ["Pesquisas guardadas", "Receba alertas de novos anúncios.", "/pesquisas-guardadas"],
-  ["Guardados", "Os anúncios que guardou.", "/guardados"],
+  ["Guardados", "Anúncios, profissionais, empresas e produtos que guardou.", "/guardados"],
+  ["Vistos recentemente", "O que viu nos últimos dias.", "/historico"],
   ["Conta", "Perfil, segurança e privacidade.", "/conta"]
 ];
 
