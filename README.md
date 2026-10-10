@@ -39,6 +39,10 @@ Este repositório é um monorepo com:
 5. Nenhuma funcionalidade crítica deve depender exclusivamente da interface.
 6. O projeto deve crescer por módulos sem criar dependências circulares.
 
+## Site publicado
+
+https://huambo-na-m-o.onrender.com (Render, a partir do ramo `main`).
+
 ## Desenvolvimento
 
 Requisitos: Node.js LTS e pnpm.
