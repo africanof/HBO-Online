@@ -6,6 +6,7 @@ export interface UserProfile {
   phone?: string;
   province: string;
   municipality: string;
+  avatarUrl?: string;
 }
 
 export interface OrganizationSummary {

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getProduct, addToMyCart, getPublicProfile, formatPrice, friendlyError } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
+import { SaveButton, ShareButton, useRecordView } from "../../../components/Engage";
 
 export default function Produto() {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,8 @@ export default function Produto() {
     const s = await getPublicProfile(c, r.data.seller_id); if (s.data?.full_name) setSeller(s.data.full_name);
     const u = await c.auth.getUser(); setUid(u.data.user?.id ?? null);
   })(); }, [id]);
+  useRecordView("product", p ? id : undefined, p?.name, Array.isArray(p?.media) ? p.media[0] : null);
+
   async function add() {
     if (!uid) { window.location.href = "/conta/login?voltar=/loja/" + id; return; }
     setBusy(true); setError(""); setNotice("");
@@ -37,6 +40,7 @@ export default function Produto() {
       {media.length > 1 && <div className="row">{media.map((m, i) => <button key={m} type="button" className={i === photo ? "" : "secondary"} onClick={() => setPhoto(i)} style={{ padding: 0, width: 72, height: 72, overflow: "hidden" }} aria-label={`Fotografia ${i + 1}`}><img src={m} alt="" style={{ width: 72, height: 72, objectFit: "cover" }} /></button>)}</div>}
     </section>}
     {p.description && <p style={{ whiteSpace: "pre-wrap" }}>{p.description}</p>}
+    <div className="row">{!mine && <SaveButton kind="product" id={id} />}<ShareButton kind="product" id={id} title={p.name} /></div>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice} <a href="/carrinho">Ver carrinho →</a></p>}
     {mine ? <a className="btn" href="/conta/produtos">Gerir os meus produtos</a> : p.stock > 0 && <div className="row">

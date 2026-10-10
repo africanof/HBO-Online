@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
   reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
+import { ShareButton, useRecordView } from "../../../components/Engage";
 
 export default function ClassifiedDetail() {
   const { id } = useParams<{ id: string }>();
@@ -43,6 +44,8 @@ export default function ClassifiedDetail() {
       }
     })();
   }, [id]);
+
+  useRecordView("listing", item?.status === "published" ? id : undefined, item?.title, Array.isArray(item?.media) ? item.media[0] : null);
 
   async function toggleSaved() {
     if (!uid) { setError("Inicie sessão para guardar este anúncio."); return; }
@@ -90,6 +93,7 @@ export default function ClassifiedDetail() {
       {media.length > 1 && <div className="row">{media.map((m, i) => <button key={m} type="button" className={i === photo ? "" : "secondary"} onClick={() => setPhoto(i)} aria-label={`Ver fotografia ${i + 1}`} style={{ padding: 0, width: 72, height: 72, overflow: "hidden" }}><img src={m} alt="" style={{ width: 72, height: 72, objectFit: "cover" }} /></button>)}</div>}
     </section>}
     {item.description && <p style={{ whiteSpace: "pre-wrap" }}>{item.description}</p>}
+    {item.status === "published" && <div className="row"><ShareButton kind="listing" id={id} title={item.title} /></div>}
     {notice && <p className="ok" role="status">{notice}</p>}
     {error && <p className="error" role="alert">{error}</p>}
     {mine ? <div className="row"><a className="btn" href={`/classificados/${id}/editar`}>Editar anúncio</a><a className="btn secondary" href="/meus-anuncios">Os meus anúncios</a></div> : <>

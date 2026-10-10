@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
   listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, formatPrice, friendlyError, type ReviewTarget } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
+import { SaveButton, ShareButton, useRecordView } from "./Engage";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string };
@@ -79,6 +80,9 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
   }
   useEffect(() => { if (id) void load(); }, [id]);
 
+  const viewKind = kind === "providers" ? "provider" : "business";
+  useRecordView(viewKind, item ? id : undefined, item ? (kind === "providers" ? item.display_name : item.name) : undefined, item?.avatar_url ?? item?.logo_url ?? null);
+
   async function contact() {
     if (!uid) { setError("Inicie sessão para enviar mensagem."); return; }
     setBusy(true); setError("");
@@ -112,6 +116,8 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
       {item.phone && <a className="btn secondary" href={"tel:" + item.phone.replace(/\s/g, "")}>📞 Ligar</a>}
       {wa && <a className="btn secondary" href={wa} target="_blank" rel="noopener">WhatsApp</a>}
       {mine && <a className="btn" href={kind === "providers" ? "/conta/profissional" : "/conta/empresas"}>Editar</a>}
+      {!mine && <SaveButton kind={viewKind} id={id} />}
+      <ShareButton kind={viewKind} id={id} title={name} />
     </div>
     {kind === "providers" && services.length > 0 && <section className="stack"><h2>Serviços</h2>
       {services.map(s => <div key={s.id} className="card"><strong>{s.title}</strong>{s.description && <span>{s.description}</span>}<span>{s.price_from != null ? "Desde " + formatPrice(s.price_from, s.currency) : "Preço sob consulta"}</span></div>)}

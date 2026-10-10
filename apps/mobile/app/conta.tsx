@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useRouter } from "expo-router";
-import { ScrollView, Text, TextInput, View } from "react-native";
-import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError, getMyAdminRole, canModerate } from "@huambo-online/core";
+import { Image, ScrollView, Text, TextInput, View } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError, getMyAdminRole, canModerate, uploadAvatar, base64ToArrayBuffer, AVATAR_MAX_BYTES } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
 
 export default function Conta() {
   const router = useRouter();
-  const [email, setEmail] = useState(""); const [loaded, setLoaded] = useState(false); const [isStaff, setIsStaff] = useState(false);
+  const [email, setEmail] = useState(""); const [loaded, setLoaded] = useState(false); const [isStaff, setIsStaff] = useState(false); const [uid, setUid] = useState(""); const [avatar, setAvatar] = useState<string | null>(null);
   const [form, setForm] = useState<{ fullName: string; phone: string; municipality: string } | null>(null);
   const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
   const [pw, setPw] = useState(""); const [pw2, setPw2] = useState(""); const [del, setDel] = useState(""); const [busy, setBusy] = useState(false);
@@ -16,10 +17,11 @@ export default function Conta() {
   useEffect(() => { void (async () => {
     const c = supabase();
     const u = await c.auth.getUser();
-    setEmail(u.data.user?.email ?? "");
+    setEmail(u.data.user?.email ?? ""); setUid(u.data.user?.id ?? "");
     const r = await getCurrentUserProfile(c);
     if (r.error && u.data.user) setErr(friendlyError(r.error));
     if (u.data.user) setIsStaff(canModerate(await getMyAdminRole(c)));
+    if (r.data) setAvatar(r.data.avatarUrl ?? null);
     if (r.data) setForm({ fullName: r.data.fullName, phone: r.data.phone ?? "", municipality: r.data.municipality });
     setLoaded(true);
   })(); }, []);
@@ -37,6 +39,20 @@ export default function Conta() {
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/" style={ui.link}>← Huambo Online</Link>
     <Text style={ui.h1}>A sua conta</Text>
+    {avatar ? <Image source={{ uri: avatar }} style={{ width: 96, height: 96, borderRadius: 48 }} accessibilityLabel="Fotografia de perfil" /> : <View style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: "#ddd" }} />}
+    <Button title="📷 Mudar fotografia de perfil" variant="secondary" disabled={busy} onPress={async () => {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) { setErr("Autorize o acesso às fotografias."); return; }
+      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.6, base64: true });
+      if (res.canceled) return;
+      const a = res.assets[0];
+      if (a.fileSize && a.fileSize > AVATAR_MAX_BYTES) { setErr("Escolha uma imagem até 2 MB."); return; }
+      const type = a.mimeType ?? "image/jpeg";
+      const body = a.base64 ? base64ToArrayBuffer(a.base64) : await (await fetch(a.uri)).arrayBuffer();
+      setBusy(true); setErr(""); setMsg("");
+      const r = await uploadAvatar(supabase(), uid, body, "perfil." + (type.split("/")[1] ?? "jpg"), type); setBusy(false);
+      if (r.error) setErr(friendlyError(r.error)); else { setAvatar(r.data); setMsg("Fotografia atualizada."); }
+    }} />
     <Text style={ui.text}>Sessão iniciada como {email}</Text>
     <View style={{ gap: 8 }}>
       <Button title="📋 Os meus anúncios" variant="secondary" onPress={() => router.push("/meus-anuncios" as any)} />
@@ -45,6 +61,7 @@ export default function Conta() {
       <Button title="🛍️ Os meus produtos" variant="secondary" onPress={() => router.push("/conta/produtos" as any)} />
       <Button title="📦 Encomendas" variant="secondary" onPress={() => router.push("/encomendas" as any)} />
       <Button title="⭐ Guardados" variant="secondary" onPress={() => router.push("/guardados")} />
+      <Button title="🕘 Vistos recentemente" variant="secondary" onPress={() => router.push("/historico" as any)} />
       <Button title="💬 Mensagens" variant="secondary" onPress={() => router.push("/mensagens")} />
       <Button title="🔔 Notificações" variant="secondary" onPress={() => router.push("/notificacoes")} />
       {isStaff && <Button title="🛡️ Administração" onPress={() => router.push("/admin" as any)} />}

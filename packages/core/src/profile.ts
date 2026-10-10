@@ -1,9 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { UserProfile } from "@huambo-online/types";
 
-const PROFILE_COLUMNS = "id,full_name,phone,province,municipality";
+const PROFILE_COLUMNS = "id,full_name,phone,province,municipality,avatar_url";
 
-type ProfileRow = { id: string; full_name: string | null; phone: string | null; province: string | null; municipality: string | null };
+type ProfileRow = { id: string; full_name: string | null; phone: string | null; province: string | null; municipality: string | null; avatar_url?: string | null };
 
 export function profileFromRow(row: ProfileRow): UserProfile {
   return {
@@ -11,7 +11,8 @@ export function profileFromRow(row: ProfileRow): UserProfile {
     fullName: row.full_name ?? "",
     phone: row.phone ?? undefined,
     province: row.province ?? "Huambo",
-    municipality: row.municipality ?? ""
+    municipality: row.municipality ?? "",
+    avatarUrl: row.avatar_url ?? undefined
   };
 }
 

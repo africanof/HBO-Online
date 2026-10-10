@@ -21,7 +21,7 @@ describe("auth messages", () => {
 describe("profile", () => {
   it("maps the real profiles columns", () => {
     expect(profileFromRow({ id: "1", full_name: "Ana", phone: null, province: null, municipality: "Caála" }))
-      .toEqual({ id: "1", fullName: "Ana", phone: undefined, province: "Huambo", municipality: "Caála" });
+      .toEqual({ id: "1", fullName: "Ana", phone: undefined, province: "Huambo", municipality: "Caála", avatarUrl: undefined });
   });
   it("validates name and phone", () => {
     expect(validateProfileInput({ fullName: " ", municipality: "" })).toBe("Indique o seu nome.");

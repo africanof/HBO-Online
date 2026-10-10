@@ -6,6 +6,7 @@ import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, sa
 import { supabase } from "../../../lib/supabase";
 import { ui } from "../../../lib/ui";
 import { Button, Message } from "../../../components/Ui";
+import { ShareButton, useRecordView } from "../../../components/Engage";
 
 export default function ClassifiedDetail() {
   const router = useRouter();
@@ -47,6 +48,8 @@ export default function ClassifiedDetail() {
       }
     })();
   }, [id]);
+
+  useRecordView("listing", item?.status === "published" ? id : undefined, item?.title, Array.isArray(item?.media) ? item.media[0] : null);
 
   async function toggleSaved() {
     if (!uid) { setError("Inicie sessão para guardar este anúncio."); return; }
@@ -93,6 +96,7 @@ export default function ClassifiedDetail() {
       {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} accessibilityLabel={`Ver fotografia ${i + 1}`} style={{ borderWidth: 3, borderColor: i === photo ? "#111" : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}
     </View>}
     {!!item.description && <Text style={ui.text}>{item.description}</Text>}
+    {item.status === "published" && <ShareButton kind="listing" id={id} title={item.title} />}
     <Message error={error} ok={notice} />
     {mine ? <View style={{ gap: 10 }}>
       <Button title="Editar anúncio" onPress={() => router.push(`/classificados/${id}/editar` as any)} />

@@ -6,6 +6,7 @@ import { listProviders, listBusinesses, getProvider, getBusiness, listProviderSe
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
+import { SaveButton, ShareButton, useRecordView } from "./Engage";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string };
@@ -83,6 +84,8 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     const u = await c.auth.getUser(); setUid(u.data.user?.id ?? null);
   }
   useEffect(() => { if (id) void load(); }, [id]);
+  const viewKind = kind === "providers" ? "provider" : "business";
+  useRecordView(viewKind, item ? id : undefined, item ? (kind === "providers" ? item.display_name : item.name) : undefined, item?.avatar_url ?? item?.logo_url ?? null);
 
   async function contact() {
     if (!uid) { setError("Inicie sessão para enviar mensagem."); return; }
@@ -114,6 +117,8 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     {!!item.phone && <Button title="📞 Ligar" variant="secondary" onPress={() => void Linking.openURL("tel:" + item.phone.replace(/\s/g, ""))} />}
     {!!wa && <Button title="WhatsApp" variant="secondary" onPress={() => void Linking.openURL(wa)} />}
     {mine && <Button title="Editar" onPress={() => router.push((kind === "providers" ? "/conta/profissional" : "/conta/empresas") as any)} />}
+    {!mine && <SaveButton kind={viewKind} id={id} />}
+    <ShareButton kind={viewKind} id={id} title={kind === "providers" ? item.display_name : item.name} />
     {kind === "providers" && services.length > 0 && <View style={{ gap: 8 }}><Text style={ui.h2}>Serviços</Text>
       {services.map(s => <View key={s.id} style={ui.card}><Text style={ui.label}>{s.title}</Text>{!!s.description && <Text style={ui.text}>{s.description}</Text>}<Text style={ui.text}>{s.price_from != null ? "Desde " + formatPrice(s.price_from, s.currency) : "Preço sob consulta"}</Text></View>)}
     </View>}
