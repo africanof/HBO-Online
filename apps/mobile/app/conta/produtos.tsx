@@ -10,6 +10,7 @@ import { MarketPicker } from "../../components/MarketPicker";
 import { VideoField } from "../../components/Video";
 import { Button, Chips, Message } from "../../components/Ui";
 import { useTerritory } from "../../components/Directory";
+import { shrinkAsset } from "../../lib/image";
 
 type Option = { id: string; name: string };
 type Photo = { key: string; uri: string; base64?: string | null; mimeType?: string; remote?: boolean };
@@ -31,10 +32,11 @@ export default function MeusProdutos() {
     const room = MAX_PRODUCT_PHOTOS - photos.length; if (room <= 0) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) { setError("Autorize o acesso às fotografias."); return; }
-    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, selectionLimit: room, quality: 0.7, base64: true });
+    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, selectionLimit: room, quality: 0.9 });
     if (r.canceled) return;
-    const ok = r.assets.filter(a => !a.fileSize || a.fileSize <= CLASSIFIED_MAX_PHOTO_BYTES);
-    setPhotos(p => [...p, ...ok.slice(0, room).map(a => ({ key: a.assetId ?? a.uri, uri: a.uri, base64: a.base64, mimeType: a.mimeType ?? "image/jpeg" }))]);
+    // Fotografias mais leves: reduzidas no telemóvel antes de enviar (poupa dados).
+    const ready = await Promise.all(r.assets.slice(0, room).map(async a => ({ key: a.assetId ?? a.uri, ...(await shrinkAsset(a)) })));
+    setPhotos(p => [...p, ...ready]);
   }
   function edit(p: any) {
     setEditing(p.id); setRemoved([]);

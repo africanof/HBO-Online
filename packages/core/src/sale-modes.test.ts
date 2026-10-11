@@ -74,7 +74,7 @@ describe("modos de venda", () => {
     expect(calls[0][0]).toBe("search_classified_listings_v2");
     expect(calls[0][1].p_sale_mode).toBe("trade");
     await saveClassifiedSearch(c, "Trocas", { query: "hilux", saleMode: "trade" });
-    expect(calls[1][1].p_filters.saleMode).toBeUndefined();
+    expect(calls[1][1].p_filters.saleMode).toBe("trade"); // os alertas também respeitam o modo
     expect(SALE_MODE_FILTERS.map(f => f.value)).toEqual(["fixed", "negotiable", "offers", "auction", "trade"]);
     expect(cardSaleTag({ purpose: "sale", sale_mode: "offers" })).toBe("Aceita propostas");
     expect(cardSaleTag({ purpose: "sale", sale_mode: null })).toBeUndefined();

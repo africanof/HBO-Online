@@ -60,3 +60,4 @@ export * from "./trust";
 export * from "./seo";
 export * from "./offline";
 export * from "./sale-modes";
+export * from "./photos";

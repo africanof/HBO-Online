@@ -3,9 +3,10 @@ import { MarketPicker } from "../../../components/MarketPicker";
 import { VideoField } from "../../../components/Video";
 import { useEffect, useState } from "react";
 import { listMyProducts, saveProduct, deleteProduct, listProductCategories, uploadClassifiedMedia, removeClassifiedMedia, parsePrice, formatPrice, friendlyError,
-  MAX_PRODUCT_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES } from "@huambo-online/core";
+  MAX_PRODUCT_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../../lib/supabase";
 import { useTerritory } from "../../../components/Directory";
+import { compressPhoto } from "../../../lib/image";
 
 type Option = { id: string; name: string };
 type Photo = { key: string; src: string; file?: File };
@@ -22,9 +23,12 @@ export default function MeusProdutos() {
   useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) void load(id); }); void listProductCategories(supabase()).then(({ data }) => setCategories(data ?? [])); }, []);
   const set = (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setForm({ ...form, [k]: e.target.value });
 
-  function addFiles(files: FileList | null) {
-    const ok = Array.from(files ?? []).filter(f => f.type.startsWith("image/") && f.size <= CLASSIFIED_MAX_PHOTO_BYTES);
-    if (ok.length < (files?.length ?? 0)) setError("Algumas fotografias foram ignoradas (só imagens até 5 MB).");
+  async function addFiles(files: FileList | null) {
+    const chosen = Array.from(files ?? []);
+    // Fotografias mais leves: reduzidas antes de enviar (poupa dados).
+    const ready = await Promise.all(chosen.filter(f => f.type.startsWith("image/") && f.size <= PHOTO_RAW_MAX_BYTES).slice(0, MAX_PRODUCT_PHOTOS - photos.length).map(f => compressPhoto(f)));
+    const ok = ready.filter(f => f.size <= CLASSIFIED_MAX_PHOTO_BYTES);
+    if (ok.length < chosen.length) setError("Algumas fotografias foram ignoradas (só imagens, no máximo " + MAX_PRODUCT_PHOTOS + ").");
     setPhotos(p => [...p, ...ok.slice(0, MAX_PRODUCT_PHOTOS - p.length).map(f => ({ key: crypto.randomUUID(), src: URL.createObjectURL(f), file: f }))]);
   }
   function edit(p: any) {

@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { Image, ScrollView, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError, getMyAdminRole, canModerate, uploadAvatar, base64ToArrayBuffer, AVATAR_MAX_BYTES } from "@huambo-online/core";
+import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError, getMyAdminRole, canModerate, uploadAvatar, base64ToArrayBuffer, AVATAR_MAX_BYTES, AVATAR_MAX_SIDE } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
+import { shrinkAsset } from "../lib/image";
 
 export default function Conta() {
   const router = useRouter();
@@ -43,12 +44,12 @@ export default function Conta() {
     <Button title="📷 Mudar fotografia de perfil" variant="secondary" disabled={busy} onPress={async () => {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) { setErr("Autorize o acesso às fotografias."); return; }
-      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.6, base64: true });
+      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.9 });
       if (res.canceled) return;
-      const a = res.assets[0];
-      if (a.fileSize && a.fileSize > AVATAR_MAX_BYTES) { setErr("Escolha uma imagem até 2 MB."); return; }
-      const type = a.mimeType ?? "image/jpeg";
+      const a = await shrinkAsset(res.assets[0], AVATAR_MAX_SIDE); // fotografia de perfil pequena (512 px)
+      const type = a.mimeType;
       const body = a.base64 ? base64ToArrayBuffer(a.base64) : await (await fetch(a.uri)).arrayBuffer();
+      if (body.byteLength > AVATAR_MAX_BYTES) { setErr("Escolha uma imagem até 2 MB."); return; }
       setBusy(true); setErr(""); setMsg("");
       const r = await uploadAvatar(supabase(), uid, body, "perfil." + (type.split("/")[1] ?? "jpg"), type); setBusy(false);
       if (r.error) setErr(friendlyError(r.error)); else { setAvatar(r.data); setMsg("Fotografia atualizada."); }
