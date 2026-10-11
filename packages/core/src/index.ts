@@ -61,3 +61,4 @@ export * from "./seo";
 export * from "./offline";
 export * from "./sale-modes";
 export * from "./photos";
+export * from "./legal";
