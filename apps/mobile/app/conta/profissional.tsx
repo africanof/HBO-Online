@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { Alert, ScrollView, Switch, Text, TextInput, View } from "react-native";
-import { getProvider, saveMyProviderProfile, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice } from "@huambo-online/core";
+import { getProvider, saveMyProviderProfile, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { Button, Chips, Message } from "../../components/Ui";
 import { useTerritory } from "../../components/Directory";
 
 type Option = { id: string; name: string };
-const empty = { displayName: "", headline: "", bio: "", categoryId: "", municipalityId: "", phone: "", whatsapp: "", active: true };
+const empty = { displayName: "", headline: "", bio: "", categoryId: "", customCategory: "", municipalityId: "", phone: "", whatsapp: "", active: true };
 
 export default function PerfilProfissional() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function PerfilProfissional() {
   async function load(id: string) {
     const c = supabase();
     const p = await getProvider(c, id);
-    if (p.data) { setExists(true); setForm({ displayName: p.data.display_name ?? "", headline: p.data.headline ?? "", bio: p.data.bio ?? "", categoryId: p.data.category_id ?? "", municipalityId: p.data.municipality_id ?? "", phone: p.data.phone ?? "", whatsapp: p.data.whatsapp ?? "", active: p.data.active }); }
+    if (p.data) { setExists(true); setForm({ displayName: p.data.display_name ?? "", headline: p.data.headline ?? "", bio: p.data.bio ?? "", ...categoryFormValues(p.data), municipalityId: p.data.municipality_id ?? "", phone: p.data.phone ?? "", whatsapp: p.data.whatsapp ?? "", active: p.data.active }); }
     const s = await listProviderServices(c, id, true); setServices(s.data ?? []);
   }
   useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) void load(id); }); void listDirectoryCategories(supabase(), "providers").then(({ data }) => setCategories(data ?? [])); }, []);
@@ -47,7 +47,8 @@ export default function PerfilProfissional() {
       <Text style={ui.label}>Nome profissional</Text><TextInput style={ui.input} value={form.displayName} onChangeText={set("displayName")} placeholder="Ex.: João Eletricista" />
       <Text style={ui.label}>Resumo</Text><TextInput style={ui.input} value={form.headline} onChangeText={set("headline")} placeholder="Ex.: Instalações elétricas" />
       <Text style={ui.label}>Sobre si</Text><TextInput style={[ui.input, ui.area]} multiline value={form.bio} onChangeText={set("bio")} />
-      <Text style={ui.label}>Área de atividade</Text><Chips options={categories.map(c => ({ value: c.id, label: c.name }))} value={form.categoryId} onChange={set("categoryId")} />
+      <Text style={ui.label}>Área de atividade</Text><Chips options={[...categories.map(c => ({ value: c.id, label: c.name })), { value: OTHER_CATEGORY, label: "Outra (escrever)" }]} value={form.categoryId} onChange={set("categoryId")} />
+      {form.categoryId === OTHER_CATEGORY && <><Text style={ui.label}>Qual é a sua área de atividade?</Text><TextInput style={ui.input} value={form.customCategory} onChangeText={set("customCategory")} maxLength={60} placeholder="Ex.: Canalizador, Costureira, Fotógrafo…" autoFocus /></>}
       <Text style={ui.label}>Província</Text><Chips options={provinces.map(p => ({ value: p.id, label: p.name }))} value={provinceId} onChange={v => { setProvinceId(v); set("municipalityId")(""); }} />
       <Text style={ui.label}>Município</Text><Chips options={municipalities.map(m => ({ value: m.id, label: m.name }))} value={form.municipalityId} onChange={set("municipalityId")} />
       <Text style={ui.label}>Telefone</Text><TextInput style={ui.input} keyboardType="phone-pad" value={form.phone} onChangeText={set("phone")} />
@@ -61,7 +62,7 @@ export default function PerfilProfissional() {
         <Text style={ui.label}>Serviço</Text><TextInput style={ui.input} value={svc.title} onChangeText={v => setSvc({ ...svc, title: v })} />
         <Text style={ui.label}>Descrição</Text><TextInput style={ui.input} value={svc.description} onChangeText={v => setSvc({ ...svc, description: v })} />
         <Text style={ui.label}>Preço desde (Kz)</Text><TextInput style={ui.input} keyboardType="decimal-pad" value={svc.price} onChangeText={v => setSvc({ ...svc, price: v })} placeholder="Vazio = sob consulta" />
-        <Button title="Adicionar serviço" disabled={busy} onPress={() => void run(() => saveService(supabase(), uid, { title: svc.title, description: svc.description, priceFrom: parsePrice(svc.price), categoryId: form.categoryId }), "Serviço adicionado.").then(ok => { if (ok) setSvc({ title: "", description: "", price: "" }); })} />
+        <Button title="Adicionar serviço" disabled={busy} onPress={() => void run(() => saveService(supabase(), uid, { title: svc.title, description: svc.description, priceFrom: parsePrice(svc.price), categoryId: form.categoryId === OTHER_CATEGORY ? undefined : form.categoryId }), "Serviço adicionado.").then(ok => { if (ok) setSvc({ title: "", description: "", price: "" }); })} />
       </View>
       {services.map(s => <View key={s.id} style={ui.card}>
         <Text style={ui.label}>{s.title}</Text>

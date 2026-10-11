@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
-  listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, formatPrice, friendlyError, type ReviewTarget } from "@huambo-online/core";
+  listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, formatPrice, friendlyError, type ReviewTarget, categoryLabel } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { SaveButton, ShareButton, useRecordView } from "./Engage";
 
@@ -117,7 +117,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <a href={TEXT[kind].base}>← Voltar</a>
     <h1>{name}{item.verified ? " ✔️" : ""}</h1>
     {kind === "providers" && item.headline && <p style={{ fontSize: 19 }}>{item.headline}</p>}
-    <p>{[item.categories?.name, item.municipalities?.name, item.address_text].filter(Boolean).join(" · ")}</p>
+    <p>{[categoryLabel(item), item.municipalities?.name, item.address_text].filter(Boolean).join(" · ")}</p>
     {item.markets?.name && <p>🧺 Na <a href={"/pracas/" + item.markets.id}>{item.markets.name}</a></p>}
     <p><strong>{ratingLabel(avg, reviews.length)}</strong></p>
     {(item.bio || item.description) && <p style={{ whiteSpace: "pre-wrap" }}>{item.bio || item.description}</p>}

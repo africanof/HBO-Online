@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getProvider, saveMyProviderProfile, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice } from "@huambo-online/core";
+import { getProvider, saveMyProviderProfile, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../../lib/supabase";
 import { useTerritory } from "../../../components/Directory";
 
 type Option = { id: string; name: string };
-const empty = { displayName: "", headline: "", bio: "", categoryId: "", municipalityId: "", phone: "", whatsapp: "", active: true };
+const empty = { displayName: "", headline: "", bio: "", categoryId: "", customCategory: "", municipalityId: "", phone: "", whatsapp: "", active: true };
 
 export default function PerfilProfissional() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
@@ -17,7 +17,7 @@ export default function PerfilProfissional() {
   async function load(id: string) {
     const c = supabase();
     const p = await getProvider(c, id);
-    if (p.data) { setExists(true); setForm({ displayName: p.data.display_name ?? "", headline: p.data.headline ?? "", bio: p.data.bio ?? "", categoryId: p.data.category_id ?? "", municipalityId: p.data.municipality_id ?? "", phone: p.data.phone ?? "", whatsapp: p.data.whatsapp ?? "", active: p.data.active }); }
+    if (p.data) { setExists(true); setForm({ displayName: p.data.display_name ?? "", headline: p.data.headline ?? "", bio: p.data.bio ?? "", ...categoryFormValues(p.data), municipalityId: p.data.municipality_id ?? "", phone: p.data.phone ?? "", whatsapp: p.data.whatsapp ?? "", active: p.data.active }); }
     const s = await listProviderServices(c, id, true); setServices(s.data ?? []);
   }
   useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) void load(id); }); void listDirectoryCategories(supabase(), "providers").then(({ data }) => setCategories(data ?? [])); }, []);
@@ -44,7 +44,8 @@ export default function PerfilProfissional() {
       <label>Nome profissional<input value={form.displayName} onChange={set("displayName")} placeholder="Ex.: João Eletricista" /></label>
       <label>Resumo<input value={form.headline} onChange={set("headline")} placeholder="Ex.: Instalações elétricas e reparações" /></label>
       <label>Sobre si<textarea rows={4} value={form.bio} onChange={set("bio")} placeholder="Experiência, horário, zonas onde trabalha…" /></label>
-      <label>Área de atividade<select value={form.categoryId} onChange={set("categoryId")}><option value="">Escolha</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+      <label>Área de atividade<select value={form.categoryId} onChange={set("categoryId")}><option value="">Escolha</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}<option value={OTHER_CATEGORY}>Outra (escrever)</option></select></label>
+      {form.categoryId === OTHER_CATEGORY && <label>Qual é a sua área de atividade?<input value={form.customCategory} onChange={set("customCategory")} maxLength={60} placeholder="Ex.: Canalizador, Costureira, Fotógrafo…" autoFocus /></label>}
       <label>Província<select value={provinceId} onChange={e => { setProvinceId(e.target.value); setForm({ ...form, municipalityId: "" }); }}><option value="">Escolha</option>{provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
       <label>Município<select value={form.municipalityId} onChange={set("municipalityId")}><option value="">Escolha</option>{municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
       <label>Telefone<input type="tel" value={form.phone} onChange={set("phone")} placeholder="923 000 000" /></label>
@@ -54,7 +55,7 @@ export default function PerfilProfissional() {
     </form>
     {exists && <section className="stack">
       <h2>Os meus serviços</h2>
-      <form className="stack card" onSubmit={e => { e.preventDefault(); void run(() => saveService(supabase(), uid, { title: svc.title, description: svc.description, priceFrom: parsePrice(svc.price), categoryId: form.categoryId }), "Serviço adicionado.").then(ok => { if (ok) setSvc({ title: "", description: "", price: "" }); }); }}>
+      <form className="stack card" onSubmit={e => { e.preventDefault(); void run(() => saveService(supabase(), uid, { title: svc.title, description: svc.description, priceFrom: parsePrice(svc.price), categoryId: form.categoryId === OTHER_CATEGORY ? undefined : form.categoryId }), "Serviço adicionado.").then(ok => { if (ok) setSvc({ title: "", description: "", price: "" }); }); }}>
         <label>Serviço<input value={svc.title} onChange={e => setSvc({ ...svc, title: e.target.value })} placeholder="Ex.: Instalação de tomadas" /></label>
         <label>Descrição<input value={svc.description} onChange={e => setSvc({ ...svc, description: e.target.value })} /></label>
         <label>Preço desde (Kz)<input value={svc.price} inputMode="decimal" onChange={e => setSvc({ ...svc, price: e.target.value })} placeholder="Vazio = sob consulta" /></label>

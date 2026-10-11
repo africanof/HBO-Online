@@ -49,3 +49,24 @@ describe("directory calls", () => {
     expect((await contactDirectoryOwner(client, { providerId: "p" }, " ")).error?.message).toMatch(/mensagem/);
   });
 });
+
+describe("área de atividade «Outra»", () => {
+  it("exige o texto quando se escolhe Outra", async () => {
+    const { validateProviderInput, validateBusinessInput, OTHER_CATEGORY } = await import("./directory");
+    const base = { displayName: "Ana", municipalityId: "m" };
+    expect(validateProviderInput({ ...base, categoryId: "" })).toMatch(/área de atividade/);
+    expect(validateProviderInput({ ...base, categoryId: OTHER_CATEGORY, customCategory: " " })).toMatch(/Escreva/);
+    expect(validateProviderInput({ ...base, categoryId: OTHER_CATEGORY, customCategory: "x".repeat(61) })).toMatch(/60/);
+    expect(validateProviderInput({ ...base, categoryId: OTHER_CATEGORY, customCategory: "Canalizador" })).toBeNull();
+    expect(validateBusinessInput({ name: "Loja", municipalityId: "m", categoryId: OTHER_CATEGORY, customCategory: "Venda de pneus" })).toBeNull();
+  });
+  it("grava, lê e mostra a área escrita", async () => {
+    const { categoryColumns, categoryFormValues, categoryLabel, OTHER_CATEGORY } = await import("./directory");
+    expect(categoryColumns(OTHER_CATEGORY, "  Costureira ")).toEqual({ category_id: null, custom_category: "Costureira" });
+    expect(categoryColumns("c1", "ignorado")).toEqual({ category_id: "c1", custom_category: null });
+    expect(categoryFormValues({ category_id: null, custom_category: "Costureira" })).toEqual({ categoryId: OTHER_CATEGORY, customCategory: "Costureira" });
+    expect(categoryFormValues({ category_id: "c1", custom_category: null })).toEqual({ categoryId: "c1", customCategory: "" });
+    expect(categoryLabel({ categories: null, custom_category: "Costureira" })).toBe("Costureira");
+    expect(categoryLabel({ categories: { name: "Limpeza" }, custom_category: null })).toBe("Limpeza");
+  });
+});

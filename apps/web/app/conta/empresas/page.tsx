@@ -1,12 +1,12 @@
 "use client";
 import { MarketPicker } from "../../../components/MarketPicker";
 import { useEffect, useState } from "react";
-import { listMyBusinesses, saveBusiness, deleteBusiness, listDirectoryCategories, friendlyError } from "@huambo-online/core";
+import { listMyBusinesses, saveBusiness, deleteBusiness, listDirectoryCategories, friendlyError, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../../lib/supabase";
 import { useTerritory } from "../../../components/Directory";
 
 type Option = { id: string; name: string };
-const empty = { name: "", description: "", categoryId: "", municipalityId: "", marketId: "", phone: "", whatsapp: "", addressText: "", active: true };
+const empty = { name: "", description: "", categoryId: "", customCategory: "", municipalityId: "", marketId: "", phone: "", whatsapp: "", addressText: "", active: true };
 
 export default function MinhasEmpresas() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
@@ -38,7 +38,7 @@ export default function MinhasEmpresas() {
       <strong>{b.name}{b.verified ? " ✔️" : ""}{b.active ? "" : " (oculta)"}</strong>
       <div className="row">
         <a className="btn secondary" href={"/empresas/" + b.id}>Ver</a>
-        <button className="secondary" onClick={() => { setEditing(b.id); setForm({ name: b.name ?? "", description: b.description ?? "", categoryId: b.category_id ?? "", municipalityId: b.municipality_id ?? "", marketId: b.market_id ?? "", phone: b.phone ?? "", whatsapp: b.whatsapp ?? "", addressText: b.address_text ?? "", active: b.active }); window.scrollTo(0, document.body.scrollHeight); }}>Editar</button>
+        <button className="secondary" onClick={() => { setEditing(b.id); setForm({ name: b.name ?? "", description: b.description ?? "", ...categoryFormValues(b), municipalityId: b.municipality_id ?? "", marketId: b.market_id ?? "", phone: b.phone ?? "", whatsapp: b.whatsapp ?? "", addressText: b.address_text ?? "", active: b.active }); window.scrollTo(0, document.body.scrollHeight); }}>Editar</button>
         <button className="danger" onClick={async () => { if (!confirm("Apagar esta empresa?")) return; const r = await deleteBusiness(supabase(), b.id); if (r.error) setError(friendlyError(r.error)); else await load(uid); }}>Apagar</button>
       </div>
     </div>)}
@@ -46,7 +46,8 @@ export default function MinhasEmpresas() {
       <h2 style={{ margin: 0 }}>{editing ? "Editar empresa" : "Registar empresa"}</h2>
       <label>Nome<input value={form.name} onChange={set("name")} /></label>
       <label>Descrição<textarea rows={4} value={form.description} onChange={set("description")} placeholder="O que vende ou faz, horário…" /></label>
-      <label>Categoria<select value={form.categoryId} onChange={set("categoryId")}><option value="">Escolha</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+      <label>Categoria<select value={form.categoryId} onChange={set("categoryId")}><option value="">Escolha</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}<option value={OTHER_CATEGORY}>Outra (escrever)</option></select></label>
+      {form.categoryId === OTHER_CATEGORY && <label>Qual é a sua área de atividade?<input value={form.customCategory} onChange={set("customCategory")} maxLength={60} placeholder="Ex.: Canalizador, Costureira, Fotógrafo…" autoFocus /></label>}
       <label>Província<select value={provinceId} onChange={e => { setProvinceId(e.target.value); setForm({ ...form, municipalityId: "" }); }}><option value="">Escolha</option>{provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
       <label>Município<select value={form.municipalityId} onChange={set("municipalityId")}><option value="">Escolha</option>{municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
       <MarketPicker value={form.marketId} onChange={v => setForm({ ...form, marketId: v })} />

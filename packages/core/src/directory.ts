@@ -3,16 +3,45 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 /** Profissionais, serviços, empresas e avaliações — mesma lógica no Site e na APP. */
 
 export type DirectoryFilters = { query?: string; categoryId?: string; municipalityId?: string; limit?: number };
-export type ProviderInput = { displayName: string; headline?: string; bio?: string; categoryId?: string; municipalityId?: string; phone?: string; whatsapp?: string; active?: boolean };
+export type ProviderInput = { displayName: string; headline?: string; bio?: string; categoryId?: string; customCategory?: string; municipalityId?: string; phone?: string; whatsapp?: string; active?: boolean };
 export type ServiceInput = { title: string; description?: string; priceFrom?: number; categoryId?: string };
-export type BusinessInput = { name: string; description?: string; categoryId?: string; municipalityId?: string; phone?: string; whatsapp?: string; addressText?: string; marketId?: string; active?: boolean };
+export type BusinessInput = { name: string; description?: string; categoryId?: string; customCategory?: string; municipalityId?: string; phone?: string; whatsapp?: string; addressText?: string; marketId?: string; active?: boolean };
 
 const PHONE_RE = /^\+?[0-9 ]{9,15}$/;
+
+/** Valor da opção "Outra" no campo da área de atividade: a pessoa escreve a sua área. */
+export const OTHER_CATEGORY = "outra";
+
+/** Valida a área: da lista, ou "Outra" com texto escrito (2 a 60 letras). */
+export function validateCategoryChoice(categoryId: string | undefined, customCategory: string | undefined, missing: string): string | null {
+  if (!categoryId) return missing;
+  if (categoryId === OTHER_CATEGORY) {
+    const t = (customCategory ?? "").trim();
+    if (t.length < 2) return "Escreva a sua área de atividade.";
+    if (t.length > 60) return "A área de atividade é demasiado longa (máximo 60 letras).";
+  }
+  return null;
+}
+/** Colunas a gravar: category_id da lista, ou custom_category quando é "Outra". */
+export function categoryColumns(categoryId: string | undefined, customCategory: string | undefined): { category_id: string | null; custom_category: string | null } {
+  return categoryId === OTHER_CATEGORY
+    ? { category_id: null, custom_category: (customCategory ?? "").trim() }
+    : { category_id: categoryId || null, custom_category: null };
+}
+/** Para editar: transforma a linha guardada nos valores do formulário. */
+export function categoryFormValues(row: { category_id?: string | null; custom_category?: string | null }) {
+  return !row.category_id && row.custom_category ? { categoryId: OTHER_CATEGORY, customCategory: row.custom_category } : { categoryId: row.category_id ?? "", customCategory: "" };
+}
+/** Nome da área a mostrar (da lista ou escrita pela pessoa). */
+export function categoryLabel(row: { categories?: { name?: string } | null; custom_category?: string | null; category_name?: string | null }) {
+  return row.category_name || row.categories?.name || row.custom_category || "";
+}
 
 export function validateProviderInput(input: ProviderInput): string | null {
   if (!input.displayName.trim()) return "Indique o nome profissional.";
   if (input.displayName.trim().length > 80) return "O nome é demasiado longo.";
-  if (!input.categoryId) return "Escolha a área de atividade.";
+  const cat = validateCategoryChoice(input.categoryId, input.customCategory, "Escolha a área de atividade.");
+  if (cat) return cat;
   if (!input.municipalityId) return "Escolha o município onde trabalha.";
   if (input.phone?.trim() && !PHONE_RE.test(input.phone.trim())) return "Telefone inválido.";
   if (input.whatsapp?.trim() && !PHONE_RE.test(input.whatsapp.trim())) return "Número de WhatsApp inválido.";
@@ -25,7 +54,8 @@ export function validateServiceInput(input: ServiceInput): string | null {
 }
 export function validateBusinessInput(input: BusinessInput): string | null {
   if (!input.name.trim()) return "Indique o nome da empresa.";
-  if (!input.categoryId) return "Escolha a categoria.";
+  const cat = validateCategoryChoice(input.categoryId, input.customCategory, "Escolha a categoria.");
+  if (cat) return cat;
   if (!input.municipalityId) return "Escolha o município.";
   if (input.phone?.trim() && !PHONE_RE.test(input.phone.trim())) return "Telefone inválido.";
   if (input.whatsapp?.trim() && !PHONE_RE.test(input.whatsapp.trim())) return "Número de WhatsApp inválido.";
@@ -54,14 +84,14 @@ export async function listProviders(client: SupabaseClient, f: DirectoryFilters 
   return client.rpc("provider_directory", { p_query: f.query?.trim() ?? "", p_category_id: f.categoryId || null, p_municipality_id: f.municipalityId || null, p_limit: f.limit ?? 30 });
 }
 export async function getProvider(client: SupabaseClient, userId: string) {
-  return client.from("provider_profiles").select("user_id,display_name,headline,bio,category_id,municipality_id,phone,whatsapp,avatar_url,verified,active,created_at,categories(name),municipalities(name)").eq("user_id", userId).maybeSingle();
+  return client.from("provider_profiles").select("user_id,display_name,headline,bio,category_id,custom_category,municipality_id,phone,whatsapp,avatar_url,verified,active,created_at,categories(name),municipalities(name)").eq("user_id", userId).maybeSingle();
 }
 export async function saveMyProviderProfile(client: SupabaseClient, userId: string, input: ProviderInput) {
   const invalid = validateProviderInput(input);
   if (invalid) return { data: null, error: new Error(invalid) };
   return client.from("provider_profiles").upsert({
     user_id: userId, display_name: input.displayName.trim(), headline: input.headline?.trim() || null, bio: input.bio?.trim() || null,
-    category_id: input.categoryId, municipality_id: input.municipalityId, phone: input.phone?.trim() || null,
+    ...categoryColumns(input.categoryId, input.customCategory), municipality_id: input.municipalityId, phone: input.phone?.trim() || null,
     whatsapp: input.whatsapp?.trim() || null, active: input.active ?? true, updated_at: new Date().toISOString()
   }, { onConflict: "user_id" }).select().single();
 }
@@ -83,15 +113,15 @@ export async function listBusinesses(client: SupabaseClient, f: DirectoryFilters
   return client.rpc("business_directory", { p_query: f.query?.trim() ?? "", p_category_id: f.categoryId || null, p_municipality_id: f.municipalityId || null, p_limit: f.limit ?? 30 });
 }
 export async function getBusiness(client: SupabaseClient, id: string) {
-  return client.from("businesses").select("id,owner_id,name,description,category_id,municipality_id,phone,whatsapp,logo_url,address_text,market_id,verified,active,created_at,categories(name),municipalities(name),markets(id,name)").eq("id", id).maybeSingle();
+  return client.from("businesses").select("id,owner_id,name,description,category_id,custom_category,municipality_id,phone,whatsapp,logo_url,address_text,market_id,verified,active,created_at,categories(name),municipalities(name),markets(id,name)").eq("id", id).maybeSingle();
 }
 export async function listMyBusinesses(client: SupabaseClient, ownerId: string) {
-  return client.from("businesses").select("id,name,description,category_id,municipality_id,phone,whatsapp,address_text,market_id,verified,active").eq("owner_id", ownerId).order("created_at");
+  return client.from("businesses").select("id,name,description,category_id,custom_category,municipality_id,phone,whatsapp,address_text,market_id,verified,active").eq("owner_id", ownerId).order("created_at");
 }
 export async function saveBusiness(client: SupabaseClient, ownerId: string, input: BusinessInput, id?: string) {
   const invalid = validateBusinessInput(input);
   if (invalid) return { data: null, error: new Error(invalid) };
-  const row = { owner_id: ownerId, name: input.name.trim(), description: input.description?.trim() || null, category_id: input.categoryId,
+  const row = { owner_id: ownerId, name: input.name.trim(), description: input.description?.trim() || null, ...categoryColumns(input.categoryId, input.customCategory),
     municipality_id: input.municipalityId, phone: input.phone?.trim() || null, whatsapp: input.whatsapp?.trim() || null,
     address_text: input.addressText?.trim() || null, market_id: input.marketId || null, active: input.active ?? true, updated_at: new Date().toISOString() };
   return id ? client.from("businesses").update(row).eq("id", id).select().single() : client.from("businesses").insert(row).select().single();

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { Alert, ScrollView, Switch, Text, TextInput, View } from "react-native";
-import { listMyBusinesses, saveBusiness, deleteBusiness, listDirectoryCategories, friendlyError } from "@huambo-online/core";
+import { listMyBusinesses, saveBusiness, deleteBusiness, listDirectoryCategories, friendlyError, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { MarketPicker } from "../../components/MarketPicker";
@@ -9,7 +9,7 @@ import { Button, Chips, Message } from "../../components/Ui";
 import { useTerritory } from "../../components/Directory";
 
 type Option = { id: string; name: string };
-const empty = { name: "", description: "", categoryId: "", municipalityId: "", marketId: "", phone: "", whatsapp: "", addressText: "", active: true };
+const empty = { name: "", description: "", categoryId: "", customCategory: "", municipalityId: "", marketId: "", phone: "", whatsapp: "", addressText: "", active: true };
 
 export default function MinhasEmpresas() {
   const router = useRouter();
@@ -41,14 +41,15 @@ export default function MinhasEmpresas() {
     {items.map(b => <View key={b.id} style={ui.card}>
       <Text style={ui.h2}>{b.name}{b.verified ? " ✔️" : ""}{b.active ? "" : " (oculta)"}</Text>
       <Button title="Ver" variant="secondary" onPress={() => router.push(("/empresas/" + b.id) as any)} />
-      <Button title="Editar" variant="secondary" onPress={() => { setEditing(b.id); setForm({ name: b.name ?? "", description: b.description ?? "", categoryId: b.category_id ?? "", municipalityId: b.municipality_id ?? "", marketId: b.market_id ?? "", phone: b.phone ?? "", whatsapp: b.whatsapp ?? "", addressText: b.address_text ?? "", active: b.active }); scroll.current?.scrollToEnd(); }} />
+      <Button title="Editar" variant="secondary" onPress={() => { setEditing(b.id); setForm({ name: b.name ?? "", description: b.description ?? "", ...categoryFormValues(b), municipalityId: b.municipality_id ?? "", marketId: b.market_id ?? "", phone: b.phone ?? "", whatsapp: b.whatsapp ?? "", addressText: b.address_text ?? "", active: b.active }); scroll.current?.scrollToEnd(); }} />
       <Button title="Apagar" variant="danger" onPress={() => Alert.alert("Apagar empresa", "Tem a certeza?", [{ text: "Cancelar", style: "cancel" }, { text: "Apagar", style: "destructive", onPress: async () => { const r = await deleteBusiness(supabase(), b.id); if (r.error) setError(friendlyError(r.error)); else await load(uid); } }])} />
     </View>)}
     <View style={ui.card}>
       <Text style={ui.h2}>{editing ? "Editar empresa" : "Registar empresa"}</Text>
       <Text style={ui.label}>Nome</Text><TextInput style={ui.input} value={form.name} onChangeText={set("name")} />
       <Text style={ui.label}>Descrição</Text><TextInput style={[ui.input, ui.area]} multiline value={form.description} onChangeText={set("description")} />
-      <Text style={ui.label}>Categoria</Text><Chips options={categories.map(c => ({ value: c.id, label: c.name }))} value={form.categoryId} onChange={set("categoryId")} />
+      <Text style={ui.label}>Categoria</Text><Chips options={[...categories.map(c => ({ value: c.id, label: c.name })), { value: OTHER_CATEGORY, label: "Outra (escrever)" }]} value={form.categoryId} onChange={set("categoryId")} />
+      {form.categoryId === OTHER_CATEGORY && <><Text style={ui.label}>Qual é a sua área de atividade?</Text><TextInput style={ui.input} value={form.customCategory} onChangeText={set("customCategory")} maxLength={60} placeholder="Ex.: Canalizador, Costureira, Fotógrafo…" autoFocus /></>}
       <Text style={ui.label}>Província</Text><Chips options={provinces.map(p => ({ value: p.id, label: p.name }))} value={provinceId} onChange={v => { setProvinceId(v); set("municipalityId")(""); }} />
       <Text style={ui.label}>Município</Text><Chips options={municipalities.map(m => ({ value: m.id, label: m.name }))} value={form.municipalityId} onChange={set("municipalityId")} />
       <MarketPicker value={form.marketId} onChange={v => setForm({ ...form, marketId: v })} />
