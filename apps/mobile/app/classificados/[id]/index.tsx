@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { VideoPlayer } from "../../../components/Video";
+import { WantedHelpers } from "../../../components/WantedHelpers";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
@@ -101,6 +102,7 @@ export default function ClassifiedDetail() {
       {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} accessibilityLabel={`Ver fotografia ${i + 1}`} style={{ borderWidth: 3, borderColor: i === photo ? "#111" : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}
     </View>}
     {!!item.video_url && <VideoPlayer url={item.video_url} />}
+    {item.purpose === "wanted" && item.status === "published" && <WantedHelpers title={item.title} mine={mine} />}
     {!!item.description && <Text style={ui.text}>{item.description}</Text>}
     {item.status === "published" && <ShareButton kind="listing" id={id} title={item.title} />}
     {item.status === "published" && <AuctionPanel listingId={id} uid={uid} mine={mine} canStart={["sale", "auction"].includes(item.purpose) && AUCTIONABLE_TYPES.includes(item.listing_type)} />}
@@ -113,7 +115,7 @@ export default function ClassifiedDetail() {
       <Button title={savedId ? "★ Guardado" : "☆ Guardar anúncio"} variant="secondary" onPress={() => void toggleSaved()} disabled={busy} />
       <View style={ui.card}>
         <Text style={ui.h2}>{item.purpose === "wanted" ? "Responder ao comprador" : "Contactar anunciante"}</Text>
-        {item.purpose === "wanted" && !message && <Button title="✋ Tenho o que procura" onPress={() => setMessage(wantedReplyMessage(item.title))} />}
+        {item.purpose === "wanted" && !message && <Button title={item.listing_type === "service" ? "🛠️ Posso fazer este serviço" : "✋ Tenho o que procura"} onPress={() => setMessage(wantedReplyMessage(item.title, item.listing_type === "service"))} />}
         <TextInput value={message} onChangeText={setMessage} placeholder="Olá, o anúncio ainda está disponível?" multiline style={[ui.input, ui.area]} />
         <Button title={busy ? "A enviar…" : "Enviar mensagem"} onPress={() => void contact()} disabled={busy || !message.trim()} />
       </View>

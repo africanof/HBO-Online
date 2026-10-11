@@ -128,8 +128,8 @@ export function ListingForm({ listing, initialPurpose }: { listing?: any; initia
           {PUBLISHABLE_PURPOSES.map(v => <option key={v} value={v}>{PURPOSE_LABELS[v]}</option>)}
         </select>
       </label>
-      {wanted && <p className="ok" style={{ margin: 0 }}>🔎 Pedido de comprador: diga o que procura e quanto pode pagar. Os vendedores com artigos parecidos são avisados.</p>}
-      <label>{wanted ? "O que procura?" : "Título"}<input value={title} maxLength={140} onChange={e => setTitle(e.target.value)} placeholder={wanted ? "Ex.: Preciso de um Router 5G da Unitel" : "Ex.: Toyota Hilux 2018"} /></label>
+      {wanted && <p className="ok" style={{ margin: 0 }}>🔎 Pedido de comprador: diga o que procura e quanto pode pagar. Os vendedores e profissionais com artigos ou serviços parecidos são avisados.</p>}
+      <label>{wanted ? "O que procura?" : "Título"}<input value={title} maxLength={140} onChange={e => setTitle(e.target.value)} placeholder={wanted ? (listingType === "service" ? "Ex.: Procuro um eletricista para instalação" : "Ex.: Preciso de um Router 5G da Unitel") : "Ex.: Toyota Hilux 2018"} /></label>
       <label>Descrição<textarea value={description} onChange={e => setDescription(e.target.value)} rows={6} placeholder={wanted ? "Pormenores: estado, marca, zona, quando precisa…" : "Estado, características, como entregar…"} /></label>
       {wanted ? <div className="row" style={{ flexWrap: "nowrap" }}>
         <label style={{ flex: 1 }}>Orçamento de (Kz)<input value={budgetMin} onChange={e => setBudgetMin(e.target.value)} inputMode="decimal" placeholder="Ex.: 20 000" /></label>

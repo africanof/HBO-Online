@@ -54,6 +54,10 @@ export function DirectoryList({ kind }: { kind: Kind }) {
     <Button title="Pesquisar" onPress={() => void search()} />
     <Message error={error} />
     {items?.length === 0 && <Text style={ui.text}>{t.empty}</Text>}
+    <View style={{ backgroundColor: "#fff4d6", borderRadius: 16, padding: 14, gap: 8 }}>
+      <Text style={ui.text}><Text style={{ fontWeight: "800" }}>Não encontrou quem procura?</Text> Publique «Procuro um eletricista, canalizador, doméstica…» e os profissionais da área são avisados.</Text>
+      <Button title="🔎 Publicar o que procuro" onPress={() => router.push("/classificados/publicar?finalidade=wanted" as any)} />
+    </View>
     {items?.map(x => {
       const id = kind === "providers" ? x.user_id : x.id;
       const pic = kind === "providers" ? x.avatar_url : x.logo_url;

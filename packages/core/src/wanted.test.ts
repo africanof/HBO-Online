@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatBudget, validateBudget, budgetPrice, listingPriceLabel, wantedReplyMessage, listWanted } from "./wanted";
+import { formatBudget, validateBudget, budgetPrice, listingPriceLabel, wantedReplyMessage, listWanted, wantedKeywords, foldText, findHelpers } from "./wanted";
 import { createClassifiedListing, updateClassifiedListing } from "./classified-listings";
 
 describe("Procura-se", () => {
@@ -22,6 +22,7 @@ describe("Procura-se", () => {
     expect(listingPriceLabel({ purpose: "wanted", price: 30000 })).toBe("até 30 000 Kz");
     expect(listingPriceLabel({ purpose: "sale", price: 30000 })).toBe("30 000 Kz");
     expect(wantedReplyMessage("Router 5G")).toMatch(/tenho o que procura/);
+    expect(wantedReplyMessage("Eletricista", true)).toMatch(/posso fazer este serviço/);
   });
   it("grava o orçamento só nos pedidos e procura só pedidos", async () => {
     const rows: any[] = []; const rpc: any[] = [];
@@ -33,5 +34,21 @@ describe("Procura-se", () => {
     expect(rows[1]).toMatchObject({ budget_min: null, budget_max: null });
     await listWanted(c, "router");
     expect(rpc[0]).toMatchObject({ p_purpose: "wanted", p_query: "router" });
+  });
+
+  it("tira as raízes das palavras como o servidor (sem acentos)", () => {
+    expect(foldText("Doméstica Ação")).toBe("domestica acao");
+    expect(wantedKeywords("Procuro um eletricista")).toEqual(["eletri"]);
+    expect(wantedKeywords("Preciso de uma doméstica para limpeza")).toEqual(["domest", "limpez"]);
+    expect(wantedKeywords("Preciso de um Router 5G da Unitel")).toEqual(["router", "unitel"]);
+    expect(wantedKeywords("Procuro de para")).toEqual([]);
+  });
+  it("procura profissionais e empresas com as raízes", async () => {
+    const calls: any[] = [];
+    const c: any = { rpc: (f: string, a: any) => { calls.push({ f, q: a.p_query }); return Promise.resolve({ data: f === "provider_directory" ? [{ user_id: "p1" }] : [{ id: "b1" }], error: null }); } };
+    const r = await findHelpers(c, "Procuro canalizador e eletricista");
+    expect(calls.map(x => x.q)).toEqual(["canali", "canali", "eletri", "eletri"]);
+    expect(r.providers).toEqual([{ user_id: "p1" }]);
+    expect((await findHelpers(c, "procuro")).providers).toEqual([]);
   });
 });

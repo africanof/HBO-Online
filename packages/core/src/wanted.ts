@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatPrice } from "./classified-listings";
 import { searchClassifiedListings } from "./classified-search";
+import { listProviders, listBusinesses } from "./directory";
 
 /** «Procura-se»: pedidos de compradores (finalidade "wanted") com orçamento de… até… */
 
@@ -32,9 +33,35 @@ export function listingPriceLabel(x: { purpose?: string; price?: number | string
 }
 
 /** Mensagem pronta para o vendedor responder a um pedido. */
-export function wantedReplyMessage(title: string) { return `Olá! Vi o seu pedido «${title}» e tenho o que procura. Ainda precisa?`; }
+export function wantedReplyMessage(title: string, service = false) { return service ? `Olá! Vi o seu pedido «${title}» e posso fazer este serviço. Quando lhe dá jeito?` : `Olá! Vi o seu pedido «${title}» e tenho o que procura. Ainda precisa?`; }
 
 /** Pedidos "Procura-se" publicados (os mais recentes primeiro). */
 export async function listWanted(client: SupabaseClient, query = "", limit = 40) {
   return searchClassifiedListings(client, { purpose: "wanted", query, limit });
+}
+
+const STOP = new Set(("preciso precisa procuro procura compro comprar quero pago pagar alguem vende vendo venda estado bons boas usado usada novo nova " +
+  "urgente urgencia para mais menos como desde entre kwanzas preco barato barata qualquer tipo servico servicos profissional pessoa senhor senhora " +
+  "trabalho fazer minha minhas meus numa numas esta este isto aqui zona bairro").split(" "));
+
+/** Sem acentos e em minúsculas (igual à função fold_text da base de dados). */
+export function foldText(t: string) { return t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
+
+/** Raízes das palavras do pedido, iguais às usadas no servidor: "Procuro um eletricista" → ["eletri"]. */
+export function wantedKeywords(title: string): string[] {
+  const words = foldText(title).split(/[^a-z0-9]+/).filter(w => w.length >= 4 && !STOP.has(w));
+  return [...new Set(words.map(w => w.slice(0, 6)))];
+}
+
+/** Profissionais e empresas que podem responder a um pedido "Procura-se". */
+export async function findHelpers(client: SupabaseClient, title: string, limit = 12) {
+  const words = wantedKeywords(title).slice(0, 2);
+  if (!words.length) return { providers: [] as any[], businesses: [] as any[] };
+  const runs = await Promise.all(words.map(q => Promise.all([listProviders(client, { query: q, limit }), listBusinesses(client, { query: q, limit })])));
+  const providers = new Map<string, any>(); const businesses = new Map<string, any>();
+  for (const [p, b] of runs) {
+    for (const x of (p.data as any[]) ?? []) if (!providers.has(x.user_id)) providers.set(x.user_id, x);
+    for (const x of (b.data as any[]) ?? []) if (!businesses.has(x.id)) businesses.set(x.id, x);
+  }
+  return { providers: [...providers.values()].slice(0, limit), businesses: [...businesses.values()].slice(0, limit) };
 }

@@ -128,9 +128,9 @@ export function ListingForm({ listing, initialPurpose }: { listing?: any; initia
     <Chips options={typeOptions} value={listingType} onChange={setListingType} />
     <Text style={ui.label}>Finalidade</Text>
     <Chips options={purposeOptions} value={purpose} onChange={setPurpose} />
-    {wanted && <Text style={ui.ok}>🔎 Pedido de comprador: diga o que procura e quanto pode pagar. Os vendedores com artigos parecidos são avisados.</Text>}
+    {wanted && <Text style={ui.ok}>🔎 Pedido de comprador: diga o que procura e quanto pode pagar. Os vendedores e profissionais com artigos ou serviços parecidos são avisados.</Text>}
     <Text style={ui.label}>{wanted ? "O que procura?" : "Título"}</Text>
-    <TextInput style={ui.input} value={title} maxLength={140} onChangeText={setTitle} placeholder={wanted ? "Ex.: Preciso de um Router 5G da Unitel" : "Ex.: Toyota Hilux 2018"} />
+    <TextInput style={ui.input} value={title} maxLength={140} onChangeText={setTitle} placeholder={wanted ? (listingType === "service" ? "Ex.: Procuro um eletricista para instalação" : "Ex.: Preciso de um Router 5G da Unitel") : "Ex.: Toyota Hilux 2018"} />
     <Text style={ui.label}>Descrição</Text>
     <TextInput style={[ui.input, ui.area]} multiline value={description} onChangeText={setDescription} placeholder={wanted ? "Pormenores: estado, marca, zona, quando precisa…" : "Estado, características, como entregar…"} />
     {wanted ? <View style={{ flexDirection: "row", gap: 10 }}>

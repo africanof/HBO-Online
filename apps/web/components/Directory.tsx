@@ -51,6 +51,10 @@ export function DirectoryList({ kind }: { kind: Kind }) {
     </form>
     {error && <p className="error" role="alert">{error}</p>}
     {items?.length === 0 && <p>{t.empty}</p>}
+    <a href="/classificados/publicar?finalidade=wanted" className="banner yellow" style={{ color: "inherit", textDecoration: "none", fontWeight: 400, padding: 18 }}>
+      <span><strong>Não encontrou quem procura?</strong> Publique «Procuro um eletricista, canalizador, doméstica…» e os profissionais da área são avisados.</span>
+      <span className="btn">🔎 Publicar o que procuro</span>
+    </a>
     <section className="grid">
       {items?.map(x => {
         const id = kind === "providers" ? x.user_id : x.id;

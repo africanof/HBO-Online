@@ -20,7 +20,7 @@ export default function ProcuraSe() {
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <View style={{ backgroundColor: "#fff4d6", borderRadius: 20, padding: 18, gap: 8 }}>
       <Text style={ui.h1}>🔎 Procura-se</Text>
-      <Text style={ui.text}>Pedidos de compradores do Huambo. Tem o que procuram? Responda e venda.</Text>
+      <Text style={ui.text}>Pedidos de compradores e de quem precisa de um serviço (eletricista, canalizador, doméstica, decoradora…). Tem o que procuram? Responda.</Text>
       <Button title="+ Publicar o que procuro" onPress={() => router.push("/classificados/publicar?finalidade=wanted" as any)} />
     </View>
     <TextInput style={ui.input} value={q} onChangeText={setQ} placeholder="Ex.: casa, telefone, router…" returnKeyType="search" onSubmitEditing={() => void search()} accessibilityLabel="Procurar pedidos" />

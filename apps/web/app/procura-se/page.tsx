@@ -15,7 +15,7 @@ export default function ProcuraSe() {
   return <main className="stack">
     <a href="/">← Início</a>
     <section className="banner yellow">
-      <div><h1 style={{ margin: 0 }}>🔎 Procura-se</h1><p>Pedidos de compradores do Huambo. Tem o que procuram? Responda e venda.</p></div>
+      <div><h1 style={{ margin: 0 }}>🔎 Procura-se</h1><p>Pedidos de compradores e de quem precisa de um serviço (eletricista, canalizador, doméstica, decoradora…). Tem o que procuram? Responda.</p></div>
       <a className="btn" href="/classificados/publicar?finalidade=wanted">+ Publicar o que procuro</a>
     </section>
     <form onSubmit={search} className="row">

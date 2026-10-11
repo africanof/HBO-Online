@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Gallery } from "../../../components/Video";
+import { WantedHelpers } from "../../../components/WantedHelpers";
 import { useParams } from "next/navigation";
 import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
   reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage } from "@huambo-online/core";
@@ -91,7 +92,7 @@ export default function ClassifiedDetail() {
     <a href={"/explorar?tipo=" + item.listing_type}>← Classificados › {typeLabel}</a>
     {item.status !== "published" && <p className="badge">{STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] ?? item.status} — só você vê este anúncio</p>}
     <div className="itempage">
-      <Gallery media={media} video={item.video_url} icon={"🏷️"} title={item.title} />
+      <Gallery media={media} video={item.video_url} icon={item.purpose === "wanted" ? "🔎" : "🏷️"} title={item.title} />
       <section className="buybox">
         {item.purpose === "wanted" && <span className="badge" style={{ justifySelf: "start", background: "#fff4d6", borderColor: "#f5af02" }}>🔎 PROCURA-SE — pedido de comprador</span>}
         <h1>{item.title}</h1>
@@ -110,7 +111,7 @@ export default function ClassifiedDetail() {
         <div className="actions">
           {mine ? <><a className="btn" href={`/classificados/${id}/editar`}>Editar anúncio</a><a className="btn secondary" href="/meus-anuncios">Os meus anúncios</a></> : <>
             {item.purpose === "wanted"
-              ? <a className="btn" href="#contactar" onClick={() => { if (!message.trim()) setMessage(wantedReplyMessage(item.title)); }}>✋ Tenho o que procura</a>
+              ? <a className="btn" href="#contactar" onClick={() => { if (!message.trim()) setMessage(wantedReplyMessage(item.title, item.listing_type === "service")); }}>{item.listing_type === "service" ? "🛠️ Posso fazer este serviço" : "✋ Tenho o que procura"}</a>
               : <a className="btn" href="#contactar">💬 Contactar anunciante</a>}
             <button type="button" className="secondary" onClick={toggleSaved} disabled={busy}>{savedId ? "♥ Guardado" : "♡ Guardar anúncio"}</button>
           </>}
@@ -118,6 +119,7 @@ export default function ClassifiedDetail() {
         </div>
       </section>
     </div>
+    {item.purpose === "wanted" && item.status === "published" && <WantedHelpers title={item.title} mine={mine} />}
     {item.description && <section className="card"><h2 style={{ margin: 0 }}>Descrição</h2><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{item.description}</p></section>}
     {!mine && <>
       <section className="card" id="contactar">
