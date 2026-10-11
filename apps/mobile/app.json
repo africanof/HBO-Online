@@ -6,13 +6,37 @@
     "orientation": "portrait",
     "scheme": "huamboonline",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "android": {
+      "package": "ao.huamboonline.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#3665F3"
+      },
+      "blockedPermissions": ["android.permission.RECORD_AUDIO"]
+    },
+    "ios": {
+      "bundleIdentifier": "ao.huamboonline.app",
+      "supportsTablet": false
+    },
     "plugins": [
       "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF"
+        }
+      ],
       [
         "expo-image-picker",
         {
           "photosPermission": "O Huambo Online usa a galeria para escolher fotografias e vídeos dos seus anúncios e para pesquisar por fotografia.",
-          "cameraPermission": "O Huambo Online usa a câmara para fotografar artigos, pesquisar por fotografia e fotografar documentos para verificar o perfil."
+          "cameraPermission": "O Huambo Online usa a câmara para fotografar artigos, pesquisar por fotografia e fotografar documentos para verificar o perfil.",
+          "microphonePermission": false
         }
       ]
     ],
