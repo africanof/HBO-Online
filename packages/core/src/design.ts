@@ -18,7 +18,9 @@ export const BRAND = {
 } as const;
 
 /** As quatro letras do logótipo, cada uma com a sua cor (como no eBay, mas com a nossa palavra). */
-export const LOGO_PARTS: [string, string][] = [["Huambo", BRAND.blue], ["On", BRAND.red], ["li", BRAND.yellow], ["ne", BRAND.green]];
+/** Amarelo mais escuro só no logótipo: contraste 3,4:1 sobre branco (legível ao sol). */
+export const LOGO_YELLOW = "#B88200";
+export const LOGO_PARTS: [string, string][] = [["Huambo", BRAND.blue], ["On", BRAND.red], ["li", LOGO_YELLOW], ["ne", BRAND.green]];
 
 export type SearchScope = "classificados" | "loja" | "pracas" | "profissionais" | "empresas";
 export const SEARCH_SCOPES: { value: SearchScope; label: string; path: string }[] = [

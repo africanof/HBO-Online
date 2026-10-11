@@ -20,12 +20,17 @@ jobs:
           node-version: 22
       - name: Instalar navegador
         run: |
-          npm install --no-save playwright@1
+          npm install --no-save playwright@1 axe-core@4
           npx playwright install --with-deps chromium
       - name: Testar páginas
         env:
           SITE_URL: ${{ inputs.site_url }}
         run: node scripts/smoke-site.mjs
+      - name: Acessibilidade (contraste, nomes dos botões, rótulos)
+        if: always()
+        env:
+          SITE_URL: ${{ inputs.site_url }}
+        run: node scripts/a11y-site.mjs
       - name: Capturas das páginas com problemas
         if: failure()
         uses: actions/upload-artifact@v4
