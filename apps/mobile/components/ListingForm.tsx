@@ -5,7 +5,7 @@ import * as ImagePicker from "expo-image-picker";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
   createAndPublishClassifiedListing, updateClassifiedListing, friendlyError, listingTerritory, base64ToArrayBuffer,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice,
-  saleModesFor, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode } from "@huambo-online/core";
+  saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
@@ -19,7 +19,7 @@ type Photo = { key: string; uri: string; base64?: string | null; mimeType?: stri
 const typeOptions = Object.entries(LISTING_TYPE_LABELS).map(([value, label]) => ({ value: value as ClassifiedListingType, label }));
 const purposeOptions = PUBLISHABLE_PURPOSES.map(value => ({ value, label: PURPOSE_LABELS[value] }));
 
-export function ListingForm({ listing, initialPurpose }: { listing?: any; initialPurpose?: ClassifiedPurpose }) {
+export function ListingForm({ listing, initialPurpose, initialSaleMode }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string }) {
   const router = useRouter();
   const editing = Boolean(listing);
   const territory = listingTerritory(listing);
@@ -33,7 +33,7 @@ export function ListingForm({ listing, initialPurpose }: { listing?: any; initia
   const wanted = purpose === "wanted";
   // Como vende: preço fixo, negociável, propostas, leilão ou troca (escolhido ao publicar).
   const lockedAuction = listing?.purpose === "auction";
-  const [saleMode, setSaleMode] = useState<SaleMode | "">(listing?.sale_mode ?? "");
+  const [saleMode, setSaleMode] = useState<SaleMode | "">(listing?.sale_mode ?? saleModeFromParam(initialSaleMode));
   const [acceptsTrade, setAcceptsTrade] = useState<boolean>(!!listing?.accepts_trade);
   const [tradeWants, setTradeWants] = useState<string>(listing?.trade_wants ?? "");
   const [auctionDays, setAuctionDays] = useState("7");

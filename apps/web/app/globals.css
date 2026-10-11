@@ -107,6 +107,7 @@ main > a:first-child { font-size: 15px; display: inline-block; margin-bottom: 4p
 .banner h2 { margin: 0 0 4px; }
 .banner p { margin: 0; }
 .banner.yellow { background: #fff4d6; }
+.banner.blue { background: #eef3ff; }
 .banner.green { background: #e6f4ec; }
 
 /* Rodapé */

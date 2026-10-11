@@ -19,6 +19,7 @@ const pages = [
   { path: "/servicos", expect: "Inicie sessão" },
   { path: "/conta/verificacao", expect: "Verificar perfil" },
   { path: "/propostas", expect: "Inicie sessão" },
+  { path: "/trocas", expect: "Publicar uma troca" },
   { path: "/robots.txt", expect: "Sitemap" },
   { path: "/sitemap.xml", expect: "/explorar" }
 ];
