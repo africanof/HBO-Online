@@ -9,11 +9,12 @@ import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
 import { AdminCouriers } from "../components/AdminCouriers";
+import { AdminMarkets } from "../components/AdminMarkets";
 
-type Tab = "stats" | "reports" | "listings" | "users" | "categories" | "couriers";
+type Tab = "stats" | "reports" | "listings" | "users" | "categories" | "couriers" | "markets";
 const tabOptions: { value: Tab; label: string }[] = [
   { value: "stats", label: "Estatísticas" }, { value: "reports", label: "Denúncias" }, { value: "listings", label: "Anúncios" },
-  { value: "users", label: "Utilizadores" }, { value: "categories", label: "Categorias" }, { value: "couriers", label: "Estafetas" }
+  { value: "users", label: "Utilizadores" }, { value: "categories", label: "Categorias" }, { value: "couriers", label: "Estafetas" }, { value: "markets", label: "Praças" }
 ];
 
 export default function Admin() {
@@ -32,7 +33,7 @@ export default function Admin() {
 
   async function load(t: Tab) {
     setError("");
-    if (t === "couriers") return;
+    if (t === "couriers" || t === "markets") return;
     const c = supabase();
     const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReports(c, reportFilter || undefined)
       : t === "listings" ? await listListingsForModeration(c, "", listingQuery) : t === "users" ? await listUsersForAdmin(c, userQuery) : await listAllCategories(c);
@@ -57,6 +58,7 @@ export default function Admin() {
     <Message error={error} ok={notice} />
 
     {tab === "couriers" && <AdminCouriers />}
+    {tab === "markets" && <AdminMarkets />}
     {tab === "stats" && stats && ADMIN_STAT_LABELS.map(([k, l]) => <View key={k} style={ui.card}><Text style={ui.text}>{l}</Text><Text style={ui.h1}>{stats[k]}</Text></View>)}
 
     {tab === "reports" && <View style={{ gap: 12 }}>

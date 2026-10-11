@@ -6,6 +6,7 @@ import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, sa
 import { supabase } from "../../../lib/supabase";
 import { ShareButton, useRecordView } from "../../../components/Engage";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
+import { MarketFact } from "../../../components/MarketPicker";
 import { AUCTIONABLE_TYPES } from "@huambo-online/core";
 
 export default function ClassifiedDetail() {
@@ -104,6 +105,7 @@ export default function ClassifiedDetail() {
           <dt>Tipo</dt><dd>{typeLabel}</dd>
           <dt>Finalidade</dt><dd>{purposeLabel}</dd>
           {place && <><dt>Local</dt><dd>📍 {place}</dd></>}
+          <MarketFact id={item.market_id} />
         </dl>
         {notice && <p className="ok" role="status">{notice}</p>}
         {error && <p className="error" role="alert">{error}</p>}

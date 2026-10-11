@@ -5,7 +5,7 @@ import { C } from "../lib/ui";
 
 const TABS: { label: string; icon: string; href: string; match: (p: string) => boolean }[] = [
   { label: "Início", icon: "🏠", href: "/", match: p => p === "/" },
-  { label: "Pesquisar", icon: "🔍", href: "/explorar", match: p => p.startsWith("/explorar") || p.startsWith("/loja") },
+  { label: "Pesquisar", icon: "🔍", href: "/explorar", match: p => p.startsWith("/explorar") || p.startsWith("/loja") || p.startsWith("/pracas") },
   { label: "Vender", icon: "➕", href: "/classificados/publicar", match: p => p.startsWith("/classificados/publicar") },
   { label: "Mensagens", icon: "💬", href: "/mensagens", match: p => p.startsWith("/mensagens") },
   { label: "Conta", icon: "👤", href: "/conta", match: p => p.startsWith("/conta") || p === "/login" }

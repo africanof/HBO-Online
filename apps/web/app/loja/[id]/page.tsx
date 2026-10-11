@@ -46,6 +46,7 @@ export default function Produto() {
           <dt>Disponível</dt><dd style={{ color: p.stock > 0 ? "var(--ok)" : "var(--danger)" }}>{p.stock > 0 ? `${p.stock} em stock` : "Esgotado"}</dd>
           {p.categories?.name && <><dt>Categoria</dt><dd>{p.categories.name}</dd></>}
           {p.municipalities?.name && <><dt>Local</dt><dd>📍 {p.municipalities.name}</dd></>}
+          {p.markets?.name && <><dt>Praça</dt><dd>🧺 <a href={"/pracas/" + p.markets.id}>{p.markets.name}</a></dd></>}
           <dt>Entrega</dt><dd>🛵 Ao domicílio ou levantar</dd>
         </dl>
         {error && <p className="error" role="alert">{error}</p>}

@@ -20,10 +20,11 @@ export const BRAND = {
 /** As quatro letras do logótipo, cada uma com a sua cor (como no eBay, mas com a nossa palavra). */
 export const LOGO_PARTS: [string, string][] = [["Huambo", BRAND.blue], ["On", BRAND.red], ["li", BRAND.yellow], ["ne", BRAND.green]];
 
-export type SearchScope = "classificados" | "loja" | "profissionais" | "empresas";
+export type SearchScope = "classificados" | "loja" | "pracas" | "profissionais" | "empresas";
 export const SEARCH_SCOPES: { value: SearchScope; label: string; path: string }[] = [
   { value: "classificados", label: "Classificados", path: "/explorar" },
   { value: "loja", label: "Loja", path: "/loja" },
+  { value: "pracas", label: "Praças", path: "/pracas" },
   { value: "profissionais", label: "Profissionais", path: "/profissionais" },
   { value: "empresas", label: "Empresas", path: "/empresas" }
 ];
@@ -50,6 +51,7 @@ export function readExploreParams(get: (key: string) => string | null | undefine
 export const HOME_CATEGORIES: { label: string; icon: string; href: string }[] = [
   { label: "Imóveis", icon: "🏠", href: "/explorar?tipo=real_estate" },
   { label: "Viaturas", icon: "🚗", href: "/explorar?tipo=vehicle" },
+  { label: "Praças", icon: "🧺", href: "/pracas" },
   { label: "Loja", icon: "🛍️", href: "/loja" },
   { label: "Arrendar", icon: "🔑", href: "/explorar?finalidade=rent" },
   { label: "Leilões", icon: "🔨", href: "/explorar?finalidade=auction" },

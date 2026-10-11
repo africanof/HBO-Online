@@ -118,6 +118,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <h1>{name}{item.verified ? " ✔️" : ""}</h1>
     {kind === "providers" && item.headline && <p style={{ fontSize: 19 }}>{item.headline}</p>}
     <p>{[item.categories?.name, item.municipalities?.name, item.address_text].filter(Boolean).join(" · ")}</p>
+    {item.markets?.name && <p>🧺 Na <a href={"/pracas/" + item.markets.id}>{item.markets.name}</a></p>}
     <p><strong>{ratingLabel(avg, reviews.length)}</strong></p>
     {(item.bio || item.description) && <p style={{ whiteSpace: "pre-wrap" }}>{item.bio || item.description}</p>}
     <div className="row">

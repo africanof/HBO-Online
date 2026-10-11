@@ -8,6 +8,7 @@ import { ui } from "../../../lib/ui";
 import { Button, Message } from "../../../components/Ui";
 import { ShareButton, useRecordView } from "../../../components/Engage";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
+import { MarketLink } from "../../../components/MarketPicker";
 
 export default function ClassifiedDetail() {
   const router = useRouter();
@@ -92,6 +93,7 @@ export default function ClassifiedDetail() {
     <Text style={ui.price}>{formatPrice(item.price, item.currency)}</Text>
     <Text style={ui.text}>{LISTING_TYPE_LABELS[item.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? item.listing_type} · {PURPOSE_LABELS[item.purpose as keyof typeof PURPOSE_LABELS] ?? item.purpose}{place ? " · 📍 " + place : ""}</Text>
     {!!seller && <Link href={("/vendedor/" + item.owner_id) as any} style={ui.link}>Anunciante: {seller} →</Link>}
+    <MarketLink id={item.market_id} />
     {media.length > 0 && <View style={{ gap: 8 }}>
       <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: "#eee" }} resizeMode="contain" accessibilityLabel={`Fotografia ${photo + 1} de ${media.length}`} />
       {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} accessibilityLabel={`Ver fotografia ${i + 1}`} style={{ borderWidth: 3, borderColor: i === photo ? "#111" : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}

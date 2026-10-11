@@ -7,7 +7,8 @@ describe("design", () => {
     expect(searchHref("loja", "")).toBe("/loja");
     expect(searchHref("profissionais", "eletricista")).toBe("/profissionais?q=eletricista");
     expect(searchHref("classificados", "", { tipo: "vehicle", finalidade: undefined })).toBe("/explorar?tipo=vehicle");
-    expect(SEARCH_SCOPES.map(s => s.value)).toEqual(["classificados", "loja", "profissionais", "empresas"]);
+    expect(SEARCH_SCOPES.map(s => s.value)).toEqual(["classificados", "loja", "pracas", "profissionais", "empresas"]);
+    expect(searchHref("pracas", "kapango")).toBe("/pracas?q=kapango");
   });
   it("lê os filtros da página Explorar e ignora valores estranhos", () => {
     const p = new URLSearchParams("q=%20hilux%20&tipo=vehicle&finalidade=auction");
@@ -16,7 +17,7 @@ describe("design", () => {
     expect(readExploreParams(k => bad.get(k))).toEqual({ query: "", listingType: "", purpose: "" });
   });
   it("as categorias da página inicial apontam para páginas existentes", () => {
-    for (const c of HOME_CATEGORIES) expect(c.href).toMatch(/^\/(explorar|loja|profissionais|empresas)(\?|$)/);
+    for (const c of HOME_CATEGORIES) expect(c.href).toMatch(/^\/(explorar|loja|pracas|profissionais|empresas)(\?|$)/);
     expect(LOGO_PARTS.map(p => p[0]).join("")).toBe("HuamboOnline");
     expect(BRAND.blue).toBe("#3665F3");
   });

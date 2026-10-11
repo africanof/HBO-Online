@@ -8,6 +8,7 @@ import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice,
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
+import { MarketPicker } from "./MarketPicker";
 import { Button, Chips, Message } from "./Ui";
 
 type Option = { id: string; name: string };
@@ -28,6 +29,7 @@ export function ListingForm({ listing }: { listing?: any }) {
   const [categoryId, setCategoryId] = useState<string>(listing?.category_id ?? "");
   const [provinceId, setProvinceId] = useState(territory.provinceId ?? "");
   const [municipalityId, setMunicipalityId] = useState(territory.municipalityId ?? "");
+  const [marketId, setMarketId] = useState<string>(listing?.market_id ?? "");
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, uri: u, remote: true })));
   const [removed, setRemoved] = useState<string[]>([]);
   const [categories, setCategories] = useState<Option[]>([]);
@@ -94,7 +96,7 @@ export function ListingForm({ listing }: { listing?: any }) {
         media.push(up.data);
       }
       setStatus(editing ? "A guardar…" : "A publicar…");
-      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, media };
+      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, media };
       if (editing) {
         const r = await updateClassifiedListing(c, listing.id, input);
         if (r.error) throw r.error;
@@ -130,6 +132,7 @@ export function ListingForm({ listing }: { listing?: any }) {
     <Chips options={provinces.map(p => ({ value: p.id, label: p.name }))} value={provinceId} onChange={v => { setProvinceId(v); setMunicipalityId(""); }} />
     <Text style={ui.label}>Município</Text>
     {provinceId ? <Chips options={municipalities.map(m => ({ value: m.id, label: m.name }))} value={municipalityId} onChange={setMunicipalityId} /> : <Text style={ui.muted}>Escolha primeiro a província.</Text>}
+    <MarketPicker value={marketId} onChange={setMarketId} />
     <Text style={ui.label}>Fotografias ({photos.length}/{CLASSIFIED_MAX_PHOTOS})</Text>
     <Button title="📷 Selecionar fotografias" variant="secondary" onPress={() => void pickPhotos()} disabled={busy || photos.length >= CLASSIFIED_MAX_PHOTOS} />
     <View style={ui.row}>

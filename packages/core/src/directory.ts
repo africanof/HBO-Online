@@ -5,7 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export type DirectoryFilters = { query?: string; categoryId?: string; municipalityId?: string; limit?: number };
 export type ProviderInput = { displayName: string; headline?: string; bio?: string; categoryId?: string; municipalityId?: string; phone?: string; whatsapp?: string; active?: boolean };
 export type ServiceInput = { title: string; description?: string; priceFrom?: number; categoryId?: string };
-export type BusinessInput = { name: string; description?: string; categoryId?: string; municipalityId?: string; phone?: string; whatsapp?: string; addressText?: string; active?: boolean };
+export type BusinessInput = { name: string; description?: string; categoryId?: string; municipalityId?: string; phone?: string; whatsapp?: string; addressText?: string; marketId?: string; active?: boolean };
 
 const PHONE_RE = /^\+?[0-9 ]{9,15}$/;
 
@@ -83,17 +83,17 @@ export async function listBusinesses(client: SupabaseClient, f: DirectoryFilters
   return client.rpc("business_directory", { p_query: f.query?.trim() ?? "", p_category_id: f.categoryId || null, p_municipality_id: f.municipalityId || null, p_limit: f.limit ?? 30 });
 }
 export async function getBusiness(client: SupabaseClient, id: string) {
-  return client.from("businesses").select("id,owner_id,name,description,category_id,municipality_id,phone,whatsapp,logo_url,address_text,verified,active,created_at,categories(name),municipalities(name)").eq("id", id).maybeSingle();
+  return client.from("businesses").select("id,owner_id,name,description,category_id,municipality_id,phone,whatsapp,logo_url,address_text,market_id,verified,active,created_at,categories(name),municipalities(name),markets(id,name)").eq("id", id).maybeSingle();
 }
 export async function listMyBusinesses(client: SupabaseClient, ownerId: string) {
-  return client.from("businesses").select("id,name,description,category_id,municipality_id,phone,whatsapp,address_text,verified,active").eq("owner_id", ownerId).order("created_at");
+  return client.from("businesses").select("id,name,description,category_id,municipality_id,phone,whatsapp,address_text,market_id,verified,active").eq("owner_id", ownerId).order("created_at");
 }
 export async function saveBusiness(client: SupabaseClient, ownerId: string, input: BusinessInput, id?: string) {
   const invalid = validateBusinessInput(input);
   if (invalid) return { data: null, error: new Error(invalid) };
   const row = { owner_id: ownerId, name: input.name.trim(), description: input.description?.trim() || null, category_id: input.categoryId,
     municipality_id: input.municipalityId, phone: input.phone?.trim() || null, whatsapp: input.whatsapp?.trim() || null,
-    address_text: input.addressText?.trim() || null, active: input.active ?? true, updated_at: new Date().toISOString() };
+    address_text: input.addressText?.trim() || null, market_id: input.marketId || null, active: input.active ?? true, updated_at: new Date().toISOString() };
   return id ? client.from("businesses").update(row).eq("id", id).select().single() : client.from("businesses").insert(row).select().single();
 }
 export async function deleteBusiness(client: SupabaseClient, id: string) { return client.from("businesses").delete().eq("id", id); }

@@ -63,6 +63,7 @@ describe("entregas", () => {
     expect(getNotificationLink({ type: "delivery", title: "Nova entrega disponível", data: { delivery_id: uuid, for: "courier" } })?.href).toBe("/entregas");
     expect(getNotificationLink({ type: "delivery", title: "Entrega atualizada", data: { delivery_id: uuid, order_id: uuid } })?.href).toBe("/encomendas");
     expect(getNotificationLink({ type: "system", title: "Novo pedido de aluguer", data: { rental_id: uuid, listing_id: uuid } })?.href).toBe("/alugueres?recebidos=1");
+    expect(getNotificationLink({ type: "system", title: "Nova praça sugerida", data: { market_id: uuid, for: "admin" } })?.href).toBe("/admin");
     expect(getNotificationLink({ type: "system", title: "Pedido de aluguer aceite", data: { rental_id: uuid } })?.href).toBe("/alugueres");
   });
   it("traduz os erros", () => {

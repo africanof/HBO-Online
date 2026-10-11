@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { searchClassifiedListings, listProducts, listProviders, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS } from "@huambo-online/core";
+import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
 import { Button } from "../components/Ui";
@@ -9,7 +9,7 @@ import { NotificationBell } from "../components/NotificationBell";
 import { Logo, SearchBar } from "../components/Brand";
 import { ItemCard, Shelf, LISTING_ICON } from "../components/ItemCard";
 
-type Shelves = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[] };
+type Shelves = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[] };
 
 const MORE: [string, string, string][] = [
   ["📋", "Os meus anúncios", "/meus-anuncios"], ["📦", "Encomendas", "/encomendas"], ["♥", "Guardados", "/guardados"],
@@ -21,15 +21,15 @@ export default function Home() {
   const [s, setS] = useState<Shelves | null>(null);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   useFocusEffect(useCallback(() => {
-    if (!supabaseConfigured) { setS({ listings: [], auctions: [], rentals: [], products: [], providers: [] }); return; }
+    if (!supabaseConfigured) { setS({ listings: [], auctions: [], rentals: [], products: [], providers: [], markets: [] }); return; }
     const c = supabase();
     void c.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
     void Promise.all([
       searchClassifiedListings(c, { limit: 12 }), searchClassifiedListings(c, { purpose: "auction", limit: 12 }),
-      searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 })
-    ]).then(([l, a, r, p, v]) => setS({
+      searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c)
+    ]).then(([l, a, r, p, v, mk]) => setS({
       listings: (l.data as any[]) ?? [], auctions: (a.data as any[]) ?? [], rentals: (r.data as any[]) ?? [],
-      products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? []
+      products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? []
     }));
   }, []));
 
@@ -66,6 +66,13 @@ export default function Home() {
 
     {s === null && <Text style={ui.muted}>A carregar novidades…</Text>}
     {!!s?.auctions.length && <Shelf title="🔨 Leilões a decorrer" href="/explorar?finalidade=auction">{s.auctions.map(listing)}</Shelf>}
+    {!!s?.markets.length && <Shelf title="🧺 Praças do Huambo" href="/pracas">{s.markets.map(m => <Link key={m.id} href={("/pracas/" + m.id) as any} asChild>
+      <Pressable accessibilityRole="link" accessibilityLabel={m.name} style={{ width: 160, gap: 4 }}>
+        <View style={st.marketImg}>{m.photo_url ? <Image source={{ uri: m.photo_url }} style={{ width: "100%", height: "100%" }} /> : <Text style={{ fontSize: 44 }}>🧺</Text>}</View>
+        <Text style={ui.label} numberOfLines={2}>{m.name}</Text>
+        <Text style={ui.muted} numberOfLines={2}>{marketSummary(m)}</Text>
+      </Pressable>
+    </Link>)}</Shelf>}
     {!!s?.listings.length && <Shelf title="Novidades" href="/explorar">{s.listings.map(listing)}</Shelf>}
 
     <View style={[st.banner, { backgroundColor: "#fff4d6" }]}>
@@ -120,5 +127,6 @@ const st = StyleSheet.create({
   catCircle: { width: 76, height: 76, borderRadius: 38, backgroundColor: C.surface, alignItems: "center", justifyContent: "center" },
   catLabel: { fontSize: 13, fontWeight: "700", color: C.ink, textAlign: "center" },
   banner: { borderRadius: 20, padding: 18, gap: 10 },
+  marketImg: { width: "100%", aspectRatio: 1, borderRadius: 16, backgroundColor: C.surface, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   rowLink: { flexDirection: "row", alignItems: "center", minHeight: 52, borderBottomWidth: 1, borderBottomColor: C.line }
 });

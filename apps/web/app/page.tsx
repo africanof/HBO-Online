@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { searchClassifiedListings, listProducts, listProviders, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS } from "@huambo-online/core";
+import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../components/ItemCard";
 
-type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[] };
+type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[] };
 
 function ShelfHead({ title, href }: { title: string; href: string }) {
   return <div className="shelf-head"><h2>{title}</h2><a href={href}>Ver tudo →</a></div>;
@@ -13,14 +13,14 @@ function ShelfHead({ title, href }: { title: string; href: string }) {
 export default function Home() {
   const [s, setS] = useState<Shelf | null>(null);
   useEffect(() => {
-    if (!supabaseConfigured) { setS({ listings: [], auctions: [], rentals: [], products: [], providers: [] }); return; }
+    if (!supabaseConfigured) { setS({ listings: [], auctions: [], rentals: [], products: [], providers: [], markets: [] }); return; }
     const c = supabase();
     void Promise.all([
       searchClassifiedListings(c, { limit: 12 }), searchClassifiedListings(c, { purpose: "auction", limit: 12 }),
-      searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 })
-    ]).then(([l, a, r, p, v]) => setS({
+      searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c)
+    ]).then(([l, a, r, p, v, mk]) => setS({
       listings: (l.data as any[]) ?? [], auctions: (a.data as any[]) ?? [], rentals: (r.data as any[]) ?? [],
-      products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? []
+      products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? []
     }));
   }, []);
 
@@ -44,6 +44,14 @@ export default function Home() {
     {s === null && <p className="muted" style={{ marginTop: 28 }}>A carregar novidades…</p>}
 
     {!!s?.auctions.length && <><ShelfHead title="🔨 Leilões a decorrer" href="/explorar?finalidade=auction" /><div className="shelf">{s.auctions.map(listingCard)}</div></>}
+
+    {!!s?.markets.length && <><ShelfHead title="🧺 Praças do Huambo" href="/pracas" /><div className="shelf">
+      {s.markets.map(m => <a key={m.id} href={"/pracas/" + m.id} className="item">
+        <div className="item-img">{m.photo_url ? <img src={m.photo_url} alt="" loading="lazy" /> : <span aria-hidden>🧺</span>}</div>
+        <span className="item-title"><strong>{m.name}</strong></span>
+        <span className="item-meta">{marketSummary(m)}</span>
+      </a>)}
+    </div></>}
 
     {!!s?.listings.length && <><ShelfHead title="Novidades nos classificados" href="/explorar" /><div className="shelf">{s.listings.map(listingCard)}</div></>}
 

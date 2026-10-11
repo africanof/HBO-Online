@@ -114,6 +114,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <Text style={ui.h1}>{kind === "providers" ? item.display_name : item.name}{item.verified ? " ✔️" : ""}</Text>
     {kind === "providers" && !!item.headline && <Text style={ui.text}>{item.headline}</Text>}
     <Text style={ui.muted}>{[item.categories?.name, item.municipalities?.name, item.address_text].filter(Boolean).join(" · ")}</Text>
+    {!!item.markets?.name && <Link href={("/pracas/" + item.markets.id) as any} style={ui.link}>🧺 Na {item.markets.name} →</Link>}
     <Text style={ui.label}>{ratingLabel(avg, reviews.length)}</Text>
     {!!(item.bio || item.description) && <Text style={ui.text}>{item.bio || item.description}</Text>}
     {!!item.phone && <Button title="📞 Ligar" variant="secondary" onPress={() => void Linking.openURL("tel:" + item.phone.replace(/\s/g, ""))} />}

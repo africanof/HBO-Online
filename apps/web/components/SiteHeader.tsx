@@ -10,10 +10,10 @@ export function Logo({ size }: { size?: number }) {
   </a>;
 }
 
-const SCOPE_BY_PATH: [string, SearchScope][] = [["/loja", "loja"], ["/profissionais", "profissionais"], ["/empresas", "empresas"]];
+const SCOPE_BY_PATH: [string, SearchScope][] = [["/loja", "loja"], ["/pracas", "pracas"], ["/profissionais", "profissionais"], ["/empresas", "empresas"]];
 const CATEGORY_LINKS: [string, string][] = [
   ["Início", "/"], ["Classificados", "/explorar"], ["Imóveis", "/explorar?tipo=real_estate"], ["Viaturas", "/explorar?tipo=vehicle"],
-  ["Arrendar", "/explorar?finalidade=rent"], ["Leilões", "/explorar?finalidade=auction"], ["Loja", "/loja"],
+  ["Arrendar", "/explorar?finalidade=rent"], ["Leilões", "/explorar?finalidade=auction"], ["Praças", "/pracas"], ["Loja", "/loja"],
   ["Profissionais", "/profissionais"], ["Empresas", "/empresas"], ["Vistos recentemente", "/historico"]
 ];
 
@@ -46,6 +46,7 @@ export function SiteHeader() {
       {name === undefined ? <span>&nbsp;</span> : name === null
         ? <span>Olá! <a href="/conta/login" style={{ color: "var(--accent)", textDecoration: "underline" }}>Entrar</a> ou <a href="/conta/criar" style={{ color: "var(--accent)", textDecoration: "underline" }}>criar conta</a></span>
         : <span>Olá, <strong>{name || "bem-vindo"}</strong>!</span>}
+      <a className="hide-sm" href="/pracas">Praças</a>
       <a className="hide-sm" href="/loja">Loja</a>
       <a className="hide-sm" href="/profissionais">Serviços</a>
       <a className="hide-sm" href="/empresas">Empresas</a>
@@ -81,7 +82,7 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   const cols: [string, [string, string][]][] = [
-    ["Comprar", [["Classificados", "/explorar"], ["Loja", "/loja"], ["Leilões", "/explorar?finalidade=auction"], ["Carrinho", "/carrinho"], ["Encomendas", "/encomendas"]]],
+    ["Comprar", [["Classificados", "/explorar"], ["Praças", "/pracas"], ["Loja", "/loja"], ["Leilões", "/explorar?finalidade=auction"], ["Carrinho", "/carrinho"], ["Encomendas", "/encomendas"]]],
     ["Vender", [["Publicar anúncio", "/classificados/publicar"], ["Os meus anúncios", "/meus-anuncios"], ["Vender produtos", "/conta/produtos"], ["Alugueres", "/alugueres"]]],
     ["Serviços", [["Profissionais", "/profissionais"], ["Empresas", "/empresas"], ["Ser profissional", "/conta/profissional"], ["Ser estafeta", "/entregas"]]],
     ["A minha conta", [["Conta", "/conta"], ["Mensagens", "/mensagens"], ["Notificações", "/notificacoes"], ["Guardados", "/guardados"], ["Pesquisas guardadas", "/pesquisas-guardadas"]]]

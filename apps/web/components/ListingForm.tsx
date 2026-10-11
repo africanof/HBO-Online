@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { MarketPicker } from "./MarketPicker";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
   createAndPublishClassifiedListing, updateClassifiedListing, friendlyError, listingTerritory,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES } from "@huambo-online/core";
@@ -20,6 +21,7 @@ export function ListingForm({ listing }: { listing?: any }) {
   const [categoryId, setCategoryId] = useState(listing?.category_id ?? "");
   const [provinceId, setProvinceId] = useState(territory.provinceId ?? "");
   const [municipalityId, setMunicipalityId] = useState(territory.municipalityId ?? "");
+  const [marketId, setMarketId] = useState<string>(listing?.market_id ?? "");
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, src: u })));
   const [removed, setRemoved] = useState<string[]>([]);
   const [categories, setCategories] = useState<Option[]>([]);
@@ -87,7 +89,7 @@ export function ListingForm({ listing }: { listing?: any }) {
         media.push(up.data);
       }
       setStatus(editing ? "A guardar…" : "A publicar…");
-      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, media };
+      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, media };
       if (editing) {
         const r = await updateClassifiedListing(c, listing.id, input);
         if (r.error) throw r.error;
@@ -139,6 +141,7 @@ export function ListingForm({ listing }: { listing?: any }) {
           {municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
         </select>
       </label>
+      <MarketPicker value={marketId} onChange={setMarketId} />
       <fieldset className="stack" style={{ border: "2px solid #ddd", borderRadius: 12, padding: 14 }}>
         <legend style={{ fontWeight: 700 }}>Fotografias ({photos.length}/{CLASSIFIED_MAX_PHOTOS})</legend>
         <input type="file" accept="image/*" multiple disabled={photos.length >= CLASSIFIED_MAX_PHOTOS} onChange={e => { addFiles(e.target.files); e.target.value = ""; }} aria-label="Selecionar fotografias" />
