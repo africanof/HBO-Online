@@ -27,7 +27,11 @@ export function validateBudget(min: number | undefined, max: number | undefined)
 export function budgetPrice(min?: number, max?: number): number | undefined { return max ?? min; }
 
 /** Texto do preço num cartão: orçamento para pedidos "Procuro", preço normal para os outros. */
-export function listingPriceLabel(x: { purpose?: string; price?: number | string | null; currency?: string; budget_min?: number | string | null; budget_max?: number | string | null }): string {
+export function listingPriceLabel(x: { purpose?: string; price?: number | string | null; currency?: string; budget_min?: number | string | null; budget_max?: number | string | null; sale_mode?: string | null }): string {
+  if (x.purpose !== "wanted" && (x.price === null || x.price === undefined || x.price === "")) {
+    if (x.sale_mode === "trade") return "🔁 Troca";
+    if (x.sale_mode === "offers") return "Aceita propostas";
+  }
   if (x.purpose === "wanted") return x.budget_min != null || x.budget_max != null ? formatBudget(x.budget_min, x.budget_max, x.currency) : (x.price != null ? `até ${formatPrice(x.price, x.currency)}` : "Orçamento a combinar");
   return formatPrice(x.price, x.currency);
 }

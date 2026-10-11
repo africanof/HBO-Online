@@ -29,6 +29,8 @@ export interface ClassifiedDraftInput {
   purpose: ClassifiedPurpose; title: string; description?: string; price?: number;
   provinceId?: string; municipalityId?: string; marketId?: string; videoUrl?: string; budgetMin?: number; budgetMax?: number;
   attributes?: Record<string, unknown>; media?: string[];
+  /** Como vende: preço fixo, negociável, aberto a propostas, leilão ou só troca. */
+  saleMode?: "fixed" | "negotiable" | "offers" | "auction" | "trade"; acceptsTrade?: boolean; tradeWants?: string;
 }
 
 /** Valida o formulário antes de enviar. Devolve a mensagem de erro ou null. */
@@ -124,6 +126,13 @@ const errorMessages: [RegExp, string][] = [
   [/NOT_BUSINESS_OWNER/, "Esta empresa não é sua."],
   [/NOT_REVIEW_TARGET/, "Só quem foi avaliado pode responder."],
   [/INVALID_DATE/, "Escolha uma data a partir de hoje."],
+  [/OFFERS_NOT_ACCEPTED/, "Este anúncio tem preço fixo e não aceita propostas."],
+  [/TRADE_NOT_ACCEPTED/, "Este vendedor não aceita troca."],
+  [/TRADE_REQUIRED/, "Este anúncio é só para troca: diga o que oferece em troca."],
+  [/OFFER_REQUIRED/, "Indique o valor ou o que oferece em troca."],
+  [/INVALID_OFFER/, "Indique um valor válido."],
+  [/OFFER_PENDING/, "Já tem uma proposta à espera de resposta neste anúncio."],
+  [/CANNOT_OFFER_OWN_LISTING/, "Não pode fazer proposta ao seu próprio anúncio."],
   [/DEAL_ALREADY_SET/, "Já indicou com quem fez este negócio."],
   [/NOT_A_DEAL_PARTNER/, "Escolha uma pessoa que lhe enviou mensagem sobre este anúncio."],
   [/CANNOT_REQUEST_OWN_SERVICE/, "Não pode pedir um serviço a si próprio."],
@@ -149,13 +158,20 @@ export function friendlyError(error: unknown, fallback = "Não foi possível con
   return raw || fallback;
 }
 
+
+const saleColumns = (input: Pick<ClassifiedDraftInput, "purpose" | "saleMode" | "acceptsTrade" | "tradeWants">) => input.purpose === "wanted"
+  ? { sale_mode: null, accepts_trade: false, trade_wants: null }
+  : { sale_mode: input.saleMode ?? null, accepts_trade: input.saleMode === "trade" || !!input.acceptsTrade,
+      trade_wants: input.saleMode === "trade" || input.acceptsTrade ? input.tradeWants?.trim() || null : null };
+
 export async function createClassifiedListing(client: SupabaseClient, input: ClassifiedDraftInput) {
   return client.from("classified_listings").insert({
     owner_id: input.ownerId, category_id: input.categoryId || null, address_id: input.addressId || null,
     listing_type: input.listingType, purpose: input.purpose, title: input.title.trim(),
     description: input.description?.trim() || null, price: input.price ?? null,
     attributes: buildAttributes(input), media: input.media || [], market_id: input.marketId || null, video_url: input.videoUrl || null,
-    budget_min: input.purpose === "wanted" ? input.budgetMin ?? null : null, budget_max: input.purpose === "wanted" ? input.budgetMax ?? null : null
+    budget_min: input.purpose === "wanted" ? input.budgetMin ?? null : null, budget_max: input.purpose === "wanted" ? input.budgetMax ?? null : null,
+    ...saleColumns(input)
   }).select().single();
 }
 
@@ -173,7 +189,8 @@ export async function updateClassifiedListing(client: SupabaseClient, id: string
     category_id: input.categoryId || null, listing_type: input.listingType, purpose: input.purpose,
     title: input.title.trim(), description: input.description?.trim() || null, price: input.price ?? null,
     attributes: buildAttributes(input), media: input.media || [], market_id: input.marketId || null, video_url: input.videoUrl || null,
-    budget_min: input.purpose === "wanted" ? input.budgetMin ?? null : null, budget_max: input.purpose === "wanted" ? input.budgetMax ?? null : null, updated_at: new Date().toISOString()
+    budget_min: input.purpose === "wanted" ? input.budgetMin ?? null : null, budget_max: input.purpose === "wanted" ? input.budgetMax ?? null : null,
+    ...saleColumns(input), updated_at: new Date().toISOString()
   }).eq("id", id).select().single();
 }
 
@@ -185,7 +202,7 @@ export async function listMyClassifiedListings(client: SupabaseClient, ownerId: 
   return client.from("classified_listings").select(LISTING_COLUMNS + ",deal_with,deal_at").eq("owner_id", ownerId).order("created_at", { ascending: false });
 }
 
-const LISTING_COLUMNS = "id,owner_id,category_id,address_id,listing_type,purpose,title,description,price,currency,attributes,media,status,featured,created_at,updated_at,market_id,video_url,budget_min,budget_max";
+const LISTING_COLUMNS = "id,owner_id,category_id,address_id,listing_type,purpose,title,description,price,currency,attributes,media,status,featured,created_at,updated_at,market_id,video_url,budget_min,budget_max,sale_mode,accepts_trade,trade_wants";
 
 export async function listClassifiedListings(client: SupabaseClient, filters: {
   listingType?: ClassifiedListingType; purpose?: ClassifiedPurpose; categoryId?: string; limit?: number;

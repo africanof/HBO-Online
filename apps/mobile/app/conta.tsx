@@ -61,6 +61,7 @@ export default function Conta() {
       <Button title="🛍️ Os meus produtos" variant="secondary" onPress={() => router.push("/conta/produtos" as any)} />
       <Button title="📦 Encomendas" variant="secondary" onPress={() => router.push("/encomendas" as any)} />
       <Button title="🛠️ Pedidos de serviço" variant="secondary" onPress={() => router.push("/servicos" as any)} />
+      <Button title="💬 As minhas propostas" variant="secondary" onPress={() => router.push("/propostas" as any)} />
       <Button title="⭐ Avaliações" variant="secondary" onPress={() => router.push("/avaliacoes" as any)} />
       <Button title="✔ Verificar perfil" variant="secondary" onPress={() => router.push("/conta/verificacao" as any)} />
       <Button title="📅 Alugueres" variant="secondary" onPress={() => router.push("/alugueres" as any)} />

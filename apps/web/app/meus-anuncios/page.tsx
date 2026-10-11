@@ -2,7 +2,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { listMyClassifiedListings, deleteClassifiedListing, updateClassifiedStatus, publishClassifiedListing, removeClassifiedMedia,
-  formatPrice, friendlyError, STATUS_LABELS } from "@huambo-online/core";
+  formatPrice, friendlyError, STATUS_LABELS, myOfferCounts, saleModeBadges, listingPriceLabel } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { DealCloser } from "../../components/Reputation";
 
@@ -10,13 +10,14 @@ function MeusAnuncios() {
   const params = useSearchParams();
   const [items, setItems] = useState<any[] | null>(null);
   const [error, setError] = useState(params.get("erro") ? "O anúncio foi guardado como rascunho mas não foi publicado: " + params.get("erro") : "");
-  const [busy, setBusy] = useState(""); const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(""); const [notice, setNotice] = useState(""); const [offers, setOffers] = useState<Record<string, number>>({});
 
   async function load() {
     const uid = await currentUserId();
     if (!uid) { setError("Inicie sessão para ver os seus anúncios."); setItems([]); return; }
     const r = await listMyClassifiedListings(supabase(), uid);
     if (r.error) setError(friendlyError(r.error)); setItems(r.data ?? []);
+    setOffers((await myOfferCounts(supabase())).data);
   }
   useEffect(() => { void load(); }, []);
 
@@ -38,7 +39,8 @@ function MeusAnuncios() {
     {items?.map(x => <article key={x.id} className="card">
       {Array.isArray(x.media) && x.media[0] && <img className="thumb" src={x.media[0]} alt="" style={{ maxWidth: 240 }} />}
       <strong style={{ fontSize: 20 }}>{x.title}</strong>
-      <span><span className="badge">{STATUS_LABELS[x.status as keyof typeof STATUS_LABELS] ?? x.status}</span> · {formatPrice(x.price, x.currency)}</span>
+      <span><span className="badge">{STATUS_LABELS[x.status as keyof typeof STATUS_LABELS] ?? x.status}</span> · {listingPriceLabel(x)}{saleModeBadges(x).map(b => <span key={b}> · <span className="mode-badge">{b}</span></span>)}</span>
+      {offers[x.id] > 0 && <a href={"/classificados/" + x.id + "#propostas"} className="ok">💬 {offers[x.id]} proposta(s) à espera de resposta →</a>}
       {x.deal_with && <span>🤝 Negócio registado — <a href="/avaliacoes">avaliar</a></span>}
       <div className="row">
         <a className="btn secondary" href={"/classificados/" + x.id}>Ver</a>

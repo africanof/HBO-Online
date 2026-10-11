@@ -4,10 +4,11 @@ import { Image, Pressable, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
   createAndPublishClassifiedListing, updateClassifiedListing, friendlyError, listingTerritory, base64ToArrayBuffer,
-  LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice } from "@huambo-online/core";
+  LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice,
+  saleModesFor, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
-import { ui } from "../lib/ui";
+import { C, ui } from "../lib/ui";
 import { MarketPicker } from "./MarketPicker";
 import { VideoField } from "./Video";
 import { Button, Chips, Message } from "./Ui";
@@ -30,6 +31,13 @@ export function ListingForm({ listing, initialPurpose }: { listing?: any; initia
   const [budgetMin, setBudgetMin] = useState(listing?.budget_min != null ? String(listing.budget_min) : "");
   const [budgetMax, setBudgetMax] = useState(listing?.budget_max != null ? String(listing.budget_max) : "");
   const wanted = purpose === "wanted";
+  // Como vende: preço fixo, negociável, propostas, leilão ou troca (escolhido ao publicar).
+  const lockedAuction = listing?.purpose === "auction";
+  const [saleMode, setSaleMode] = useState<SaleMode | "">(listing?.sale_mode ?? "");
+  const [acceptsTrade, setAcceptsTrade] = useState<boolean>(!!listing?.accepts_trade);
+  const [tradeWants, setTradeWants] = useState<string>(listing?.trade_wants ?? "");
+  const [auctionDays, setAuctionDays] = useState("7");
+  const modes = lockedAuction ? [] : saleModesFor(purpose, listingType);
   const [categoryId, setCategoryId] = useState<string>(listing?.category_id ?? "");
   const [provinceId, setProvinceId] = useState(territory.provinceId ?? "");
   const [municipalityId, setMunicipalityId] = useState(territory.municipalityId ?? "");
@@ -85,8 +93,11 @@ export function ListingForm({ listing, initialPurpose }: { listing?: any; initia
     const budgetError = wanted ? validateBudget(minValue, maxValue) : null;
     if (budgetError) { setError(budgetError); return; }
     const priceValue = wanted ? budgetPrice(minValue, maxValue) : parsePrice(price);
-    const invalid = validateClassifiedDraft({ listingType, purpose, title, description, price: priceValue, provinceId, municipalityId, photoCount: photos.length });
+    const invalid = validateClassifiedDraft({ listingType, purpose, title, description, price: priceValue, provinceId, municipalityId, photoCount: photos.length })
+      ?? (lockedAuction ? null : validateSaleMode({ purpose, listingType, saleMode, price: priceValue, auctionDays: Number(auctionDays), tradeWants, acceptsTrade }));
     if (invalid) { setError(invalid); return; }
+    const mode = modes.length ? (saleMode || undefined) as SaleMode | undefined : undefined;
+    const sale = lockedAuction ? { saleMode: "auction" as const, acceptsTrade: false } : { saleMode: mode, acceptsTrade: mode === "trade" || (canAlsoTrade(purpose, saleMode) && acceptsTrade), tradeWants };
     setBusy(true);
     try {
       const c = supabase();
@@ -104,11 +115,19 @@ export function ListingForm({ listing, initialPurpose }: { listing?: any; initia
         media.push(up.data);
       }
       setStatus(editing ? "A guardar…" : "A publicar…");
-      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media };
+      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale };
+      // O leilão começa logo depois de publicar (ou de guardar, ao mudar para leilão).
+      const startAuction = async (id: string) => {
+        if (mode !== "auction" || lockedAuction) return null;
+        setStatus("A abrir o leilão…");
+        const a = await startListingAuction(c, id, { startingPrice: priceValue ?? 0, days: Number(auctionDays) });
+        return a.error ?? null;
+      };
       if (editing) {
         const r = await updateClassifiedListing(c, listing.id, input);
         if (r.error) throw r.error;
         if (removed.length) await removeClassifiedMedia(c, removed);
+        const ae = await startAuction(listing.id); if (ae) throw ae;
         router.replace(("/classificados/" + listing.id) as any);
       } else {
         const r = await createAndPublishClassifiedListing(c, { ownerId: user.id, ...input });
@@ -116,6 +135,8 @@ export function ListingForm({ listing, initialPurpose }: { listing?: any; initia
           if (r.draftId) { router.replace(("/meus-anuncios?erro=" + encodeURIComponent(friendlyError(r.error))) as any); return; }
           throw r.error;
         }
+        const ae = await startAuction((r.data as any).id);
+        if (ae) { router.replace(("/meus-anuncios?erro=" + encodeURIComponent("o anúncio foi publicado, mas o leilão não abriu: " + friendlyError(ae))) as any); return; }
         router.replace(("/classificados/" + (r.data as any).id) as any);
       }
     } catch (err) {
@@ -137,8 +158,24 @@ export function ListingForm({ listing, initialPurpose }: { listing?: any; initia
       <View style={{ flex: 1, gap: 6 }}><Text style={ui.label}>Orçamento de (Kz)</Text><TextInput style={ui.input} keyboardType="decimal-pad" value={budgetMin} onChangeText={setBudgetMin} placeholder="20 000" /></View>
       <View style={{ flex: 1, gap: 6 }}><Text style={ui.label}>até (Kz)</Text><TextInput style={ui.input} keyboardType="decimal-pad" value={budgetMax} onChangeText={setBudgetMax} placeholder="25 000" /></View>
     </View> : <>
-      <Text style={ui.label}>Preço (Kz)</Text>
-      <TextInput style={ui.input} keyboardType="decimal-pad" value={price} onChangeText={setPrice} placeholder="Vazio = «sob consulta»" />
+      {modes.length > 0 && <View style={{ gap: 8 }}>
+        <Text style={ui.h2}>Como quer vender?</Text>
+        {modes.map(m => <Pressable key={m} accessibilityRole="radio" accessibilityState={{ checked: saleMode === m }} onPress={() => setSaleMode(m)}
+          style={{ borderWidth: 2, borderColor: saleMode === m ? C.blue : C.line, backgroundColor: saleMode === m ? "#EEF3FF" : C.white, borderRadius: 14, padding: 12, gap: 2 }}>
+          <Text style={ui.label}>{saleMode === m ? "◉ " : "○ "}{SALE_MODE_INFO[m].icon} {SALE_MODE_INFO[m].label}</Text>
+          <Text style={ui.muted}>{SALE_MODE_INFO[m].help}</Text>
+        </Pressable>)}
+      </View>}
+      {lockedAuction && <Text style={ui.label}>🔨 Este anúncio está em leilão.</Text>}
+      <Text style={ui.label}>{saleMode === "auction" ? "Preço inicial do leilão (Kz)" : saleMode === "offers" || saleMode === "trade" ? "Preço de referência (Kz, opcional)" : "Preço (Kz)"}</Text>
+      <TextInput style={ui.input} keyboardType="decimal-pad" value={price} onChangeText={setPrice} placeholder={saleMode === "fixed" || saleMode === "negotiable" || saleMode === "auction" ? "Ex.: 85 000" : "Vazio = «sob consulta»"} />
+      {saleMode === "auction" && !lockedAuction && <><Text style={ui.label}>Duração do leilão</Text>
+        <Chips options={["1", "3", "5", "7", "10", "14"].map(d => ({ value: d, label: d + (d === "1" ? " dia" : " dias") }))} value={auctionDays} onChange={setAuctionDays} /></>}
+      {canAlsoTrade(purpose, saleMode) && <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: acceptsTrade }} onPress={() => setAcceptsTrade(!acceptsTrade)} style={[ui.row, { alignItems: "center" }]}>
+        <Text style={{ fontSize: 26 }}>{acceptsTrade ? "☑" : "☐"}</Text><Text style={ui.label}>🔁 Também aceito troca</Text></Pressable>}
+      {(saleMode === "trade" || (canAlsoTrade(purpose, saleMode) && acceptsTrade)) && <>
+        <Text style={ui.label}>O que aceita em troca?</Text>
+        <TextInput style={ui.input} value={tradeWants} maxLength={300} onChangeText={setTradeWants} placeholder="Ex.: telemóvel Android, motorizada…" /></>}
     </>}
     <Text style={ui.label}>Categoria</Text>
     <Chips options={[{ value: "", label: "Sem categoria" }, ...categories.map(c => ({ value: c.id, label: c.name }))]} value={categoryId} onChange={setCategoryId} />

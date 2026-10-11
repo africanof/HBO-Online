@@ -4,7 +4,8 @@ import { MarketPicker } from "./MarketPicker";
 import { VideoField } from "./Video";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
   createAndPublishClassifiedListing, updateClassifiedListing, friendlyError, listingTerritory,
-  LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice } from "@huambo-online/core";
+  LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice,
+  saleModesFor, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
 
@@ -22,6 +23,13 @@ export function ListingForm({ listing, initialPurpose }: { listing?: any; initia
   const [budgetMin, setBudgetMin] = useState(listing?.budget_min != null ? String(listing.budget_min) : "");
   const [budgetMax, setBudgetMax] = useState(listing?.budget_max != null ? String(listing.budget_max) : "");
   const wanted = purpose === "wanted";
+  // Como vende: preço fixo, negociável, propostas, leilão ou troca (escolhido ao publicar).
+  const lockedAuction = listing?.purpose === "auction";
+  const [saleMode, setSaleMode] = useState<SaleMode | "">(listing?.sale_mode ?? (editing ? "" : ""));
+  const [acceptsTrade, setAcceptsTrade] = useState<boolean>(!!listing?.accepts_trade);
+  const [tradeWants, setTradeWants] = useState<string>(listing?.trade_wants ?? "");
+  const [auctionDays, setAuctionDays] = useState("7");
+  const modes = lockedAuction ? [] : saleModesFor(purpose, listingType);
   const [categoryId, setCategoryId] = useState(listing?.category_id ?? "");
   const [provinceId, setProvinceId] = useState(territory.provinceId ?? "");
   const [municipalityId, setMunicipalityId] = useState(territory.municipalityId ?? "");
@@ -80,8 +88,11 @@ export function ListingForm({ listing, initialPurpose }: { listing?: any; initia
     const budgetError = wanted ? validateBudget(minValue, maxValue) : null;
     if (budgetError) { setError(budgetError); return; }
     const priceValue = wanted ? budgetPrice(minValue, maxValue) : parsePrice(price);
-    const invalid = validateClassifiedDraft({ listingType, purpose, title, description, price: priceValue, provinceId, municipalityId, photoCount: photos.length });
+    const invalid = validateClassifiedDraft({ listingType, purpose, title, description, price: priceValue, provinceId, municipalityId, photoCount: photos.length })
+      ?? (lockedAuction ? null : validateSaleMode({ purpose, listingType, saleMode, price: priceValue, auctionDays: Number(auctionDays), tradeWants, acceptsTrade }));
     if (invalid) { setError(invalid); return; }
+    const mode = modes.length ? (saleMode || undefined) as SaleMode | undefined : undefined;
+    const sale = lockedAuction ? { saleMode: "auction" as const, acceptsTrade: false } : { saleMode: mode, acceptsTrade: mode === "trade" || (canAlsoTrade(purpose, saleMode) && acceptsTrade), tradeWants };
     setBusy(true);
     try {
       const c = supabase();
@@ -97,11 +108,19 @@ export function ListingForm({ listing, initialPurpose }: { listing?: any; initia
         media.push(up.data);
       }
       setStatus(editing ? "A guardar…" : "A publicar…");
-      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media };
+      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale };
+      // O leilão começa logo depois de publicar (ou de guardar, ao mudar para leilão).
+      const startAuction = async (id: string) => {
+        if (mode !== "auction" || lockedAuction) return null;
+        setStatus("A abrir o leilão…");
+        const a = await startListingAuction(c, id, { startingPrice: priceValue ?? 0, days: Number(auctionDays) });
+        return a.error ?? null;
+      };
       if (editing) {
         const r = await updateClassifiedListing(c, listing.id, input);
         if (r.error) throw r.error;
         if (removed.length) await removeClassifiedMedia(c, removed);
+        const ae = await startAuction(listing.id); if (ae) throw ae;
         window.location.href = "/classificados/" + listing.id;
       } else {
         const r = await createAndPublishClassifiedListing(c, { ownerId: user.id, ...input });
@@ -109,6 +128,8 @@ export function ListingForm({ listing, initialPurpose }: { listing?: any; initia
           if (r.draftId) { window.location.href = "/meus-anuncios?erro=" + encodeURIComponent(friendlyError(r.error)); return; }
           throw r.error;
         }
+        const ae = await startAuction((r.data as any).id);
+        if (ae) { window.location.href = "/meus-anuncios?erro=" + encodeURIComponent("o anúncio foi publicado, mas o leilão não abriu: " + friendlyError(ae)); return; }
         window.location.href = "/classificados/" + (r.data as any).id;
       }
     } catch (err) {
@@ -134,7 +155,22 @@ export function ListingForm({ listing, initialPurpose }: { listing?: any; initia
       {wanted ? <div className="row" style={{ flexWrap: "nowrap" }}>
         <label style={{ flex: 1 }}>Orçamento de (Kz)<input value={budgetMin} onChange={e => setBudgetMin(e.target.value)} inputMode="decimal" placeholder="Ex.: 20 000" /></label>
         <label style={{ flex: 1 }}>até (Kz)<input value={budgetMax} onChange={e => setBudgetMax(e.target.value)} inputMode="decimal" placeholder="Ex.: 25 000" /></label>
-      </div> : <label>Preço (Kz)<input value={price} onChange={e => setPrice(e.target.value)} inputMode="decimal" placeholder="Deixe vazio para «sob consulta»" /></label>}
+      </div> : <>
+        {modes.length > 0 && <fieldset className="stack sale-modes">
+          <legend>Como quer vender?</legend>
+          {modes.map(m => <label key={m} className={"mode" + (saleMode === m ? " on" : "")}>
+            <input type="radio" name="sale_mode" value={m} checked={saleMode === m} onChange={() => setSaleMode(m)} />
+            <span><strong>{SALE_MODE_INFO[m].icon} {SALE_MODE_INFO[m].label}</strong><small>{SALE_MODE_INFO[m].help}</small></span>
+          </label>)}
+        </fieldset>}
+        {lockedAuction && <p className="badge">🔨 Este anúncio está em leilão.</p>}
+        <label>{saleMode === "auction" ? "Preço inicial do leilão (Kz)" : saleMode === "offers" || saleMode === "trade" ? "Preço de referência (Kz, opcional)" : "Preço (Kz)"}
+          <input value={price} onChange={e => setPrice(e.target.value)} inputMode="decimal" placeholder={saleMode === "fixed" || saleMode === "negotiable" || saleMode === "auction" ? "Ex.: 85 000" : "Deixe vazio para «sob consulta»"} /></label>
+        {saleMode === "auction" && !lockedAuction && <label>Duração do leilão
+          <select value={auctionDays} onChange={e => setAuctionDays(e.target.value)}>{[1, 3, 5, 7, 10, 14].map(d => <option key={d} value={d}>{d} dia{d > 1 ? "s" : ""}</option>)}</select></label>}
+        {canAlsoTrade(purpose, saleMode) && <label className="check"><input type="checkbox" checked={acceptsTrade} onChange={e => setAcceptsTrade(e.target.checked)} /> 🔁 Também aceito troca</label>}
+        {(saleMode === "trade" || (canAlsoTrade(purpose, saleMode) && acceptsTrade)) && <label>O que aceita em troca?<input value={tradeWants} maxLength={300} onChange={e => setTradeWants(e.target.value)} placeholder="Ex.: telemóvel Android, motorizada, ou diga «estou aberto a ofertas»" /></label>}
+      </>}
       <label>Categoria
         <select value={categoryId} onChange={e => setCategoryId(e.target.value)}>
           <option value="">Sem categoria</option>
