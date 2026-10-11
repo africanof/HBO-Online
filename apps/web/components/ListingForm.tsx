@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { MarketPicker } from "./MarketPicker";
+import { VideoField } from "./Video";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
   createAndPublishClassifiedListing, updateClassifiedListing, friendlyError, listingTerritory,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES } from "@huambo-online/core";
@@ -22,6 +23,7 @@ export function ListingForm({ listing }: { listing?: any }) {
   const [provinceId, setProvinceId] = useState(territory.provinceId ?? "");
   const [municipalityId, setMunicipalityId] = useState(territory.municipalityId ?? "");
   const [marketId, setMarketId] = useState<string>(listing?.market_id ?? "");
+  const [videoUrl, setVideoUrl] = useState<string>(listing?.video_url ?? "");
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, src: u })));
   const [removed, setRemoved] = useState<string[]>([]);
   const [categories, setCategories] = useState<Option[]>([]);
@@ -89,7 +91,7 @@ export function ListingForm({ listing }: { listing?: any }) {
         media.push(up.data);
       }
       setStatus(editing ? "A guardar…" : "A publicar…");
-      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, media };
+      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, media };
       if (editing) {
         const r = await updateClassifiedListing(c, listing.id, input);
         if (r.error) throw r.error;
@@ -154,6 +156,7 @@ export function ListingForm({ listing }: { listing?: any }) {
           ))}
         </div>
       </fieldset>
+      <VideoField value={videoUrl} onChange={setVideoUrl} />
       {error && <p className="error" role="alert">{error}</p>}
       {status && <p role="status">{status}</p>}
       <button type="submit" disabled={busy}>{busy ? (status || "Aguarde…") : editing ? "Guardar alterações" : "Publicar anúncio"}</button>

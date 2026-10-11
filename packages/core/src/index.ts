@@ -52,3 +52,4 @@ export * from "./listing-auctions";
 export * from "./delivery";
 export * from "./design";
 export * from "./markets";
+export * from "./videos";

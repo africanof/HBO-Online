@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Gallery } from "../../../components/Video";
 import { useParams } from "next/navigation";
 import { getProduct, addToMyCart, getPublicProfile, formatPrice, friendlyError } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
@@ -8,7 +9,7 @@ import { SaveButton, ShareButton, useRecordView } from "../../../components/Enga
 export default function Produto() {
   const { id } = useParams<{ id: string }>();
   const [p, setP] = useState<any>(null); const [seller, setSeller] = useState(""); const [uid, setUid] = useState<string | null>(null);
-  const [qty, setQty] = useState(1); const [photo, setPhoto] = useState(0); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
+  const [qty, setQty] = useState(1); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
   useEffect(() => { if (!id) return; void (async () => {
     const c = supabase(); const r = await getProduct(c, id);
     if (r.error) { setError(friendlyError(r.error)); return; }
@@ -32,12 +33,7 @@ export default function Produto() {
   return <main className="stack">
     <a href="/loja">← Loja{p.categories?.name ? " › " + p.categories.name : ""}</a>
     <div className="itempage">
-      <section className="gallery" aria-label="Fotografias">
-        {media.length === 0 ? <div className="gallery-empty" aria-hidden>📦</div> : <>
-          <div className="thumbs">{media.length > 1 && media.map((m, i) => <button key={m} type="button" aria-current={i === photo} onClick={() => setPhoto(i)} aria-label={`Fotografia ${i + 1}`}><img src={m} alt="" /></button>)}</div>
-          <img className="gallery-main" src={media[photo]} alt={`Fotografia ${photo + 1}`} style={media.length === 1 ? { gridColumn: "1 / -1" } : undefined} />
-        </>}
-      </section>
+      <Gallery media={media} video={p.video_url} icon={"📦"} title={p.name} />
       <section className="buybox">
         <h1>{p.name}</h1>
         {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>🏪</span><span>Vendedor: <a href={"/vendedor/" + p.seller_id}><strong>{seller}</strong></a><br /><a href={"/vendedor/" + p.seller_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver a loja do vendedor</a></span></div>}

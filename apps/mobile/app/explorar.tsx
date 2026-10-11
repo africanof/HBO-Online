@@ -74,7 +74,7 @@ export default function Explorar() {
     <Message error={error} ok={notice} />
     {items !== null && <Text style={ui.label}>{items.length} resultado(s)</Text>}
     {items?.length === 0 && <View style={ui.card}><Text style={ui.text}>Nenhum anúncio encontrado. Experimente outras palavras ou menos filtros.</Text><Link href="/classificados/publicar" style={ui.link}>Publique o primeiro →</Link></View>}
-    <Grid>{items?.map(x => <ItemCard key={x.id} width={cardW} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={formatPrice(x.price, x.currency)}
+    <Grid>{items?.map(x => <ItemCard key={x.id} video={!!x.video_url} width={cardW} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={formatPrice(x.price, x.currency)}
       icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : undefined} tagRed={x.purpose === "auction"}
       meta={timeAgo(x.published_at ?? x.created_at)} />)}</Grid>
   </ScrollView>;

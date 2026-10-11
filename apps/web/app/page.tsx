@@ -24,7 +24,7 @@ export default function Home() {
     }));
   }, []);
 
-  const listingCard = (x: any) => <ItemCard key={x.id} href={"/classificados/" + x.id} media={x.media} title={x.title} price={formatPrice(x.price, x.currency)}
+  const listingCard = (x: any) => <ItemCard key={x.id} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={formatPrice(x.price, x.currency)}
     icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : undefined}
     tagRed={x.purpose === "auction"} meta={timeAgo(x.published_at ?? x.created_at)} />;
 

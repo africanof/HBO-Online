@@ -6,8 +6,8 @@ import { C } from "../lib/ui";
 export const LISTING_ICON: Record<string, string> = { real_estate: "🏠", vehicle: "🚗", product: "📦", service: "🛠️", classified: "🏷️" };
 
 /** Cartão de artigo ao estilo eBay: fotografia quadrada, título em duas linhas, preço forte. */
-export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = "📦", width }: {
-  href: string; media?: unknown; title: string; price: string; meta?: string; tag?: string; tagRed?: boolean; icon?: string; width?: number | `${number}%`;
+export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = "📦", width, video }: {
+  href: string; media?: unknown; title: string; price: string; meta?: string; tag?: string; tagRed?: boolean; icon?: string; width?: number | `${number}%`; video?: boolean;
 }) {
   const photo = firstPhoto(media);
   return <Link href={href as any} asChild>
@@ -15,6 +15,7 @@ export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = 
       <View style={s.img}>
         {photo ? <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : <Text style={{ fontSize: 44 }}>{icon}</Text>}
         {!!tag && <View style={[s.tag, tagRed && { backgroundColor: C.red }]}><Text style={[s.tagText, tagRed && { color: C.white }]}>{tag}</Text></View>}
+        {!!video && <View style={s.video}><Text style={s.videoText}>▶ Vídeo</Text></View>}
       </View>
       <Text style={s.title} numberOfLines={2}>{title}</Text>
       <Text style={s.price}>{price}</Text>
@@ -40,6 +41,8 @@ const s = StyleSheet.create({
   card: { width: 160, gap: 4 },
   img: { width: "100%", aspectRatio: 1, borderRadius: 16, backgroundColor: C.surface, overflow: "hidden", alignItems: "center", justifyContent: "center", marginBottom: 4 },
   tag: { position: "absolute", left: 8, top: 8, backgroundColor: C.white, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
+  video: { position: "absolute", right: 8, bottom: 8, backgroundColor: "rgba(0,0,0,0.75)", borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
+  videoText: { fontSize: 12, fontWeight: "800", color: C.white },
   tagText: { fontSize: 12, fontWeight: "800", color: C.ink },
   title: { fontSize: 15, color: C.ink, lineHeight: 20 },
   price: { fontSize: 19, fontWeight: "800", color: C.ink },

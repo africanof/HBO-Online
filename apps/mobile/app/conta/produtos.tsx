@@ -7,12 +7,13 @@ import { listMyProducts, saveProduct, deleteProduct, listProductCategories, uplo
 import { supabase, currentUserId } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { MarketPicker } from "../../components/MarketPicker";
+import { VideoField } from "../../components/Video";
 import { Button, Chips, Message } from "../../components/Ui";
 import { useTerritory } from "../../components/Directory";
 
 type Option = { id: string; name: string };
 type Photo = { key: string; uri: string; base64?: string | null; mimeType?: string; remote?: boolean };
-const empty = { name: "", description: "", price: "", stock: "1", categoryId: "", municipalityId: "", marketId: "", active: true };
+const empty = { name: "", description: "", price: "", stock: "1", categoryId: "", municipalityId: "", marketId: "", videoUrl: "", active: true };
 
 export default function MeusProdutos() {
   const router = useRouter(); const scroll = useRef<ScrollView>(null);
@@ -37,7 +38,7 @@ export default function MeusProdutos() {
   }
   function edit(p: any) {
     setEditing(p.id); setRemoved([]);
-    setForm({ name: p.name, description: p.description ?? "", price: String(p.price), stock: String(p.stock), categoryId: p.category_id ?? "", municipalityId: p.municipality_id ?? "", marketId: p.market_id ?? "", active: p.active });
+    setForm({ name: p.name, description: p.description ?? "", price: String(p.price), stock: String(p.stock), categoryId: p.category_id ?? "", municipalityId: p.municipality_id ?? "", marketId: p.market_id ?? "", videoUrl: p.video_url ?? "", active: p.active });
     setPhotos((Array.isArray(p.media) ? p.media : []).map((u: string) => ({ key: u, uri: u, remote: true })));
     scroll.current?.scrollToEnd();
   }
@@ -56,7 +57,7 @@ export default function MeusProdutos() {
         media.push(up.data);
       }
       const r = await saveProduct(supabase(), uid, { name: form.name, description: form.description, price: parsePrice(form.price) ?? NaN, stock: Number(form.stock),
-        categoryId: form.categoryId, municipalityId: form.municipalityId, marketId: form.marketId, media, active: form.active }, editing ?? undefined);
+        categoryId: form.categoryId, municipalityId: form.municipalityId, marketId: form.marketId, videoUrl: form.videoUrl, media, active: form.active }, editing ?? undefined);
       if (r.error) throw r.error;
       if (removed.length) await removeClassifiedMedia(supabase(), removed);
       setNotice(editing ? "Produto atualizado." : "Produto publicado na loja."); reset(); await load(uid);
@@ -88,6 +89,7 @@ export default function MeusProdutos() {
       <Text style={ui.label}>Província</Text><Chips options={provinces.map(p => ({ value: p.id, label: p.name }))} value={provinceId} onChange={v => { setProvinceId(v); set("municipalityId")(""); }} />
       <Text style={ui.label}>Município</Text><Chips options={municipalities.map(m => ({ value: m.id, label: m.name }))} value={form.municipalityId} onChange={set("municipalityId")} />
       <MarketPicker value={form.marketId} onChange={v => setForm({ ...form, marketId: v })} />
+      <VideoField value={form.videoUrl} onChange={v => setForm(f => ({ ...f, videoUrl: v }))} />
       <Text style={ui.label}>Fotografias ({photos.length}/{MAX_PRODUCT_PHOTOS})</Text>
       <Button title="📷 Selecionar fotografias" variant="secondary" disabled={photos.length >= MAX_PRODUCT_PHOTOS} onPress={() => void pick()} />
       <View style={ui.row}>{photos.map((p, i) => <View key={p.key} style={{ width: 100, gap: 6 }}>

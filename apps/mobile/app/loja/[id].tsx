@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { VideoPlayer } from "../../components/Video";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { getProduct, addToMyCart, getPublicProfile, formatPrice, friendlyError } from "@huambo-online/core";
@@ -44,6 +45,7 @@ export default function Produto() {
       <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: "#eee" }} resizeMode="contain" />
       {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} style={{ borderWidth: 3, borderColor: i === photo ? "#111" : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}
     </View>}
+    {!!p.video_url && <VideoPlayer url={p.video_url} />}
     {!!p.description && <Text style={ui.text}>{p.description}</Text>}
     {!mine && <SaveButton kind="product" id={id} />}
     <ShareButton kind="product" id={id} title={p.name} />

@@ -148,6 +148,8 @@ main > a:first-child { font-size: 15px; display: inline-block; margin-bottom: 4p
 /* Página do artigo: galeria à esquerda, caixa de compra à direita */
 .itempage { display: grid; gap: 28px; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 1fr); align-items: start; }
 .gallery { display: grid; gap: 10px; grid-template-columns: 76px 1fr; align-items: start; }
+.gallery.single { grid-template-columns: 1fr; }
+.item-video { position: absolute; right: 10px; bottom: 10px; background: rgba(0,0,0,.75); color: #fff; font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: var(--pill); }
 .gallery-main { width: 100%; aspect-ratio: 1/1; object-fit: contain; background: var(--surface); border-radius: var(--radius); }
 .gallery-empty { width: 100%; aspect-ratio: 1/1; background: var(--surface); border-radius: var(--radius); display: grid; place-items: center; font-size: 96px; grid-column: 1 / -1; }
 .thumbs { display: grid; gap: 8px; }

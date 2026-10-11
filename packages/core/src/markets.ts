@@ -45,8 +45,8 @@ export async function getMarket(client: SupabaseClient, id: string) {
 /** O que se vende na praça: anúncios publicados, produtos e lojas/empresas. */
 export async function listMarketContents(client: SupabaseClient, marketId: string) {
   const [listings, products, businesses] = await Promise.all([
-    client.from("classified_listings").select("id,title,price,currency,media,purpose,listing_type,created_at").eq("market_id", marketId).eq("status", "published").order("created_at", { ascending: false }).limit(60),
-    client.from("products").select("id,name,price,currency,stock,media,seller_id").eq("market_id", marketId).eq("active", true).order("created_at", { ascending: false }).limit(60),
+    client.from("classified_listings").select("id,title,price,currency,media,purpose,listing_type,created_at,video_url").eq("market_id", marketId).eq("status", "published").order("created_at", { ascending: false }).limit(60),
+    client.from("products").select("id,name,price,currency,stock,media,seller_id,video_url").eq("market_id", marketId).eq("active", true).order("created_at", { ascending: false }).limit(60),
     client.from("businesses").select("id,name,description,logo_url,verified,phone").eq("market_id", marketId).eq("active", true).order("name").limit(60)
   ]);
   return { listings: listings.data ?? [], products: products.data ?? [], businesses: businesses.data ?? [], error: listings.error ?? products.error ?? businesses.error };

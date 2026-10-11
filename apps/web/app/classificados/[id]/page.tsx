@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Gallery } from "../../../components/Video";
 import { useParams } from "next/navigation";
 import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
   reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS } from "@huambo-online/core";
@@ -20,7 +21,6 @@ export default function ClassifiedDetail() {
   const [notice, setNotice] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const [photo, setPhoto] = useState(0);
   const [reporting, setReporting] = useState(false);
   const [reason, setReason] = useState("");
 
@@ -91,12 +91,7 @@ export default function ClassifiedDetail() {
     <a href={"/explorar?tipo=" + item.listing_type}>← Classificados › {typeLabel}</a>
     {item.status !== "published" && <p className="badge">{STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] ?? item.status} — só você vê este anúncio</p>}
     <div className="itempage">
-      <section className="gallery" aria-label="Fotografias">
-        {media.length === 0 ? <div className="gallery-empty" aria-hidden>🏷️</div> : <>
-          <div className="thumbs">{media.length > 1 && media.map((m, i) => <button key={m} type="button" aria-current={i === photo} onClick={() => setPhoto(i)} aria-label={`Ver fotografia ${i + 1}`}><img src={m} alt="" /></button>)}</div>
-          <img className="gallery-main" src={media[photo]} alt={`Fotografia ${photo + 1} de ${media.length}`} style={media.length === 1 ? { gridColumn: "1 / -1" } : undefined} />
-        </>}
-      </section>
+      <Gallery media={media} video={item.video_url} icon={"🏷️"} title={item.title} />
       <section className="buybox">
         <h1>{item.title}</h1>
         {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>👤</span><span>Anunciante: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver outros anúncios</a></span></div>}

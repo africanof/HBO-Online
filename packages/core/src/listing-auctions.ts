@@ -58,5 +58,5 @@ export async function getPublicSeller(client: SupabaseClient, userId: string) {
   return client.rpc("public_seller", { p_user_id: userId }).maybeSingle<PublicSeller>();
 }
 export async function listSellerListings(client: SupabaseClient, ownerId: string) {
-  return client.from("classified_listings").select("id,title,price,currency,media,purpose,listing_type,created_at").eq("owner_id", ownerId).eq("status", "published").order("created_at", { ascending: false }).limit(60);
+  return client.from("classified_listings").select("id,title,price,currency,media,purpose,listing_type,created_at,video_url").eq("owner_id", ownerId).eq("status", "published").order("created_at", { ascending: false }).limit(60);
 }

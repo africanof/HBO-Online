@@ -27,7 +27,7 @@ export function formatPrice(price: number | string | null | undefined, currency 
 export interface ClassifiedDraftInput {
   ownerId: string; categoryId?: string; addressId?: string; listingType: ClassifiedListingType;
   purpose: ClassifiedPurpose; title: string; description?: string; price?: number;
-  provinceId?: string; municipalityId?: string; marketId?: string;
+  provinceId?: string; municipalityId?: string; marketId?: string; videoUrl?: string;
   attributes?: Record<string, unknown>; media?: string[];
 }
 
@@ -134,7 +134,7 @@ export async function createClassifiedListing(client: SupabaseClient, input: Cla
     owner_id: input.ownerId, category_id: input.categoryId || null, address_id: input.addressId || null,
     listing_type: input.listingType, purpose: input.purpose, title: input.title.trim(),
     description: input.description?.trim() || null, price: input.price ?? null,
-    attributes: buildAttributes(input), media: input.media || [], market_id: input.marketId || null
+    attributes: buildAttributes(input), media: input.media || [], market_id: input.marketId || null, video_url: input.videoUrl || null
   }).select().single();
 }
 
@@ -151,7 +151,7 @@ export async function updateClassifiedListing(client: SupabaseClient, id: string
   return client.from("classified_listings").update({
     category_id: input.categoryId || null, listing_type: input.listingType, purpose: input.purpose,
     title: input.title.trim(), description: input.description?.trim() || null, price: input.price ?? null,
-    attributes: buildAttributes(input), media: input.media || [], market_id: input.marketId || null, updated_at: new Date().toISOString()
+    attributes: buildAttributes(input), media: input.media || [], market_id: input.marketId || null, video_url: input.videoUrl || null, updated_at: new Date().toISOString()
   }).eq("id", id).select().single();
 }
 
@@ -163,7 +163,7 @@ export async function listMyClassifiedListings(client: SupabaseClient, ownerId: 
   return client.from("classified_listings").select(LISTING_COLUMNS).eq("owner_id", ownerId).order("created_at", { ascending: false });
 }
 
-const LISTING_COLUMNS = "id,owner_id,category_id,address_id,listing_type,purpose,title,description,price,currency,attributes,media,status,featured,created_at,updated_at,market_id";
+const LISTING_COLUMNS = "id,owner_id,category_id,address_id,listing_type,purpose,title,description,price,currency,attributes,media,status,featured,created_at,updated_at,market_id,video_url";
 
 export async function listClassifiedListings(client: SupabaseClient, filters: {
   listingType?: ClassifiedListingType; purpose?: ClassifiedPurpose; categoryId?: string; limit?: number;
