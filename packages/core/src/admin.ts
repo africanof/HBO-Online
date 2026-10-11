@@ -4,6 +4,8 @@ export type AdminRole = "user" | "moderator" | "admin";
 export type AdminStats = {
   users: number; users_7d: number; users_suspended: number; listings_published: number; listings_total: number;
   listings_7d: number; reports_open: number; conversations: number; messages_7d: number;
+  products_active?: number; providers?: number; businesses?: number; orders_30d?: number; orders_completed_30d?: number; sales_value_30d?: number;
+  services_30d?: number; services_done_30d?: number; deals_30d?: number; reviews_30d?: number; verifications_pending?: number;
 };
 export type ReportStatus = "open" | "reviewing" | "resolved" | "dismissed";
 export type UserStatus = "active" | "suspended" | "banned";
@@ -15,7 +17,10 @@ export const ROLE_LABELS: Record<AdminRole, string> = { user: "Utilizador", mode
 export const ADMIN_STAT_LABELS: [keyof AdminStats, string][] = [
   ["users", "Utilizadores"], ["users_7d", "Novos (7 dias)"], ["users_suspended", "Suspensos"],
   ["listings_published", "Anúncios publicados"], ["listings_total", "Anúncios (total)"], ["listings_7d", "Anúncios novos (7 dias)"],
-  ["reports_open", "Denúncias por tratar"], ["conversations", "Conversas"], ["messages_7d", "Mensagens (7 dias)"]
+  ["reports_open", "Denúncias por tratar"], ["verifications_pending", "Verificações por analisar"], ["conversations", "Conversas"], ["messages_7d", "Mensagens (7 dias)"],
+  ["products_active", "Produtos na loja"], ["providers", "Profissionais"], ["businesses", "Empresas"],
+  ["orders_30d", "Encomendas (30 dias)"], ["orders_completed_30d", "Encomendas concluídas (30 dias)"], ["sales_value_30d", "Vendas concluídas em Kz (30 dias)"],
+  ["services_30d", "Pedidos de serviço (30 dias)"], ["services_done_30d", "Serviços prestados (30 dias)"], ["deals_30d", "Negócios em anúncios (30 dias)"], ["reviews_30d", "Avaliações (30 dias)"]
 ];
 
 export function canModerate(role: string | null | undefined) { return role === "moderator" || role === "admin"; }

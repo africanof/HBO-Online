@@ -6,6 +6,7 @@ import { getProduct, addToMyCart, getPublicProfile, formatPrice, friendlyError }
 import { supabase } from "../../../lib/supabase";
 import { SaveButton, ShareButton, useRecordView } from "../../../components/Engage";
 import { SellerBadge } from "../../../components/Reputation";
+import { ReportButton } from "../../../components/Trust";
 
 export default function Produto() {
   const { id } = useParams<{ id: string }>();
@@ -59,5 +60,6 @@ export default function Produto() {
       </section>
     </div>
     {p.description && <section className="card"><h2 style={{ margin: 0 }}>Descrição</h2><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{p.description}</p></section>}
+    {!mine && <ReportButton type="product" id={id} label="Denunciar este produto" />}
   </main>;
 }

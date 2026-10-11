@@ -16,7 +16,10 @@ const pages = [
   { path: "/conta/criar", expect: "Criar conta" },
   { path: "/historico", expect: "Vistos recentemente" },
   { path: "/avaliacoes", expect: "Inicie sessão" },
-  { path: "/servicos", expect: "Inicie sessão" }
+  { path: "/servicos", expect: "Inicie sessão" },
+  { path: "/conta/verificacao", expect: "Verificar perfil" },
+  { path: "/robots.txt", expect: "Sitemap" },
+  { path: "/sitemap.xml", expect: "/explorar" }
 ];
 const badText = [/Serviço indisponível/i, /configuração do Supabase em falta/i, /permission denied/i, /Application error/i, /row-level security/i];
 

@@ -2,7 +2,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { listMyServiceRequests, updateServiceRequest, confirmService, serviceActions, validateReview, friendlyError,
-  SERVICE_STATUS_LABELS, SERVICE_ACTION_LABELS, type ServiceRequest, type ServiceAction } from "@huambo-online/core";
+  SERVICE_STATUS_LABELS, SERVICE_ACTION_LABELS, formatPreferredDate, type ServiceRequest, type ServiceAction } from "@huambo-online/core";
 import { currentUserId, supabase } from "../../lib/supabase";
 import { StarPicker } from "../../components/Reputation";
 
@@ -54,6 +54,7 @@ function Servicos() {
     {items?.map(s => <article key={s.id} className="card">
       <strong style={{ fontSize: 19 }}>{as === "client" ? <a href={s.provider_id ? "/profissionais/" + s.provider_id : "/empresas/" + s.business_id}>{s.target_name}</a> : s.client_name} · <span className="badge">{SERVICE_STATUS_LABELS[s.status]}</span></strong>
       <span style={{ whiteSpace: "pre-wrap" }}>{s.description}</span>
+      {s.preferred_date && <span>📅 {formatPreferredDate(s.preferred_date)}</span>}
       {s.provider_note && <span>💬 {s.provider_note}</span>}
       <small>{new Date(s.created_at).toLocaleString("pt-AO")}</small>
       <div className="row">{serviceActions(s.status, as).map(a => a === "confirm"

@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "expo-router";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { getUserStats, requestService, validateServiceRequest, sellerBadge, friendlyError, validateReview, submitDealReview, listDealCandidates, setListingDeal,
-  updateClassifiedStatus, finalDealStatus, DEAL_ROLE_LABELS, type UserStats, type PendingReview, type DealCandidate } from "@huambo-online/core";
+  updateClassifiedStatus, finalDealStatus, quickDates, DEAL_ROLE_LABELS, type UserStats, type PendingReview, type DealCandidate } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
-import { Button, Message } from "./Ui";
+import { Button, Chips, Message } from "./Ui";
 
 const DEAL_BUTTON = { sold: "Marcar vendido", rented: "Marcar arrendado", closed: "Fechar" } as const;
 export const stars = (n: number) => "★".repeat(n) + "☆".repeat(Math.max(0, 5 - n));
@@ -44,19 +44,21 @@ export function SellerBadge({ userId }: { userId?: string | null }) {
 
 /** Caixa «Pedir serviço» nas páginas de profissionais e empresas. */
 export function RequestServiceBox({ target, signedIn }: { target: { providerId?: string; businessId?: string }; signedIn: boolean }) {
-  const [text, setText] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [done, setDone] = useState(false);
+  const [text, setText] = useState(""); const [date, setDate] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [done, setDone] = useState(false);
   async function send() {
     if (!signedIn) { setError("Inicie sessão para pedir um serviço."); return; }
     const v = validateServiceRequest(text); if (v) { setError(v); return; }
     setBusy(true); setError("");
-    const r = await requestService(supabase(), target, text); setBusy(false);
-    if (r.error) setError(friendlyError(r.error)); else { setDone(true); setText(""); }
+    const r = await requestService(supabase(), target, text, date); setBusy(false);
+    if (r.error) setError(friendlyError(r.error)); else { setDone(true); setText(""); setDate(""); }
   }
   return <View style={ui.card}>
     <Text style={ui.h2}>🛠️ Pedir serviço</Text>
     {done ? <><Text style={ui.ok}>Pedido enviado!</Text><Link href={"/servicos" as any} style={ui.link}>Acompanhar pedidos de serviço →</Link></> : <>
       <Text style={ui.text}>Diga o que precisa. Quando o serviço terminar, confirma e avalia — a avaliação fica marcada «✔ Serviço confirmado».</Text>
       <TextInput style={[ui.input, ui.area]} multiline value={text} onChangeText={setText} placeholder="Ex.: Instalar 3 tomadas na sala, no bairro São João." />
+      <Text style={ui.label}>Para quando? (opcional)</Text>
+      <Chips options={[{ value: "", label: "Sem data" }, ...quickDates(7)]} value={date} onChange={setDate} />
       <Message error={error} />
       <Button title={busy ? "A enviar…" : "Enviar pedido de serviço"} disabled={busy} onPress={() => void send()} />
     </>}

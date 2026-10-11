@@ -12,7 +12,7 @@
         "expo-image-picker",
         {
           "photosPermission": "O Huambo Online usa a galeria para escolher fotografias e vídeos dos seus anúncios e para pesquisar por fotografia.",
-          "cameraPermission": "O Huambo Online usa a câmara para fotografar artigos e pesquisar por fotografia."
+          "cameraPermission": "O Huambo Online usa a câmara para fotografar artigos, pesquisar por fotografia e fotografar documentos para verificar o perfil."
         }
       ]
     ],
