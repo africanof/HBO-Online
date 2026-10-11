@@ -1,13 +1,15 @@
 import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted } from "@huambo-online/core";
+import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted, loadWithCache, isOfflineError } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
 import { Button } from "../components/Ui";
 import { NotificationBell } from "../components/NotificationBell";
 import { Logo, SearchBar } from "../components/Brand";
 import { ItemCard, Shelf, LISTING_ICON } from "../components/ItemCard";
+import { OfflineBanner } from "../components/Offline";
+import { deviceStore } from "../components/Engage";
 
 type Shelves = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[] };
 
@@ -20,17 +22,28 @@ export default function Home() {
   const router = useRouter();
   const [s, setS] = useState<Shelves | null>(null);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
   useFocusEffect(useCallback(() => {
     if (!supabaseConfigured) { setS({ listings: [], auctions: [], rentals: [], products: [], providers: [], markets: [], wanted: [] }); return; }
     const c = supabase();
     void c.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
-    void Promise.all([
-      searchClassifiedListings(c, { limit: 12 }), searchClassifiedListings(c, { purpose: "auction", limit: 12 }),
-      searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c), listWanted(c, "", 12)
-    ]).then(([l, a, r, p, v, mk, w]) => setS({
-      listings: (l.data as any[]) ?? [], auctions: (a.data as any[]) ?? [], rentals: (r.data as any[]) ?? [],
-      products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? [], wanted: (w.data as any[]) ?? []
-    }));
+    // Guarda a página inicial para a mostrar quando não houver internet.
+    void loadWithCache<Shelves>(deviceStore, "inicio", async () => {
+      const all = await Promise.all([
+        searchClassifiedListings(c, { limit: 12 }), searchClassifiedListings(c, { purpose: "auction", limit: 12 }),
+        searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c), listWanted(c, "", 12)
+      ]);
+      const netError = all.map(r => r.error).find(e => isOfflineError(e));
+      if (netError) return { data: null, error: netError };
+      const [l, a, r, p, v, mk, w] = all;
+      return { data: {
+        listings: (l.data as any[]) ?? [], auctions: (a.data as any[]) ?? [], rentals: (r.data as any[]) ?? [],
+        products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? [], wanted: (w.data as any[]) ?? []
+      } };
+    }).then(res => {
+      setOffline({ on: res.fromCache || isOfflineError(res.error), at: res.savedAt });
+      setS(res.data ?? { listings: [], auctions: [], rentals: [], products: [], providers: [], markets: [], wanted: [] });
+    });
   }, []));
 
   const listing = (x: any) => <ItemCard key={x.id} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
@@ -40,6 +53,7 @@ export default function Home() {
   return <ScrollView contentContainerStyle={[ui.screen, { gap: 22 }]} keyboardShouldPersistTaps="handled">
     <View style={st.top}><Logo /><NotificationBell /></View>
     <SearchBar />
+    <OfflineBanner show={offline.on} savedAt={offline.at} />
 
     {signedIn === false && <View style={st.welcome}>
       <Text style={ui.text}>Entre para comprar, vender e guardar favoritos.</Text>

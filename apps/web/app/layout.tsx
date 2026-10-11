@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SiteHeader, SiteFooter } from "../components/SiteHeader";
+import { ConnectionWatcher } from "../components/Offline";
 import { SITE_URL } from "../lib/site";
 
 export const metadata: Metadata = {
@@ -14,5 +15,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#3665F3", width: "device-width", initialScale: 1, colorScheme: "only light" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="pt-AO" style={{ colorScheme: "only light", background: "#fff" }}><body><SiteHeader />{children}<SiteFooter /></body></html>;
+  return <html lang="pt-AO" style={{ colorScheme: "only light", background: "#fff" }}><body><ConnectionWatcher /><SiteHeader />{children}<SiteFooter /></body></html>;
 }

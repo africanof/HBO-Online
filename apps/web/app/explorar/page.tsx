@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyError, parsePrice, readExploreParams, timeAgo,
+import { loadWithCache, isOfflineError, searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyError, parsePrice, readExploreParams, timeAgo,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, type ClassifiedSearchFilters, listingPriceLabel } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../../components/ItemCard";
+import { OfflineBanner } from "../../components/Offline";
+import { browserStore } from "../../components/Engage";
 
 type Option = { id: string; name: string };
 type F = { q: string; purpose: string; type: string; categoryId: string; provinceId: string; municipalityId: string; min: string; max: string };
@@ -13,6 +15,7 @@ export default function ExplorarPage() {
   const [f, setF] = useState<F>(EMPTY);
   const [name, setName] = useState(""); const [showFilters, setShowFilters] = useState(false);
   const [categories, setCategories] = useState<Option[]>([]); const [provinces, setProvinces] = useState<Option[]>([]); const [municipalities, setMunicipalities] = useState<Option[]>([]);
+  const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -35,9 +38,13 @@ export default function ExplorarPage() {
   }
   async function search(v = f) {
     setError(""); setNotice(""); setBusy(true);
-    const r = await searchClassifiedListings(supabase(), toFilters(v));
+    const fl = toFilters(v); const key = JSON.stringify(fl);
+    // Guarda a última pesquisa para a mostrar quando a rede falhar.
+    const r = await loadWithCache<{ key: string; items: any[] }>(browserStore, "explorar", async () => { const x = await searchClassifiedListings(supabase(), fl); return { data: x.data ? { key, items: x.data as any[] } : null, error: x.error }; });
+    const usable = r.data && r.data.key === key ? r.data.items : null;
+    setOffline({ on: r.fromCache || isOfflineError(r.error), at: usable ? r.savedAt : null });
     setBusy(false);
-    if (r.error) setError(friendlyError(r.error)); else setItems((r.data ?? []) as any[]);
+    if (r.error && !isOfflineError(r.error)) setError(friendlyError(r.error)); else setItems(usable ?? []);
   }
   function quick(patch: Partial<F>) { const v = { ...f, ...patch }; setF(v); void search(v); }
   async function save() {
@@ -77,6 +84,7 @@ export default function ExplorarPage() {
       </form>
       <section className="stack" aria-label="Resultados">
         <div className="results-bar"><strong>{items === null ? "A carregar…" : `${items.length} resultado(s)`}</strong><a href="/classificados/publicar">+ Publicar anúncio</a></div>
+        <OfflineBanner show={offline.on} savedAt={offline.at} />
         {error && <p className="error" role="alert">{error}</p>}
         {notice && <p className="ok" role="status">{notice}</p>}
         {items?.length === 0 && <div className="card"><strong>Nenhum anúncio encontrado.</strong><span>Experimente outras palavras ou menos filtros, ou <a href="/classificados/publicar">publique o primeiro!</a></span></div>}

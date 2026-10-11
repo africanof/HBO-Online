@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams } from "expo-router";
 import { ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
-import { searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyError, parsePrice,
+import { loadWithCache, isOfflineError, searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyError, parsePrice,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, readExploreParams, timeAgo, type ClassifiedSearchFilters, listingPriceLabel } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
 import { SearchBar } from "../components/Brand";
 import { ItemCard, Grid, LISTING_ICON } from "../components/ItemCard";
+import { OfflineBanner } from "../components/Offline";
+import { deviceStore } from "../components/Engage";
 
 type Option = { id: string; name: string };
 
@@ -19,6 +21,7 @@ export default function Explorar() {
   const [categoryId, setCategoryId] = useState(""); const [provinceId, setProvinceId] = useState(""); const [municipalityId, setMunicipalityId] = useState("");
   const [min, setMin] = useState(""); const [max, setMax] = useState(""); const [name, setName] = useState(""); const [showFilters, setShowFilters] = useState(false);
   const [categories, setCategories] = useState<Option[]>([]); const [provinces, setProvinces] = useState<Option[]>([]); const [municipalities, setMunicipalities] = useState<Option[]>([]);
+  const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -38,9 +41,14 @@ export default function Explorar() {
   }
   async function search(o: { q?: string; purpose?: string } = {}) {
     setError(""); setNotice(""); setBusy(true);
-    const r = await searchClassifiedListings(supabase(), filters(o));
+    const f = filters(o);
+    // Guarda a última pesquisa de cada filtro para a mostrar sem internet.
+    const key = JSON.stringify(f);
+    const r = await loadWithCache<{ key: string; items: any[] }>(deviceStore, "explorar", async () => { const x = await searchClassifiedListings(supabase(), f); return { data: x.data ? { key, items: x.data as any[] } : null, error: x.error }; });
     setBusy(false);
-    if (r.error) setError(friendlyError(r.error)); else setItems((r.data ?? []) as any[]);
+    const usable = r.data && r.data.key === key ? r.data.items : null; // só a mesma pesquisa
+    setOffline({ on: r.fromCache || isOfflineError(r.error), at: usable ? r.savedAt : null });
+    if (r.error && !isOfflineError(r.error)) setError(friendlyError(r.error)); else setItems(usable ?? []);
   }
   async function save() {
     setError(""); setNotice("");
@@ -71,6 +79,7 @@ export default function Explorar() {
     {showFilters && <Button title={busy ? "A pesquisar…" : "Aplicar filtros"} onPress={() => void search()} disabled={busy} />}
     {showFilters && <><TextInput value={name} onChangeText={setName} placeholder="Nome para guardar esta pesquisa" style={ui.input} />
     <Button title="⭐ Guardar pesquisa e receber alertas" variant="secondary" onPress={() => void save()} /></>}
+    <OfflineBanner show={offline.on} savedAt={offline.at} />
     <Message error={error} ok={notice} />
     {items !== null && <Text style={ui.label}>{items.length} resultado(s)</Text>}
     {items?.length === 0 && <View style={ui.card}><Text style={ui.text}>Nenhum anúncio encontrado. Experimente outras palavras ou menos filtros.</Text><Link href="/classificados/publicar" style={ui.link}>Publique o primeiro →</Link></View>}
