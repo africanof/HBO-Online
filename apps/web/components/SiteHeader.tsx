@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getCurrentUserProfile, getMyAdminRole, canModerate, searchHref, SEARCH_SCOPES, LOGO_PARTS, type SearchScope } from "@huambo-online/core";
+import { getCurrentUserProfile, getMyAdminRole, canModerate, searchHref, SEARCH_SCOPES, LOGO_PARTS, INFO_LINKS, type SearchScope } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { useUnreadCounts } from "./NotificationBell";
 
@@ -86,7 +86,8 @@ export function SiteFooter() {
     ["Comprar", [["Classificados", "/explorar"], ["Procura-se (pedidos)", "/procura-se"], ["Publicar o que procuro", "/classificados/publicar?finalidade=wanted"], ["Trocas", "/trocas"], ["Praças", "/pracas"], ["Loja", "/loja"], ["Leilões", "/explorar?finalidade=auction"], ["Carrinho", "/carrinho"], ["Encomendas", "/encomendas"]]],
     ["Vender", [["Publicar anúncio", "/classificados/publicar"], ["Os meus anúncios", "/meus-anuncios"], ["Vender produtos", "/conta/produtos"], ["Alugueres", "/alugueres"]]],
     ["Serviços", [["Profissionais", "/profissionais"], ["Empresas", "/empresas"], ["Ser profissional", "/conta/profissional"], ["Ser estafeta", "/entregas"]]],
-    ["A minha conta", [["Conta", "/conta"], ["Mensagens", "/mensagens"], ["Notificações", "/notificacoes"], ["Guardados", "/guardados"], ["Pesquisas guardadas", "/pesquisas-guardadas"]]]
+    ["A minha conta", [["Conta", "/conta"], ["Mensagens", "/mensagens"], ["Notificações", "/notificacoes"], ["Guardados", "/guardados"], ["Pesquisas guardadas", "/pesquisas-guardadas"]]],
+    ["Ajuda e informação", INFO_LINKS.map(l => [l.label, l.href] as [string, string])]
   ];
   return <footer className="footer"><div className="footer-in">
     {cols.map(([title, links]) => <nav key={title} aria-label={title}><h3>{title}</h3>{links.map(([l, h]) => <a key={h} href={h}>{l}</a>)}</nav>)}
