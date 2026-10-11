@@ -12,6 +12,7 @@ import { C, ui } from "../lib/ui";
 import { MarketPicker } from "./MarketPicker";
 import { VideoField } from "./Video";
 import { Button, Chips, Message } from "./Ui";
+import { shrinkAsset } from "../lib/image";
 
 type Option = { id: string; name: string };
 type Photo = { key: string; uri: string; base64?: string | null; mimeType?: string; remote?: boolean };
@@ -73,11 +74,13 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
     if (room <= 0) { setError(`Pode juntar no máximo ${CLASSIFIED_MAX_PHOTOS} fotografias.`); return; }
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) { setError("Autorize o acesso às fotografias para as juntar ao anúncio."); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, selectionLimit: room, quality: 0.7, base64: true });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, selectionLimit: room, quality: 0.9 });
     if (result.canceled) return;
-    const ok = result.assets.filter(a => !a.fileSize || a.fileSize <= CLASSIFIED_MAX_PHOTO_BYTES);
-    if (ok.length < result.assets.length) setError("Algumas fotografias têm mais de 5 MB e foram ignoradas.");
-    setPhotos(p => [...p, ...ok.slice(0, room).map(a => ({ key: a.assetId ?? a.uri, uri: a.uri, base64: a.base64, mimeType: a.mimeType ?? "image/jpeg" }))]);
+    // Fotografias mais leves: reduzidas no telemóvel antes de enviar (poupa dados).
+    setStatus("A preparar as fotografias…");
+    const ready = await Promise.all(result.assets.slice(0, room).map(async a => ({ key: a.assetId ?? a.uri, ...(await shrinkAsset(a)) })));
+    setStatus("");
+    setPhotos(p => [...p, ...ready]);
   }
 
   function removePhoto(i: number) {

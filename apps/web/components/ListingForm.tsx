@@ -4,10 +4,11 @@ import { MarketPicker } from "./MarketPicker";
 import { VideoField } from "./Video";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
   createAndPublishClassifiedListing, updateClassifiedListing, friendlyError, listingTerritory,
-  LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice,
+  LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES, validateBudget, budgetPrice,
   saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
+import { compressPhoto } from "../lib/image";
 
 type Option = { id: string; name: string };
 type Photo = { key: string; src: string; file?: File };
@@ -59,17 +60,21 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
     void listMunicipalities(supabase(), provinceId).then(({ data }) => setMunicipalities((data ?? []) as Option[]));
   }, [provinceId]);
 
-  function addFiles(files: FileList | null) {
+  async function addFiles(files: FileList | null) {
     setError("");
     const chosen = Array.from(files ?? []);
     const images = chosen.filter(f => f.type.startsWith("image/"));
-    const tooBig = images.filter(f => f.size > CLASSIFIED_MAX_PHOTO_BYTES);
-    const ok = images.filter(f => f.size <= CLASSIFIED_MAX_PHOTO_BYTES);
     const room = CLASSIFIED_MAX_PHOTOS - photos.length;
-    if (tooBig.length) setError(`${tooBig.length} fotografia(s) com mais de 5 MB foram ignoradas.`);
-    else if (images.length < chosen.length) setError("Só são aceites imagens.");
-    if (ok.length > room) setError(`Pode juntar no máximo ${CLASSIFIED_MAX_PHOTOS} fotografias.`);
-    setPhotos(p => [...p, ...ok.slice(0, Math.max(0, room)).map(f => ({ key: crypto.randomUUID(), src: URL.createObjectURL(f), file: f }))]);
+    const usable = images.filter(f => f.size <= PHOTO_RAW_MAX_BYTES).slice(0, Math.max(0, room));
+    // Fotografias mais leves: reduzidas aqui antes de enviar (poupa dados a quem publica e a quem vê).
+    setStatus("A preparar as fotografias…");
+    const ready = await Promise.all(usable.map(f => compressPhoto(f)));
+    setStatus("");
+    const ok = ready.filter(f => f.size <= CLASSIFIED_MAX_PHOTO_BYTES);
+    if (images.length < chosen.length) setError("Só são aceites imagens.");
+    else if (images.length > room) setError(`Pode juntar no máximo ${CLASSIFIED_MAX_PHOTOS} fotografias.`);
+    else if (ok.length < images.length) setError("Algumas fotografias são demasiado grandes e foram ignoradas.");
+    setPhotos(p => [...p, ...ok.map(f => ({ key: crypto.randomUUID(), src: URL.createObjectURL(f), file: f }))]);
   }
 
   function removePhoto(i: number) {

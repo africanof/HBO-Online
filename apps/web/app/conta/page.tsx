@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError, getMyAdminRole, canModerate, uploadAvatar, AVATAR_MAX_BYTES } from "@huambo-online/core";
+import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError, getMyAdminRole, canModerate, uploadAvatar, AVATAR_MAX_BYTES, AVATAR_MAX_SIDE, PHOTO_RAW_MAX_BYTES } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
+import { compressPhoto } from "../../lib/image";
 
 export default function ContaPage() {
   const [email, setEmail] = useState("");
@@ -40,8 +41,10 @@ export default function ContaPage() {
     <div className="row">
       {avatar ? <img src={avatar} alt="Fotografia de perfil" style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover" }} /> : <div aria-hidden style={{ width: 96, height: 96, borderRadius: "50%", background: "#ddd" }} />}
       <label>Fotografia de perfil<input type="file" accept="image/*" disabled={busy} onChange={async e => {
-        const f = e.target.files?.[0]; e.target.value = ""; if (!f) return;
-        if (!f.type.startsWith("image/") || f.size > AVATAR_MAX_BYTES) { setErr("Escolha uma imagem até 2 MB."); return; }
+        const raw = e.target.files?.[0]; e.target.value = ""; if (!raw) return;
+        if (!raw.type.startsWith("image/") || raw.size > PHOTO_RAW_MAX_BYTES) { setErr("Escolha uma imagem."); return; }
+        const f = await compressPhoto(raw, AVATAR_MAX_SIDE); // fotografia de perfil pequena (512 px)
+        if (f.size > AVATAR_MAX_BYTES) { setErr("Escolha uma imagem até 2 MB."); return; }
         setBusy(true); setErr(""); setMsg("");
         const r = await uploadAvatar(supabase(), uid, f, f.name, f.type); setBusy(false);
         if (r.error) setErr(friendlyError(r.error)); else { setAvatar(r.data); setMsg("Fotografia atualizada."); }

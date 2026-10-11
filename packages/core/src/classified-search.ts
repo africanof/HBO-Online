@@ -41,6 +41,6 @@ export async function searchClassifiedListings(client: SupabaseClient, filters: 
 
 export async function saveClassifiedSearch(client: SupabaseClient, name: string, filters: ClassifiedSearchFilters) {
   const f = normalizeSearchFilters(filters);
-  delete f.limit; delete f.saleMode; // os alertas ainda não filtram pelo modo de venda
+  delete f.limit;
   return client.rpc("create_classified_saved_search", { p_name: name.trim(), p_filters: f });
 }
