@@ -12,9 +12,9 @@ describe("design", () => {
   });
   it("lê os filtros da página Explorar e ignora valores estranhos", () => {
     const p = new URLSearchParams("q=%20hilux%20&tipo=vehicle&finalidade=auction");
-    expect(readExploreParams(k => p.get(k))).toEqual({ query: "hilux", listingType: "vehicle", purpose: "auction" });
+    expect(readExploreParams(k => p.get(k))).toEqual({ query: "hilux", listingType: "vehicle", purpose: "auction", saleMode: "" });
     const bad = new URLSearchParams("tipo=nave&finalidade=x");
-    expect(readExploreParams(k => bad.get(k))).toEqual({ query: "", listingType: "", purpose: "" });
+    expect(readExploreParams(k => bad.get(k))).toEqual({ query: "", listingType: "", purpose: "", saleMode: "" });
   });
   it("as categorias da página inicial apontam para páginas existentes", () => {
     for (const c of HOME_CATEGORIES) expect(c.href).toMatch(/^\/(explorar|loja|pracas|procura-se|trocas|profissionais|empresas)(\?|$)/);

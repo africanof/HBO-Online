@@ -1,15 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
 import { loadWithCache, isOfflineError, searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyError, parsePrice, readExploreParams, timeAgo,
-  LISTING_TYPE_LABELS, PURPOSE_LABELS, type ClassifiedSearchFilters, listingPriceLabel } from "@huambo-online/core";
+  LISTING_TYPE_LABELS, PURPOSE_LABELS, type ClassifiedSearchFilters, listingPriceLabel, SALE_MODE_FILTERS, cardSaleTag } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../../components/ItemCard";
 import { OfflineBanner } from "../../components/Offline";
 import { browserStore } from "../../components/Engage";
 
 type Option = { id: string; name: string };
-type F = { q: string; purpose: string; type: string; categoryId: string; provinceId: string; municipalityId: string; min: string; max: string };
-const EMPTY: F = { q: "", purpose: "", type: "", categoryId: "", provinceId: "", municipalityId: "", min: "", max: "" };
+type F = { q: string; purpose: string; type: string; categoryId: string; provinceId: string; municipalityId: string; min: string; max: string; mode: string };
+const EMPTY: F = { q: "", purpose: "", type: "", categoryId: "", provinceId: "", municipalityId: "", min: "", max: "", mode: "" };
 
 export default function ExplorarPage() {
   const [f, setF] = useState<F>(EMPTY);
@@ -24,7 +24,7 @@ export default function ExplorarPage() {
     void listProvinces(c).then(({ data }) => setProvinces((data ?? []) as Option[]));
     const p = new URLSearchParams(window.location.search);
     const fromUrl = readExploreParams(k => p.get(k));
-    const start = { ...EMPTY, q: fromUrl.query, type: fromUrl.listingType, purpose: fromUrl.purpose };
+    const start = { ...EMPTY, q: fromUrl.query, type: fromUrl.listingType, purpose: fromUrl.purpose, mode: fromUrl.saleMode };
     setF(start); void search(start);
   }, []);
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function ExplorarPage() {
 
   function toFilters(v: F): ClassifiedSearchFilters {
     return { query: v.q, purpose: (v.purpose || undefined) as any, listingType: (v.type || undefined) as any, categoryId: v.categoryId || undefined,
-      provinceId: v.provinceId || undefined, municipalityId: v.municipalityId || undefined, minPrice: parsePrice(v.min), maxPrice: parsePrice(v.max) };
+      provinceId: v.provinceId || undefined, municipalityId: v.municipalityId || undefined, minPrice: parsePrice(v.min), maxPrice: parsePrice(v.max), saleMode: (v.mode || undefined) as ClassifiedSearchFilters["saleMode"] };
   }
   async function search(v = f) {
     setError(""); setNotice(""); setBusy(true);
@@ -63,6 +63,10 @@ export default function ExplorarPage() {
     <nav className="chips" aria-label="Finalidade">
       {([["", "Tudo"], ...Object.entries(PURPOSE_LABELS)] as [string, string][]).map(([v, l]) => <button key={v} type="button" className={"chip" + (f.purpose === v ? " on" : "")} aria-pressed={f.purpose === v} onClick={() => quick({ purpose: v })}>{l}</button>)}
     </nav>
+    <nav className="chips" aria-label="Como vende">
+      <span className="muted" style={{ alignSelf: "center", fontWeight: 700 }}>Como vende:</span>
+      {([{ value: "", label: "Todos" }, ...SALE_MODE_FILTERS] as { value: string; label: string }[]).map(m => <button key={m.value} type="button" className={"chip" + (f.mode === m.value ? " on" : "")} aria-pressed={f.mode === m.value} onClick={() => quick({ mode: m.value })}>{m.label}</button>)}
+    </nav>
     <div className="results">
       <form className="filters card" onSubmit={e => { e.preventDefault(); void search(); }}>
         <div className="row" style={{ justifyContent: "space-between" }}><h2>Filtros</h2><button type="button" className="secondary" onClick={() => setShowFilters(!showFilters)} style={{ minHeight: 40, padding: "4px 14px" }} aria-expanded={showFilters}>{showFilters ? "Menos" : "Mais"}</button></div>
@@ -90,7 +94,7 @@ export default function ExplorarPage() {
         {items?.length === 0 && <div className="card"><strong>Nenhum anúncio encontrado.</strong><span>Experimente outras palavras ou menos filtros, ou <a href="/classificados/publicar">publique o primeiro!</a></span></div>}
         <div className="results-grid">
           {items?.map(x => <ItemCard key={x.id} video={!!x.video_url} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={listingPriceLabel(x)}
-            icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : undefined} tagRed={x.purpose === "auction"}
+            icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : cardSaleTag(x)} tagRed={x.purpose === "auction"}
             meta={[LISTING_TYPE_LABELS[x.listing_type as keyof typeof LISTING_TYPE_LABELS], timeAgo(x.published_at ?? x.created_at)].filter(Boolean).join(" · ")} />)}
         </div>
       </section>

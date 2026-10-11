@@ -5,6 +5,8 @@ export type ClassifiedSearchFilters = {
   listingType?: ClassifiedListingType; purpose?: ClassifiedPurpose; categoryId?: string;
   minPrice?: number; maxPrice?: number; query?: string; attributes?: Record<string, unknown>; limit?: number;
   provinceId?: string; municipalityId?: string;
+  /** Modo de venda: fixed, negotiable, offers, auction ou trade (troca inclui «aceita troca»). */
+  saleMode?: "fixed" | "negotiable" | "offers" | "auction" | "trade";
 };
 
 /**
@@ -23,21 +25,22 @@ export function normalizeSearchFilters(filters: ClassifiedSearchFilters): Classi
   if (filters.minPrice !== undefined && Number.isFinite(filters.minPrice)) out.minPrice = filters.minPrice;
   if (filters.maxPrice !== undefined && Number.isFinite(filters.maxPrice)) out.maxPrice = filters.maxPrice;
   if (Object.keys(attributes).length) out.attributes = attributes;
+  if (filters.saleMode) out.saleMode = filters.saleMode;
   if (filters.limit) out.limit = filters.limit;
   return out;
 }
 
 export async function searchClassifiedListings(client: SupabaseClient, filters: ClassifiedSearchFilters = {}) {
   const f = normalizeSearchFilters(filters);
-  return client.rpc("search_classified_listings", {
+  return client.rpc("search_classified_listings_v2", {
     p_listing_type: f.listingType ?? null, p_purpose: f.purpose ?? null, p_category_id: f.categoryId ?? null,
     p_min_price: f.minPrice ?? null, p_max_price: f.maxPrice ?? null, p_query: f.query ?? "",
-    p_attributes: f.attributes ?? {}, p_limit: Math.max(1, Math.min(f.limit ?? 30, 100))
+    p_attributes: f.attributes ?? {}, p_limit: Math.max(1, Math.min(f.limit ?? 30, 100)), p_sale_mode: f.saleMode ?? null
   });
 }
 
 export async function saveClassifiedSearch(client: SupabaseClient, name: string, filters: ClassifiedSearchFilters) {
   const f = normalizeSearchFilters(filters);
-  delete f.limit;
+  delete f.limit; delete f.saleMode; // os alertas ainda não filtram pelo modo de venda
   return client.rpc("create_classified_saved_search", { p_name: name.trim(), p_filters: f });
 }

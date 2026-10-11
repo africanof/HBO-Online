@@ -38,7 +38,7 @@ describe("pesquisa por fotografia", () => {
   it("procura com até 3 palavras e junta resultados sem repetir", async () => {
     const { c, calls } = client();
     const r = await searchByKeywords(c, ["telemóvel", "Samsung", "telemóvel", "A54", "smartphone"]);
-    const queries = calls.filter(x => x.fn === "search_classified_listings").map(x => x.a.p_query);
+    const queries = calls.filter(x => x.fn === "search_classified_listings_v2").map(x => x.a.p_query);
     expect(queries).toEqual(["telemóvel", "Samsung", "A54"]);
     expect(r.listings.map(x => x.id).sort()).toEqual(["A54-L", "Samsung-L", "comum", "telemóvel-L"].sort());
   });

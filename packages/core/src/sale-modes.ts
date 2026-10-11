@@ -113,3 +113,13 @@ export const PUBLISH_TRADE_HREF = "/classificados/publicar?modo=trade";
 export function saleModeFromParam(v: string | null | undefined): SaleMode | "" {
   return v === "fixed" || v === "negotiable" || v === "offers" || v === "auction" || v === "trade" ? v : "";
 }
+
+/** Filtros «Como vende» na pesquisa (Explorar). */
+export const SALE_MODE_FILTERS: { value: SaleMode; label: string }[] = [
+  { value: "fixed", label: "🏷️ Preço fixo" }, { value: "negotiable", label: "🤝 Negociável" }, { value: "offers", label: "💬 Aceita propostas" },
+  { value: "auction", label: "🔨 Leilão" }, { value: "trade", label: "🔁 Troca" }
+];
+/** Etiqueta curta para o cartão (a primeira que se aplica). */
+export function cardSaleTag(l: { purpose?: string; sale_mode?: string | null; accepts_trade?: boolean | null }): string | undefined {
+  return saleModeBadges(l)[0];
+}

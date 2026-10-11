@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { listTrades, saleModeFromParam, PUBLISH_TRADE_HREF, saleModesFor, canAlsoTrade, validateSaleMode, saleModeBadges, buyerOptions, buyNowMessage, offerLabel, validateOffer, makeOffer, respondOffer, myOfferCounts } from "./sale-modes";
+import { SALE_MODE_FILTERS, cardSaleTag, listTrades, saleModeFromParam, PUBLISH_TRADE_HREF, saleModesFor, canAlsoTrade, validateSaleMode, saleModeBadges, buyerOptions, buyNowMessage, offerLabel, validateOffer, makeOffer, respondOffer, myOfferCounts } from "./sale-modes";
 import { createClassifiedListing } from "./classified-listings";
 import { getNotificationLink } from "./notifications";
 import { friendlyError } from "./classified-listings";
@@ -65,6 +65,19 @@ describe("modos de venda", () => {
     expect(calls[0]).toEqual(["make_offer", { p_listing_id: uuid, p_amount: 800, p_trade_item: null, p_message: "Pode ser?" }]);
     expect(calls[1][1]).toEqual({ p_offer_id: uuid, p_accept: true, p_note: null });
     expect((await myOfferCounts(rpc)).data).toEqual({ a: 2 });
+  });
+  it("filtra a pesquisa pelo modo de venda", async () => {
+    const { searchClassifiedListings, saveClassifiedSearch } = await import("./classified-search");
+    const calls: any[] = [];
+    const c: any = { rpc: (fn: string, a: any) => { calls.push([fn, a]); return Promise.resolve({ data: [], error: null }); } };
+    await searchClassifiedListings(c, { query: "hilux", saleMode: "trade" });
+    expect(calls[0][0]).toBe("search_classified_listings_v2");
+    expect(calls[0][1].p_sale_mode).toBe("trade");
+    await saveClassifiedSearch(c, "Trocas", { query: "hilux", saleMode: "trade" });
+    expect(calls[1][1].p_filters.saleMode).toBeUndefined();
+    expect(SALE_MODE_FILTERS.map(f => f.value)).toEqual(["fixed", "negotiable", "offers", "auction", "trade"]);
+    expect(cardSaleTag({ purpose: "sale", sale_mode: "offers" })).toBe("Aceita propostas");
+    expect(cardSaleTag({ purpose: "sale", sale_mode: null })).toBeUndefined();
   });
   it("secção Trocas", async () => {
     const calls: any[] = [];
