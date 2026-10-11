@@ -3,12 +3,13 @@ import { VideoPlayer } from "../../../components/Video";
 import { WantedHelpers } from "../../../components/WantedHelpers";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
-import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
+import { loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
   reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ui } from "../../../lib/ui";
 import { Button, Message } from "../../../components/Ui";
-import { ShareButton, useRecordView } from "../../../components/Engage";
+import { ShareButton, useRecordView, deviceStore } from "../../../components/Engage";
+import { OfflineBanner } from "../../../components/Offline";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
 import { MarketLink } from "../../../components/MarketPicker";
 import { SellerBadge } from "../../../components/Reputation";
@@ -28,16 +29,20 @@ export default function ClassifiedDetail() {
   const [busy, setBusy] = useState(false);
   const [photo, setPhoto] = useState(0);
   const [reporting, setReporting] = useState(false);
+  const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
   const [reason, setReason] = useState("");
 
   useEffect(() => {
     if (!id) return;
     void (async () => {
       const c = supabase();
-      const r = await getClassifiedListing(c, id);
+      // Os anúncios abertos ficam guardados para se poderem ver sem internet.
+      const r = await loadItemWithCache<any>(deviceStore, "anuncios", id, () => getClassifiedListing(c, id));
+      setOffline({ on: r.fromCache || isOfflineError(r.error), at: r.savedAt });
       if (r.error) { setError(friendlyError(r.error)); return; }
       if (!r.data) { setError("Anúncio não encontrado ou já não está publicado."); return; }
       setItem(r.data);
+      if (r.fromCache) return;
       const t = listingTerritory(r.data);
       if (t.municipalityId) {
         const m = await c.from("municipalities").select("name,provinces(name)").eq("id", t.municipalityId).maybeSingle();
@@ -91,6 +96,7 @@ export default function ClassifiedDetail() {
 
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/explorar" style={ui.link}>← Explorar</Link>
+    <OfflineBanner show={offline.on} savedAt={offline.at} />
     {item.status !== "published" && <Text style={ui.error}>{STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] ?? item.status} — só você vê este anúncio</Text>}
     {item.purpose === "wanted" && <Text style={[ui.label, { backgroundColor: "#fff4d6", alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }]}>🔎 PROCURA-SE — pedido de comprador</Text>}
     <Text style={ui.h1}>{item.title}</Text>

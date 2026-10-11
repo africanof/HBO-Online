@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import { Gallery } from "../../../components/Video";
 import { WantedHelpers } from "../../../components/WantedHelpers";
 import { useParams } from "next/navigation";
-import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
+import { loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
   reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
-import { ShareButton, useRecordView } from "../../../components/Engage";
+import { ShareButton, useRecordView, browserStore } from "../../../components/Engage";
+import { OfflineBanner } from "../../../components/Offline";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
 import { MarketFact } from "../../../components/MarketPicker";
 import { AUCTIONABLE_TYPES } from "@huambo-online/core";
@@ -24,16 +25,20 @@ export default function ClassifiedDetail() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [reporting, setReporting] = useState(false);
+  const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
   const [reason, setReason] = useState("");
 
   useEffect(() => {
     if (!id) return;
     void (async () => {
       const c = supabase();
-      const r = await getClassifiedListing(c, id);
+      // Os anúncios abertos ficam guardados para se poderem ver quando a rede falhar.
+      const r = await loadItemWithCache<any>(browserStore, "anuncios", id, () => getClassifiedListing(c, id));
+      setOffline({ on: r.fromCache || isOfflineError(r.error), at: r.savedAt });
       if (r.error) { setError(friendlyError(r.error)); return; }
       if (!r.data) { setError("Anúncio não encontrado ou já não está publicado."); return; }
       setItem(r.data);
+      if (r.fromCache) return;
       const t = listingTerritory(r.data);
       if (t.municipalityId) {
         const m = await c.from("municipalities").select("name,provinces(name)").eq("id", t.municipalityId).maybeSingle();
@@ -91,6 +96,7 @@ export default function ClassifiedDetail() {
 
   return <main className="stack">
     <a href={"/explorar?tipo=" + item.listing_type}>← Classificados › {typeLabel}</a>
+    <OfflineBanner show={offline.on} savedAt={offline.at} />
     {item.status !== "published" && <p className="badge">{STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] ?? item.status} — só você vê este anúncio</p>}
     <div className="itempage">
       <Gallery media={media} video={item.video_url} icon={item.purpose === "wanted" ? "🔎" : "🏷️"} title={item.title} />

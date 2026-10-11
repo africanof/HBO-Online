@@ -181,3 +181,4 @@ main > a:first-child { font-size: 15px; display: inline-block; margin-bottom: 4p
 .seller-badge { display: inline-block; font-weight: 700; color: #6b4e00; background: #fff6d6; border-radius: var(--pill); padding: 2px 10px; font-size: 15px; }
 .verified { display: inline-block; font-weight: 700; color: #0b6b2b; background: #e5f6ea; border-radius: var(--pill); padding: 2px 10px; font-size: 14px; }
 .reply { border-left: 4px solid var(--accent); background: var(--surface); padding: 8px 12px; border-radius: 6px; }
+.offline { background: #fff4cc; border: 1px solid #e0b100; color: #4a3700; font-weight: 700; padding: 10px 14px; border-radius: 10px; }
