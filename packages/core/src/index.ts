@@ -57,3 +57,4 @@ export * from "./photo-search";
 export * from "./wanted";
 export * from "./deal-reviews";
 export * from "./trust";
+export * from "./seo";
