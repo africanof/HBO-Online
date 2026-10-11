@@ -26,6 +26,8 @@ export function getNotificationLink(n: Pick<AppNotification, "data" | "type" | "
   if (isUuid(d.market_id)) return d.for === "admin" ? { href: "/admin", label: "🧺 Ver na administração →" } : { href: "/pracas/" + d.market_id, label: "🧺 Ver praça →" };
   if (isUuid(d.rental_id)) return { href: /^Novo pedido/.test(n.title) ? "/alugueres?recebidos=1" : "/alugueres", label: "📅 Ver alugueres →" };
   if (d.for === "admin" && (isUuid(d.report_id) || isUuid(d.verification_id))) return { href: "/admin", label: "🛡️ Ver na administração →" };
+  if (d.for === "offer" && isUuid(d.listing_id)) return { href: "/classificados/" + d.listing_id + "#propostas", label: "💬 Ver propostas →" };
+  if (d.for === "my_offer") return { href: "/propostas", label: "💬 As minhas propostas →" };
   if (d.for === "verification") return { href: "/conta/verificacao", label: "✔ Ver verificação →" };
   if (d.for === "service" && isUuid(d.service_request_id)) return { href: /^Novo pedido/.test(n.title) ? "/servicos?recebidos=1" : "/servicos", label: "🛠️ Ver pedidos de serviço →" };
   if (d.for === "review") return { href: "/avaliacoes", label: "⭐ Avaliar agora →" };

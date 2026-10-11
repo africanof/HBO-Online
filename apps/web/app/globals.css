@@ -182,3 +182,14 @@ main > a:first-child { font-size: 15px; display: inline-block; margin-bottom: 4p
 .verified { display: inline-block; font-weight: 700; color: #0b6b2b; background: #e5f6ea; border-radius: var(--pill); padding: 2px 10px; font-size: 14px; }
 .reply { border-left: 4px solid var(--accent); background: var(--surface); padding: 8px 12px; border-radius: 6px; }
 .offline { background: #fff4cc; border: 1px solid #e0b100; color: #4a3700; font-weight: 700; padding: 10px 14px; border-radius: 10px; }
+/* Modo de venda ao publicar */
+.sale-modes { border: 2px solid var(--line); border-radius: 12px; padding: 12px; gap: 8px; }
+.sale-modes legend { font-weight: 800; padding: 0 6px; }
+.sale-modes .mode { display: flex; gap: 10px; align-items: flex-start; border: 2px solid var(--line); border-radius: 12px; padding: 10px 12px; cursor: pointer; background: #fff; }
+.sale-modes .mode.on { border-color: var(--accent); background: #eef3ff; }
+.sale-modes .mode input { margin-top: 4px; width: 20px; height: 20px; }
+.sale-modes .mode span { display: grid; gap: 2px; }
+.sale-modes .mode small { color: var(--muted); font-size: 14px; }
+label.check { display: flex; gap: 10px; align-items: center; font-weight: 700; }
+label.check input { width: 22px; height: 22px; }
+.mode-badge { display: inline-block; padding: 2px 10px; border-radius: var(--pill); background: #eef3ff; color: #1f3fae; font-weight: 700; font-size: 14px; }

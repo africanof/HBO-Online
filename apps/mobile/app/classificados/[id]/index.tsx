@@ -3,7 +3,7 @@ import { VideoPlayer } from "../../../components/Video";
 import { WantedHelpers } from "../../../components/WantedHelpers";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
-import { loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
+import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
   reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ui } from "../../../lib/ui";
@@ -13,6 +13,7 @@ import { OfflineBanner } from "../../../components/Offline";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
 import { MarketLink } from "../../../components/MarketPicker";
 import { SellerBadge } from "../../../components/Reputation";
+import { OfferBox, OffersList } from "../../../components/Offers";
 
 export default function ClassifiedDetail() {
   const router = useRouter();
@@ -82,6 +83,16 @@ export default function ClassifiedDetail() {
     if (conversationId) router.push(("/mensagens?conversation=" + conversationId) as any); else setNotice("Mensagem enviada.");
   }
 
+  async function buyNow() {
+    if (!uid) { setError("Inicie sessão para comprar."); return; }
+    setBusy(true); setError("");
+    const r = await contactListingOwner(supabase(), id, buyNowMessage(item.title, item.price, item.currency));
+    setBusy(false);
+    if (r.error) { setError(friendlyError(r.error)); return; }
+    const conversationId = (r.data as any)?.id;
+    if (conversationId) router.push(("/mensagens?conversation=" + conversationId) as any); else setNotice("Pedido de compra enviado ao vendedor.");
+  }
+
   async function report() {
     if (!uid) { setError("Inicie sessão para denunciar."); return; }
     if (!reason.trim()) { setError("Indique o motivo da denúncia."); return; }
@@ -93,6 +104,9 @@ export default function ClassifiedDetail() {
   if (!item) return <View style={ui.screen}><Text style={ui.text}>A carregar anúncio…</Text></View>;
   const media: string[] = Array.isArray(item.media) ? item.media : [];
   const mine = uid === item.owner_id;
+  const badges = saleModeBadges(item);
+  const can = buyerOptions(item);
+  const mode = (item.purpose === "auction" ? "auction" : item.sale_mode) as SaleMode | null;
 
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/explorar" style={ui.link}>← Explorar</Link>
@@ -100,7 +114,10 @@ export default function ClassifiedDetail() {
     {item.status !== "published" && <Text style={ui.error}>{STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] ?? item.status} — só você vê este anúncio</Text>}
     {item.purpose === "wanted" && <Text style={[ui.label, { backgroundColor: "#fff4d6", alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }]}>🔎 PROCURA-SE — pedido de comprador</Text>}
     <Text style={ui.h1}>{item.title}</Text>
-    {item.purpose === "wanted" ? <Text style={ui.price}>Orçamento: {listingPriceLabel(item)}</Text> : <Text style={ui.price}>{formatPrice(item.price, item.currency)}</Text>}
+    {item.purpose === "wanted" ? <Text style={ui.price}>Orçamento: {listingPriceLabel(item)}</Text> : <Text style={ui.price}>{listingPriceLabel(item)}</Text>}
+    {badges.length > 0 && <View style={ui.row}>{badges.map(b => <Text key={b} style={{ backgroundColor: "#EEF3FF", color: "#1F3FAE", fontWeight: "800", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 }}>{b}</Text>)}</View>}
+    {!!mode && !!SALE_MODE_INFO[mode] && <Text style={ui.muted}>{SALE_MODE_INFO[mode].icon} {SALE_MODE_INFO[mode].label}</Text>}
+    {!!item.trade_wants && <Text style={ui.text}>🔁 Aceita em troca: <Text style={ui.label}>{item.trade_wants}</Text></Text>}
     <Text style={ui.text}>{LISTING_TYPE_LABELS[item.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? item.listing_type} · {PURPOSE_LABELS[item.purpose as keyof typeof PURPOSE_LABELS] ?? item.purpose}{place ? " · 📍 " + place : ""}</Text>
     {!!seller && <Link href={("/vendedor/" + item.owner_id) as any} style={ui.link}>{item.purpose === "wanted" ? "Comprador" : "Anunciante"}: {seller} →</Link>}
     {!!seller && <SellerBadge userId={item.owner_id} />}
@@ -119,7 +136,10 @@ export default function ClassifiedDetail() {
     {mine ? <View style={{ gap: 10 }}>
       <Button title="Editar anúncio" onPress={() => router.push(`/classificados/${id}/editar` as any)} />
       <Button title="Os meus anúncios" variant="secondary" onPress={() => router.push("/meus-anuncios" as any)} />
+      {item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} />}
     </View> : <View style={{ gap: 12 }}>
+      {can.buyNow && <Button title={"🛒 Quero comprar" + (item.price != null ? " por " + formatPrice(item.price, item.currency) : "")} disabled={busy} onPress={() => void buyNow()} />}
+      {(can.offerMoney || can.offerTrade) && <OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} />}
       <Button title={savedId ? "★ Guardado" : "☆ Guardar anúncio"} variant="secondary" onPress={() => void toggleSaved()} disabled={busy} />
       <View style={ui.card}>
         <Text style={ui.h2}>{item.purpose === "wanted" ? "Responder ao comprador" : "Contactar anunciante"}</Text>

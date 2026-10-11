@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Gallery } from "../../../components/Video";
 import { WantedHelpers } from "../../../components/WantedHelpers";
 import { useParams } from "next/navigation";
-import { loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
+import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
   reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ShareButton, useRecordView, browserStore } from "../../../components/Engage";
@@ -12,6 +12,7 @@ import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtr
 import { MarketFact } from "../../../components/MarketPicker";
 import { AUCTIONABLE_TYPES } from "@huambo-online/core";
 import { SellerBadge } from "../../../components/Reputation";
+import { OfferBox, OffersList } from "../../../components/Offers";
 
 export default function ClassifiedDetail() {
   const { id } = useParams<{ id: string }>();
@@ -79,6 +80,16 @@ export default function ClassifiedDetail() {
     else setNotice("Mensagem enviada.");
   }
 
+  async function buyNow() {
+    if (!uid) { setError("Inicie sessão para comprar."); return; }
+    setBusy(true); setError("");
+    const r = await contactListingOwner(supabase(), id, buyNowMessage(item.title, item.price, item.currency));
+    setBusy(false);
+    if (r.error) { setError(friendlyError(r.error)); return; }
+    const conversationId = (r.data as any)?.id;
+    if (conversationId) window.location.href = "/mensagens?conversation=" + conversationId; else setNotice("Pedido de compra enviado ao vendedor.");
+  }
+
   async function report() {
     if (!uid) { setError("Inicie sessão para denunciar."); return; }
     if (!reason.trim()) { setError("Indique o motivo da denúncia."); return; }
@@ -90,6 +101,9 @@ export default function ClassifiedDetail() {
   if (!item) return <main><p>A carregar anúncio…</p></main>;
   const media: string[] = Array.isArray(item.media) ? item.media : [];
   const mine = uid === item.owner_id;
+  const badges = saleModeBadges(item);
+  const can = buyerOptions(item);
+  const mode = (item.purpose === "auction" ? "auction" : item.sale_mode) as SaleMode | null;
 
   const typeLabel = LISTING_TYPE_LABELS[item.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? item.listing_type;
   const purposeLabel = PURPOSE_LABELS[item.purpose as keyof typeof PURPOSE_LABELS] ?? item.purpose;
@@ -104,10 +118,13 @@ export default function ClassifiedDetail() {
         {item.purpose === "wanted" && <span className="badge" style={{ justifySelf: "start", background: "#fff4d6", borderColor: "#f5af02" }}>🔎 PROCURA-SE — pedido de comprador</span>}
         <h1>{item.title}</h1>
         {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>👤</span><span>{item.purpose === "wanted" ? "Comprador" : "Anunciante"}: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a> <SellerBadge userId={item.owner_id} /><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver outros anúncios</a></span></div>}
-        {item.purpose === "wanted" ? <div><span className="muted">Orçamento</span><div className="big-price">{listingPriceLabel(item)}</div></div> : <div className="big-price">{formatPrice(item.price, item.currency)}</div>}
+        {item.purpose === "wanted" ? <div><span className="muted">Orçamento</span><div className="big-price">{listingPriceLabel(item)}</div></div> : <div className="big-price">{listingPriceLabel(item)}</div>}
+        {badges.length > 0 && <div className="row">{badges.map(b => <span key={b} className="mode-badge">{b}</span>)}</div>}
+        {item.trade_wants && <p style={{ margin: 0 }}>🔁 Aceita em troca: <strong>{item.trade_wants}</strong></p>}
         <dl className="facts">
           <dt>Tipo</dt><dd>{typeLabel}</dd>
           <dt>Finalidade</dt><dd>{purposeLabel}</dd>
+          {mode && SALE_MODE_INFO[mode] && <><dt>Como vende</dt><dd>{SALE_MODE_INFO[mode].icon} {SALE_MODE_INFO[mode].label}</dd></>}
           {place && <><dt>Local</dt><dd>📍 {place}</dd></>}
           <MarketFact id={item.market_id} />
         </dl>
@@ -119,7 +136,11 @@ export default function ClassifiedDetail() {
           {mine ? <><a className="btn" href={`/classificados/${id}/editar`}>Editar anúncio</a><a className="btn secondary" href="/meus-anuncios">Os meus anúncios</a></> : <>
             {item.purpose === "wanted"
               ? <a className="btn" href="#contactar" onClick={() => { if (!message.trim()) setMessage(wantedReplyMessage(item.title, item.listing_type === "service")); }}>{item.listing_type === "service" ? "🛠️ Posso fazer este serviço" : "✋ Tenho o que procura"}</a>
-              : <a className="btn" href="#contactar">💬 Contactar anunciante</a>}
+              : <>
+                {can.buyNow && <button type="button" onClick={buyNow} disabled={busy}>🛒 Quero comprar{item.price != null ? " por " + formatPrice(item.price, item.currency) : ""}</button>}
+                {(can.offerMoney || can.offerTrade) && <a className={can.buyNow ? "btn secondary" : "btn"} href="#proposta">{item.sale_mode === "trade" ? "🔁 Propor troca" : "💬 Fazer proposta"}</a>}
+                <a className={can.buyNow || can.offerMoney || can.offerTrade ? "btn secondary" : "btn"} href="#contactar">✉️ Contactar anunciante</a>
+              </>}
             <button type="button" className="secondary" onClick={toggleSaved} disabled={busy}>{savedId ? "♥ Guardado" : "♡ Guardar anúncio"}</button>
           </>}
           {item.status === "published" && <ShareButton kind="listing" id={id} title={item.title} />}
@@ -128,7 +149,9 @@ export default function ClassifiedDetail() {
     </div>
     {item.purpose === "wanted" && item.status === "published" && <WantedHelpers title={item.title} mine={mine} />}
     {item.description && <section className="card"><h2 style={{ margin: 0 }}>Descrição</h2><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{item.description}</p></section>}
+    {mine && item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} />}
     {!mine && <>
+      {(can.offerMoney || can.offerTrade) && <OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} />}
       <section className="card" id="contactar">
         <h2 style={{ margin: 0 }}>{item.purpose === "wanted" ? "Responder ao comprador" : "Contactar anunciante"}</h2>
         <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Olá, o anúncio ainda está disponível?" rows={4} />

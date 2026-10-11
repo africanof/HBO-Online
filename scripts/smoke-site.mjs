@@ -18,6 +18,7 @@ const pages = [
   { path: "/avaliacoes", expect: "Inicie sessão" },
   { path: "/servicos", expect: "Inicie sessão" },
   { path: "/conta/verificacao", expect: "Verificar perfil" },
+  { path: "/propostas", expect: "Inicie sessão" },
   { path: "/robots.txt", expect: "Sitemap" },
   { path: "/sitemap.xml", expect: "/explorar" }
 ];
