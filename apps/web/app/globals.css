@@ -1,12 +1,14 @@
 /* Huambo Online — estilo inspirado no eBay: branco, azul forte nas ações, cartões limpos e contraste alto. */
+/* O Site é sempre claro: não deixar o navegador escurecer as cores (modo escuro automático). */
 :root {
+  color-scheme: only light;
   --fg: #191919; --bg: #fff; --muted: #595959; --line: #e5e5e5; --surface: #f7f7f7;
   --accent: #3665f3; --accent-dark: #2148c9; --accent-soft: #eef2fe;
   --danger: #c7102e; --ok: #0b7a3b; --yellow: #f5af02;
   --radius: 16px; --pill: 999px;
 }
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; background: #fff; color: var(--fg); }
 body { margin: 0; font-family: "Helvetica Neue", Helvetica, Arial, system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--fg); background: var(--bg); font-size: 17px; line-height: 1.5; }
 main { max-width: 1240px; margin: 0 auto; padding: 20px 16px 64px; }
 a { color: var(--accent); font-weight: 600; text-underline-offset: 3px; }

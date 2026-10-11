@@ -4,8 +4,10 @@ import { chromium } from "playwright";
 
 const SITE = (process.env.SITE_URL || "https://huambo-na-m-o.onrender.com").replace(/\/$/, "");
 const pages = [
-  { path: "/", expect: "Tudo o que o Huambo tem para oferecer" },
-  { path: "/explorar", expect: "Explorar classificados", options: "select" },
+  { path: "/", expect: "Compre, venda e encontre tudo no Huambo" },
+  { path: "/explorar", expect: "Classificados", options: "select" },
+  { path: "/pracas", expect: "Praças do Huambo" },
+  { path: "/pagina-que-nao-existe", expect: "Página não encontrada", status: 404 },
   { path: "/classificados/publicar", expect: "Publicar anúncio" },
   { path: "/profissionais", expect: "Profissionais e serviços", options: "select" },
   { path: "/empresas", expect: "Empresas e lojas", options: "select" },
@@ -31,7 +33,7 @@ for (const p of pages) {
   let ok = true; const notes = [];
   try {
     const res = await page.goto(SITE + p.path, { timeout: 90000, waitUntil: "networkidle" });
-    if (!res || res.status() >= 400) { ok = false; notes.push("HTTP " + (res ? res.status() : "sem resposta")); }
+    if (!res || (res.status() >= 400 && res.status() !== (p.status ?? 0))) { ok = false; notes.push("HTTP " + (res ? res.status() : "sem resposta")); }
     const text = await page.innerText("body");
     if (!text.includes(p.expect)) { ok = false; notes.push(`não encontrou «${p.expect}»`); }
     for (const re of badText) if (re.test(text)) { ok = false; notes.push("mensagem de erro: " + re); }
