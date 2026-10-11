@@ -35,3 +35,7 @@ jobs:
 
       - name: Build web
         run: pnpm build:web
+
+      - name: Validar a configuração da APP (sem compilar)
+        working-directory: apps/mobile
+        run: npx expo config --type public > /dev/null
