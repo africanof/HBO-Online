@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, listWanted, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listTrades, loadWithCache, isOfflineError } from "@huambo-online/core";
+import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, listWanted, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listTrades, cardSaleTag, loadWithCache, isOfflineError } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../components/ItemCard";
 import { OfflineBanner } from "../components/Offline";
@@ -38,7 +38,7 @@ export default function Home() {
   }, []);
 
   const listingCard = (x: any) => <ItemCard key={x.id} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
-    icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : undefined}
+    icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : cardSaleTag(x)}
     tagRed={x.purpose === "auction"} meta={timeAgo(x.published_at ?? x.created_at)} />;
 
   return <main>

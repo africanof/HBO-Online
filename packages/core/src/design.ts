@@ -44,7 +44,9 @@ export function readExploreParams(get: (key: string) => string | null | undefine
   const tipo = get("tipo") ?? "", finalidade = get("finalidade") ?? "";
   const TYPES = ["classified", "product", "vehicle", "real_estate", "service"];
   const PURPOSES = ["sale", "rent", "lease", "wanted", "service", "auction"];
-  return { query: (get("q") ?? "").trim(), listingType: TYPES.includes(tipo) ? tipo : "", purpose: PURPOSES.includes(finalidade) ? finalidade : "" };
+  const modo = get("modo") ?? "";
+  const MODES = ["fixed", "negotiable", "offers", "auction", "trade"];
+  return { query: (get("q") ?? "").trim(), listingType: TYPES.includes(tipo) ? tipo : "", purpose: PURPOSES.includes(finalidade) ? finalidade : "", saleMode: MODES.includes(modo) ? modo : "" };
 }
 
 /** Categorias redondas da página inicial. */

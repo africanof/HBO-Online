@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams } from "expo-router";
 import { ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
-import { loadWithCache, isOfflineError, searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyError, parsePrice,
+import { SALE_MODE_FILTERS, cardSaleTag, loadWithCache, isOfflineError, searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyError, parsePrice,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, readExploreParams, timeAgo, type ClassifiedSearchFilters, listingPriceLabel } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
@@ -14,10 +14,10 @@ import { deviceStore } from "../components/Engage";
 type Option = { id: string; name: string };
 
 export default function Explorar() {
-  const params = useLocalSearchParams<{ q?: string; tipo?: string; finalidade?: string }>();
+  const params = useLocalSearchParams<{ q?: string; tipo?: string; finalidade?: string; modo?: string }>();
   const initial = readExploreParams(k => (params as any)[k] ?? null);
   const { width } = useWindowDimensions(); const cardW = (width - 32 - 14) / 2;
-  const [q, setQ] = useState(initial.query); const [purpose, setPurpose] = useState(initial.purpose); const [type, setType] = useState(initial.listingType);
+  const [q, setQ] = useState(initial.query); const [purpose, setPurpose] = useState(initial.purpose); const [type, setType] = useState(initial.listingType); const [mode, setMode] = useState(initial.saleMode);
   const [categoryId, setCategoryId] = useState(""); const [provinceId, setProvinceId] = useState(""); const [municipalityId, setMunicipalityId] = useState("");
   const [min, setMin] = useState(""); const [max, setMax] = useState(""); const [name, setName] = useState(""); const [showFilters, setShowFilters] = useState(false);
   const [categories, setCategories] = useState<Option[]>([]); const [provinces, setProvinces] = useState<Option[]>([]); const [municipalities, setMunicipalities] = useState<Option[]>([]);
@@ -35,11 +35,11 @@ export default function Explorar() {
     void listMunicipalities(supabase(), provinceId).then(({ data }) => setMunicipalities((data ?? []) as Option[]));
   }, [provinceId]);
 
-  function filters(o: { q?: string; purpose?: string } = {}): ClassifiedSearchFilters {
+  function filters(o: { q?: string; purpose?: string; mode?: string } = {}): ClassifiedSearchFilters {
     return { query: o.q ?? q, purpose: ((o.purpose ?? purpose) || undefined) as any, listingType: (type || undefined) as any, categoryId: categoryId || undefined,
-      provinceId: provinceId || undefined, municipalityId: municipalityId || undefined, minPrice: parsePrice(min), maxPrice: parsePrice(max) };
+      provinceId: provinceId || undefined, municipalityId: municipalityId || undefined, minPrice: parsePrice(min), maxPrice: parsePrice(max), saleMode: ((o.mode ?? mode) || undefined) as ClassifiedSearchFilters["saleMode"] };
   }
-  async function search(o: { q?: string; purpose?: string } = {}) {
+  async function search(o: { q?: string; purpose?: string; mode?: string } = {}) {
     setError(""); setNotice(""); setBusy(true);
     const f = filters(o);
     // Guarda a última pesquisa de cada filtro para a mostrar sem internet.
@@ -63,6 +63,7 @@ export default function Explorar() {
     <SearchBar initial={q} onSearch={v => { setQ(v); void search({ q: v }); }} />
     <Text style={ui.h1}>{q ? `«${q}»` : type ? LISTING_TYPE_LABELS[type as keyof typeof LISTING_TYPE_LABELS] : purpose ? PURPOSE_LABELS[purpose as keyof typeof PURPOSE_LABELS] : "Classificados"}</Text>
     <ScrollView horizontal showsHorizontalScrollIndicator={false}><Chips options={[{ value: "", label: "Tudo" }, ...Object.entries(PURPOSE_LABELS).map(([v, l]) => ({ value: v, label: l }))]} value={purpose} onChange={v => { setPurpose(v); void search({ purpose: v }); }} /></ScrollView>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}><Chips options={[{ value: "", label: "Como vende: todos" }, ...SALE_MODE_FILTERS]} value={mode} onChange={v => { setMode(v); void search({ mode: v }); }} /></ScrollView>
     <Button title={showFilters ? "Esconder filtros" : "⚙️ Filtros"} variant="secondary" onPress={() => setShowFilters(!showFilters)} />
     {showFilters && <View style={{ gap: 10 }}>
       <Text style={ui.label}>Tipo</Text>
@@ -84,7 +85,7 @@ export default function Explorar() {
     {items !== null && <Text style={ui.label}>{items.length} resultado(s)</Text>}
     {items?.length === 0 && <View style={ui.card}><Text style={ui.text}>Nenhum anúncio encontrado. Experimente outras palavras ou menos filtros.</Text><Link href="/classificados/publicar" style={ui.link}>Publique o primeiro →</Link></View>}
     <Grid>{items?.map(x => <ItemCard key={x.id} video={!!x.video_url} width={cardW} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={listingPriceLabel(x)}
-      icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : undefined} tagRed={x.purpose === "auction"}
+      icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : cardSaleTag(x)} tagRed={x.purpose === "auction"}
       meta={timeAgo(x.published_at ?? x.created_at)} />)}</Grid>
   </ScrollView>;
 }
