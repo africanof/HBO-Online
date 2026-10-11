@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, View } from "react-native";
-import { getPublicSeller, listSellerListings, listProducts, formatPrice, ratingLabel, friendlyError, PURPOSE_LABELS, type PublicSeller } from "@huambo-online/core";
+import { getPublicSeller, listSellerListings, listProducts, formatPrice, ratingLabel, friendlyError, PURPOSE_LABELS, type PublicSeller, listingPriceLabel } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 
@@ -32,7 +32,7 @@ export default function Vendedor() {
     {listings.length === 0 && <Text style={ui.text}>Sem anúncios publicados.</Text>}
     {listings.map(x => <Pressable key={x.id} style={ui.card} accessibilityRole="link" onPress={() => router.push(("/classificados/" + x.id) as any)}>
       {Array.isArray(x.media) && !!x.media[0] && <Image source={{ uri: x.media[0] }} style={{ width: "100%", height: 160, borderRadius: 8 }} />}
-      <Text style={ui.label}>{x.title}</Text><Text style={ui.price}>{formatPrice(x.price, x.currency)}</Text>
+      <Text style={ui.label}>{x.title}</Text><Text style={ui.price}>{listingPriceLabel(x)}</Text>
       <Text style={ui.muted}>{PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] ?? x.purpose}</Text>
     </Pressable>)}
     {products.length > 0 && <><Text style={ui.h2}>Produtos na loja ({products.length})</Text>

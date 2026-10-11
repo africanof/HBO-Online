@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { getPublicSeller, listSellerListings, listProducts, formatPrice, ratingLabel, friendlyError, PURPOSE_LABELS, type PublicSeller } from "@huambo-online/core";
+import { getPublicSeller, listSellerListings, listProducts, formatPrice, ratingLabel, friendlyError, PURPOSE_LABELS, type PublicSeller, listingPriceLabel } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../../../components/ItemCard";
 
@@ -28,7 +28,7 @@ export default function Vendedor() {
     {s.is_provider && <p>{ratingLabel(s.rating, s.review_count)} · <a href={"/profissionais/" + s.id}>Ver perfil profissional →</a></p>}
     <h2>Anúncios ({listings.length})</h2>
     {listings.length === 0 && <p>Sem anúncios publicados.</p>}
-    <div className="results-grid">{listings.map(x => <ItemCard key={x.id} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={formatPrice(x.price, x.currency)}
+    <div className="results-grid">{listings.map(x => <ItemCard key={x.id} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
       icon={LISTING_ICON[x.listing_type] ?? "🏷️"} meta={PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] ?? x.purpose} tag={x.purpose === "auction" ? "Leilão" : undefined} tagRed />)}</div>
     {products.length > 0 && <><h2>Produtos na loja ({products.length})</h2>
       <div className="results-grid">{products.map(p => <ItemCard key={p.id} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)} meta={p.stock > 0 ? `${p.stock} em stock` : "Esgotado"} />)}</div></>}

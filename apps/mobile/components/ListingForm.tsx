@@ -4,7 +4,7 @@ import { Image, Pressable, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
   createAndPublishClassifiedListing, updateClassifiedListing, friendlyError, listingTerritory, base64ToArrayBuffer,
-  LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES } from "@huambo-online/core";
+  LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
@@ -18,15 +18,18 @@ type Photo = { key: string; uri: string; base64?: string | null; mimeType?: stri
 const typeOptions = Object.entries(LISTING_TYPE_LABELS).map(([value, label]) => ({ value: value as ClassifiedListingType, label }));
 const purposeOptions = PUBLISHABLE_PURPOSES.map(value => ({ value, label: PURPOSE_LABELS[value] }));
 
-export function ListingForm({ listing }: { listing?: any }) {
+export function ListingForm({ listing, initialPurpose }: { listing?: any; initialPurpose?: ClassifiedPurpose }) {
   const router = useRouter();
   const editing = Boolean(listing);
   const territory = listingTerritory(listing);
   const [listingType, setListingType] = useState<ClassifiedListingType>(listing?.listing_type ?? "classified");
-  const [purpose, setPurpose] = useState<ClassifiedPurpose>(listing?.purpose ?? "sale");
+  const [purpose, setPurpose] = useState<ClassifiedPurpose>(listing?.purpose ?? initialPurpose ?? "sale");
   const [title, setTitle] = useState(listing?.title ?? "");
   const [description, setDescription] = useState(listing?.description ?? "");
   const [price, setPrice] = useState(listing?.price != null ? String(listing.price) : "");
+  const [budgetMin, setBudgetMin] = useState(listing?.budget_min != null ? String(listing.budget_min) : "");
+  const [budgetMax, setBudgetMax] = useState(listing?.budget_max != null ? String(listing.budget_max) : "");
+  const wanted = purpose === "wanted";
   const [categoryId, setCategoryId] = useState<string>(listing?.category_id ?? "");
   const [provinceId, setProvinceId] = useState(territory.provinceId ?? "");
   const [municipalityId, setMunicipalityId] = useState(territory.municipalityId ?? "");
@@ -78,7 +81,10 @@ export function ListingForm({ listing }: { listing?: any }) {
   async function submit() {
     if (busy) return;
     setError("");
-    const priceValue = parsePrice(price);
+    const minValue = wanted ? parsePrice(budgetMin) : undefined, maxValue = wanted ? parsePrice(budgetMax) : undefined;
+    const budgetError = wanted ? validateBudget(minValue, maxValue) : null;
+    if (budgetError) { setError(budgetError); return; }
+    const priceValue = wanted ? budgetPrice(minValue, maxValue) : parsePrice(price);
     const invalid = validateClassifiedDraft({ listingType, purpose, title, description, price: priceValue, provinceId, municipalityId, photoCount: photos.length });
     if (invalid) { setError(invalid); return; }
     setBusy(true);
@@ -98,7 +104,7 @@ export function ListingForm({ listing }: { listing?: any }) {
         media.push(up.data);
       }
       setStatus(editing ? "A guardar…" : "A publicar…");
-      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, media };
+      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media };
       if (editing) {
         const r = await updateClassifiedListing(c, listing.id, input);
         if (r.error) throw r.error;
@@ -122,12 +128,18 @@ export function ListingForm({ listing }: { listing?: any }) {
     <Chips options={typeOptions} value={listingType} onChange={setListingType} />
     <Text style={ui.label}>Finalidade</Text>
     <Chips options={purposeOptions} value={purpose} onChange={setPurpose} />
-    <Text style={ui.label}>Título</Text>
-    <TextInput style={ui.input} value={title} maxLength={140} onChangeText={setTitle} placeholder="Ex.: Toyota Hilux 2018" />
+    {wanted && <Text style={ui.ok}>🔎 Pedido de comprador: diga o que procura e quanto pode pagar. Os vendedores com artigos parecidos são avisados.</Text>}
+    <Text style={ui.label}>{wanted ? "O que procura?" : "Título"}</Text>
+    <TextInput style={ui.input} value={title} maxLength={140} onChangeText={setTitle} placeholder={wanted ? "Ex.: Preciso de um Router 5G da Unitel" : "Ex.: Toyota Hilux 2018"} />
     <Text style={ui.label}>Descrição</Text>
-    <TextInput style={[ui.input, ui.area]} multiline value={description} onChangeText={setDescription} placeholder="Estado, características, como entregar…" />
-    <Text style={ui.label}>Preço (Kz)</Text>
-    <TextInput style={ui.input} keyboardType="decimal-pad" value={price} onChangeText={setPrice} placeholder="Vazio = «sob consulta»" />
+    <TextInput style={[ui.input, ui.area]} multiline value={description} onChangeText={setDescription} placeholder={wanted ? "Pormenores: estado, marca, zona, quando precisa…" : "Estado, características, como entregar…"} />
+    {wanted ? <View style={{ flexDirection: "row", gap: 10 }}>
+      <View style={{ flex: 1, gap: 6 }}><Text style={ui.label}>Orçamento de (Kz)</Text><TextInput style={ui.input} keyboardType="decimal-pad" value={budgetMin} onChangeText={setBudgetMin} placeholder="20 000" /></View>
+      <View style={{ flex: 1, gap: 6 }}><Text style={ui.label}>até (Kz)</Text><TextInput style={ui.input} keyboardType="decimal-pad" value={budgetMax} onChangeText={setBudgetMax} placeholder="25 000" /></View>
+    </View> : <>
+      <Text style={ui.label}>Preço (Kz)</Text>
+      <TextInput style={ui.input} keyboardType="decimal-pad" value={price} onChangeText={setPrice} placeholder="Vazio = «sob consulta»" />
+    </>}
     <Text style={ui.label}>Categoria</Text>
     <Chips options={[{ value: "", label: "Sem categoria" }, ...categories.map(c => ({ value: c.id, label: c.name }))]} value={categoryId} onChange={setCategoryId} />
     <Text style={ui.label}>Província</Text>

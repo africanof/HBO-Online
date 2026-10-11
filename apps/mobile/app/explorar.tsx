@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams } from "expo-router";
 import { ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyError, parsePrice,
-  LISTING_TYPE_LABELS, PURPOSE_LABELS, readExploreParams, timeAgo, type ClassifiedSearchFilters } from "@huambo-online/core";
+  LISTING_TYPE_LABELS, PURPOSE_LABELS, readExploreParams, timeAgo, type ClassifiedSearchFilters, listingPriceLabel } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
@@ -74,7 +74,7 @@ export default function Explorar() {
     <Message error={error} ok={notice} />
     {items !== null && <Text style={ui.label}>{items.length} resultado(s)</Text>}
     {items?.length === 0 && <View style={ui.card}><Text style={ui.text}>Nenhum anúncio encontrado. Experimente outras palavras ou menos filtros.</Text><Link href="/classificados/publicar" style={ui.link}>Publique o primeiro →</Link></View>}
-    <Grid>{items?.map(x => <ItemCard key={x.id} video={!!x.video_url} width={cardW} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={formatPrice(x.price, x.currency)}
+    <Grid>{items?.map(x => <ItemCard key={x.id} video={!!x.video_url} width={cardW} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={listingPriceLabel(x)}
       icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : undefined} tagRed={x.purpose === "auction"}
       meta={timeAgo(x.published_at ?? x.created_at)} />)}</Grid>
   </ScrollView>;

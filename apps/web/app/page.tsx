@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS } from "@huambo-online/core";
+import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, listWanted, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../components/ItemCard";
 
-type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[] };
+type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[] };
 
 function ShelfHead({ title, href }: { title: string; href: string }) {
   return <div className="shelf-head"><h2>{title}</h2><a href={href}>Ver tudo →</a></div>;
@@ -13,18 +13,18 @@ function ShelfHead({ title, href }: { title: string; href: string }) {
 export default function Home() {
   const [s, setS] = useState<Shelf | null>(null);
   useEffect(() => {
-    if (!supabaseConfigured) { setS({ listings: [], auctions: [], rentals: [], products: [], providers: [], markets: [] }); return; }
+    if (!supabaseConfigured) { setS({ listings: [], auctions: [], rentals: [], products: [], providers: [], markets: [], wanted: [] }); return; }
     const c = supabase();
     void Promise.all([
       searchClassifiedListings(c, { limit: 12 }), searchClassifiedListings(c, { purpose: "auction", limit: 12 }),
-      searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c)
-    ]).then(([l, a, r, p, v, mk]) => setS({
+      searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c), listWanted(c, "", 12)
+    ]).then(([l, a, r, p, v, mk, w]) => setS({
       listings: (l.data as any[]) ?? [], auctions: (a.data as any[]) ?? [], rentals: (r.data as any[]) ?? [],
-      products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? []
+      products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? [], wanted: (w.data as any[]) ?? []
     }));
   }, []);
 
-  const listingCard = (x: any) => <ItemCard key={x.id} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={formatPrice(x.price, x.currency)}
+  const listingCard = (x: any) => <ItemCard key={x.id} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
     icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : undefined}
     tagRed={x.purpose === "auction"} meta={timeAgo(x.published_at ?? x.created_at)} />;
 
@@ -55,9 +55,17 @@ export default function Home() {
 
     {!!s?.listings.length && <><ShelfHead title="Novidades nos classificados" href="/explorar" /><div className="shelf">{s.listings.map(listingCard)}</div></>}
 
+    {!!s?.wanted.length && <><ShelfHead title="🔎 Procura-se — compradores à procura" href="/procura-se" /><div className="shelf">
+      {s.wanted.map(x => <a key={x.id} href={"/classificados/" + x.id} className="card wanted-card">
+        <span className="item-meta">🔎 PROCURA-SE</span>
+        <strong className="item-title" style={{ fontSize: 17 }}>{x.title}</strong>
+        <span className="muted">Orçamento:</span><strong>{listingPriceLabel(x)}</strong>
+      </a>)}
+    </div></>}
+
     <section className="banner yellow" style={{ marginTop: 32 }}>
       <div><h2>Tem algo para vender?</h2><p>Publique grátis com fotografias e receba mensagens de compradores do Huambo.</p></div>
-      <a className="btn" href="/classificados/publicar">+ Publicar anúncio</a>
+      <div className="row"><a className="btn" href="/classificados/publicar">+ Publicar anúncio</a><a className="btn secondary" href="/classificados/publicar?finalidade=wanted">🔎 Publicar o que procuro</a></div>
     </section>
 
     {!!s?.products.length && <><ShelfHead title="🛍️ Na loja" href="/loja" /><div className="shelf">

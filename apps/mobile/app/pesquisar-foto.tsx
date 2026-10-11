@@ -4,7 +4,7 @@ import { Image, Pressable, ScrollView, Text, View, useWindowDimensions } from "r
 import * as ImagePicker from "expo-image-picker";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { analyzePhoto, photoSearchesLeft, photoSearchMessage, searchByKeywords, fitWithin, formatPrice, timeAgo,
-  PHOTO_SEARCH_DAILY_LIMIT, PURPOSE_LABELS, type PhotoSearchResult } from "@huambo-online/core";
+  PHOTO_SEARCH_DAILY_LIMIT, PURPOSE_LABELS, type PhotoSearchResult, listingPriceLabel } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
@@ -71,7 +71,7 @@ export default function PesquisarFoto() {
     {!!items && <>
       <Text style={ui.h2}>{total ? `${total} resultado(s)` : "Ainda não há nada parecido à venda."}</Text>
       <Grid>
-        {items.listings.map(x => <ItemCard key={x.id} width={cardW} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={formatPrice(x.price, x.currency)}
+        {items.listings.map(x => <ItemCard key={x.id} width={cardW} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
           icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : undefined} tagRed={x.purpose === "auction"} meta={timeAgo(x.created_at)} />)}
         {items.products.map(p => <ItemCard key={p.id} width={cardW} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)} tag="Loja" meta={[p.seller_name, p.municipality_name].filter(Boolean).join(" · ")} />)}
       </Grid>

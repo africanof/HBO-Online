@@ -3,7 +3,7 @@ import { VideoPlayer } from "../../../components/Video";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
-  reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS } from "@huambo-online/core";
+  reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ui } from "../../../lib/ui";
 import { Button, Message } from "../../../components/Ui";
@@ -90,10 +90,11 @@ export default function ClassifiedDetail() {
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/explorar" style={ui.link}>← Explorar</Link>
     {item.status !== "published" && <Text style={ui.error}>{STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] ?? item.status} — só você vê este anúncio</Text>}
+    {item.purpose === "wanted" && <Text style={[ui.label, { backgroundColor: "#fff4d6", alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }]}>🔎 PROCURA-SE — pedido de comprador</Text>}
     <Text style={ui.h1}>{item.title}</Text>
-    <Text style={ui.price}>{formatPrice(item.price, item.currency)}</Text>
+    {item.purpose === "wanted" ? <Text style={ui.price}>Orçamento: {listingPriceLabel(item)}</Text> : <Text style={ui.price}>{formatPrice(item.price, item.currency)}</Text>}
     <Text style={ui.text}>{LISTING_TYPE_LABELS[item.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? item.listing_type} · {PURPOSE_LABELS[item.purpose as keyof typeof PURPOSE_LABELS] ?? item.purpose}{place ? " · 📍 " + place : ""}</Text>
-    {!!seller && <Link href={("/vendedor/" + item.owner_id) as any} style={ui.link}>Anunciante: {seller} →</Link>}
+    {!!seller && <Link href={("/vendedor/" + item.owner_id) as any} style={ui.link}>{item.purpose === "wanted" ? "Comprador" : "Anunciante"}: {seller} →</Link>}
     <MarketLink id={item.market_id} />
     {media.length > 0 && <View style={{ gap: 8 }}>
       <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: "#eee" }} resizeMode="contain" accessibilityLabel={`Fotografia ${photo + 1} de ${media.length}`} />
@@ -111,7 +112,8 @@ export default function ClassifiedDetail() {
     </View> : <View style={{ gap: 12 }}>
       <Button title={savedId ? "★ Guardado" : "☆ Guardar anúncio"} variant="secondary" onPress={() => void toggleSaved()} disabled={busy} />
       <View style={ui.card}>
-        <Text style={ui.h2}>Contactar anunciante</Text>
+        <Text style={ui.h2}>{item.purpose === "wanted" ? "Responder ao comprador" : "Contactar anunciante"}</Text>
+        {item.purpose === "wanted" && !message && <Button title="✋ Tenho o que procura" onPress={() => setMessage(wantedReplyMessage(item.title))} />}
         <TextInput value={message} onChangeText={setMessage} placeholder="Olá, o anúncio ainda está disponível?" multiline style={[ui.input, ui.area]} />
         <Button title={busy ? "A enviar…" : "Enviar mensagem"} onPress={() => void contact()} disabled={busy || !message.trim()} />
       </View>

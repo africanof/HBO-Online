@@ -4,21 +4,24 @@ import { MarketPicker } from "./MarketPicker";
 import { VideoField } from "./Video";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
   createAndPublishClassifiedListing, updateClassifiedListing, friendlyError, listingTerritory,
-  LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES } from "@huambo-online/core";
+  LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
 
 type Option = { id: string; name: string };
 type Photo = { key: string; src: string; file?: File };
 
-export function ListingForm({ listing }: { listing?: any }) {
+export function ListingForm({ listing, initialPurpose }: { listing?: any; initialPurpose?: ClassifiedPurpose }) {
   const editing = Boolean(listing);
   const territory = listingTerritory(listing);
   const [listingType, setListingType] = useState<ClassifiedListingType>(listing?.listing_type ?? "classified");
-  const [purpose, setPurpose] = useState<ClassifiedPurpose>(listing?.purpose ?? "sale");
+  const [purpose, setPurpose] = useState<ClassifiedPurpose>(listing?.purpose ?? initialPurpose ?? "sale");
   const [title, setTitle] = useState(listing?.title ?? "");
   const [description, setDescription] = useState(listing?.description ?? "");
   const [price, setPrice] = useState(listing?.price != null ? String(listing.price) : "");
+  const [budgetMin, setBudgetMin] = useState(listing?.budget_min != null ? String(listing.budget_min) : "");
+  const [budgetMax, setBudgetMax] = useState(listing?.budget_max != null ? String(listing.budget_max) : "");
+  const wanted = purpose === "wanted";
   const [categoryId, setCategoryId] = useState(listing?.category_id ?? "");
   const [provinceId, setProvinceId] = useState(territory.provinceId ?? "");
   const [municipalityId, setMunicipalityId] = useState(territory.municipalityId ?? "");
@@ -73,7 +76,10 @@ export function ListingForm({ listing }: { listing?: any }) {
     e.preventDefault();
     if (busy) return;
     setError("");
-    const priceValue = parsePrice(price);
+    const minValue = wanted ? parsePrice(budgetMin) : undefined, maxValue = wanted ? parsePrice(budgetMax) : undefined;
+    const budgetError = wanted ? validateBudget(minValue, maxValue) : null;
+    if (budgetError) { setError(budgetError); return; }
+    const priceValue = wanted ? budgetPrice(minValue, maxValue) : parsePrice(price);
     const invalid = validateClassifiedDraft({ listingType, purpose, title, description, price: priceValue, provinceId, municipalityId, photoCount: photos.length });
     if (invalid) { setError(invalid); return; }
     setBusy(true);
@@ -91,7 +97,7 @@ export function ListingForm({ listing }: { listing?: any }) {
         media.push(up.data);
       }
       setStatus(editing ? "A guardar…" : "A publicar…");
-      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, media };
+      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media };
       if (editing) {
         const r = await updateClassifiedListing(c, listing.id, input);
         if (r.error) throw r.error;
@@ -122,9 +128,13 @@ export function ListingForm({ listing }: { listing?: any }) {
           {PUBLISHABLE_PURPOSES.map(v => <option key={v} value={v}>{PURPOSE_LABELS[v]}</option>)}
         </select>
       </label>
-      <label>Título<input value={title} maxLength={140} onChange={e => setTitle(e.target.value)} placeholder="Ex.: Toyota Hilux 2018" /></label>
-      <label>Descrição<textarea value={description} onChange={e => setDescription(e.target.value)} rows={6} placeholder="Estado, características, como entregar…" /></label>
-      <label>Preço (Kz)<input value={price} onChange={e => setPrice(e.target.value)} inputMode="decimal" placeholder="Deixe vazio para «sob consulta»" /></label>
+      {wanted && <p className="ok" style={{ margin: 0 }}>🔎 Pedido de comprador: diga o que procura e quanto pode pagar. Os vendedores com artigos parecidos são avisados.</p>}
+      <label>{wanted ? "O que procura?" : "Título"}<input value={title} maxLength={140} onChange={e => setTitle(e.target.value)} placeholder={wanted ? "Ex.: Preciso de um Router 5G da Unitel" : "Ex.: Toyota Hilux 2018"} /></label>
+      <label>Descrição<textarea value={description} onChange={e => setDescription(e.target.value)} rows={6} placeholder={wanted ? "Pormenores: estado, marca, zona, quando precisa…" : "Estado, características, como entregar…"} /></label>
+      {wanted ? <div className="row" style={{ flexWrap: "nowrap" }}>
+        <label style={{ flex: 1 }}>Orçamento de (Kz)<input value={budgetMin} onChange={e => setBudgetMin(e.target.value)} inputMode="decimal" placeholder="Ex.: 20 000" /></label>
+        <label style={{ flex: 1 }}>até (Kz)<input value={budgetMax} onChange={e => setBudgetMax(e.target.value)} inputMode="decimal" placeholder="Ex.: 25 000" /></label>
+      </div> : <label>Preço (Kz)<input value={price} onChange={e => setPrice(e.target.value)} inputMode="decimal" placeholder="Deixe vazio para «sob consulta»" /></label>}
       <label>Categoria
         <select value={categoryId} onChange={e => setCategoryId(e.target.value)}>
           <option value="">Sem categoria</option>

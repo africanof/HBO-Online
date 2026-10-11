@@ -17,7 +17,7 @@ describe("design", () => {
     expect(readExploreParams(k => bad.get(k))).toEqual({ query: "", listingType: "", purpose: "" });
   });
   it("as categorias da página inicial apontam para páginas existentes", () => {
-    for (const c of HOME_CATEGORIES) expect(c.href).toMatch(/^\/(explorar|loja|pracas|profissionais|empresas)(\?|$)/);
+    for (const c of HOME_CATEGORIES) expect(c.href).toMatch(/^\/(explorar|loja|pracas|procura-se|profissionais|empresas)(\?|$)/);
     expect(LOGO_PARTS.map(p => p[0]).join("")).toBe("HuamboOnline");
     expect(BRAND.blue).toBe("#3665F3");
   });

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Gallery } from "../../../components/Video";
 import { useParams } from "next/navigation";
 import { getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
-  reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS } from "@huambo-online/core";
+  reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ShareButton, useRecordView } from "../../../components/Engage";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
@@ -93,9 +93,10 @@ export default function ClassifiedDetail() {
     <div className="itempage">
       <Gallery media={media} video={item.video_url} icon={"🏷️"} title={item.title} />
       <section className="buybox">
+        {item.purpose === "wanted" && <span className="badge" style={{ justifySelf: "start", background: "#fff4d6", borderColor: "#f5af02" }}>🔎 PROCURA-SE — pedido de comprador</span>}
         <h1>{item.title}</h1>
-        {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>👤</span><span>Anunciante: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver outros anúncios</a></span></div>}
-        <div className="big-price">{formatPrice(item.price, item.currency)}</div>
+        {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>👤</span><span>{item.purpose === "wanted" ? "Comprador" : "Anunciante"}: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver outros anúncios</a></span></div>}
+        {item.purpose === "wanted" ? <div><span className="muted">Orçamento</span><div className="big-price">{listingPriceLabel(item)}</div></div> : <div className="big-price">{formatPrice(item.price, item.currency)}</div>}
         <dl className="facts">
           <dt>Tipo</dt><dd>{typeLabel}</dd>
           <dt>Finalidade</dt><dd>{purposeLabel}</dd>
@@ -108,7 +109,9 @@ export default function ClassifiedDetail() {
         {!mine && item.status === "published" && ["rent", "lease"].includes(item.purpose) && <RentalRequestForm listingId={id} uid={uid} defaultPrice={item.price} />}
         <div className="actions">
           {mine ? <><a className="btn" href={`/classificados/${id}/editar`}>Editar anúncio</a><a className="btn secondary" href="/meus-anuncios">Os meus anúncios</a></> : <>
-            <a className="btn" href="#contactar">💬 Contactar anunciante</a>
+            {item.purpose === "wanted"
+              ? <a className="btn" href="#contactar" onClick={() => { if (!message.trim()) setMessage(wantedReplyMessage(item.title)); }}>✋ Tenho o que procura</a>
+              : <a className="btn" href="#contactar">💬 Contactar anunciante</a>}
             <button type="button" className="secondary" onClick={toggleSaved} disabled={busy}>{savedId ? "♥ Guardado" : "♡ Guardar anúncio"}</button>
           </>}
           {item.status === "published" && <ShareButton kind="listing" id={id} title={item.title} />}
@@ -118,7 +121,7 @@ export default function ClassifiedDetail() {
     {item.description && <section className="card"><h2 style={{ margin: 0 }}>Descrição</h2><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{item.description}</p></section>}
     {!mine && <>
       <section className="card" id="contactar">
-        <h2 style={{ margin: 0 }}>Contactar anunciante</h2>
+        <h2 style={{ margin: 0 }}>{item.purpose === "wanted" ? "Responder ao comprador" : "Contactar anunciante"}</h2>
         <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Olá, o anúncio ainda está disponível?" rows={4} />
         <button type="button" disabled={busy || !message.trim()} onClick={contact} style={{ justifySelf: "start" }}>{busy ? "A enviar…" : "Enviar mensagem"}</button>
       </section>

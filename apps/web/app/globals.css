@@ -166,3 +166,6 @@ main > a:first-child { font-size: 15px; display: inline-block; margin-bottom: 4p
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; font-weight: 700; }
 @media (max-width: 860px) { .itempage { grid-template-columns: 1fr; } .gallery { grid-template-columns: 1fr; } .thumbs { grid-auto-flow: column; grid-auto-columns: 72px; overflow-x: auto; order: 2; } }
+
+/* Pedidos "Procura-se" */
+.wanted-card { color: inherit; text-decoration: none; font-weight: 400; border-left: 6px solid var(--yellow); }
