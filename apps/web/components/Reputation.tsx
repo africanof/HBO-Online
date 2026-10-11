@@ -33,19 +33,20 @@ export function SellerBadge({ userId }: { userId?: string | null }) {
 
 /** Caixa «Pedir serviço» nas páginas de profissionais e empresas. */
 export function RequestServiceBox({ target, signedIn }: { target: { providerId?: string; businessId?: string }; signedIn: boolean }) {
-  const [text, setText] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [done, setDone] = useState(false);
+  const [text, setText] = useState(""); const [date, setDate] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [done, setDone] = useState(false);
   async function send() {
     if (!signedIn) { setError("Inicie sessão para pedir um serviço."); return; }
     const v = validateServiceRequest(text); if (v) { setError(v); return; }
     setBusy(true); setError("");
-    const r = await requestService(supabase(), target, text); setBusy(false);
-    if (r.error) setError(friendlyError(r.error)); else { setDone(true); setText(""); }
+    const r = await requestService(supabase(), target, text, date); setBusy(false);
+    if (r.error) setError(friendlyError(r.error)); else { setDone(true); setText(""); setDate(""); }
   }
   return <section className="card">
     <h2 style={{ margin: 0 }}>🛠️ Pedir serviço</h2>
     {done ? <p className="ok" role="status">Pedido enviado! Acompanhe em <a href="/servicos">Pedidos de serviço</a>.</p> : <>
       <p style={{ margin: 0 }}>Diga o que precisa. Quando o serviço terminar, confirma e avalia — a avaliação fica marcada «✔ Serviço confirmado».</p>
       <textarea rows={3} value={text} onChange={e => setText(e.target.value)} placeholder="Ex.: Instalar 3 tomadas na sala, no bairro São João." />
+      <label style={{ maxWidth: 260 }}>Para quando? (opcional)<input type="date" value={date} min={new Date().toISOString().slice(0, 10)} onChange={e => setDate(e.target.value)} /></label>
       {error && <p className="error" role="alert">{error}</p>}
       <button disabled={busy} onClick={send}>{busy ? "A enviar…" : "Enviar pedido de serviço"}</button>
     </>}

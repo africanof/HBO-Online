@@ -8,6 +8,7 @@ import { ui } from "../../lib/ui";
 import { Button, Message } from "../../components/Ui";
 import { SaveButton, ShareButton, useRecordView } from "../../components/Engage";
 import { SellerBadge } from "../../components/Reputation";
+import { ReportButton } from "../../components/Trust";
 
 export default function Produto() {
   const router = useRouter(); const { width } = useWindowDimensions();
@@ -58,5 +59,6 @@ export default function Produto() {
       <TextInput style={ui.input} keyboardType="number-pad" value={qty} onChangeText={setQty} />
       <Button title="🛒 Adicionar ao carrinho" disabled={busy} onPress={() => void add()} />
     </View>}
+    {!mine && <ReportButton type="product" id={id} label="Denunciar este produto" />}
   </ScrollView>;
 }

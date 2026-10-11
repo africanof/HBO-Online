@@ -3,13 +3,15 @@ import { useEffect, useState } from "react";
 import { getMyAdminRole, getAdminStats, listReports, resolveReport, listListingsForModeration, moderateListing, listUsersForAdmin,
   setUserStatus, setUserRole, listAllCategories, createCategory, setCategoryActive, canModerate, canManageRoles, friendlyError, formatPrice,
   ADMIN_STAT_LABELS, REPORT_STATUS_LABELS, USER_STATUS_LABELS, ROLE_LABELS, STATUS_LABELS, CATEGORY_TYPES, CATEGORY_TYPE_LABELS,
+  listReportsV2, setTargetActive, reportTargetHref, REPORT_TARGET_LABELS, type ReportTargetType,
   type AdminRole, type AdminStats, type ReportStatus, type UserStatus } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
 import { AdminCouriers } from "../../components/AdminCouriers";
 import { AdminMarkets } from "../../components/AdminMarkets";
+import { AdminVerifications, AdminAudit } from "../../components/AdminTrust";
 
-type Tab = "stats" | "reports" | "listings" | "users" | "categories" | "couriers" | "markets";
-const tabs: [Tab, string][] = [["stats", "Estatísticas"], ["reports", "Denúncias"], ["listings", "Anúncios"], ["users", "Utilizadores"], ["categories", "Categorias"], ["couriers", "Estafetas"], ["markets", "Praças"]];
+type Tab = "stats" | "reports" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+const tabs: [Tab, string][] = [["stats", "Estatísticas"], ["reports", "Denúncias"], ["verifications", "Verificações"], ["listings", "Anúncios"], ["users", "Utilizadores"], ["categories", "Categorias"], ["couriers", "Estafetas"], ["markets", "Praças"], ["audit", "Registo"]];
 
 export default function AdminPage() {
   const [role, setRole] = useState<AdminRole | null>(null);
@@ -26,9 +28,9 @@ export default function AdminPage() {
 
   async function load(t: Tab) {
     setError("");
-    if (t === "couriers" || t === "markets") return;
+    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit") return;
     const c = supabase();
-    const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReports(c, reportFilter || undefined)
+    const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReportsV2(c, reportFilter || undefined)
       : t === "listings" ? await listListingsForModeration(c, listingFilter, listingQuery) : t === "users" ? await listUsersForAdmin(c, userQuery) : await listAllCategories(c);
     if (r.error) { setError(friendlyError(r.error)); return; }
     if (t === "stats") setStats(r.data); else if (t === "reports") setReports(r.data ?? []); else if (t === "listings") setListings(r.data ?? []);
@@ -53,6 +55,8 @@ export default function AdminPage() {
 
     {tab === "couriers" && <AdminCouriers />}
     {tab === "markets" && <AdminMarkets />}
+    {tab === "verifications" && <AdminVerifications />}
+    {tab === "audit" && <AdminAudit />}
     {tab === "stats" && stats && <section className="grid">{ADMIN_STAT_LABELS.map(([k, l]) => <div key={k} className="card"><span>{l}</span><strong style={{ fontSize: 32 }}>{stats[k]}</strong></div>)}</section>}
 
     {tab === "reports" && <section className="stack">
@@ -60,12 +64,16 @@ export default function AdminPage() {
       <button className="secondary" style={{ maxWidth: 200 }} onClick={() => load("reports")}>Atualizar</button>
       {reports.length === 0 && <p>Sem denúncias.</p>}
       {reports.map(r => <article key={r.id} className="card">
-        <strong>{r.listing_title ?? r.target_type}</strong>
+        <strong>{REPORT_TARGET_LABELS[r.target_type as ReportTargetType] ?? r.target_type}: {r.target_title ?? "(já não existe)"}{r.target_active === false ? " · escondido" : ""}</strong>
         <span>Motivo: {r.reason}{r.details ? " — " + r.details : ""}</span>
         <span>Denunciado por {r.reporter_name || "utilizador"} · {new Date(r.created_at).toLocaleString("pt-AO")} · <span className="badge">{REPORT_STATUS_LABELS[r.status as ReportStatus]}</span></span>
         <div className="row">
-          {r.target_type === "classified_listing" && <a className="btn secondary" href={"/classificados/" + r.target_id} target="_blank">Ver anúncio</a>}
-          {r.target_type === "classified_listing" && r.listing_status !== "cancelled" && <button className="danger" onClick={() => act(async () => { const a = await moderateListing(supabase(), r.target_id, "cancelled"); return a.error ? a : resolveReport(supabase(), r.id, "resolved"); }, "Anúncio retirado e denúncia resolvida.")}>Retirar anúncio</button>}
+          <a className="btn secondary" href={reportTargetHref(r.target_type, r.target_id, r.target_owner)} target="_blank">Ver</a>
+          {r.target_type === "classified_listing" && r.target_active && <button className="danger" onClick={() => act(async () => { const a = await moderateListing(supabase(), r.target_id, "cancelled"); return a.error ? a : resolveReport(supabase(), r.id, "resolved"); }, "Anúncio retirado e denúncia resolvida.")}>Retirar anúncio</button>}
+          {["product", "business", "provider"].includes(r.target_type) && (r.target_active
+            ? <button className="danger" onClick={() => act(async () => { const a = await setTargetActive(supabase(), r.target_type, r.target_id, false); return a.error ? a : resolveReport(supabase(), r.id, "resolved"); }, "Escondido e denúncia resolvida.")}>Esconder</button>
+            : r.target_active === false && <button className="secondary" onClick={() => act(() => setTargetActive(supabase(), r.target_type, r.target_id, true), "Voltou a aparecer.")}>Voltar a mostrar</button>)}
+          {r.target_type === "user" && r.target_active && <button className="danger" onClick={() => { if (confirm("Suspender esta conta?")) void act(async () => { const a = await setUserStatus(supabase(), r.target_id, "suspended"); return a.error ? a : resolveReport(supabase(), r.id, "resolved"); }, "Conta suspensa e denúncia resolvida."); }}>Suspender conta</button>}
           {r.status !== "resolved" && <button onClick={() => act(() => resolveReport(supabase(), r.id, "resolved"), "Denúncia resolvida.")}>Resolvida</button>}
           {r.status !== "dismissed" && <button className="secondary" onClick={() => act(() => resolveReport(supabase(), r.id, "dismissed"), "Denúncia rejeitada.")}>Rejeitar</button>}
         </div>

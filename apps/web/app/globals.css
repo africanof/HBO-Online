@@ -180,3 +180,4 @@ main > a:first-child { font-size: 15px; display: inline-block; margin-bottom: 4p
 .star.on { background: #fff6d6; color: #b07a00; border-color: #e0b100; }
 .seller-badge { display: inline-block; font-weight: 700; color: #6b4e00; background: #fff6d6; border-radius: var(--pill); padding: 2px 10px; font-size: 15px; }
 .verified { display: inline-block; font-weight: 700; color: #0b6b2b; background: #e5f6ea; border-radius: var(--pill); padding: 2px 10px; font-size: 14px; }
+.reply { border-left: 4px solid var(--accent); background: var(--surface); padding: 8px 12px; border-radius: 6px; }

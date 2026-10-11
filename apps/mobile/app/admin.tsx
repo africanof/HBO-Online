@@ -4,17 +4,19 @@ import { Alert, ScrollView, Text, TextInput, View } from "react-native";
 import { getMyAdminRole, getAdminStats, listReports, resolveReport, listListingsForModeration, moderateListing, listUsersForAdmin,
   setUserStatus, setUserRole, listAllCategories, createCategory, setCategoryActive, canModerate, canManageRoles, friendlyError, formatPrice,
   ADMIN_STAT_LABELS, REPORT_STATUS_LABELS, USER_STATUS_LABELS, ROLE_LABELS, STATUS_LABELS, CATEGORY_TYPES, CATEGORY_TYPE_LABELS,
+  listReportsV2, setTargetActive, reportTargetHref, REPORT_TARGET_LABELS, type ReportTargetType,
   type AdminRole, type AdminStats, type ReportStatus, type UserStatus } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
 import { AdminCouriers } from "../components/AdminCouriers";
 import { AdminMarkets } from "../components/AdminMarkets";
+import { AdminVerifications, AdminAudit } from "../components/AdminTrust";
 
-type Tab = "stats" | "reports" | "listings" | "users" | "categories" | "couriers" | "markets";
+type Tab = "stats" | "reports" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
 const tabOptions: { value: Tab; label: string }[] = [
-  { value: "stats", label: "Estatísticas" }, { value: "reports", label: "Denúncias" }, { value: "listings", label: "Anúncios" },
-  { value: "users", label: "Utilizadores" }, { value: "categories", label: "Categorias" }, { value: "couriers", label: "Estafetas" }, { value: "markets", label: "Praças" }
+  { value: "stats", label: "Estatísticas" }, { value: "reports", label: "Denúncias" }, { value: "verifications", label: "Verificações" }, { value: "listings", label: "Anúncios" },
+  { value: "users", label: "Utilizadores" }, { value: "categories", label: "Categorias" }, { value: "couriers", label: "Estafetas" }, { value: "markets", label: "Praças" }, { value: "audit", label: "Registo" }
 ];
 
 export default function Admin() {
@@ -33,9 +35,9 @@ export default function Admin() {
 
   async function load(t: Tab) {
     setError("");
-    if (t === "couriers" || t === "markets") return;
+    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit") return;
     const c = supabase();
-    const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReports(c, reportFilter || undefined)
+    const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReportsV2(c, reportFilter || undefined)
       : t === "listings" ? await listListingsForModeration(c, "", listingQuery) : t === "users" ? await listUsersForAdmin(c, userQuery) : await listAllCategories(c);
     if (r.error) { setError(friendlyError(r.error)); return; }
     if (t === "stats") setStats(r.data); else if (t === "reports") setReports(r.data ?? []); else if (t === "listings") setListings(r.data ?? []);
@@ -59,17 +61,22 @@ export default function Admin() {
 
     {tab === "couriers" && <AdminCouriers />}
     {tab === "markets" && <AdminMarkets />}
+    {tab === "verifications" && <AdminVerifications />}
+    {tab === "audit" && <AdminAudit />}
     {tab === "stats" && stats && ADMIN_STAT_LABELS.map(([k, l]) => <View key={k} style={ui.card}><Text style={ui.text}>{l}</Text><Text style={ui.h1}>{stats[k]}</Text></View>)}
 
     {tab === "reports" && <View style={{ gap: 12 }}>
       <Chips options={[{ value: "" as const, label: "Todas" }, ...Object.entries(REPORT_STATUS_LABELS).map(([value, label]) => ({ value: value as ReportStatus, label }))]} value={reportFilter} onChange={setReportFilter} />
       {reports.length === 0 && <Text style={ui.text}>Sem denúncias.</Text>}
       {reports.map(r => <View key={r.id} style={ui.card}>
-        <Text style={ui.h2}>{r.listing_title ?? r.target_type}</Text>
+        <Text style={ui.h2}>{REPORT_TARGET_LABELS[r.target_type as ReportTargetType] ?? r.target_type}: {r.target_title ?? "(já não existe)"}{r.target_active === false ? " · escondido" : ""}</Text>
         <Text style={ui.text}>Motivo: {r.reason}{r.details ? " — " + r.details : ""}</Text>
         <Text style={ui.muted}>{r.reporter_name || "utilizador"} · {new Date(r.created_at).toLocaleString("pt-AO")} · {REPORT_STATUS_LABELS[r.status as ReportStatus]}</Text>
-        {r.target_type === "classified_listing" && <Button title="Ver anúncio" variant="secondary" onPress={() => router.push(("/classificados/" + r.target_id) as any)} />}
-        {r.target_type === "classified_listing" && r.listing_status !== "cancelled" && <Button title="Retirar anúncio" variant="danger" onPress={() => void act(async () => { const a = await moderateListing(supabase(), r.target_id, "cancelled"); return a.error ? a : resolveReport(supabase(), r.id, "resolved"); }, "Anúncio retirado e denúncia resolvida.")} />}
+        <Button title="Ver" variant="secondary" onPress={() => router.push(reportTargetHref(r.target_type, r.target_id, r.target_owner) as any)} />
+        {r.target_type === "classified_listing" && r.target_active && <Button title="Retirar anúncio" variant="danger" onPress={() => void act(async () => { const a = await moderateListing(supabase(), r.target_id, "cancelled"); return a.error ? a : resolveReport(supabase(), r.id, "resolved"); }, "Anúncio retirado e denúncia resolvida.")} />}
+        {["product", "business", "provider"].includes(r.target_type) && r.target_active && <Button title="Esconder" variant="danger" onPress={() => void act(async () => { const a = await setTargetActive(supabase(), r.target_type, r.target_id, false); return a.error ? a : resolveReport(supabase(), r.id, "resolved"); }, "Escondido e denúncia resolvida.")} />}
+        {["product", "business", "provider"].includes(r.target_type) && r.target_active === false && <Button title="Voltar a mostrar" variant="secondary" onPress={() => void act(() => setTargetActive(supabase(), r.target_type, r.target_id, true), "Voltou a aparecer.")} />}
+        {r.target_type === "user" && r.target_active && <Button title="Suspender conta" variant="danger" onPress={() => Alert.alert("Suspender conta", "Tem a certeza?", [{ text: "Não", style: "cancel" }, { text: "Suspender", style: "destructive", onPress: () => void act(async () => { const a = await setUserStatus(supabase(), r.target_id, "suspended"); return a.error ? a : resolveReport(supabase(), r.id, "resolved"); }, "Conta suspensa e denúncia resolvida.") }])} />}
         {r.status !== "resolved" && <Button title="Resolvida" onPress={() => void act(() => resolveReport(supabase(), r.id, "resolved"), "Denúncia resolvida.")} />}
         {r.status !== "dismissed" && <Button title="Rejeitar" variant="secondary" onPress={() => void act(() => resolveReport(supabase(), r.id, "dismissed"), "Denúncia rejeitada.")} />}
       </View>)}

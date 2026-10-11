@@ -6,12 +6,14 @@ import { getPublicSeller, listSellerListings, listProducts, formatPrice, ratingL
 import { supabase } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { StatsBlock, VerifiedTag, stars } from "../../components/Reputation";
+import { ReportButton, TrustBadges, ReviewReply } from "../../components/Trust";
+import { currentUserId } from "../../lib/supabase";
 
 export default function Vendedor() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [s, setS] = useState<PublicSeller | null>(null); const [listings, setListings] = useState<any[]>([]); const [products, setProducts] = useState<any[]>([]); const [error, setError] = useState("");
-  const [stats, setStats] = useState<UserStats | null>(null); const [reviews, setReviews] = useState<UserReview[]>([]);
+  const [stats, setStats] = useState<UserStats | null>(null); const [reviews, setReviews] = useState<UserReview[]>([]); const [me, setMe] = useState<string | null>(null);
   useEffect(() => { if (!id) return; void (async () => {
     const c = supabase();
     const r = await getPublicSeller(c, id);
@@ -19,7 +21,7 @@ export default function Vendedor() {
     if (!r.data) { setError("Perfil não encontrado."); return; }
     setS(r.data);
     const [l, p, st, rv] = await Promise.all([listSellerListings(c, id), listProducts(c, { sellerId: id }), getUserStats(c, id), listUserReviews(c, id)]);
-    setStats(st.data); setReviews(rv.data);
+    setStats(st.data); setReviews(rv.data); setMe(await currentUserId());
     setListings(l.data ?? []); setProducts((p.data as any[]) ?? []);
   })(); }, [id]);
   if (error) return <View style={ui.screen}><Link href="/" style={ui.link}>← Huambo Online</Link><Text style={ui.error}>{error}</Text></View>;
@@ -32,6 +34,7 @@ export default function Vendedor() {
         <Text style={ui.muted}>{[s.municipality, "membro desde " + new Date(s.member_since).toLocaleDateString("pt-AO")].filter(Boolean).join(" · ")}</Text></View>
     </View>
     {s.is_provider && <><Text style={ui.text}>{ratingLabel(s.rating, s.review_count)}</Text><Link href={("/profissionais/" + s.id) as any} style={ui.link}>Ver perfil profissional →</Link></>}
+    <TrustBadges userId={s.id} />
     <StatsBlock rows={userStatsRows(stats)} />
     <Text style={ui.h2}>Anúncios ({listings.length})</Text>
     {listings.length === 0 && <Text style={ui.text}>Sem anúncios publicados.</Text>}
@@ -48,6 +51,8 @@ export default function Vendedor() {
     <Text style={ui.h2}>Avaliações de negócios ({reviews.length})</Text>
     <Text style={ui.muted}>Só quem fez negócio com esta pessoa (compra, venda ou arrendamento) a pode avaliar.</Text>
     {reviews.length === 0 && <Text style={ui.text}>Ainda sem avaliações.</Text>}
-    {reviews.map(r => <View key={r.id} style={ui.card}><Text style={ui.label}>{stars(r.rating)} — {r.author_name}</Text><VerifiedTag text={"✔ Negócio concluído · como " + DEAL_ROLE_LABELS[r.role]} />{!!r.comment && <Text style={ui.text}>{r.comment}</Text>}<Text style={ui.muted}>{new Date(r.created_at).toLocaleDateString("pt-AO")}</Text></View>)}
+    {reviews.map(r => <View key={r.id} style={ui.card}><Text style={ui.label}>{stars(r.rating)} — {r.author_name}</Text><VerifiedTag text={"✔ Negócio concluído · como " + DEAL_ROLE_LABELS[r.role]} />{!!r.comment && <Text style={ui.text}>{r.comment}</Text>}<Text style={ui.muted}>{new Date(r.created_at).toLocaleDateString("pt-AO")}</Text>
+      <ReviewReply kind="deal" reviewId={r.id} reply={r.reply} canReply={me === s.id} onDone={async () => setReviews((await listUserReviews(supabase(), s.id)).data)} /></View>)}
+    {me !== s.id && <ReportButton type="user" id={s.id} label="Denunciar esta pessoa" />}
   </ScrollView>;
 }

@@ -11,8 +11,8 @@ export type DealKind = "order" | "listing";
 export type DealRole = "seller" | "buyer";
 
 export type PendingReview = { kind: DealKind; ref_id: string; title: string; other_id: string; other_name: string; other_role: DealRole; done_at: string | null };
-export type UserReview = { id: string; role: DealRole; rating: number; comment: string | null; created_at: string; author_name: string; kind: DealKind };
-export type ProviderReview = { id: string; rating: number; comment: string | null; created_at: string; author_id: string; author_name: string; confirmed: boolean };
+export type UserReview = { id: string; role: DealRole; rating: number; comment: string | null; created_at: string; author_name: string; kind: DealKind; reply?: string | null; reply_at?: string | null };
+export type ProviderReview = { id: string; rating: number; comment: string | null; created_at: string; author_id: string; author_name: string; confirmed: boolean; owner_reply?: string | null; owner_reply_at?: string | null };
 export type DealCandidate = { user_id: string; full_name: string };
 
 export type UserStats = {
@@ -25,7 +25,7 @@ export type BusinessStats = { rating: number | null; review_count: number; confi
 export type ServiceRequestStatus = "requested" | "accepted" | "declined" | "done" | "confirmed" | "cancelled";
 export type ServiceRequest = {
   id: string; status: ServiceRequestStatus; description: string; provider_note: string | null; created_at: string; updated_at: string;
-  provider_id: string | null; business_id: string | null; target_name: string; client_id: string; client_name: string;
+  provider_id: string | null; business_id: string | null; target_name: string; client_id: string; client_name: string; preferred_date?: string | null;
 };
 export type ServiceAction = "accept" | "decline" | "done" | "cancel";
 
@@ -131,11 +131,11 @@ export async function getBusinessStats(client: SupabaseClient, businessId: strin
   return { data: firstRow<BusinessStats>(r.data), error: r.error };
 }
 export async function listUserReviews(client: SupabaseClient, userId: string) {
-  const r = await client.rpc("user_reviews_for", { p_user_id: userId });
+  const r = await client.rpc("user_reviews_for_v2", { p_user_id: userId });
   return { data: (r.data ?? []) as UserReview[], error: r.error };
 }
 export async function listProviderReviews(client: SupabaseClient, target: { providerId?: string; businessId?: string }) {
-  const r = await client.rpc("list_reviews_v2", { p_provider_id: target.providerId ?? null, p_business_id: target.businessId ?? null });
+  const r = await client.rpc("list_reviews_v3", { p_provider_id: target.providerId ?? null, p_business_id: target.businessId ?? null });
   return { data: (r.data ?? []) as ProviderReview[], error: r.error };
 }
 export async function listPendingReviews(client: SupabaseClient) {
@@ -152,8 +152,24 @@ export async function listDealCandidates(client: SupabaseClient, listingId: stri
 export function setListingDeal(client: SupabaseClient, listingId: string, status: "sold" | "rented" | "closed", counterpartId: string) {
   return client.rpc("set_listing_deal", { p_listing_id: listingId, p_status: status, p_counterpart: counterpartId });
 }
-export function requestService(client: SupabaseClient, target: { providerId?: string; businessId?: string }, description: string) {
-  return client.rpc("request_service", { p_provider_id: target.providerId ?? null, p_business_id: target.businessId ?? null, p_description: description.trim() });
+export function requestService(client: SupabaseClient, target: { providerId?: string; businessId?: string }, description: string, preferredDate?: string) {
+  return client.rpc("request_service_v2", { p_provider_id: target.providerId ?? null, p_business_id: target.businessId ?? null, p_description: description.trim(), p_preferred_date: preferredDate || null });
+}
+/** Próximos dias para escolher no telemóvel: Hoje, Amanhã, qua. 15/10… (data de Angola). */
+export function quickDates(days = 7, now = new Date()): { value: string; label: string }[] {
+  const luanda = new Date(now.getTime() + 60 * 60 * 1000); // Angola = UTC+1, sem hora de verão
+  const week = ["dom.", "seg.", "ter.", "qua.", "qui.", "sex.", "sáb."];
+  return Array.from({ length: days }, (_, i) => {
+    const d = new Date(Date.UTC(luanda.getUTCFullYear(), luanda.getUTCMonth(), luanda.getUTCDate() + i));
+    const iso = d.toISOString().slice(0, 10);
+    const label = i === 0 ? "Hoje" : i === 1 ? "Amanhã" : `${week[d.getUTCDay()]} ${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
+    return { value: iso, label };
+  });
+}
+/** "Para 15/10/2026" (a data vem como AAAA-MM-DD). */
+export function formatPreferredDate(d: string | null | undefined): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d ?? "");
+  return m ? `Para ${m[3]}/${m[2]}/${m[1]}` : "";
 }
 export function updateServiceRequest(client: SupabaseClient, id: string, action: ServiceAction, note?: string) {
   return client.rpc("update_service_request", { p_id: id, p_action: action, p_note: note?.trim() || null });
@@ -162,6 +178,6 @@ export function confirmService(client: SupabaseClient, id: string, rating: numbe
   return client.rpc("confirm_service", { p_id: id, p_rating: rating, p_comment: comment?.trim() || null });
 }
 export async function listMyServiceRequests(client: SupabaseClient, as: "client" | "provider") {
-  const r = await client.rpc("my_service_requests", { p_as: as });
+  const r = await client.rpc("my_service_requests_v2", { p_as: as });
   return { data: (r.data ?? []) as ServiceRequest[], error: r.error };
 }

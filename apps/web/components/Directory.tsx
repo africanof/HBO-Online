@@ -6,6 +6,7 @@ import { listProviders, listBusinesses, getProvider, getBusiness, listProviderSe
 import { supabase } from "../lib/supabase";
 import { SaveButton, ShareButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, stars } from "./Reputation";
+import { ReportButton, TrustBadges, ReviewReply } from "./Trust";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string };
@@ -131,6 +132,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <p>{[categoryLabel(item), item.municipalities?.name, item.address_text].filter(Boolean).join(" · ")}</p>
     {item.markets?.name && <p>🧺 Na <a href={"/pracas/" + item.markets.id}>{item.markets.name}</a></p>}
     <p><strong>{ratingLabel(avg, reviews.length)}</strong></p>
+    <TrustBadges userId={kind === "providers" ? id : item.owner_id} />
     <StatsBlock rows={stats.rows} footer={stats.since} />
     {(item.bio || item.description) && <p style={{ whiteSpace: "pre-wrap" }}>{item.bio || item.description}</p>}
     <div className="row">
@@ -157,7 +159,9 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
         <button disabled={busy || !rating} onClick={review}>Publicar avaliação</button>
       </div>}
       {reviews.length === 0 && <p>Ainda sem avaliações.</p>}
-      {reviews.map(r => <div key={r.id} className="card"><strong>{stars(r.rating)} — {r.author_name}</strong>{r.confirmed && <span className="verified">✔ Serviço confirmado</span>}{r.comment && <span>{r.comment}</span>}<small>{new Date(r.created_at).toLocaleDateString("pt-AO")}</small></div>)}
+      {reviews.map(r => <div key={r.id} className="card"><strong>{stars(r.rating)} — {r.author_name}</strong>{r.confirmed && <span className="verified">✔ Serviço confirmado</span>}{r.comment && <span>{r.comment}</span>}<small>{new Date(r.created_at).toLocaleDateString("pt-AO")}</small>
+        <ReviewReply kind="service" reviewId={r.id} reply={r.owner_reply} canReply={mine} onDone={load} /></div>)}
+      {!mine && <ReportButton type={kind === "providers" ? "provider" : "business"} id={id} label={kind === "providers" ? "Denunciar este profissional" : "Denunciar esta empresa"} />}
     </section>
   </main>;
 }

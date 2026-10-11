@@ -9,6 +9,7 @@ import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
 import { SaveButton, ShareButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, VerifiedTag, stars } from "./Reputation";
+import { ReportButton, TrustBadges, ReviewReply } from "./Trust";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string };
@@ -127,6 +128,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <Text style={ui.muted}>{[categoryLabel(item), item.municipalities?.name, item.address_text].filter(Boolean).join(" · ")}</Text>
     {!!item.markets?.name && <Link href={("/pracas/" + item.markets.id) as any} style={ui.link}>🧺 Na {item.markets.name} →</Link>}
     <Text style={ui.label}>{ratingLabel(avg, reviews.length)}</Text>
+    <TrustBadges userId={kind === "providers" ? id : item.owner_id} />
     <StatsBlock rows={stats.rows} footer={stats.since} />
     {!!(item.bio || item.description) && <Text style={ui.text}>{item.bio || item.description}</Text>}
     {!!item.phone && <Button title="📞 Ligar" variant="secondary" onPress={() => void Linking.openURL("tel:" + item.phone.replace(/\s/g, ""))} />}
@@ -151,6 +153,8 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
       <Button title="Publicar avaliação" disabled={busy || !rating} onPress={() => void review()} />
     </View>}
     {reviews.length === 0 && <Text style={ui.text}>Ainda sem avaliações.</Text>}
-    {reviews.map(r => <View key={r.id} style={ui.card}><Text style={ui.label}>{stars(r.rating)} — {r.author_name}</Text>{r.confirmed && <VerifiedTag text="✔ Serviço confirmado" />}{!!r.comment && <Text style={ui.text}>{r.comment}</Text>}<Text style={ui.muted}>{new Date(r.created_at).toLocaleDateString("pt-AO")}</Text></View>)}
+    {reviews.map(r => <View key={r.id} style={ui.card}><Text style={ui.label}>{stars(r.rating)} — {r.author_name}</Text>{r.confirmed && <VerifiedTag text="✔ Serviço confirmado" />}{!!r.comment && <Text style={ui.text}>{r.comment}</Text>}<Text style={ui.muted}>{new Date(r.created_at).toLocaleDateString("pt-AO")}</Text>
+      <ReviewReply kind="service" reviewId={r.id} reply={r.owner_reply} canReply={mine} onDone={() => void load()} /></View>)}
+    {!mine && <ReportButton type={kind === "providers" ? "provider" : "business"} id={id} label={kind === "providers" ? "Denunciar este profissional" : "Denunciar esta empresa"} />}
   </ScrollView>;
 }

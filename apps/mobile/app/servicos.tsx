@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Alert, ScrollView, Text, TextInput, View } from "react-native";
 import { listMyServiceRequests, updateServiceRequest, confirmService, serviceActions, validateReview, friendlyError,
-  SERVICE_STATUS_LABELS, SERVICE_ACTION_LABELS, type ServiceRequest, type ServiceAction } from "@huambo-online/core";
+  SERVICE_STATUS_LABELS, SERVICE_ACTION_LABELS, formatPreferredDate, type ServiceRequest, type ServiceAction } from "@huambo-online/core";
 import { currentUserId, supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
@@ -60,6 +60,7 @@ export default function Servicos() {
           : <Text style={ui.h2}>{s.client_name}</Text>}
         <Text style={ui.label}>{SERVICE_STATUS_LABELS[s.status]}</Text>
         <Text style={ui.text}>{s.description}</Text>
+        {!!s.preferred_date && <Text style={ui.label}>📅 {formatPreferredDate(s.preferred_date)}</Text>}
         {!!s.provider_note && <Text style={ui.text}>💬 {s.provider_note}</Text>}
         <Text style={ui.muted}>{new Date(s.created_at).toLocaleString("pt-AO")}</Text>
         {as === "provider" && actions.length > 0 && <TextInput style={ui.input} value={note[s.id] ?? ""} onChangeText={t => setNote(n => ({ ...n, [s.id]: t }))} placeholder="Mensagem para o cliente (opcional)" />}
