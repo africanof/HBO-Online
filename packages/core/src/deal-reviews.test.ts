@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   businessStatsRows, confirmService, formatRating, listDealCandidates, listMyServiceRequests, listPendingReviews, memberSince, requestService,
   sellerBadge, serviceActions, setListingDeal, submitDealReview, updateServiceRequest, userStatsRows, validateReview, validateServiceRequest,
-  getUserStats, type UserStats
+  getUserStats, finalDealStatus, type UserStats
 } from "./deal-reviews";
 import { getNotificationLink } from "./notifications";
 import { friendlyError } from "./classified-listings";
@@ -42,6 +42,11 @@ describe("reputação", () => {
     expect(serviceActions("requested", "client")).toEqual(["cancel"]);
     expect(serviceActions("done", "client")).toEqual(["confirm"]);
     expect(serviceActions("confirmed", "client")).toEqual([]);
+  });
+  it("escolhe o estado final do anúncio", () => {
+    expect(finalDealStatus("sale")).toBe("sold"); expect(finalDealStatus("auction")).toBe("sold");
+    expect(finalDealStatus("rent")).toBe("rented"); expect(finalDealStatus("lease")).toBe("rented");
+    expect(finalDealStatus("wanted")).toBe("closed"); expect(finalDealStatus("service")).toBe("closed");
   });
   it("valida antes de enviar", () => {
     expect(validateReview(0)).toMatch(/estrelas/);

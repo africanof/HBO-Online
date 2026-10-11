@@ -7,6 +7,7 @@ import { supabase } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { Button, Message } from "../../components/Ui";
 import { SaveButton, ShareButton, useRecordView } from "../../components/Engage";
+import { SellerBadge } from "../../components/Reputation";
 
 export default function Produto() {
   const router = useRouter(); const { width } = useWindowDimensions();
@@ -40,6 +41,7 @@ export default function Produto() {
     <Text style={ui.price}>{formatPrice(p.price, p.currency)}</Text>
     <Text style={ui.muted}>{p.stock > 0 ? `${p.stock} em stock` : "Esgotado"} · {[p.categories?.name, p.municipalities?.name].filter(Boolean).join(" · ")}</Text>
     {!!seller && <Link href={("/vendedor/" + p.seller_id) as any} style={ui.link}>Vendedor: {seller} →</Link>}
+    {!!seller && <SellerBadge userId={p.seller_id} />}
     {!!p.markets?.name && <Link href={("/pracas/" + p.markets.id) as any} style={ui.link}>🧺 {p.markets.name} →</Link>}
     {media.length > 0 && <View style={{ gap: 8 }}>
       <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: "#eee" }} resizeMode="contain" />

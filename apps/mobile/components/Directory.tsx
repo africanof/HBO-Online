@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
-  listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, formatPrice, friendlyError, type ReviewTarget, categoryLabel } from "@huambo-online/core";
+  listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
+  listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
 import { SaveButton, ShareButton, useRecordView } from "./Engage";
+import { StatsBlock, StarPicker, RequestServiceBox, VerifiedTag, stars } from "./Reputation";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string };
@@ -77,6 +79,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
   const target: ReviewTarget = kind === "providers" ? { providerId: id } : { businessId: id };
   const [item, setItem] = useState<any>(null); const [services, setServices] = useState<any[]>([]); const [reviews, setReviews] = useState<any[]>([]);
   const [uid, setUid] = useState<string | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
+  const [stats, setStats] = useState<{ rows: { label: string; value: string }[]; since: string }>({ rows: [], since: "" });
   const [message, setMessage] = useState(""); const [rating, setRating] = useState(0); const [comment, setComment] = useState(""); const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -86,7 +89,11 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     if (!r.data) { setError("Não encontrado."); return; }
     setItem(r.data);
     if (kind === "providers") { const s = await listProviderServices(c, id); setServices(s.data ?? []); }
-    const rv = await listReviewsFor(c, target); setReviews((rv.data as any[]) ?? []);
+    const rv = await listProviderReviews(c, target);
+    if (rv.error) { const old = await listReviewsFor(c, target); setReviews((old.data as any[]) ?? []); } else setReviews(rv.data);
+    if (kind === "providers") { const st = await getUserStats(c, id); const rows = userStatsRows(st.data).filter(r => /serviço|Serviços|vendedor/.test(r.label));
+      setStats({ rows: rows.length ? rows : [{ label: "Serviços prestados", value: "0" }], since: memberSince(st.data?.member_since) }); }
+    else { const st = await getBusinessStats(c, id); setStats({ rows: businessStatsRows(st.data), since: memberSince(st.data?.member_since).replace("Membro", "No Huambo Online") }); }
     const u = await c.auth.getUser(); setUid(u.data.user?.id ?? null);
   }
   useEffect(() => { if (id) void load(); }, [id]);
@@ -120,6 +127,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <Text style={ui.muted}>{[categoryLabel(item), item.municipalities?.name, item.address_text].filter(Boolean).join(" · ")}</Text>
     {!!item.markets?.name && <Link href={("/pracas/" + item.markets.id) as any} style={ui.link}>🧺 Na {item.markets.name} →</Link>}
     <Text style={ui.label}>{ratingLabel(avg, reviews.length)}</Text>
+    <StatsBlock rows={stats.rows} footer={stats.since} />
     {!!(item.bio || item.description) && <Text style={ui.text}>{item.bio || item.description}</Text>}
     {!!item.phone && <Button title="📞 Ligar" variant="secondary" onPress={() => void Linking.openURL("tel:" + item.phone.replace(/\s/g, ""))} />}
     {!!wa && <Button title="WhatsApp" variant="secondary" onPress={() => void Linking.openURL(wa)} />}
@@ -130,6 +138,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
       {services.map(s => <View key={s.id} style={ui.card}><Text style={ui.label}>{s.title}</Text>{!!s.description && <Text style={ui.text}>{s.description}</Text>}<Text style={ui.text}>{s.price_from != null ? "Desde " + formatPrice(s.price_from, s.currency) : "Preço sob consulta"}</Text></View>)}
     </View>}
     <Message error={error} ok={notice} />
+    {!mine && <RequestServiceBox target={target} signedIn={!!uid} />}
     {!mine && <View style={ui.card}>
       <Text style={ui.h2}>Enviar mensagem</Text>
       <TextInput style={[ui.input, ui.area]} multiline value={message} onChangeText={setMessage} placeholder="Olá, gostaria de pedir um orçamento…" />
@@ -137,11 +146,11 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     </View>}
     <Text style={ui.h2}>Avaliações</Text>
     {!mine && <View style={ui.card}>
-      <View style={ui.row}>{[1, 2, 3, 4, 5].map(n => <Pressable key={n} accessibilityRole="button" accessibilityLabel={`${n} estrela(s)`} onPress={() => setRating(n)} style={{ padding: 6 }}><Text style={{ fontSize: 34 }}>{n <= rating ? "★" : "☆"}</Text></Pressable>)}</View>
+      <StarPicker value={rating} onChange={setRating} />
       <TextInput style={[ui.input, ui.area]} multiline value={comment} onChangeText={setComment} placeholder="Como foi a sua experiência?" />
       <Button title="Publicar avaliação" disabled={busy || !rating} onPress={() => void review()} />
     </View>}
     {reviews.length === 0 && <Text style={ui.text}>Ainda sem avaliações.</Text>}
-    {reviews.map(r => <View key={r.id} style={ui.card}><Text style={ui.label}>{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)} — {r.author_name}</Text>{!!r.comment && <Text style={ui.text}>{r.comment}</Text>}<Text style={ui.muted}>{new Date(r.created_at).toLocaleDateString("pt-AO")}</Text></View>)}
+    {reviews.map(r => <View key={r.id} style={ui.card}><Text style={ui.label}>{stars(r.rating)} — {r.author_name}</Text>{r.confirmed && <VerifiedTag text="✔ Serviço confirmado" />}{!!r.comment && <Text style={ui.text}>{r.comment}</Text>}<Text style={ui.muted}>{new Date(r.created_at).toLocaleDateString("pt-AO")}</Text></View>)}
   </ScrollView>;
 }

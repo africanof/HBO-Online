@@ -43,6 +43,11 @@ export const SERVICE_ACTION_LABELS: Record<ServiceAction | "confirm", string> = 
   accept: "✔ Aceitar", decline: "✖ Recusar", done: "✅ Serviço concluído", cancel: "Cancelar pedido", confirm: "⭐ Confirmar e avaliar"
 };
 
+/** Estado final ao fechar um anúncio com negócio: venda → vendido, arrendamento → arrendado, pedidos/serviços → fechado. */
+export function finalDealStatus(purpose: string): "sold" | "rented" | "closed" {
+  return purpose === "sale" || purpose === "auction" ? "sold" : purpose === "rent" || purpose === "lease" ? "rented" : "closed";
+}
+
 const num = (v: unknown) => (v === null || v === undefined || v === "" ? null : Number(v));
 const int = (v: unknown) => Number(v ?? 0) || 0;
 

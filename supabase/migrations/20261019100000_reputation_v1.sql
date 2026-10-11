@@ -59,6 +59,7 @@ begin
   select * into l from public.classified_listings where id = p_listing_id for update;
   if not found then raise exception 'LISTING_NOT_FOUND'; end if;
   if l.owner_id <> auth.uid() then raise exception 'NOT_LISTING_OWNER'; end if;
+  if l.deal_with is not null then raise exception 'DEAL_ALREADY_SET'; end if;
   if not exists (select 1 from public.listing_deal_candidates(p_listing_id) c where c.user_id = p_counterpart) then raise exception 'NOT_A_DEAL_PARTNER'; end if;
   update public.classified_listings set status = p_status, deal_with = p_counterpart, deal_at = now(), updated_at = now()
    where id = l.id returning * into l;
