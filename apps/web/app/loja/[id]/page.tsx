@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { getProduct, addToMyCart, getPublicProfile, formatPrice, friendlyError } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { SaveButton, ShareButton, useRecordView } from "../../../components/Engage";
+import { SellerBadge } from "../../../components/Reputation";
 
 export default function Produto() {
   const { id } = useParams<{ id: string }>();
@@ -36,7 +37,7 @@ export default function Produto() {
       <Gallery media={media} video={p.video_url} icon={"📦"} title={p.name} />
       <section className="buybox">
         <h1>{p.name}</h1>
-        {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>🏪</span><span>Vendedor: <a href={"/vendedor/" + p.seller_id}><strong>{seller}</strong></a><br /><a href={"/vendedor/" + p.seller_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver a loja do vendedor</a></span></div>}
+        {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>🏪</span><span>Vendedor: <a href={"/vendedor/" + p.seller_id}><strong>{seller}</strong></a> <SellerBadge userId={p.seller_id} /><br /><a href={"/vendedor/" + p.seller_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver a loja do vendedor</a></span></div>}
         <div className="big-price">{formatPrice(p.price, p.currency)}</div>
         <dl className="facts">
           <dt>Disponível</dt><dd style={{ color: p.stock > 0 ? "var(--ok)" : "var(--danger)" }}>{p.stock > 0 ? `${p.stock} em stock` : "Esgotado"}</dd>

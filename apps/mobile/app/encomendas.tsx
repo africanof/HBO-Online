@@ -54,6 +54,7 @@ export default function Encomendas() {
         {role === "seller" && !!deliveries[o.id] && ["pending", "assigned", "accepted"].includes(deliveries[o.id].status) && <Button title="Cancelar estafeta" variant="secondary" onPress={() => Alert.alert("Cancelar o pedido de estafeta?", "", [{ text: "Não", style: "cancel" }, { text: "Sim", onPress: () => void run(() => cancelDeliveryRequest(supabase(), deliveries[o.id].id), "Pedido de estafeta cancelado.") }])} />}
         {role === "seller" && !!o.contact_phone && <Button title={"📞 " + o.contact_phone} variant="secondary" onPress={() => void Linking.openURL("tel:" + o.contact_phone.replace(/\s/g, ""))} />}
         {role === "seller" && next && <Button title={`Marcar como «${ORDER_STATUS_LABELS[next]}»`} onPress={() => void act(o.id, next)} />}
+        {o.status === "completed" && <Button title={role === "seller" ? "⭐ Avaliar o cliente" : "⭐ Avaliar o vendedor"} variant="secondary" onPress={() => router.push("/avaliacoes" as any)} />}
         {role === "seller" && o.payment_status !== "paid" && o.status !== "cancelled" && <Button title="Marcar como paga" variant="secondary" onPress={() => void act(o.id, o.status as OrderStatus, true)} />}
         {(role === "seller" ? !["completed", "cancelled"].includes(o.status) : o.status === "pending") && <Button title="Cancelar" variant="danger" onPress={() => Alert.alert("Cancelar encomenda", "Tem a certeza?", [{ text: "Não", style: "cancel" }, { text: "Cancelar encomenda", style: "destructive", onPress: () => void act(o.id, "cancelled") }])} />}
       </View>;

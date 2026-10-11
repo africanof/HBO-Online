@@ -10,6 +10,7 @@ import { ShareButton, useRecordView } from "../../../components/Engage";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
 import { MarketFact } from "../../../components/MarketPicker";
 import { AUCTIONABLE_TYPES } from "@huambo-online/core";
+import { SellerBadge } from "../../../components/Reputation";
 
 export default function ClassifiedDetail() {
   const { id } = useParams<{ id: string }>();
@@ -96,7 +97,7 @@ export default function ClassifiedDetail() {
       <section className="buybox">
         {item.purpose === "wanted" && <span className="badge" style={{ justifySelf: "start", background: "#fff4d6", borderColor: "#f5af02" }}>🔎 PROCURA-SE — pedido de comprador</span>}
         <h1>{item.title}</h1>
-        {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>👤</span><span>{item.purpose === "wanted" ? "Comprador" : "Anunciante"}: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver outros anúncios</a></span></div>}
+        {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>👤</span><span>{item.purpose === "wanted" ? "Comprador" : "Anunciante"}: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a> <SellerBadge userId={item.owner_id} /><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver outros anúncios</a></span></div>}
         {item.purpose === "wanted" ? <div><span className="muted">Orçamento</span><div className="big-price">{listingPriceLabel(item)}</div></div> : <div className="big-price">{formatPrice(item.price, item.currency)}</div>}
         <dl className="facts">
           <dt>Tipo</dt><dd>{typeLabel}</dd>

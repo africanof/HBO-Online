@@ -55,3 +55,4 @@ export * from "./markets";
 export * from "./videos";
 export * from "./photo-search";
 export * from "./wanted";
+export * from "./deal-reviews";

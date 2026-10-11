@@ -11,6 +11,7 @@ import { Button, Message } from "../../../components/Ui";
 import { ShareButton, useRecordView } from "../../../components/Engage";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
 import { MarketLink } from "../../../components/MarketPicker";
+import { SellerBadge } from "../../../components/Reputation";
 
 export default function ClassifiedDetail() {
   const router = useRouter();
@@ -96,6 +97,7 @@ export default function ClassifiedDetail() {
     {item.purpose === "wanted" ? <Text style={ui.price}>Orçamento: {listingPriceLabel(item)}</Text> : <Text style={ui.price}>{formatPrice(item.price, item.currency)}</Text>}
     <Text style={ui.text}>{LISTING_TYPE_LABELS[item.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? item.listing_type} · {PURPOSE_LABELS[item.purpose as keyof typeof PURPOSE_LABELS] ?? item.purpose}{place ? " · 📍 " + place : ""}</Text>
     {!!seller && <Link href={("/vendedor/" + item.owner_id) as any} style={ui.link}>{item.purpose === "wanted" ? "Comprador" : "Anunciante"}: {seller} →</Link>}
+    {!!seller && <SellerBadge userId={item.owner_id} />}
     <MarketLink id={item.market_id} />
     {media.length > 0 && <View style={{ gap: 8 }}>
       <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: "#eee" }} resizeMode="contain" accessibilityLabel={`Fotografia ${photo + 1} de ${media.length}`} />

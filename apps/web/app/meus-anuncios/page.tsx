@@ -4,12 +4,13 @@ import { useSearchParams } from "next/navigation";
 import { listMyClassifiedListings, deleteClassifiedListing, updateClassifiedStatus, publishClassifiedListing, removeClassifiedMedia,
   formatPrice, friendlyError, STATUS_LABELS } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
+import { DealCloser } from "../../components/Reputation";
 
 function MeusAnuncios() {
   const params = useSearchParams();
   const [items, setItems] = useState<any[] | null>(null);
   const [error, setError] = useState(params.get("erro") ? "O anúncio foi guardado como rascunho mas não foi publicado: " + params.get("erro") : "");
-  const [busy, setBusy] = useState("");
+  const [busy, setBusy] = useState(""); const [notice, setNotice] = useState("");
 
   async function load() {
     const uid = await currentUserId();
@@ -31,19 +32,21 @@ function MeusAnuncios() {
     <h1>Os meus anúncios</h1>
     <a className="btn" href="/classificados/publicar">+ Publicar anúncio</a>
     {error && <p className="error" role="alert">{error}</p>}
+    {notice && <p className="ok" role="status">{notice}</p>}
     {items === null && <p>A carregar…</p>}
     {items?.length === 0 && !error && <p>Ainda não publicou anúncios.</p>}
     {items?.map(x => <article key={x.id} className="card">
       {Array.isArray(x.media) && x.media[0] && <img className="thumb" src={x.media[0]} alt="" style={{ maxWidth: 240 }} />}
       <strong style={{ fontSize: 20 }}>{x.title}</strong>
       <span><span className="badge">{STATUS_LABELS[x.status as keyof typeof STATUS_LABELS] ?? x.status}</span> · {formatPrice(x.price, x.currency)}</span>
+      {x.deal_with && <span>🤝 Negócio registado — <a href="/avaliacoes">avaliar</a></span>}
       <div className="row">
         <a className="btn secondary" href={"/classificados/" + x.id}>Ver</a>
         <a className="btn secondary" href={`/classificados/${x.id}/editar`}>Editar</a>
         {x.status === "published"
           ? <button className="secondary" disabled={busy === x.id} onClick={() => act(x.id, () => updateClassifiedStatus(supabase(), x.id, "paused"))}>Pausar</button>
           : <button disabled={busy === x.id} onClick={() => act(x.id, () => publishClassifiedListing(supabase(), x.id))}>Publicar</button>}
-        {x.status === "published" && <button className="secondary" disabled={busy === x.id} onClick={() => act(x.id, () => updateClassifiedStatus(supabase(), x.id, x.purpose === "sale" ? "sold" : "closed"))}>{x.purpose === "sale" ? "Marcar vendido" : "Fechar"}</button>}
+        {["published", "sold", "rented", "closed"].includes(x.status) && <DealCloser listing={x} onDone={msg => { setNotice(msg); void load(); }} />}
         <button className="danger" disabled={busy === x.id} onClick={() => { if (confirm("Apagar este anúncio? Não pode ser desfeito.")) void act(x.id, async () => { const r = await deleteClassifiedListing(supabase(), x.id); if (!r.error) await removeClassifiedMedia(supabase(), x.media ?? []); return r; }); }}>Apagar</button>
       </div>
     </article>)}

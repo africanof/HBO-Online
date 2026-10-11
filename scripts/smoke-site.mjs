@@ -14,7 +14,9 @@ const pages = [
   { path: "/loja", expect: "Loja", options: "select" },
   { path: "/conta/login", expect: "Entrar" },
   { path: "/conta/criar", expect: "Criar conta" },
-  { path: "/historico", expect: "Vistos recentemente" }
+  { path: "/historico", expect: "Vistos recentemente" },
+  { path: "/avaliacoes", expect: "Inicie sessão" },
+  { path: "/servicos", expect: "Inicie sessão" }
 ];
 const badText = [/Serviço indisponível/i, /configuração do Supabase em falta/i, /permission denied/i, /Application error/i, /row-level security/i];
 

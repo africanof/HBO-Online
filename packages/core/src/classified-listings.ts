@@ -113,6 +113,17 @@ const errorMessages: [RegExp, string][] = [
   [/CANNOT_RENT_OWN_LISTING/, "Não pode alugar o seu próprio anúncio."],
   [/INVALID_RENTAL_REQUEST/, "Verifique as datas e o valor."],
   [/RENTAL_ALREADY_ANSWERED/, "Este pedido já foi respondido."],
+  [/DEAL_NOT_COMPLETED/, "Só pode avaliar depois de o negócio estar concluído."],
+  [/NOT_DEAL_PARTY/, "Só quem fez o negócio pode avaliar."],
+  [/DEAL_ALREADY_SET/, "Já indicou com quem fez este negócio."],
+  [/NOT_A_DEAL_PARTNER/, "Escolha uma pessoa que lhe enviou mensagem sobre este anúncio."],
+  [/CANNOT_REQUEST_OWN_SERVICE/, "Não pode pedir um serviço a si próprio."],
+  [/TOO_MANY_REQUESTS/, "Já fez muitos pedidos hoje. Tente amanhã."],
+  [/DESCRIPTION_REQUIRED/, "Descreva o serviço de que precisa."],
+  [/NOT_SERVICE_PROVIDER/, "Este pedido não é para si."],
+  [/NOT_SERVICE_CLIENT/, "Só quem pediu o serviço pode fazer isto."],
+  [/INVALID_TRANSITION/, "Este passo já não é possível. Atualize a página."],
+  [/TARGET_NOT_FOUND/, "Este perfil já não está disponível."],
   [/USE_SERVER_FUNCTIONS/, "Operação não permitida."],
   [/ADMIN_ONLY/, "Só a administração pode fazer isto."],
   [/CANNOT_CHANGE_SELF/, "Não pode alterar a sua própria conta aqui."],
@@ -162,7 +173,7 @@ export async function deleteClassifiedListing(client: SupabaseClient, id: string
 }
 
 export async function listMyClassifiedListings(client: SupabaseClient, ownerId: string) {
-  return client.from("classified_listings").select(LISTING_COLUMNS).eq("owner_id", ownerId).order("created_at", { ascending: false });
+  return client.from("classified_listings").select(LISTING_COLUMNS + ",deal_with,deal_at").eq("owner_id", ownerId).order("created_at", { ascending: false });
 }
 
 const LISTING_COLUMNS = "id,owner_id,category_id,address_id,listing_type,purpose,title,description,price,currency,attributes,media,status,featured,created_at,updated_at,market_id,video_url,budget_min,budget_max";
