@@ -65,6 +65,7 @@ export function SiteHeader() {
             {SEARCH_SCOPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
         </div>
+        <a className="icon-btn" href="/pesquisar-foto" aria-label="Pesquisar por fotografia" title="Pesquisar por fotografia" style={{ alignSelf: "center" }}>📷</a>
         <button className="search-btn" type="submit">Pesquisar</button>
       </form>
       <nav className="icons" aria-label="Atalhos">

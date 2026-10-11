@@ -18,6 +18,7 @@ export function SearchBar({ scope = "classificados", initial = "", onSearch }: {
     <Text style={{ fontSize: 18 }}>🔍</Text>
     <TextInput value={q} onChangeText={setQ} placeholder="O que procura?" placeholderTextColor={C.muted} style={s.input}
       returnKeyType="search" onSubmitEditing={go} accessibilityLabel="Pesquisar" />
+    <Pressable onPress={() => router.push("/pesquisar-foto" as any)} accessibilityRole="button" accessibilityLabel="Pesquisar por fotografia" style={{ padding: 6 }}><Text style={{ fontSize: 22 }}>📷</Text></Pressable>
     <Pressable onPress={go} accessibilityRole="button" accessibilityLabel="Pesquisar" style={s.go}><Text style={s.goText}>Pesquisar</Text></Pressable>
   </View>;
 }

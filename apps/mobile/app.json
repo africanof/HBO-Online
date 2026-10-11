@@ -6,7 +6,16 @@
     "orientation": "portrait",
     "scheme": "huamboonline",
     "userInterfaceStyle": "light",
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Huambo Online usa a galeria para escolher fotografias e vídeos dos seus anúncios e para pesquisar por fotografia.",
+          "cameraPermission": "O Huambo Online usa a câmara para fotografar artigos e pesquisar por fotografia."
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     }

@@ -53,3 +53,4 @@ export * from "./delivery";
 export * from "./design";
 export * from "./markets";
 export * from "./videos";
+export * from "./photo-search";
