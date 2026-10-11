@@ -1,49 +1,49 @@
 import { useEffect, useState } from "react";
-import { Link, useRouter } from "expo-router";
-import { Image, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { listProducts, listProductCategories, formatPrice, friendlyError } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { Button, Chips, Message } from "../../components/Ui";
 import { useTerritory } from "../../components/Directory";
+import { SearchBar } from "../../components/Brand";
+import { ItemCard, Grid } from "../../components/ItemCard";
 
 type Option = { id: string; name: string };
 
 export default function Loja() {
   const router = useRouter();
-  const [q, setQ] = useState(""); const [categoryId, setCategoryId] = useState(""); const [municipalityId, setMunicipalityId] = useState(""); const [showFilters, setShowFilters] = useState(false);
+  const params = useLocalSearchParams<{ q?: string }>();
+  const { width } = useWindowDimensions(); const cardW = (width - 32 - 14) / 2;
+  const [q, setQ] = useState(params.q ?? ""); const [categoryId, setCategoryId] = useState(""); const [municipalityId, setMunicipalityId] = useState(""); const [showFilters, setShowFilters] = useState(false);
   const [categories, setCategories] = useState<Option[]>([]); const { municipalities } = useTerritory();
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState("");
   useEffect(() => { void listProductCategories(supabase()).then(({ data }) => setCategories(data ?? [])); void search(); }, []);
-  async function search() {
+  async function search(o: { q?: string; categoryId?: string } = {}) {
     setError("");
-    const r = await listProducts(supabase(), { query: q, categoryId, municipalityId });
+    const r = await listProducts(supabase(), { query: o.q ?? q, categoryId: o.categoryId ?? categoryId, municipalityId });
     if (r.error) setError(friendlyError(r.error)); else setItems((r.data as any[]) ?? []);
   }
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
-    <Link href="/" style={ui.link}>← Huambo Online</Link>
-    <Text style={ui.h1}>Loja</Text>
-    <View style={ui.row}>
+    <SearchBar scope="loja" initial={q} onSearch={v => { setQ(v); void search({ q: v }); }} />
+    <Text style={ui.h1}>{q ? `Loja: «${q}»` : "Loja"}</Text>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
       <Button title="🛒 Carrinho" onPress={() => router.push("/carrinho" as any)} />
       <Button title="📦 Encomendas" variant="secondary" onPress={() => router.push("/encomendas" as any)} />
-      <Button title="Vender" variant="secondary" onPress={() => router.push("/conta/produtos" as any)} />
-    </View>
-    <TextInput value={q} onChangeText={setQ} placeholder="Ex.: arroz, telemóvel, cimento…" style={ui.input} returnKeyType="search" onSubmitEditing={() => void search()} />
-    <Button title={showFilters ? "Esconder filtros" : "Filtros"} variant="secondary" onPress={() => setShowFilters(!showFilters)} />
+      <Button title="Vender produtos" variant="secondary" onPress={() => router.push("/conta/produtos" as any)} />
+    </ScrollView>
+    {categories.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <Chips options={[{ value: "", label: "Tudo" }, ...categories.map(c => ({ value: c.id, label: c.name }))]} value={categoryId} onChange={v => { setCategoryId(v); void search({ categoryId: v }); }} />
+    </ScrollView>}
+    <Button title={showFilters ? "Esconder filtros" : "⚙️ Município"} variant="secondary" onPress={() => setShowFilters(!showFilters)} />
     {showFilters && <View style={{ gap: 10 }}>
-      <Text style={ui.label}>Categoria</Text>
-      <Chips options={[{ value: "", label: "Todas" }, ...categories.map(c => ({ value: c.id, label: c.name }))]} value={categoryId} onChange={setCategoryId} />
-      <Text style={ui.label}>Município</Text>
       <Chips options={[{ value: "", label: "Todos" }, ...municipalities.map(m => ({ value: m.id, label: m.name }))]} value={municipalityId} onChange={setMunicipalityId} />
+      <Button title="Aplicar" onPress={() => void search()} />
     </View>}
-    <Button title="Pesquisar" onPress={() => void search()} />
     <Message error={error} />
+    {items !== null && <Text style={ui.label}>{items.length} produto(s)</Text>}
     {items?.length === 0 && <Text style={ui.text}>Ainda não há produtos nesta pesquisa.</Text>}
-    {items?.map(p => <Pressable key={p.id} style={ui.card} accessibilityRole="link" onPress={() => router.push(("/loja/" + p.id) as any)}>
-      {Array.isArray(p.media) && p.media[0] ? <Image source={{ uri: p.media[0] }} style={{ width: "100%", height: 180, borderRadius: 10 }} /> : null}
-      <Text style={ui.h2}>{p.name}</Text>
-      <Text style={ui.price}>{formatPrice(p.price, p.currency)}</Text>
-      <Text style={ui.muted}>{p.stock > 0 ? `${p.stock} em stock` : "Esgotado"} · {[p.seller_name, p.municipality_name].filter(Boolean).join(" · ")}</Text>
-    </Pressable>)}
+    <Grid>{items?.map(p => <ItemCard key={p.id} width={cardW} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)}
+      tag={p.stock > 0 ? undefined : "Esgotado"} meta={[p.seller_name, p.municipality_name].filter(Boolean).join(" · ")} />)}</Grid>
   </ScrollView>;
 }

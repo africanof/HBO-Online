@@ -1,0 +1,93 @@
+"use client";
+import { useEffect, useState } from "react";
+import { getCurrentUserProfile, getMyAdminRole, canModerate, searchHref, SEARCH_SCOPES, LOGO_PARTS, type SearchScope } from "@huambo-online/core";
+import { supabase, supabaseConfigured } from "../lib/supabase";
+import { useUnreadCounts } from "./NotificationBell";
+
+export function Logo({ size }: { size?: number }) {
+  return <a href="/" className="logo" aria-label="Huambo Online — página inicial" style={size ? { fontSize: size } : undefined}>
+    {LOGO_PARTS.map(([t, color]) => <span key={t} style={{ color }}>{t}</span>)}
+  </a>;
+}
+
+const SCOPE_BY_PATH: [string, SearchScope][] = [["/loja", "loja"], ["/profissionais", "profissionais"], ["/empresas", "empresas"]];
+const CATEGORY_LINKS: [string, string][] = [
+  ["Início", "/"], ["Classificados", "/explorar"], ["Imóveis", "/explorar?tipo=real_estate"], ["Viaturas", "/explorar?tipo=vehicle"],
+  ["Arrendar", "/explorar?finalidade=rent"], ["Leilões", "/explorar?finalidade=auction"], ["Loja", "/loja"],
+  ["Profissionais", "/profissionais"], ["Empresas", "/empresas"], ["Vistos recentemente", "/historico"]
+];
+
+/** Cabeçalho de todas as páginas: saudação, pesquisa grande, ícones e barra de categorias. */
+export function SiteHeader() {
+  const [name, setName] = useState<string | null | undefined>(undefined);
+  const [admin, setAdmin] = useState(false);
+  const [q, setQ] = useState(""); const [scope, setScope] = useState<SearchScope>("classificados");
+  const counts = useUnreadCounts();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setQ(params.get("q") ?? "");
+    const match = SCOPE_BY_PATH.find(([p]) => window.location.pathname.startsWith(p));
+    if (match) setScope(match[1]);
+    if (!supabaseConfigured) { setName(null); return; }
+    const c = supabase();
+    void c.auth.getUser().then(async ({ data }) => {
+      if (!data.user) { setName(null); return; }
+      const p = await getCurrentUserProfile(c);
+      setName(p.data?.fullName?.split(" ")[0] || "");
+      setAdmin(canModerate(await getMyAdminRole(c)));
+    });
+  }, []);
+
+  function submit(e: React.FormEvent) { e.preventDefault(); window.location.href = searchHref(scope, q); }
+
+  return <header>
+    <div className="topbar"><div className="topbar-in">
+      {name === undefined ? <span>&nbsp;</span> : name === null
+        ? <span>Olá! <a href="/conta/login" style={{ color: "var(--accent)", textDecoration: "underline" }}>Entrar</a> ou <a href="/conta/criar" style={{ color: "var(--accent)", textDecoration: "underline" }}>criar conta</a></span>
+        : <span>Olá, <strong>{name || "bem-vindo"}</strong>!</span>}
+      <a className="hide-sm" href="/loja">Loja</a>
+      <a className="hide-sm" href="/profissionais">Serviços</a>
+      <a className="hide-sm" href="/empresas">Empresas</a>
+      <span className="spacer" />
+      <a href="/classificados/publicar"><strong>Vender</strong></a>
+      <a className="hide-sm" href="/guardados">Guardados</a>
+      <a className="hide-sm" href="/conta">A minha conta</a>
+      {admin && <a href="/admin">Administração</a>}
+    </div></div>
+    <div className="header">
+      <Logo />
+      <form className="searchform" role="search" onSubmit={submit}>
+        <div className="search">
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder="O que procura?" aria-label="Pesquisar" />
+          <select value={scope} onChange={e => setScope(e.target.value as SearchScope)} aria-label="Onde pesquisar">
+            {SEARCH_SCOPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+        </div>
+        <button className="search-btn" type="submit">Pesquisar</button>
+      </form>
+      <nav className="icons" aria-label="Atalhos">
+        <a className="icon-btn" href="/notificacoes" aria-label={`Notificações (${counts.notifications} por ler)`}>🔔{counts.notifications > 0 && <span className="count">{counts.notifications}</span>}</a>
+        <a className="icon-btn" href="/mensagens" aria-label={`Mensagens (${counts.messages} por ler)`}>💬{counts.messages > 0 && <span className="count">{counts.messages}</span>}</a>
+        <a className="icon-btn" href="/conta" aria-label="A minha conta">👤</a>
+        <a className="icon-btn" href="/carrinho" aria-label={`Carrinho (${counts.cart} artigos)`}>🛒{counts.cart > 0 && <span className="count">{counts.cart}</span>}</a>
+      </nav>
+    </div>
+    <nav className="catnav" aria-label="Categorias"><div className="catnav-in">
+      {CATEGORY_LINKS.map(([l, h]) => <a key={h} href={h}>{l}</a>)}
+    </div></nav>
+  </header>;
+}
+
+export function SiteFooter() {
+  const cols: [string, [string, string][]][] = [
+    ["Comprar", [["Classificados", "/explorar"], ["Loja", "/loja"], ["Leilões", "/explorar?finalidade=auction"], ["Carrinho", "/carrinho"], ["Encomendas", "/encomendas"]]],
+    ["Vender", [["Publicar anúncio", "/classificados/publicar"], ["Os meus anúncios", "/meus-anuncios"], ["Vender produtos", "/conta/produtos"], ["Alugueres", "/alugueres"]]],
+    ["Serviços", [["Profissionais", "/profissionais"], ["Empresas", "/empresas"], ["Ser profissional", "/conta/profissional"], ["Ser estafeta", "/entregas"]]],
+    ["A minha conta", [["Conta", "/conta"], ["Mensagens", "/mensagens"], ["Notificações", "/notificacoes"], ["Guardados", "/guardados"], ["Pesquisas guardadas", "/pesquisas-guardadas"]]]
+  ];
+  return <footer className="footer"><div className="footer-in">
+    {cols.map(([title, links]) => <nav key={title} aria-label={title}><h3>{title}</h3>{links.map(([l, h]) => <a key={h} href={h}>{l}</a>)}</nav>)}
+    <small>© {new Date().getFullYear()} Huambo Online · Comércio, serviços e negócios do Huambo.</small>
+  </div></footer>;
+}

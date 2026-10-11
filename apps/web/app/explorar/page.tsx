@@ -1,15 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
-import { searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyError, parsePrice,
-  LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, type ClassifiedSearchFilters } from "@huambo-online/core";
+import { searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyError, parsePrice, readExploreParams, timeAgo,
+  LISTING_TYPE_LABELS, PURPOSE_LABELS, type ClassifiedSearchFilters } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
+import { ItemCard, LISTING_ICON } from "../../components/ItemCard";
 
 type Option = { id: string; name: string };
+type F = { q: string; purpose: string; type: string; categoryId: string; provinceId: string; municipalityId: string; min: string; max: string };
+const EMPTY: F = { q: "", purpose: "", type: "", categoryId: "", provinceId: "", municipalityId: "", min: "", max: "" };
 
 export default function ExplorarPage() {
-  const [q, setQ] = useState(""); const [purpose, setPurpose] = useState(""); const [type, setType] = useState("");
-  const [categoryId, setCategoryId] = useState(""); const [provinceId, setProvinceId] = useState(""); const [municipalityId, setMunicipalityId] = useState("");
-  const [min, setMin] = useState(""); const [max, setMax] = useState(""); const [name, setName] = useState("");
+  const [f, setF] = useState<F>(EMPTY);
+  const [name, setName] = useState(""); const [showFilters, setShowFilters] = useState(false);
   const [categories, setCategories] = useState<Option[]>([]); const [provinces, setProvinces] = useState<Option[]>([]); const [municipalities, setMunicipalities] = useState<Option[]>([]);
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
 
@@ -17,57 +19,73 @@ export default function ExplorarPage() {
     const c = supabase();
     void c.from("categories").select("id,name").eq("active", true).order("name").then(({ data }) => setCategories(data ?? []));
     void listProvinces(c).then(({ data }) => setProvinces((data ?? []) as Option[]));
-    void search();
+    const p = new URLSearchParams(window.location.search);
+    const fromUrl = readExploreParams(k => p.get(k));
+    const start = { ...EMPTY, q: fromUrl.query, type: fromUrl.listingType, purpose: fromUrl.purpose };
+    setF(start); void search(start);
   }, []);
   useEffect(() => {
-    if (!provinceId) { setMunicipalities([]); return; }
-    void listMunicipalities(supabase(), provinceId).then(({ data }) => setMunicipalities((data ?? []) as Option[]));
-  }, [provinceId]);
+    if (!f.provinceId) { setMunicipalities([]); return; }
+    void listMunicipalities(supabase(), f.provinceId).then(({ data }) => setMunicipalities((data ?? []) as Option[]));
+  }, [f.provinceId]);
 
-  function filters(): ClassifiedSearchFilters {
-    return { query: q, purpose: (purpose || undefined) as any, listingType: (type || undefined) as any, categoryId: categoryId || undefined,
-      provinceId: provinceId || undefined, municipalityId: municipalityId || undefined, minPrice: parsePrice(min), maxPrice: parsePrice(max) };
+  function toFilters(v: F): ClassifiedSearchFilters {
+    return { query: v.q, purpose: (v.purpose || undefined) as any, listingType: (v.type || undefined) as any, categoryId: v.categoryId || undefined,
+      provinceId: v.provinceId || undefined, municipalityId: v.municipalityId || undefined, minPrice: parsePrice(v.min), maxPrice: parsePrice(v.max) };
   }
-  async function search(e?: React.FormEvent) {
-    e?.preventDefault(); setError(""); setNotice(""); setBusy(true);
-    const r = await searchClassifiedListings(supabase(), filters());
+  async function search(v = f) {
+    setError(""); setNotice(""); setBusy(true);
+    const r = await searchClassifiedListings(supabase(), toFilters(v));
     setBusy(false);
     if (r.error) setError(friendlyError(r.error)); else setItems((r.data ?? []) as any[]);
   }
+  function quick(patch: Partial<F>) { const v = { ...f, ...patch }; setF(v); void search(v); }
   async function save() {
     setError(""); setNotice("");
     const c = supabase(); const u = await c.auth.getUser();
     if (!u.data.user) { setError("Inicie sessão para guardar pesquisas."); return; }
     if (!name.trim()) { setError("Dê um nome à pesquisa."); return; }
-    const r = await saveClassifiedSearch(c, name, filters());
+    const r = await saveClassifiedSearch(c, name, toFilters(f));
     if (r.error) setError(friendlyError(r.error)); else { setName(""); setNotice("Pesquisa guardada. Vai receber alertas de novos anúncios."); }
   }
+  const set = (k: keyof F) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
 
   return <main className="stack">
-    <a href="/">← Huambo Online</a>
-    <h1>Explorar classificados</h1>
-    <form onSubmit={search} className="grid" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))" }}>
-      <label>Pesquisar<input value={q} onChange={e => setQ(e.target.value)} placeholder="Ex.: casa, Hilux…" /></label>
-      <label>Finalidade<select value={purpose} onChange={e => setPurpose(e.target.value)}><option value="">Todas</option>{PUBLISHABLE_PURPOSES.map(p => <option key={p} value={p}>{PURPOSE_LABELS[p]}</option>)}</select></label>
-      <label>Tipo<select value={type} onChange={e => setType(e.target.value)}><option value="">Todos</option>{Object.entries(LISTING_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
-      <label>Categoria<select value={categoryId} onChange={e => setCategoryId(e.target.value)}><option value="">Todas</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
-      <label>Província<select value={provinceId} onChange={e => { setProvinceId(e.target.value); setMunicipalityId(""); }}><option value="">Todas</option>{provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
-      <label>Município<select value={municipalityId} disabled={!provinceId} onChange={e => setMunicipalityId(e.target.value)}><option value="">Todos</option>{municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
-      <label>Preço mínimo (Kz)<input value={min} onChange={e => setMin(e.target.value)} inputMode="numeric" /></label>
-      <label>Preço máximo (Kz)<input value={max} onChange={e => setMax(e.target.value)} inputMode="numeric" /></label>
-      <button type="submit" disabled={busy} style={{ alignSelf: "end" }}>{busy ? "A pesquisar…" : "Pesquisar"}</button>
-    </form>
-    <div className="row"><input value={name} onChange={e => setName(e.target.value)} placeholder="Nome para guardar esta pesquisa" style={{ maxWidth: 360 }} /><button type="button" className="secondary" onClick={save}>⭐ Guardar pesquisa</button></div>
-    {error && <p className="error" role="alert">{error}</p>}
-    {notice && <p className="ok" role="status">{notice}</p>}
-    {items?.length === 0 && <p>Nenhum anúncio encontrado. <a href="/classificados/publicar">Publique o primeiro!</a></p>}
-    <section className="grid" aria-label="Resultados">
-      {items?.map(x => <a key={x.id} href={`/classificados/${x.id}`} className="card" style={{ color: "inherit", textDecoration: "none" }}>
-        {Array.isArray(x.media) && x.media[0] ? <img className="thumb" src={x.media[0]} alt="" /> : <div className="thumb" />}
-        <strong style={{ fontSize: 19 }}>{x.title}</strong>
-        <span className="price">{formatPrice(x.price, x.currency)}</span>
-        <span>{LISTING_TYPE_LABELS[x.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? x.listing_type} · {PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] ?? x.purpose}</span>
-      </a>)}
-    </section>
+    <a href="/">← Início</a>
+    <h1>{f.q ? <>Resultados para «{f.q}»</> : f.type ? LISTING_TYPE_LABELS[f.type as keyof typeof LISTING_TYPE_LABELS] : f.purpose ? PURPOSE_LABELS[f.purpose as keyof typeof PURPOSE_LABELS] : "Classificados"}</h1>
+    <nav className="chips" aria-label="Finalidade">
+      {([["", "Tudo"], ...Object.entries(PURPOSE_LABELS)] as [string, string][]).map(([v, l]) => <button key={v} type="button" className={"chip" + (f.purpose === v ? " on" : "")} aria-pressed={f.purpose === v} onClick={() => quick({ purpose: v })}>{l}</button>)}
+    </nav>
+    <div className="results">
+      <form className="filters card" onSubmit={e => { e.preventDefault(); void search(); }}>
+        <div className="row" style={{ justifyContent: "space-between" }}><h2>Filtros</h2><button type="button" className="secondary" onClick={() => setShowFilters(!showFilters)} style={{ minHeight: 40, padding: "4px 14px" }} aria-expanded={showFilters}>{showFilters ? "Menos" : "Mais"}</button></div>
+        <label>Pesquisar<input value={f.q} onChange={set("q")} placeholder="Ex.: casa, Hilux…" /></label>
+        <label>Tipo<select value={f.type} onChange={set("type")}><option value="">Todos</option>{Object.entries(LISTING_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
+        <label>Categoria<select value={f.categoryId} onChange={set("categoryId")}><option value="">Todas</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+        <div className="row" style={{ flexWrap: "nowrap" }}>
+          <label style={{ flex: 1 }}>Preço mín.<input value={f.min} onChange={set("min")} inputMode="numeric" placeholder="Kz" /></label>
+          <label style={{ flex: 1 }}>Preço máx.<input value={f.max} onChange={set("max")} inputMode="numeric" placeholder="Kz" /></label>
+        </div>
+        {showFilters && <>
+          <label>Província<select value={f.provinceId} onChange={e => setF({ ...f, provinceId: e.target.value, municipalityId: "" })}><option value="">Todas</option>{provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+          <label>Município<select value={f.municipalityId} disabled={!f.provinceId} onChange={set("municipalityId")}><option value="">Todos</option>{municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
+        </>}
+        <button type="submit" disabled={busy}>{busy ? "A pesquisar…" : "Aplicar filtros"}</button>
+        <hr style={{ border: 0, borderTop: "1px solid var(--line)", width: "100%" }} />
+        <label>Guardar esta pesquisa<input value={name} onChange={e => setName(e.target.value)} placeholder="Ex.: Casas no Huambo" /></label>
+        <button type="button" className="secondary" onClick={save}>⭐ Guardar e receber alertas</button>
+      </form>
+      <section className="stack" aria-label="Resultados">
+        <div className="results-bar"><strong>{items === null ? "A carregar…" : `${items.length} resultado(s)`}</strong><a href="/classificados/publicar">+ Publicar anúncio</a></div>
+        {error && <p className="error" role="alert">{error}</p>}
+        {notice && <p className="ok" role="status">{notice}</p>}
+        {items?.length === 0 && <div className="card"><strong>Nenhum anúncio encontrado.</strong><span>Experimente outras palavras ou menos filtros, ou <a href="/classificados/publicar">publique o primeiro!</a></span></div>}
+        <div className="results-grid">
+          {items?.map(x => <ItemCard key={x.id} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={formatPrice(x.price, x.currency)}
+            icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : undefined} tagRed={x.purpose === "auction"}
+            meta={[LISTING_TYPE_LABELS[x.listing_type as keyof typeof LISTING_TYPE_LABELS], timeAgo(x.published_at ?? x.created_at)].filter(Boolean).join(" · ")} />)}
+        </div>
+      </section>
+    </div>
   </main>;
 }

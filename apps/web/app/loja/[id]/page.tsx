@@ -30,22 +30,36 @@ export default function Produto() {
   const media: string[] = Array.isArray(p.media) ? p.media : [];
   const mine = uid === p.seller_id;
   return <main className="stack">
-    <a href="/loja">← Loja</a>
-    <h1>{p.name}</h1>
-    <p className="price">{formatPrice(p.price, p.currency)}</p>
-    <p>{p.stock > 0 ? `${p.stock} em stock` : "Esgotado"} · {[p.categories?.name, p.municipalities?.name].filter(Boolean).join(" · ")}</p>
-    {seller && <p>Vendedor: <a href={"/vendedor/" + p.seller_id}><strong>{seller}</strong></a></p>}
-    {media.length > 0 && <section className="stack">
-      <img src={media[photo]} alt={`Fotografia ${photo + 1}`} style={{ width: "100%", maxHeight: 480, objectFit: "contain", background: "#f2f2f2", borderRadius: 12 }} />
-      {media.length > 1 && <div className="row">{media.map((m, i) => <button key={m} type="button" className={i === photo ? "" : "secondary"} onClick={() => setPhoto(i)} style={{ padding: 0, width: 72, height: 72, overflow: "hidden" }} aria-label={`Fotografia ${i + 1}`}><img src={m} alt="" style={{ width: 72, height: 72, objectFit: "cover" }} /></button>)}</div>}
-    </section>}
-    {p.description && <p style={{ whiteSpace: "pre-wrap" }}>{p.description}</p>}
-    <div className="row">{!mine && <SaveButton kind="product" id={id} />}<ShareButton kind="product" id={id} title={p.name} /></div>
-    {error && <p className="error" role="alert">{error}</p>}
-    {notice && <p className="ok" role="status">{notice} <a href="/carrinho">Ver carrinho →</a></p>}
-    {mine ? <a className="btn" href="/conta/produtos">Gerir os meus produtos</a> : p.stock > 0 && <div className="row">
-      <label style={{ maxWidth: 140 }}>Quantidade<input type="number" min={1} max={p.stock} value={qty} onChange={e => setQty(Math.max(1, Math.min(p.stock, Number(e.target.value) || 1)))} /></label>
-      <button disabled={busy} onClick={add} style={{ alignSelf: "end" }}>🛒 Adicionar ao carrinho</button>
-    </div>}
+    <a href="/loja">← Loja{p.categories?.name ? " › " + p.categories.name : ""}</a>
+    <div className="itempage">
+      <section className="gallery" aria-label="Fotografias">
+        {media.length === 0 ? <div className="gallery-empty" aria-hidden>📦</div> : <>
+          <div className="thumbs">{media.length > 1 && media.map((m, i) => <button key={m} type="button" aria-current={i === photo} onClick={() => setPhoto(i)} aria-label={`Fotografia ${i + 1}`}><img src={m} alt="" /></button>)}</div>
+          <img className="gallery-main" src={media[photo]} alt={`Fotografia ${photo + 1}`} style={media.length === 1 ? { gridColumn: "1 / -1" } : undefined} />
+        </>}
+      </section>
+      <section className="buybox">
+        <h1>{p.name}</h1>
+        {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>🏪</span><span>Vendedor: <a href={"/vendedor/" + p.seller_id}><strong>{seller}</strong></a><br /><a href={"/vendedor/" + p.seller_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver a loja do vendedor</a></span></div>}
+        <div className="big-price">{formatPrice(p.price, p.currency)}</div>
+        <dl className="facts">
+          <dt>Disponível</dt><dd style={{ color: p.stock > 0 ? "var(--ok)" : "var(--danger)" }}>{p.stock > 0 ? `${p.stock} em stock` : "Esgotado"}</dd>
+          {p.categories?.name && <><dt>Categoria</dt><dd>{p.categories.name}</dd></>}
+          {p.municipalities?.name && <><dt>Local</dt><dd>📍 {p.municipalities.name}</dd></>}
+          <dt>Entrega</dt><dd>🛵 Ao domicílio ou levantar</dd>
+        </dl>
+        {error && <p className="error" role="alert">{error}</p>}
+        {notice && <p className="ok" role="status">{notice} <a href="/carrinho">Ver carrinho →</a></p>}
+        <div className="actions">
+          {mine ? <a className="btn" href="/conta/produtos">Gerir os meus produtos</a> : p.stock > 0 && <>
+            <label style={{ maxWidth: 160 }}>Quantidade<input type="number" min={1} max={p.stock} value={qty} onChange={e => setQty(Math.max(1, Math.min(p.stock, Number(e.target.value) || 1)))} /></label>
+            <button disabled={busy} onClick={add}>🛒 Adicionar ao carrinho</button>
+          </>}
+          {!mine && <SaveButton kind="product" id={id} />}
+          <ShareButton kind="product" id={id} title={p.name} />
+        </div>
+      </section>
+    </div>
+    {p.description && <section className="card"><h2 style={{ margin: 0 }}>Descrição</h2><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{p.description}</p></section>}
   </main>;
 }

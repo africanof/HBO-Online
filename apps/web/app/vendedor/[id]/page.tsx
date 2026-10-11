@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getPublicSeller, listSellerListings, listProducts, formatPrice, ratingLabel, friendlyError, PURPOSE_LABELS, type PublicSeller } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
+import { ItemCard, LISTING_ICON } from "../../../components/ItemCard";
 
 export default function Vendedor() {
   const { id } = useParams<{ id: string }>();
@@ -27,14 +28,9 @@ export default function Vendedor() {
     {s.is_provider && <p>{ratingLabel(s.rating, s.review_count)} · <a href={"/profissionais/" + s.id}>Ver perfil profissional →</a></p>}
     <h2>Anúncios ({listings.length})</h2>
     {listings.length === 0 && <p>Sem anúncios publicados.</p>}
-    <section className="grid">{listings.map(x => <a key={x.id} href={"/classificados/" + x.id} className="card" style={{ color: "inherit", textDecoration: "none" }}>
-      {Array.isArray(x.media) && x.media[0] ? <img className="thumb" src={x.media[0]} alt="" /> : <div className="thumb" />}
-      <strong>{x.title}</strong><span className="price">{formatPrice(x.price, x.currency)}</span><span>{PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] ?? x.purpose}</span>
-    </a>)}</section>
+    <div className="results-grid">{listings.map(x => <ItemCard key={x.id} href={"/classificados/" + x.id} media={x.media} title={x.title} price={formatPrice(x.price, x.currency)}
+      icon={LISTING_ICON[x.listing_type] ?? "🏷️"} meta={PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] ?? x.purpose} tag={x.purpose === "auction" ? "Leilão" : undefined} tagRed />)}</div>
     {products.length > 0 && <><h2>Produtos na loja ({products.length})</h2>
-      <section className="grid">{products.map(p => <a key={p.id} href={"/loja/" + p.id} className="card" style={{ color: "inherit", textDecoration: "none" }}>
-        {Array.isArray(p.media) && p.media[0] ? <img className="thumb" src={p.media[0]} alt="" /> : <div className="thumb" />}
-        <strong>{p.name}</strong><span className="price">{formatPrice(p.price, p.currency)}</span>
-      </a>)}</section></>}
+      <div className="results-grid">{products.map(p => <ItemCard key={p.id} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)} meta={p.stock > 0 ? `${p.stock} em stock` : "Esgotado"} />)}</div></>}
   </main>;
 }

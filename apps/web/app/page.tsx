@@ -1,38 +1,82 @@
-const modules = [
-  ["Explorar classificados", "Pesquisar anúncios de compra, venda e aluguer.", "/explorar"],
-  ["Loja", "Comprar produtos de vendedores do Huambo.", "/loja"],
-  ["Profissionais e serviços", "Eletricistas, advogados, técnicos, explicadores…", "/profissionais"],
-  ["Empresas e lojas", "Farmácias, oficinas, lojas, restaurantes…", "/empresas"],
-  ["Publicar anúncio", "Venda ou arrende com fotografias.", "/classificados/publicar"],
-  ["Os meus anúncios", "Editar, pausar ou apagar os seus anúncios.", "/meus-anuncios"],
-  ["Mensagens", "Converse com anunciantes e compradores.", "/mensagens"],
-  ["Notificações", "Acompanhe alertas e novidades.", "/notificacoes"],
-  ["Pesquisas guardadas", "Receba alertas de novos anúncios.", "/pesquisas-guardadas"],
-  ["Guardados", "Anúncios, profissionais, empresas e produtos que guardou.", "/guardados"],
-  ["Vistos recentemente", "O que viu nos últimos dias.", "/historico"],
-  ["Conta", "Perfil, segurança e privacidade.", "/conta"]
-];
+"use client";
+import { useEffect, useState } from "react";
+import { searchClassifiedListings, listProducts, listProviders, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS } from "@huambo-online/core";
+import { supabase, supabaseConfigured } from "../lib/supabase";
+import { ItemCard, LISTING_ICON } from "../components/ItemCard";
+
+type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[] };
+
+function ShelfHead({ title, href }: { title: string; href: string }) {
+  return <div className="shelf-head"><h2>{title}</h2><a href={href}>Ver tudo →</a></div>;
+}
 
 export default function Home() {
-  return (
-    <main>
-      <p style={{ fontWeight: 800, letterSpacing: 1 }}>HUAMBO ONLINE</p>
-      <h1>Tudo o que o Huambo tem para oferecer.</h1>
-      <p style={{ fontSize: 19, maxWidth: 760 }}>Negócios, profissionais, produtos, serviços e classificados num único lugar.</p>
-      <div className="row" style={{ margin: "20px 0" }}>
-        <a className="btn" href="/classificados/publicar">+ Publicar anúncio</a>
-        <a className="btn secondary" href="/explorar">Ver anúncios</a>
-      </div>
-      <nav className="grid">
-        {modules.map(([title, description, href]) => (
-          <a key={href} href={href} className="card" style={{ color: "inherit", textDecoration: "none" }}>
-            <strong style={{ fontSize: 20 }}>{title}</strong><span>{description}</span>
-          </a>
-        ))}
-      </nav>
-      <div className="row" style={{ marginTop: 28 }}>
-        <a href="/conta/login">Entrar</a><a href="/conta/criar">Criar conta</a>
-      </div>
-    </main>
-  );
+  const [s, setS] = useState<Shelf | null>(null);
+  useEffect(() => {
+    if (!supabaseConfigured) { setS({ listings: [], auctions: [], rentals: [], products: [], providers: [] }); return; }
+    const c = supabase();
+    void Promise.all([
+      searchClassifiedListings(c, { limit: 12 }), searchClassifiedListings(c, { purpose: "auction", limit: 12 }),
+      searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 })
+    ]).then(([l, a, r, p, v]) => setS({
+      listings: (l.data as any[]) ?? [], auctions: (a.data as any[]) ?? [], rentals: (r.data as any[]) ?? [],
+      products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? []
+    }));
+  }, []);
+
+  const listingCard = (x: any) => <ItemCard key={x.id} href={"/classificados/" + x.id} media={x.media} title={x.title} price={formatPrice(x.price, x.currency)}
+    icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : undefined}
+    tagRed={x.purpose === "auction"} meta={timeAgo(x.published_at ?? x.created_at)} />;
+
+  return <main>
+    <section className="hero">
+      <span className="hero-art" aria-hidden>🛍️</span>
+      <h1>Compre, venda e encontre tudo no Huambo.</h1>
+      <p>Classificados, loja, leilões, profissionais e empresas — num único lugar, com entrega ao domicílio.</p>
+      <div className="row"><a className="btn" href="/explorar">Começar a comprar</a><a className="btn secondary" href="/classificados/publicar">Vender agora</a></div>
+    </section>
+
+    <div className="shelf-head"><h2>Explore as categorias</h2></div>
+    <nav className="cats" aria-label="Categorias populares" style={{ marginTop: 14 }}>
+      {HOME_CATEGORIES.map(c => <a key={c.href} href={c.href} className="cat"><span className="cat-circle" aria-hidden>{c.icon}</span>{c.label}</a>)}
+    </nav>
+
+    {s === null && <p className="muted" style={{ marginTop: 28 }}>A carregar novidades…</p>}
+
+    {!!s?.auctions.length && <><ShelfHead title="🔨 Leilões a decorrer" href="/explorar?finalidade=auction" /><div className="shelf">{s.auctions.map(listingCard)}</div></>}
+
+    {!!s?.listings.length && <><ShelfHead title="Novidades nos classificados" href="/explorar" /><div className="shelf">{s.listings.map(listingCard)}</div></>}
+
+    <section className="banner yellow" style={{ marginTop: 32 }}>
+      <div><h2>Tem algo para vender?</h2><p>Publique grátis com fotografias e receba mensagens de compradores do Huambo.</p></div>
+      <a className="btn" href="/classificados/publicar">+ Publicar anúncio</a>
+    </section>
+
+    {!!s?.products.length && <><ShelfHead title="🛍️ Na loja" href="/loja" /><div className="shelf">
+      {s.products.map(p => <ItemCard key={p.id} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)}
+        meta={p.stock > 0 ? [p.seller_name, p.municipality_name].filter(Boolean).join(" · ") : "Esgotado"} tag={p.stock > 0 ? undefined : "Esgotado"} />)}
+    </div></>}
+
+    {!!s?.rentals.length && <><ShelfHead title="🔑 Para arrendar" href="/explorar?finalidade=rent" /><div className="shelf">{s.rentals.map(listingCard)}</div></>}
+
+    {!!s?.providers.length && <><ShelfHead title="🛠️ Profissionais de confiança" href="/profissionais" /><div className="shelf">
+      {s.providers.map(p => <a key={p.user_id} href={"/profissionais/" + p.user_id} className="card" style={{ color: "inherit", textDecoration: "none", fontWeight: 400 }}>
+        {p.avatar_url ? <img src={p.avatar_url} alt="" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ fontSize: 40 }} aria-hidden>👷</span>}
+        <strong>{p.display_name}{p.verified ? " ✔️" : ""}</strong>
+        <span className="item-meta">{[p.category_name, p.municipality_name].filter(Boolean).join(" · ")}</span>
+        <span className="item-meta">{ratingLabel(p.rating, p.review_count)}</span>
+      </a>)}
+    </div></>}
+
+    {s && !s.listings.length && !s.products.length && <section className="card" style={{ marginTop: 28 }}>
+      <h2 style={{ margin: 0 }}>Seja o primeiro a anunciar!</h2>
+      <p style={{ margin: 0 }}>Ainda há poucos artigos. Publique o seu e ajude o Huambo Online a crescer.</p>
+      <a className="btn" href="/classificados/publicar" style={{ justifySelf: "start" }}>Publicar anúncio</a>
+    </section>}
+
+    <section className="banner green" style={{ marginTop: 32 }}>
+      <div><h2>Profissional, empresa ou estafeta?</h2><p>Crie o seu perfil e receba clientes de todo o Huambo.</p></div>
+      <div className="row"><a className="btn secondary" href="/conta/profissional">Sou profissional</a><a className="btn secondary" href="/conta/empresas">Tenho uma empresa</a><a className="btn secondary" href="/entregas">Quero ser estafeta</a></div>
+    </section>
+  </main>;
 }

@@ -27,16 +27,20 @@ export function DirectoryList({ kind }: { kind: Kind }) {
   const [categories, setCategories] = useState<Option[]>([]); const { municipalities } = useTerritory();
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState("");
 
-  useEffect(() => { void listDirectoryCategories(supabase(), kind).then(({ data }) => setCategories(data ?? [])); void search(); }, []);
-  async function search(e?: React.FormEvent) {
+  useEffect(() => {
+    void listDirectoryCategories(supabase(), kind).then(({ data }) => setCategories(data ?? []));
+    const start = new URLSearchParams(window.location.search).get("q") ?? "";
+    setQ(start); void search(undefined, start);
+  }, []);
+  async function search(e?: React.FormEvent, query = q) {
     e?.preventDefault(); setError("");
-    const f = { query: q, categoryId, municipalityId };
+    const f = { query, categoryId, municipalityId };
     const r: any = kind === "providers" ? await listProviders(supabase(), f) : await listBusinesses(supabase(), f);
     if (r.error) setError(friendlyError(r.error)); else setItems(r.data ?? []);
   }
 
   return <main className="stack">
-    <a href="/">← Huambo Online</a>
+    <a href="/">← Início</a>
     <h1>{t.title}</h1>
     <a className="btn secondary" href={t.ctaHref} style={{ justifySelf: "start" }}>{t.cta}</a>
     <form onSubmit={search} className="grid" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))" }}>
@@ -51,11 +55,15 @@ export function DirectoryList({ kind }: { kind: Kind }) {
       {items?.map(x => {
         const id = kind === "providers" ? x.user_id : x.id;
         const name = kind === "providers" ? x.display_name : x.name;
-        return <a key={id} href={`${t.base}/${id}`} className="card" style={{ color: "inherit", textDecoration: "none" }}>
-          <strong style={{ fontSize: 20 }}>{name}{x.verified ? " ✔️" : ""}</strong>
+        const pic = kind === "providers" ? x.avatar_url : x.logo_url;
+        return <a key={id} href={`${t.base}/${id}`} className="card" style={{ color: "inherit", textDecoration: "none", fontWeight: 400 }}>
+          <div className="row" style={{ flexWrap: "nowrap" }}>
+            {pic ? <img src={pic} alt="" style={{ width: 56, height: 56, borderRadius: kind === "providers" ? "50%" : 12, objectFit: "cover" }} /> : <span aria-hidden style={{ width: 56, height: 56, borderRadius: kind === "providers" ? "50%" : 12, background: "var(--surface)", display: "grid", placeItems: "center", fontSize: 28 }}>{kind === "providers" ? "👷" : "🏢"}</span>}
+            <strong style={{ fontSize: 19 }}>{name}{x.verified ? " ✔️" : ""}</strong>
+          </div>
           {kind === "providers" ? x.headline && <span>{x.headline}</span> : x.description && <span>{String(x.description).slice(0, 120)}</span>}
-          <span>{[x.category_name, x.municipality_name].filter(Boolean).join(" · ")}</span>
-          <span>{ratingLabel(x.rating, x.review_count)}</span>
+          <span className="item-meta">{[x.category_name, x.municipality_name].filter(Boolean).join(" · ")}</span>
+          <span><strong>{ratingLabel(x.rating, x.review_count)}</strong></span>
         </a>;
       })}
     </section>

@@ -83,31 +83,49 @@ export default function ClassifiedDetail() {
   const media: string[] = Array.isArray(item.media) ? item.media : [];
   const mine = uid === item.owner_id;
 
+  const typeLabel = LISTING_TYPE_LABELS[item.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? item.listing_type;
+  const purposeLabel = PURPOSE_LABELS[item.purpose as keyof typeof PURPOSE_LABELS] ?? item.purpose;
+
   return <main className="stack">
-    <a href="/explorar">← Explorar</a>
+    <a href={"/explorar?tipo=" + item.listing_type}>← Classificados › {typeLabel}</a>
     {item.status !== "published" && <p className="badge">{STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] ?? item.status} — só você vê este anúncio</p>}
-    <h1>{item.title}</h1>
-    <p className="price">{formatPrice(item.price, item.currency)}</p>
-    <p>{LISTING_TYPE_LABELS[item.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? item.listing_type} · {PURPOSE_LABELS[item.purpose as keyof typeof PURPOSE_LABELS] ?? item.purpose}{place && <> · 📍 {place}</>}</p>
-    {seller && <p>Anunciante: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a></p>}
-    {media.length > 0 && <section className="stack">
-      <img src={media[photo]} alt={`Fotografia ${photo + 1} de ${media.length}`} style={{ width: "100%", maxHeight: 520, objectFit: "contain", background: "#f2f2f2", borderRadius: 12 }} />
-      {media.length > 1 && <div className="row">{media.map((m, i) => <button key={m} type="button" className={i === photo ? "" : "secondary"} onClick={() => setPhoto(i)} aria-label={`Ver fotografia ${i + 1}`} style={{ padding: 0, width: 72, height: 72, overflow: "hidden" }}><img src={m} alt="" style={{ width: 72, height: 72, objectFit: "cover" }} /></button>)}</div>}
-    </section>}
-    {item.description && <p style={{ whiteSpace: "pre-wrap" }}>{item.description}</p>}
-    {item.status === "published" && <div className="row"><ShareButton kind="listing" id={id} title={item.title} /></div>}
-    {notice && <p className="ok" role="status">{notice}</p>}
-    {error && <p className="error" role="alert">{error}</p>}
-    {item.status === "published" && <AuctionPanel listingId={id} uid={uid} mine={mine} canStart={["sale", "auction"].includes(item.purpose) && AUCTIONABLE_TYPES.includes(item.listing_type)} />}
-    {!mine && item.status === "published" && ["rent", "lease"].includes(item.purpose) && <RentalRequestForm listingId={id} uid={uid} defaultPrice={item.price} />}
-    {mine ? <div className="row"><a className="btn" href={`/classificados/${id}/editar`}>Editar anúncio</a><a className="btn secondary" href="/meus-anuncios">Os meus anúncios</a></div> : <>
-      <button type="button" className="secondary" onClick={toggleSaved} disabled={busy}>{savedId ? "★ Guardado" : "☆ Guardar anúncio"}</button>
-      <section className="card">
+    <div className="itempage">
+      <section className="gallery" aria-label="Fotografias">
+        {media.length === 0 ? <div className="gallery-empty" aria-hidden>🏷️</div> : <>
+          <div className="thumbs">{media.length > 1 && media.map((m, i) => <button key={m} type="button" aria-current={i === photo} onClick={() => setPhoto(i)} aria-label={`Ver fotografia ${i + 1}`}><img src={m} alt="" /></button>)}</div>
+          <img className="gallery-main" src={media[photo]} alt={`Fotografia ${photo + 1} de ${media.length}`} style={media.length === 1 ? { gridColumn: "1 / -1" } : undefined} />
+        </>}
+      </section>
+      <section className="buybox">
+        <h1>{item.title}</h1>
+        {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>👤</span><span>Anunciante: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver outros anúncios</a></span></div>}
+        <div className="big-price">{formatPrice(item.price, item.currency)}</div>
+        <dl className="facts">
+          <dt>Tipo</dt><dd>{typeLabel}</dd>
+          <dt>Finalidade</dt><dd>{purposeLabel}</dd>
+          {place && <><dt>Local</dt><dd>📍 {place}</dd></>}
+        </dl>
+        {notice && <p className="ok" role="status">{notice}</p>}
+        {error && <p className="error" role="alert">{error}</p>}
+        {item.status === "published" && <AuctionPanel listingId={id} uid={uid} mine={mine} canStart={["sale", "auction"].includes(item.purpose) && AUCTIONABLE_TYPES.includes(item.listing_type)} />}
+        {!mine && item.status === "published" && ["rent", "lease"].includes(item.purpose) && <RentalRequestForm listingId={id} uid={uid} defaultPrice={item.price} />}
+        <div className="actions">
+          {mine ? <><a className="btn" href={`/classificados/${id}/editar`}>Editar anúncio</a><a className="btn secondary" href="/meus-anuncios">Os meus anúncios</a></> : <>
+            <a className="btn" href="#contactar">💬 Contactar anunciante</a>
+            <button type="button" className="secondary" onClick={toggleSaved} disabled={busy}>{savedId ? "♥ Guardado" : "♡ Guardar anúncio"}</button>
+          </>}
+          {item.status === "published" && <ShareButton kind="listing" id={id} title={item.title} />}
+        </div>
+      </section>
+    </div>
+    {item.description && <section className="card"><h2 style={{ margin: 0 }}>Descrição</h2><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{item.description}</p></section>}
+    {!mine && <>
+      <section className="card" id="contactar">
         <h2 style={{ margin: 0 }}>Contactar anunciante</h2>
         <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Olá, o anúncio ainda está disponível?" rows={4} />
-        <button type="button" disabled={busy || !message.trim()} onClick={contact}>{busy ? "A enviar…" : "Enviar mensagem"}</button>
+        <button type="button" disabled={busy || !message.trim()} onClick={contact} style={{ justifySelf: "start" }}>{busy ? "A enviar…" : "Enviar mensagem"}</button>
       </section>
-      {!reporting ? <button type="button" className="secondary" onClick={() => setReporting(true)}>Denunciar anúncio</button> :
+      {!reporting ? <button type="button" className="secondary" onClick={() => setReporting(true)} style={{ justifySelf: "start" }}>Denunciar anúncio</button> :
         <section className="card"><label>Motivo da denúncia<textarea value={reason} onChange={e => setReason(e.target.value)} rows={3} placeholder="Ex.: fraude, conteúdo proibido…" /></label>
           <div className="row"><button type="button" className="danger" onClick={report}>Enviar denúncia</button><button type="button" className="secondary" onClick={() => setReporting(false)}>Cancelar</button></div></section>}
     </>}

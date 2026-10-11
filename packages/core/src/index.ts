@@ -50,3 +50,4 @@ export * from "./shop";
 export * from "./engage";
 export * from "./listing-auctions";
 export * from "./delivery";
+export * from "./design";

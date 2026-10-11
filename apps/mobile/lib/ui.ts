@@ -1,28 +1,30 @@
 import { StyleSheet } from "react-native";
+import { BRAND } from "@huambo-online/core";
 
-/** Estilos comuns: botões grandes e contraste alto. */
+/** Estilos comuns da APP (inspirados no eBay): botões grandes em pílula, azul forte, cartões limpos e contraste alto. */
+export const C = BRAND;
 export const ui = StyleSheet.create({
-  screen: { padding: 20, paddingTop: 54, gap: 14, paddingBottom: 60 },
-  h1: { fontSize: 30, fontWeight: "800", color: "#111" },
-  h2: { fontSize: 22, fontWeight: "800", color: "#111" },
-  text: { fontSize: 17, color: "#111" },
-  muted: { fontSize: 15, color: "#444" },
-  label: { fontSize: 16, fontWeight: "700", color: "#111" },
-  input: { borderWidth: 2, borderColor: "#bbb", borderRadius: 10, padding: 12, fontSize: 17, color: "#111", backgroundColor: "#fff" },
+  screen: { padding: 16, paddingTop: 54, gap: 14, paddingBottom: 120, backgroundColor: C.white },
+  h1: { fontSize: 28, fontWeight: "800", color: C.ink, letterSpacing: -0.3 },
+  h2: { fontSize: 21, fontWeight: "800", color: C.ink },
+  text: { fontSize: 17, color: C.ink, lineHeight: 24 },
+  muted: { fontSize: 15, color: C.muted },
+  label: { fontSize: 16, fontWeight: "700", color: C.ink },
+  input: { borderWidth: 2, borderColor: "#767676", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 17, color: C.ink, backgroundColor: C.white },
   area: { minHeight: 110, textAlignVertical: "top" },
-  button: { minHeight: 50, borderRadius: 10, backgroundColor: "#111", alignItems: "center", justifyContent: "center", paddingHorizontal: 18 },
-  buttonText: { color: "#fff", fontSize: 17, fontWeight: "800" },
-  buttonSecondary: { minHeight: 50, borderRadius: 10, borderWidth: 2, borderColor: "#111", backgroundColor: "#fff", alignItems: "center", justifyContent: "center", paddingHorizontal: 18 },
-  buttonSecondaryText: { color: "#111", fontSize: 17, fontWeight: "800" },
-  danger: { minHeight: 50, borderRadius: 10, backgroundColor: "#a30000", alignItems: "center", justifyContent: "center", paddingHorizontal: 18 },
-  chip: { borderWidth: 2, borderColor: "#111", borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14, backgroundColor: "#fff" },
-  chipOn: { borderWidth: 2, borderColor: "#111", borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14, backgroundColor: "#111" },
-  chipText: { color: "#111", fontWeight: "700", fontSize: 15 },
-  chipTextOn: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  button: { minHeight: 52, borderRadius: 999, backgroundColor: C.blue, alignItems: "center", justifyContent: "center", paddingHorizontal: 22 },
+  buttonText: { color: C.white, fontSize: 17, fontWeight: "800" },
+  buttonSecondary: { minHeight: 52, borderRadius: 999, borderWidth: 2, borderColor: C.blue, backgroundColor: C.white, alignItems: "center", justifyContent: "center", paddingHorizontal: 22 },
+  buttonSecondaryText: { color: C.blue, fontSize: 17, fontWeight: "800" },
+  danger: { minHeight: 52, borderRadius: 999, backgroundColor: C.red, alignItems: "center", justifyContent: "center", paddingHorizontal: 22 },
+  chip: { borderWidth: 1, borderColor: C.line, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 16, backgroundColor: C.surface },
+  chipOn: { borderWidth: 1, borderColor: C.ink, borderRadius: 999, paddingVertical: 9, paddingHorizontal: 16, backgroundColor: C.ink },
+  chipText: { color: C.ink, fontWeight: "700", fontSize: 15 },
+  chipTextOn: { color: C.white, fontWeight: "700", fontSize: 15 },
   row: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  card: { borderWidth: 2, borderColor: "#ddd", borderRadius: 14, padding: 14, gap: 8, backgroundColor: "#fff" },
-  error: { color: "#a30000", fontWeight: "800", fontSize: 16 },
-  ok: { color: "#0b5d1e", fontWeight: "800", fontSize: 16 },
-  price: { fontSize: 22, fontWeight: "800", color: "#111" },
-  link: { color: "#0b5d1e", fontWeight: "800", fontSize: 17 }
+  card: { borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 14, gap: 8, backgroundColor: C.white },
+  error: { color: C.red, fontWeight: "800", fontSize: 16 },
+  ok: { color: C.green, fontWeight: "800", fontSize: 16 },
+  price: { fontSize: 22, fontWeight: "800", color: C.ink },
+  link: { color: C.blue, fontWeight: "800", fontSize: 17 }
 });

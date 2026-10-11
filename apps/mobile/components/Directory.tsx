@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useRouter } from "expo-router";
-import { Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
   listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, formatPrice, friendlyError, type ReviewTarget } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
@@ -27,7 +27,8 @@ export function useTerritory() {
 export function DirectoryList({ kind }: { kind: Kind }) {
   const t = TEXT[kind];
   const router = useRouter();
-  const [q, setQ] = useState(""); const [categoryId, setCategoryId] = useState(""); const [municipalityId, setMunicipalityId] = useState(""); const [showFilters, setShowFilters] = useState(false);
+  const params = useLocalSearchParams<{ q?: string }>();
+  const [q, setQ] = useState(params.q ?? ""); const [categoryId, setCategoryId] = useState(""); const [municipalityId, setMunicipalityId] = useState(""); const [showFilters, setShowFilters] = useState(false);
   const [categories, setCategories] = useState<Option[]>([]); const { municipalities } = useTerritory();
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState("");
 
@@ -40,7 +41,6 @@ export function DirectoryList({ kind }: { kind: Kind }) {
   }
 
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
-    <Link href="/" style={ui.link}>← Huambo Online</Link>
     <Text style={ui.h1}>{t.title}</Text>
     <Button title={t.cta} variant="secondary" onPress={() => router.push(t.ctaHref as any)} />
     <TextInput value={q} onChangeText={setQ} placeholder={t.search} style={ui.input} returnKeyType="search" onSubmitEditing={() => void search()} />
@@ -56,7 +56,9 @@ export function DirectoryList({ kind }: { kind: Kind }) {
     {items?.length === 0 && <Text style={ui.text}>{t.empty}</Text>}
     {items?.map(x => {
       const id = kind === "providers" ? x.user_id : x.id;
+      const pic = kind === "providers" ? x.avatar_url : x.logo_url;
       return <Pressable key={id} style={ui.card} accessibilityRole="link" onPress={() => router.push(`${t.base}/${id}` as any)}>
+        {pic ? <Image source={{ uri: pic }} style={{ width: 56, height: 56, borderRadius: kind === "providers" ? 28 : 12 }} /> : <Text style={{ fontSize: 36 }}>{kind === "providers" ? "👷" : "🏢"}</Text>}
         <Text style={ui.h2}>{kind === "providers" ? x.display_name : x.name}{x.verified ? " ✔️" : ""}</Text>
         {!!(kind === "providers" ? x.headline : x.description) && <Text style={ui.text}>{String(kind === "providers" ? x.headline : x.description).slice(0, 120)}</Text>}
         <Text style={ui.muted}>{[x.category_name, x.municipality_name].filter(Boolean).join(" · ")}</Text>
