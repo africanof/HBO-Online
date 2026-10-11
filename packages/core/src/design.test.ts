@@ -20,6 +20,9 @@ describe("design", () => {
     for (const c of HOME_CATEGORIES) expect(c.href).toMatch(/^\/(explorar|loja|pracas|procura-se|trocas|profissionais|empresas)(\?|$)/);
     expect(LOGO_PARTS.map(p => p[0]).join("")).toBe("HuamboOnline");
     expect(BRAND.blue).toBe("#3665F3");
+    // Todas as cores do logótipo têm contraste de pelo menos 3:1 sobre branco (texto grande, WCAG AA).
+    const lum = (h: string) => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(x => x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+    for (const [, color] of LOGO_PARTS) expect(1.05 / (lum(color) + 0.05)).toBeGreaterThanOrEqual(3);
   });
   it("mostra há quanto tempo foi publicado", () => {
     const now = new Date("2026-10-11T12:00:00Z").getTime();

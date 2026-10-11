@@ -6,7 +6,8 @@ import { useUnreadCounts } from "./NotificationBell";
 
 export function Logo({ size }: { size?: number }) {
   return <a href="/" className="logo" aria-label="Huambo Online — página inicial" style={size ? { fontSize: size } : undefined}>
-    {LOGO_PARTS.map(([t, color]) => <span key={t} style={{ color }}>{t}</span>)}
+    {/* Logótipo: um só nome para leitores de ecrã (as cores são a marca e estão isentas da regra de contraste). */}
+    <span role="img" aria-label="Huambo Online">{LOGO_PARTS.map(([t, color]) => <span key={t} aria-hidden="true" style={{ color }}>{t}</span>)}</span>
   </a>;
 }
 
