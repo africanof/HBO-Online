@@ -1,12 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
-import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, listWanted, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, loadWithCache, isOfflineError } from "@huambo-online/core";
+import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, listWanted, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listTrades, loadWithCache, isOfflineError } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../components/ItemCard";
 import { OfflineBanner } from "../components/Offline";
 import { browserStore } from "../components/Engage";
 
-type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[] };
+type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[] };
 
 function ShelfHead({ title, href }: { title: string; href: string }) {
   return <div className="shelf-head"><h2>{title}</h2><a href={href}>Ver tudo →</a></div>;
@@ -22,14 +22,14 @@ export default function Home() {
     void loadWithCache<Shelf>(browserStore, "inicio", async () => {
       const all = await Promise.all([
         searchClassifiedListings(c, { limit: 12 }), searchClassifiedListings(c, { purpose: "auction", limit: 12 }),
-        searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c), listWanted(c, "", 12)
+        searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c), listWanted(c, "", 12), listTrades(c, "", false, 12)
       ]);
       const netError = all.map(r => r.error).find(e => isOfflineError(e));
       if (netError) return { data: null, error: netError };
-      const [l, a, r, p, v, mk, w] = all;
+      const [l, a, r, p, v, mk, w, t] = all;
       return { data: {
         listings: (l.data as any[]) ?? [], auctions: (a.data as any[]) ?? [], rentals: (r.data as any[]) ?? [],
-        products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? [], wanted: (w.data as any[]) ?? []
+        products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? [], wanted: (w.data as any[]) ?? [], trades: (t.data as any[]) ?? []
       } };
     }).then(res => {
       setOffline({ on: res.fromCache || isOfflineError(res.error), at: res.savedAt });
@@ -88,6 +88,7 @@ export default function Home() {
     </div></>}
 
     {!!s?.rentals.length && <><ShelfHead title="🔑 Para arrendar" href="/explorar?finalidade=rent" /><div className="shelf">{s.rentals.map(listingCard)}</div></>}
+    {!!s?.trades?.length && <><ShelfHead title="🔁 Trocas" href="/trocas" /><div className="shelf">{s.trades.map(listingCard)}</div></>}
 
     {!!s?.providers.length && <><ShelfHead title="🛠️ Profissionais de confiança" href="/profissionais" /><div className="shelf">
       {s.providers.map(p => <a key={p.user_id} href={"/profissionais/" + p.user_id} className="card" style={{ color: "inherit", textDecoration: "none", fontWeight: 400 }}>

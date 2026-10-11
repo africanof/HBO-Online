@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { saleModesFor, canAlsoTrade, validateSaleMode, saleModeBadges, buyerOptions, buyNowMessage, offerLabel, validateOffer, makeOffer, respondOffer, myOfferCounts } from "./sale-modes";
+import { listTrades, saleModeFromParam, PUBLISH_TRADE_HREF, saleModesFor, canAlsoTrade, validateSaleMode, saleModeBadges, buyerOptions, buyNowMessage, offerLabel, validateOffer, makeOffer, respondOffer, myOfferCounts } from "./sale-modes";
 import { createClassifiedListing } from "./classified-listings";
 import { getNotificationLink } from "./notifications";
 import { friendlyError } from "./classified-listings";
@@ -65,6 +65,17 @@ describe("modos de venda", () => {
     expect(calls[0]).toEqual(["make_offer", { p_listing_id: uuid, p_amount: 800, p_trade_item: null, p_message: "Pode ser?" }]);
     expect(calls[1][1]).toEqual({ p_offer_id: uuid, p_accept: true, p_note: null });
     expect((await myOfferCounts(rpc)).data).toEqual({ a: 2 });
+  });
+  it("secção Trocas", async () => {
+    const calls: any[] = [];
+    const c: any = { rpc: (fn: string, a: any) => { calls.push([fn, a]); return Promise.resolve({ data: [], error: null }); } };
+    await listTrades(c, " telemóvel ", true);
+    expect(calls[0]).toEqual(["search_trades", { p_query: "telemóvel", p_only_trade: true, p_limit: 40 }]);
+    expect(saleModeFromParam("trade")).toBe("trade");
+    expect(saleModeFromParam("xpto")).toBe("");
+    expect(PUBLISH_TRADE_HREF).toBe("/classificados/publicar?modo=trade");
+    const { HOME_CATEGORIES } = await import("./design");
+    expect(HOME_CATEGORIES.some(c => c.href === "/trocas")).toBe(true);
   });
   it("liga notificações e traduz erros", () => {
     expect(getNotificationLink({ type: "system", title: "Nova proposta", data: { listing_id: uuid, offer_id: uuid, for: "offer" } })?.href).toBe("/classificados/" + uuid + "#propostas");

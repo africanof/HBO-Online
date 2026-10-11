@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted, loadWithCache, isOfflineError } from "@huambo-online/core";
+import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted, listTrades, loadWithCache, isOfflineError } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
 import { Button } from "../components/Ui";
@@ -11,7 +11,7 @@ import { ItemCard, Shelf, LISTING_ICON } from "../components/ItemCard";
 import { OfflineBanner } from "../components/Offline";
 import { deviceStore } from "../components/Engage";
 
-type Shelves = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[] };
+type Shelves = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[] };
 
 const MORE: [string, string, string][] = [
   ["📋", "Os meus anúncios", "/meus-anuncios"], ["📦", "Encomendas", "/encomendas"], ["♥", "Guardados", "/guardados"],
@@ -31,14 +31,14 @@ export default function Home() {
     void loadWithCache<Shelves>(deviceStore, "inicio", async () => {
       const all = await Promise.all([
         searchClassifiedListings(c, { limit: 12 }), searchClassifiedListings(c, { purpose: "auction", limit: 12 }),
-        searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c), listWanted(c, "", 12)
+        searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c), listWanted(c, "", 12), listTrades(c, "", false, 12)
       ]);
       const netError = all.map(r => r.error).find(e => isOfflineError(e));
       if (netError) return { data: null, error: netError };
-      const [l, a, r, p, v, mk, w] = all;
+      const [l, a, r, p, v, mk, w, t] = all;
       return { data: {
         listings: (l.data as any[]) ?? [], auctions: (a.data as any[]) ?? [], rentals: (r.data as any[]) ?? [],
-        products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? [], wanted: (w.data as any[]) ?? []
+        products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? [], wanted: (w.data as any[]) ?? [], trades: (t.data as any[]) ?? []
       } };
     }).then(res => {
       setOffline({ on: res.fromCache || isOfflineError(res.error), at: res.savedAt });
@@ -107,6 +107,7 @@ export default function Home() {
     {!!s?.products.length && <Shelf title="🛍️ Na loja" href="/loja">{s.products.map(p => <ItemCard key={p.id} href={"/loja/" + p.id} media={p.media} title={p.name}
       price={formatPrice(p.price, p.currency)} tag={p.stock > 0 ? undefined : "Esgotado"} meta={[p.seller_name, p.municipality_name].filter(Boolean).join(" · ")} />)}</Shelf>}
     {!!s?.rentals.length && <Shelf title="🔑 Para arrendar" href="/explorar?finalidade=rent">{s.rentals.map(listing)}</Shelf>}
+    {!!s?.trades?.length && <Shelf title="🔁 Trocas" href="/trocas">{s.trades.map(listing)}</Shelf>}
     {!!s?.providers.length && <Shelf title="🛠️ Profissionais" href="/profissionais">{s.providers.map(p => <Link key={p.user_id} href={("/profissionais/" + p.user_id) as any} asChild>
       <Pressable accessibilityRole="link" style={[ui.card, { width: 180 }]}>
         {p.avatar_url ? <Image source={{ uri: p.avatar_url }} style={{ width: 56, height: 56, borderRadius: 28 }} /> : <Text style={{ fontSize: 36 }}>👷</Text>}

@@ -102,3 +102,14 @@ export async function myOfferCounts(client: SupabaseClient) {
   for (const x of (r.data ?? []) as { listing_id: string; pending: number }[]) map[x.listing_id] = Number(x.pending);
   return { data: map, error: r.error };
 }
+
+/** Secção «Trocas»: só troca e anúncios que também aceitam troca (os «só troca» primeiro). */
+export function listTrades(client: SupabaseClient, query = "", onlyTrade = false, limit = 40) {
+  return client.rpc("search_trades", { p_query: query.trim(), p_only_trade: onlyTrade, p_limit: limit });
+}
+/** Ligação para publicar já com «Só troca» escolhido. */
+export const PUBLISH_TRADE_HREF = "/classificados/publicar?modo=trade";
+/** Lê o modo de venda vindo do endereço (?modo=trade). */
+export function saleModeFromParam(v: string | null | undefined): SaleMode | "" {
+  return v === "fixed" || v === "negotiable" || v === "offers" || v === "auction" || v === "trade" ? v : "";
+}

@@ -5,9 +5,10 @@ import { currentUserId } from "../../../lib/supabase";
 
 export default function PublicarClassificado() {
   const [user, setUser] = useState<string | null | undefined>(undefined);
-  const [wanted, setWanted] = useState(false);
+  const [wanted, setWanted] = useState(false); const [mode, setMode] = useState("");
   useEffect(() => {
-    setWanted(new URLSearchParams(window.location.search).get("finalidade") === "wanted");
+    const params = new URLSearchParams(window.location.search);
+    setWanted(params.get("finalidade") === "wanted"); setMode(params.get("modo") ?? "");
     void currentUserId().then(setUser).catch(() => setUser(null));
   }, []);
   return <main>
@@ -16,6 +17,6 @@ export default function PublicarClassificado() {
     {!wanted && <p><a href="/classificados/publicar?finalidade=wanted">Quer comprar? Publique o que procura →</a></p>}
     {user === undefined && <p>A carregar…</p>}
     {user === null && <p>Para publicar, <a href={"/conta/login?voltar=/classificados/publicar" + (wanted ? "%3Ffinalidade%3Dwanted" : "")}>inicie sessão</a> ou <a href="/conta/criar">crie uma conta</a>.</p>}
-    {user && <ListingForm key={wanted ? "w" : "s"} initialPurpose={wanted ? "wanted" : undefined} />}
+    {user && <ListingForm key={(wanted ? "w" : "s") + mode} initialPurpose={wanted ? "wanted" : undefined} initialSaleMode={mode} />}
   </main>;
 }
