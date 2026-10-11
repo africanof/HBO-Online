@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
-  listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, formatPrice, friendlyError, type ReviewTarget, categoryLabel } from "@huambo-online/core";
+  listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
+  listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { SaveButton, ShareButton, useRecordView } from "./Engage";
+import { StatsBlock, StarPicker, RequestServiceBox, stars } from "./Reputation";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string };
@@ -78,6 +80,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
   const target: ReviewTarget = kind === "providers" ? { providerId: id } : { businessId: id };
   const [item, setItem] = useState<any>(null); const [services, setServices] = useState<any[]>([]); const [reviews, setReviews] = useState<any[]>([]);
   const [uid, setUid] = useState<string | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
+  const [stats, setStats] = useState<{ rows: { label: string; value: string }[]; since: string }>({ rows: [], since: "" });
   const [message, setMessage] = useState(""); const [rating, setRating] = useState(0); const [comment, setComment] = useState(""); const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -87,7 +90,11 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     if (!r.data) { setError("Não encontrado."); return; }
     setItem(r.data);
     if (kind === "providers") { const s = await listProviderServices(c, id); setServices(s.data ?? []); }
-    const rv = await listReviewsFor(c, target); setReviews((rv.data as any[]) ?? []);
+    const rv = await listProviderReviews(c, target);
+    if (rv.error) { const old = await listReviewsFor(c, target); setReviews((old.data as any[]) ?? []); } else setReviews(rv.data);
+    if (kind === "providers") { const st = await getUserStats(c, id); const rows = userStatsRows(st.data).filter(r => /serviço|Serviços|vendedor/.test(r.label));
+      setStats({ rows: rows.length ? rows : [{ label: "Serviços prestados", value: "0" }], since: memberSince(st.data?.member_since) }); }
+    else { const st = await getBusinessStats(c, id); setStats({ rows: businessStatsRows(st.data), since: memberSince(st.data?.member_since).replace("Membro", "No Huambo Online") }); }
     const u = await c.auth.getUser(); setUid(u.data.user?.id ?? null);
   }
   useEffect(() => { if (id) void load(); }, [id]);
@@ -124,6 +131,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <p>{[categoryLabel(item), item.municipalities?.name, item.address_text].filter(Boolean).join(" · ")}</p>
     {item.markets?.name && <p>🧺 Na <a href={"/pracas/" + item.markets.id}>{item.markets.name}</a></p>}
     <p><strong>{ratingLabel(avg, reviews.length)}</strong></p>
+    <StatsBlock rows={stats.rows} footer={stats.since} />
     {(item.bio || item.description) && <p style={{ whiteSpace: "pre-wrap" }}>{item.bio || item.description}</p>}
     <div className="row">
       {item.phone && <a className="btn secondary" href={"tel:" + item.phone.replace(/\s/g, "")}>📞 Ligar</a>}
@@ -137,18 +145,19 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     </section>}
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
+    {!mine && <RequestServiceBox target={target} signedIn={!!uid} />}
     {!mine && <section className="card"><h2 style={{ margin: 0 }}>Enviar mensagem</h2>
       <textarea rows={4} value={message} onChange={e => setMessage(e.target.value)} placeholder="Olá, gostaria de pedir um orçamento…" />
       <button disabled={busy || !message.trim()} onClick={contact}>{busy ? "A enviar…" : "Enviar mensagem"}</button>
     </section>}
     <section className="stack"><h2>Avaliações</h2>
       {!mine && <div className="card">
-        <div className="row" role="radiogroup" aria-label="Estrelas">{[1, 2, 3, 4, 5].map(n => <button key={n} type="button" className={n <= rating ? "" : "secondary"} aria-label={`${n} estrela(s)`} onClick={() => setRating(n)}>★</button>)}</div>
+        <StarPicker value={rating} onChange={setRating} />
         <textarea rows={3} value={comment} onChange={e => setComment(e.target.value)} placeholder="Como foi a sua experiência?" />
         <button disabled={busy || !rating} onClick={review}>Publicar avaliação</button>
       </div>}
       {reviews.length === 0 && <p>Ainda sem avaliações.</p>}
-      {reviews.map(r => <div key={r.id} className="card"><strong>{"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)} — {r.author_name}</strong>{r.comment && <span>{r.comment}</span>}<small>{new Date(r.created_at).toLocaleDateString("pt-AO")}</small></div>)}
+      {reviews.map(r => <div key={r.id} className="card"><strong>{stars(r.rating)} — {r.author_name}</strong>{r.confirmed && <span className="verified">✔ Serviço confirmado</span>}{r.comment && <span>{r.comment}</span>}<small>{new Date(r.created_at).toLocaleDateString("pt-AO")}</small></div>)}
     </section>
   </main>;
 }
