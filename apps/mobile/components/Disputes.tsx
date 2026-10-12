@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { Alert, Image, Linking, Pressable, Text, TextInput, View } from "react-native";
-import { disputeActions, disputeNextStep, disputeEventLabel, disputeAction, disputePhotoUrls, uploadDisputePhoto, listDisputesForAdmin, decideDispute,
+import { disputeActions, disputeNextStep, platformRefunds, setDisputeRefundAccount, disputeEventLabel, disputeAction, disputePhotoUrls, uploadDisputePhoto, listDisputesForAdmin, decideDispute,
   base64ToArrayBuffer, formatPrice, friendlyError, DISPUTE_STATUS_LABELS, DISPUTE_OUTCOME_LABELS, DISPUTE_REASON_LABELS, DISPUTE_REQUEST_LABELS,
   DISPUTE_ACTION_LABELS, DISPUTE_DECISION_LABELS, DISPUTE_MAX_PHOTOS, PAYMENT_LABELS, ORDER_STATUS_LABELS,
   type DisputeAction, type DisputeDecision, type DisputeEvent, type MyDispute, type AdminDispute, type DisputeStatus, type PaymentMethod, type OrderStatus } from "@huambo-online/core";
@@ -67,6 +67,13 @@ export function DisputeCard({ d, uid, onChanged }: { d: MyDispute; uid: string; 
   const [note, setNote] = useState(""); const [photos, setPhotos] = useState<Evidence[]>([]); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const [open, setOpen] = useState(false);
   const actions = disputeActions(d, d.my_role);
+  const [account, setAccount] = useState(d.refund_to ?? "");
+  async function saveAccount() {
+    setBusy(true); setError("");
+    const r = await setDisputeRefundAccount(supabase(), d.id, account);
+    setBusy(false);
+    if (r.error) setError(friendlyError(r.error)); else onChanged("Guardado. O Huambo Online vai devolver o dinheiro para esta conta.");
+  }
   async function send(action: DisputeAction) {
     setBusy(true); setError("");
     try {
@@ -93,6 +100,13 @@ export function DisputeCard({ d, uid, onChanged }: { d: MyDispute; uid: string; 
     <Text style={ui.text}>Pedido: {DISPUTE_REQUEST_LABELS[d.request]}{d.amount != null ? " · " + formatPrice(d.amount) : ""}</Text>
     {!!d.admin_note && <Text style={ui.text}>⚖️ Decisão da administração: {d.admin_note}</Text>}
     <Text style={ui.ok}>👉 {disputeNextStep(d, d.my_role)}</Text>
+    {platformRefunds(d) && <Text style={ui.text}>🛡️ Pagamento protegido: o dinheiro está guardado pelo Huambo Online.</Text>}
+    {d.my_role === "buyer" && platformRefunds(d) && d.status !== "resolved" && d.request !== "replacement" && <View style={[ui.card, { gap: 6 }]}>
+      <Text style={ui.label}>Para onde devolvemos o dinheiro? (IBAN ou número Multicaixa Express)</Text>
+      <TextInput style={ui.input} value={account} onChangeText={setAccount} placeholder="AO06 … ou 9xx xxx xxx" placeholderTextColor={C.muted} accessibilityLabel="Conta para o reembolso" />
+      {!!d.refund_to && <Text style={ui.muted}>Guardado: {d.refund_to}</Text>}
+      <Button title="Guardar conta para o reembolso" variant="secondary" disabled={busy} onPress={() => void saveAccount()} />
+    </View>}
     <Button title={open ? "Esconder histórico" : `Ver histórico (${d.events.length})`} variant="secondary" onPress={() => setOpen(!open)} />
     {open && <DisputeTimeline events={d.events} />}
     {d.status !== "resolved" && <>
@@ -109,7 +123,7 @@ export function DisputeCard({ d, uid, onChanged }: { d: MyDispute; uid: string; 
 
 /** Administração: disputas para decidir. */
 export function AdminDisputes() {
-  const [status, setStatus] = useState<"escalated" | "active" | "all">("escalated");
+  const [status, setStatus] = useState<"escalated" | "escrow_refunds" | "active" | "all">("escalated");
   const [items, setItems] = useState<AdminDispute[]>([]); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
   const [editing, setEditing] = useState<string | null>(null); const [decision, setDecision] = useState<DisputeDecision>("refund");
   const [amount, setAmount] = useState(""); const [note, setNote] = useState("");
@@ -123,13 +137,19 @@ export function AdminDisputes() {
     const r = await decideDispute(supabase(), d.id, decision, note, value);
     if (r.error) setError(friendlyError(r.error)); else { setNotice("Decisão registada e enviada às duas pessoas."); setEditing(null); setNote(""); setAmount(""); await load(); }
   }
+  async function refundStep(d: AdminDispute, action: "mark_refunded" | "confirm_refund") {
+    if (!note.trim()) { setError("Escreva a referência da transferência na caixa de texto."); return; }
+    setError(""); setNotice("");
+    const r = await disputeAction(supabase(), d.id, action, note);
+    if (r.error) setError(friendlyError(r.error)); else { setNotice(action === "mark_refunded" ? "Registado: o comprador vai confirmar que recebeu." : "Reembolso fechado."); setNote(""); setEditing(null); await load(); }
+  }
   async function comment(d: AdminDispute) {
     if (!note.trim()) { setError("Escreva a mensagem."); return; }
     const r = await disputeAction(supabase(), d.id, "comment", note);
     if (r.error) setError(friendlyError(r.error)); else { setNotice("Mensagem enviada."); setNote(""); await load(); }
   }
   return <View style={{ gap: 12 }}>
-    <Chips options={[{ value: "escalated" as const, label: "Para decidir" }, { value: "active" as const, label: "Abertos" }, { value: "all" as const, label: "Todos" }]} value={status} onChange={setStatus} />
+    <Chips options={[{ value: "escalated" as const, label: "Para decidir" }, { value: "escrow_refunds" as const, label: "💸 Reembolsos a enviar" }, { value: "active" as const, label: "Abertos" }, { value: "all" as const, label: "Todos" }]} value={status} onChange={setStatus} />
     <Message error={error} ok={notice} />
     {items.length === 0 && <Text style={ui.text}>Sem pedidos.</Text>}
     {items.map(d => <View key={d.id} style={ui.card}>
@@ -139,6 +159,12 @@ export function AdminDisputes() {
       <Text style={ui.muted}>Encomenda de {formatPrice(d.order_total)} · {ORDER_STATUS_LABELS[d.order_status as OrderStatus] ?? d.order_status} · {PAYMENT_LABELS[d.payment_method as PaymentMethod] ?? ""}</Text>
       <Text style={ui.text}>Pedido: {DISPUTE_REQUEST_LABELS[d.request]}{d.amount != null ? " · " + formatPrice(d.amount) : ""}</Text>
       {!!d.admin_note && <Text style={ui.text}>Decisão: {d.admin_note}</Text>}
+      {platformRefunds(d) && <Text style={ui.label} selectable>🛡️ Dinheiro guardado{d.order_ref ? " · " + d.order_ref : ""} · Devolver para: {d.refund_to ?? "o comprador ainda não indicou"}</Text>}
+      {platformRefunds(d) && (d.status === "awaiting_refund" || d.status === "refund_sent") && editing === d.id && <>
+        {d.status === "awaiting_refund" && <Button title="💸 Já enviámos o reembolso" disabled={!d.refund_to} onPress={() => void refundStep(d, "mark_refunded")} />}
+        {d.status === "refund_sent" && <Button title="✔ Fechar como reembolsado" variant="secondary" onPress={() => void refundStep(d, "confirm_refund")} />}
+        <Text style={ui.muted}>Escreva a referência da transferência na caixa abaixo antes de carregar.</Text>
+      </>}
       <DisputeTimeline events={d.events} />
       {d.status !== "resolved" && (editing === d.id ? <>
         <Chips options={(Object.keys(DISPUTE_DECISION_LABELS) as DisputeDecision[]).map(k => ({ value: k, label: DISPUTE_DECISION_LABELS[k] }))} value={decision} onChange={setDecision} />

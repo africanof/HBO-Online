@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { disputeActions, disputeNextStep, disputeEventLabel, disputeAction, disputePhotoUrls, uploadDisputePhoto, listDisputesForAdmin, decideDispute,
+import { disputeActions, disputeNextStep, platformRefunds, setDisputeRefundAccount, disputeEventLabel, disputeAction, disputePhotoUrls, uploadDisputePhoto, listDisputesForAdmin, decideDispute,
   formatPrice, friendlyError, DISPUTE_STATUS_LABELS, DISPUTE_OUTCOME_LABELS, DISPUTE_REASON_LABELS, DISPUTE_REQUEST_LABELS, DISPUTE_ACTION_LABELS,
   DISPUTE_DECISION_LABELS, DISPUTE_MAX_PHOTOS, PAYMENT_LABELS, ORDER_STATUS_LABELS,
   type DisputeAction, type DisputeDecision, type DisputeEvent, type DisputeRole, type MyDispute, type AdminDispute, type DisputeStatus, type PaymentMethod, type OrderStatus } from "@huambo-online/core";
@@ -50,6 +50,13 @@ export function DisputeCard({ d, uid, onChanged }: { d: MyDispute; uid: string; 
   const [note, setNote] = useState(""); const [files, setFiles] = useState<File[]>([]); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const role: DisputeRole = d.my_role;
   const actions = disputeActions(d, role);
+  const [account, setAccount] = useState(d.refund_to ?? "");
+  async function saveAccount() {
+    setBusy(true); setError("");
+    const r = await setDisputeRefundAccount(supabase(), d.id, account);
+    setBusy(false);
+    if (r.error) setError(friendlyError(r.error)); else onChanged("Guardado. O Huambo Online vai devolver o dinheiro para esta conta.");
+  }
   async function run(action: DisputeAction) {
     if (action === "decline" && !note.trim()) { setError("Escreva na caixa de mensagem porque recusa."); return; }
     if (action === "comment" && !note.trim() && !files.length) { setError("Escreva uma mensagem ou junte uma fotografia."); return; }
@@ -70,6 +77,12 @@ export function DisputeCard({ d, uid, onChanged }: { d: MyDispute; uid: string; 
     <span>Pedido: <strong>{DISPUTE_REQUEST_LABELS[d.request]}</strong>{d.amount != null ? <> · Valor: <strong>{formatPrice(d.amount)}</strong></> : null}</span>
     {d.admin_note && <span>⚖️ Decisão da administração: {d.admin_note}</span>}
     <p className="ok" style={{ margin: 0 }}>👉 {disputeNextStep(d, role)}</p>
+    {platformRefunds(d) && <span>🛡️ Pagamento protegido: o dinheiro está guardado pelo Huambo Online.</span>}
+    {role === "buyer" && platformRefunds(d) && d.status !== "resolved" && d.request !== "replacement" && <div className="card stack" style={{ gap: 8 }}>
+      <label>Para onde devolvemos o dinheiro? (IBAN ou número Multicaixa Express)<input value={account} onChange={e => setAccount(e.target.value)} placeholder="AO06 … ou 9xx xxx xxx" /></label>
+      {d.refund_to && <small>Guardado: <strong>{d.refund_to}</strong></small>}
+      <button type="button" className="secondary" disabled={busy} style={{ justifySelf: "start" }} onClick={saveAccount}>Guardar conta para o reembolso</button>
+    </div>}
     <details><summary>Histórico ({d.events.length})</summary><DisputeTimeline events={d.events} /></details>
     {d.status !== "resolved" && <>
       <label>Mensagem<textarea rows={2} value={note} onChange={e => setNote(e.target.value)} placeholder={role === "seller" && d.status === "open" ? "Resposta ao comprador (obrigatória se recusar)" : "Escreva aqui (ex.: onde entregar, referência da transferência)…"} /></label>
@@ -86,7 +99,7 @@ export function DisputeCard({ d, uid, onChanged }: { d: MyDispute; uid: string; 
 
 /** Administração: disputas para decidir e todas as outras. */
 export function AdminDisputes() {
-  const [status, setStatus] = useState<DisputeStatus | "active" | "">("escalated");
+  const [status, setStatus] = useState<DisputeStatus | "active" | "escrow_refunds" | "">("escalated");
   const [items, setItems] = useState<AdminDispute[]>([]); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
   async function load() { const r = await listDisputesForAdmin(supabase(), status); if (r.error) setError(friendlyError(r.error)); setItems(r.data); }
   useEffect(() => { void load(); }, [status]);
@@ -104,6 +117,15 @@ export function AdminDisputes() {
     const r = await decideDispute(supabase(), d.id, decision, note, amount);
     if (r.error) setError(friendlyError(r.error)); else { setNotice("Decisão registada e enviada às duas pessoas."); await load(); }
   }
+  async function refundStep(d: AdminDispute, action: "mark_refunded" | "confirm_refund") {
+    const note = action === "mark_refunded"
+      ? prompt(`Enviou ${formatPrice(d.amount ?? d.order_total)} para ${d.refund_to}? Escreva a referência da transferência:`) ?? ""
+      : prompt("O comprador não confirmou. Fechar como reembolsado? Escreva a referência do comprovativo:") ?? "";
+    if (!note.trim()) return;
+    setError(""); setNotice("");
+    const r = await disputeAction(supabase(), d.id, action, note);
+    if (r.error) setError(friendlyError(r.error)); else { setNotice(action === "mark_refunded" ? "Registado: o comprador vai confirmar que recebeu." : "Reembolso fechado."); await load(); }
+  }
   async function comment(d: AdminDispute) {
     const note = prompt("Mensagem para o comprador e o vendedor:") ?? "";
     if (!note.trim()) return;
@@ -113,7 +135,7 @@ export function AdminDisputes() {
   return <section className="stack">
     <p>Pedidos de devolução, reembolso ou troca das encomendas da Loja. Veja o histórico e as fotografias, fale com as duas pessoas e decida.</p>
     <label style={{ maxWidth: 300 }}>Mostrar<select value={status} onChange={e => setStatus(e.target.value as any)}>
-      <option value="escalated">Para decidir</option><option value="active">Todos os abertos</option><option value="">Todos</option>
+      <option value="escalated">Para decidir</option><option value="escrow_refunds">💸 Reembolsos a enviar (pagamento protegido)</option><option value="active">Todos os abertos</option><option value="">Todos</option>
       {(Object.keys(DISPUTE_STATUS_LABELS) as DisputeStatus[]).filter(s => s !== "escalated").map(s => <option key={s} value={s}>{DISPUTE_STATUS_LABELS[s]}</option>)}
     </select></label>
     {error && <p className="error" role="alert">{error}</p>}
@@ -125,6 +147,13 @@ export function AdminDisputes() {
       <span>Encomenda de {formatPrice(d.order_total)} · {ORDER_STATUS_LABELS[d.order_status as OrderStatus] ?? d.order_status} · {PAYMENT_LABELS[d.payment_method as PaymentMethod] ?? d.payment_method ?? ""}</span>
       <span>Pedido: <strong>{DISPUTE_REQUEST_LABELS[d.request]}</strong>{d.amount != null ? <> · {formatPrice(d.amount)}</> : null}</span>
       {d.admin_note && <span>Decisão: {d.admin_note}</span>}
+      {platformRefunds(d) && <span>🛡️ Dinheiro guardado pelo Huambo Online{d.order_ref ? " · " + d.order_ref : ""} · Devolver para: <strong>{d.refund_to ?? "o comprador ainda não indicou"}</strong></span>}
+      {platformRefunds(d) && d.status === "awaiting_refund" && <div className="row">
+        <button disabled={!d.refund_to} onClick={() => refundStep(d, "mark_refunded")}>💸 Já enviámos o reembolso</button>
+      </div>}
+      {platformRefunds(d) && d.status === "refund_sent" && <div className="row">
+        <button className="secondary" onClick={() => refundStep(d, "confirm_refund")}>✔ Fechar como reembolsado</button>
+      </div>}
       <DisputeTimeline events={d.events} />
       {d.status !== "resolved" && <div className="row">
         {(Object.keys(DISPUTE_DECISION_LABELS) as DisputeDecision[]).map(k => <button key={k} className={k === "reject" ? "danger" : k === "refund" ? "" : "secondary"} onClick={() => decide(d, k)}>{DISPUTE_DECISION_LABELS[k]}</button>)}

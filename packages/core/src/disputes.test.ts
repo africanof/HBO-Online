@@ -102,7 +102,7 @@ describe("ligação ao servidor", () => {
     await decideDispute(c, "d1", "refund", " Metade ", 500);
     expect(rpc).toHaveBeenLastCalledWith("admin_decide_dispute", { p_dispute_id: "d1", p_decision: "refund", p_amount: 500, p_note: "Metade" });
     await listDisputesForAdmin(c, "");
-    expect(rpc).toHaveBeenLastCalledWith("admin_list_disputes", { p_status: null });
+    expect(rpc).toHaveBeenLastCalledWith("admin_list_disputes_v2", { p_status: null });
   });
   it("notificações levam à página certa e os erros ficam em português", () => {
     const dispute = "0f8fad5b-d9cb-469f-a165-70867728950e";

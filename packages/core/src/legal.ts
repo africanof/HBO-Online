@@ -43,15 +43,21 @@ export function termsPage(email?: string | null): InfoPage {
         "As Lojas (produtos vendidos na Loja sem empresa) seguem o mesmo critério das empresas: um mês grátis e depois 5 000 Kz por mês. Os produtos de uma empresa ficam cobertos pela mensalidade dessa empresa.",
         "Sem mês grátis nem pagamento em dia, o perfil ou a Loja deixa de aparecer aos clientes, mas não é apagado. Volta a aparecer quando o pagamento é confirmado.",
         "Anúncios classificados não pagam mensalidade: quando um artigo é vendido (incluindo leilões), o vendedor paga à plataforma uma comissão de 5% do valor da venda, no prazo de 7 dias. Com comissões em atraso não se podem publicar anúncios novos."] },
-      { title: "6. Avaliações e denúncias", paragraphs: [
+      { title: "6. Pagamento protegido", paragraphs: [
+        "Quando estiver disponível, pode escolher o «Pagamento protegido» nas compras da Loja. Paga ao Huambo Online, que guarda o dinheiro e só o entrega ao vendedor depois de o comprador confirmar que recebeu a encomenda.",
+        "Se o comprador não confirmar nem reclamar dentro do prazo indicado depois da entrega (3 dias, salvo outro valor anunciado), o dinheiro é entregue ao vendedor. Um pedido de devolução ou reembolso aberto a tempo congela o dinheiro até ser resolvido.",
+        "Encomendas protegidas que não são pagas dentro do prazo indicado (48 horas, salvo outro valor anunciado) são canceladas. Os reembolsos de dinheiro ainda guardado são feitos pelo Huambo Online, para o IBAN ou o número Multicaixa Express indicado pelo comprador.",
+        "O vendedor recebe as vendas libertadas no seu saldo e pede o levantamento para a sua conta. Os levantamentos são pagos por transferência nos dias anunciados em «O meu saldo». Se houver comissão sobre o pagamento protegido, é mostrada antes de vender e descontada no saldo.",
+        "O Huambo Online atua apenas como intermediário tecnológico e de pagamento: não é o vendedor dos produtos nem responde pela sua qualidade, mas segue as regras de devolução descritas em «Devoluções e reembolsos»."] },
+      { title: "7. Avaliações e denúncias", paragraphs: [
         "Só quem fez negócio pode avaliar. As avaliações devem ser honestas e sem insultos.",
         "Se vir algo errado, use «Denunciar». A administração analisa as denúncias e pode retirar conteúdos."] },
-      { title: "7. Verificação de perfis", paragraphs: [
+      { title: "8. Verificação de perfis", paragraphs: [
         "O selo «Verificado» quer dizer que a administração viu um documento. Não é uma garantia sobre a pessoa nem sobre o negócio: continue a ter cuidado."] },
-      { title: "8. Responsabilidade", paragraphs: [
+      { title: "9. Responsabilidade", paragraphs: [
         "O Huambo Online faz o possível para manter o serviço a funcionar e seguro, mas não garante que esteja sempre disponível nem responde pelos negócios feitos entre utilizadores.",
         "Estes termos podem mudar. Quando mudarem, a data no topo é atualizada."] },
-      { title: "9. Contacto", paragraphs: [contactLine(email)] }
+      { title: "10. Contacto", paragraphs: [contactLine(email)] }
     ]
   };
 }
@@ -138,9 +144,11 @@ export function returnsPage(email?: string | null): InfoPage {
         "A administração vê o pedido, as mensagens e as fotografias, e decide: reembolso (todo ou parte), devolução, troca ou recusa. A decisão fica registada.",
         "Quem não cumprir uma decisão pode ter a conta suspensa."] },
       { title: "6. Encomenda paga e cancelada", paragraphs: [
-        "Se a encomenda já estava paga e foi cancelada, o pedido de reembolso abre sozinho: o vendedor tem de devolver o dinheiro todo."] },
+        "Se a encomenda já estava paga e foi cancelada, o pedido de reembolso abre sozinho: o vendedor tem de devolver o dinheiro todo.",
+        "Com pagamento protegido, quem devolve o dinheiro ainda guardado é o Huambo Online: indique no pedido o seu IBAN ou o número Multicaixa Express."] },
       { title: "7. Como chega o dinheiro", paragraphs: [
-        "O Huambo Online não guarda o dinheiro das compras. O reembolso é feito pelo vendedor, pelo mesmo meio do pagamento (dinheiro, transferência ou Multicaixa Express), salvo outro acordo entre os dois.",
+        "Nas compras pagas ao vendedor (na entrega, transferência ou Multicaixa Express), o Huambo Online não guarda o dinheiro: o reembolso é feito pelo vendedor, pelo mesmo meio do pagamento, salvo outro acordo entre os dois.",
+        "Nas compras com pagamento protegido, o dinheiro fica guardado pelo Huambo Online até confirmar a receção. Enquanto estiver guardado, o reembolso é feito pelo Huambo Online. Depois de entregue ao vendedor, é o vendedor que devolve.",
         "Guarde os comprovativos de pagamento e de reembolso: podem ser pedidos pela administração."] },
       { title: "8. Negócios fora da Loja", paragraphs: [
         "Nos anúncios classificados (venda, troca, arrendamento) o negócio é feito diretamente entre as pessoas. Se algo correr mal, use «Denunciar» e a administração analisa."] },
@@ -165,6 +173,8 @@ export const HELP_FAQ: FaqItem[] = [
   { q: "Como peço um serviço a um profissional?", a: "Abra a página do profissional ou empresa e use «Pedir serviço». Quando o serviço terminar, confirme e avalie — a avaliação fica marcada «Serviço confirmado»." },
   { q: "Como avalio um vendedor ou comprador?", a: "Depois de uma encomenda concluída, ou quando o anúncio é marcado como vendido com a pessoa certa, aparece em «Avaliações» para avaliar." },
   { q: "Como fico com o selo «Verificado»?", a: "Em «A sua conta», abra «Verificar perfil» e envie a fotografia do BI (ou do alvará/NIF da empresa). O documento fica privado; a administração responde por notificação." },
+  { q: "O que é o «Pagamento protegido»?", a: "Nas compras da Loja, pode pagar ao Huambo Online em vez de pagar ao vendedor. Guardamos o dinheiro e o vendedor só o recebe depois de confirmar que recebeu a encomenda. Se houver problema, peça reembolso em «Encomendas»: o dinheiro fica congelado até se resolver. Se não confirmar nem reclamar uns dias depois da entrega, o pagamento vai para o vendedor." },
+  { q: "Vendo na Loja: como recebo o dinheiro do pagamento protegido?", a: "Espere pelo aviso «Pagamento recebido» antes de enviar. Depois de entregar, marque a encomenda como «Entregue». Quando o cliente confirmar (ou passar o prazo sem reclamação), o dinheiro passa para «A sua conta» → «O meu saldo». Indique o seu IBAN ou número Multicaixa Express e carregue em «Pedir levantamento»." },
   { q: "Como evito burlas?", a: "Não pague adiantado a quem não conhece. Encontre-se num local público, veja o artigo e pague na entrega. Desconfie de preços demasiado baixos. Se suspeitar, use «Denunciar»." },
   { q: "Como peço uma devolução ou reembolso?", a: "Em «Encomendas», escolha a encomenda e carregue em «Pedir devolução ou reembolso» (até 14 dias depois da entrega). Explique o problema e junte fotografias. Se o vendedor recusar ou não responder, pode chamar a administração. Veja «Devoluções e reembolsos»." },
   { q: "Posso usar sem internet?", a: "Pode ver a página inicial, a última pesquisa e os últimos anúncios que abriu. Para publicar, enviar mensagens ou propostas precisa de ligação." },

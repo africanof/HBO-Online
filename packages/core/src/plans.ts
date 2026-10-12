@@ -122,10 +122,10 @@ export function savePaymentAccounts(client: SupabaseClient, list: PaymentAccount
 }
 
 // --- Relatório de receitas (administração) -------------------------------------------------------
-export type RevenueKind = "plan_provider" | "plan_business" | "plan_store" | "commission";
+export type RevenueKind = "plan_provider" | "plan_business" | "plan_store" | "commission" | "protected_fee";
 export type RevenueRow = { paid_at: string; kind: RevenueKind; description: string; payer_name: string; amount: number | string; method: PaymentMethodPlan | null; reference: string | null };
 export const REVENUE_KIND_LABELS: Record<RevenueKind, string> = {
-  plan_provider: "Mensalidade — profissional", plan_business: "Mensalidade — empresa", plan_store: "Mensalidade — Loja", commission: "Comissão de venda"
+  plan_provider: "Mensalidade — profissional", plan_business: "Mensalidade — empresa", plan_store: "Mensalidade — Loja", commission: "Comissão de venda", protected_fee: "Comissão — pagamento protegido"
 };
 export async function listRevenue(client: SupabaseClient, from: string, to: string) {
   const r = await client.rpc("admin_revenue", { p_from: from, p_to: to });
