@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
   reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
-import { ShareButton, useRecordView, browserStore } from "../../../components/Engage";
+import { ShareButton, SellerWhatsApp, useRecordView, browserStore } from "../../../components/Engage";
 import { OfflineBanner } from "../../../components/Offline";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
 import { MarketFact } from "../../../components/MarketPicker";
@@ -141,10 +141,11 @@ export default function ClassifiedDetail() {
                 {can.buyNow && <button type="button" onClick={buyNow} disabled={busy}>🛒 Quero comprar{item.price != null ? " por " + formatPrice(item.price, item.currency) : ""}</button>}
                 {(can.offerMoney || can.offerTrade) && <a className={can.buyNow ? "btn secondary" : "btn"} href="#proposta">{item.sale_mode === "trade" ? "🔁 Propor troca" : "💬 Fazer proposta"}</a>}
                 <a className={can.buyNow || can.offerMoney || can.offerTrade ? "btn secondary" : "btn"} href="#contactar">✉️ Contactar anunciante</a>
+                {item.status === "published" && <SellerWhatsApp sellerId={item.owner_id} kind="listing" id={id} title={item.title} refCode={item.ref_no ? formatRef("listing", item.ref_no) : null} />}
               </>}
             <button type="button" className="secondary" onClick={toggleSaved} disabled={busy}>{savedId ? "♥ Guardado" : "♡ Guardar anúncio"}</button>
           </>}
-          {item.status === "published" && <ShareButton kind="listing" id={id} title={item.title} />}
+          {item.status === "published" && <ShareButton kind="listing" id={id} title={item.title} extra={{ price: item.purpose === "wanted" ? null : item.price, currency: item.currency, refCode: item.ref_no ? formatRef("listing", item.ref_no) : null, place }} />}
         </div>
       </section>
     </div>

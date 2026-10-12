@@ -4,7 +4,7 @@ import { Gallery } from "../../../components/Video";
 import { useParams } from "next/navigation";
 import { getProduct, addToMyCart, formatRef, getPublicProfile, formatPrice, friendlyError } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
-import { SaveButton, ShareButton, useRecordView } from "../../../components/Engage";
+import { SaveButton, ShareButton, SellerWhatsApp, useRecordView } from "../../../components/Engage";
 import { SellerBadge } from "../../../components/Reputation";
 import { ReportButton } from "../../../components/Trust";
 
@@ -55,8 +55,9 @@ export default function Produto() {
             <label style={{ maxWidth: 160 }}>Quantidade<input type="number" min={1} max={p.stock} value={qty} onChange={e => setQty(Math.max(1, Math.min(p.stock, Number(e.target.value) || 1)))} /></label>
             <button disabled={busy} onClick={add}>🛒 Adicionar ao carrinho</button>
           </>}
+          {!mine && <SellerWhatsApp sellerId={p.seller_id} kind="product" id={id} title={p.name} refCode={p.ref_no ? formatRef("product", p.ref_no) : null} />}
           {!mine && <SaveButton kind="product" id={id} />}
-          <ShareButton kind="product" id={id} title={p.name} />
+          <ShareButton kind="product" id={id} title={p.name} extra={{ price: p.price, currency: p.currency, refCode: p.ref_no ? formatRef("product", p.ref_no) : null, place: p.municipalities?.name }} />
         </div>
       </section>
     </div>

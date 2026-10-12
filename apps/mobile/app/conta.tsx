@@ -8,6 +8,7 @@ import { ui, C } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
 import { shrinkAsset } from "../lib/image";
 import { ThemePicker } from "../components/ThemePicker";
+import { WhatsAppSettings } from "../components/Engage";
 
 export default function Conta() {
   const router = useRouter();
@@ -82,6 +83,7 @@ export default function Conta() {
       {isStaff && <Button title="🛡️ Administração" onPress={() => router.push("/admin" as any)} />}
     </View>
     <ThemePicker />
+    {!!uid && <WhatsAppSettings uid={uid} />}
     <Message error={err} ok={msg} />
     {form && <View style={ui.card}>
       <Text style={ui.h2}>Dados pessoais</Text>
