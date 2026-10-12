@@ -48,5 +48,5 @@ export function NotificationBell() {
 const s = themed(C => StyleSheet.create({
   btn: { padding: 8 },
   count: { position: "absolute", top: -4, right: -10, minWidth: 20, height: 20, borderRadius: 10, backgroundColor: C.red, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
-  countText: { color: C.white, fontSize: 11, fontWeight: "800" }
+  countText: { color: C.onAccent, fontSize: 11, fontWeight: "800" }
 }));

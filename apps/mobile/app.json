@@ -5,7 +5,7 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "huamboonline",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "android": {
       "package": "ao.huamboonline.app",
@@ -14,7 +14,9 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#3665F3"
       },
-      "blockedPermissions": ["android.permission.RECORD_AUDIO"]
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "ios": {
       "bundleIdentifier": "ao.huamboonline.app",
