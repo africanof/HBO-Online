@@ -10,6 +10,7 @@ import { Button, Chips, Message } from "./Ui";
 import { SaveButton, ShareButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, VerifiedTag, stars } from "./Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "./Trust";
+import { PortfolioGallery, BusinessProducts } from "./Portfolio";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string };
@@ -123,6 +124,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
 
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href={TEXT[kind].base as any} style={ui.link}>← Voltar</Link>
+    {!!(item.avatar_url || item.logo_url) && <Image source={{ uri: item.avatar_url || item.logo_url }} style={{ width: 96, height: 96, borderRadius: 20 }} accessibilityLabel={kind === "providers" ? "Fotografia" : "Logótipo"} />}
     <Text style={ui.h1}>{kind === "providers" ? item.display_name : item.name}{item.verified ? " ✔️" : ""}</Text>
     {kind === "providers" && !!item.headline && <Text style={ui.text}>{item.headline}</Text>}
     <Text style={ui.muted}>{[categoryLabel(item), item.municipalities?.name, item.address_text].filter(Boolean).join(" · ")}</Text>
@@ -139,6 +141,8 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     {kind === "providers" && services.length > 0 && <View style={{ gap: 8 }}><Text style={ui.h2}>Serviços</Text>
       {services.map(s => <View key={s.id} style={ui.card}><Text style={ui.label}>{s.title}</Text>{!!s.description && <Text style={ui.text}>{s.description}</Text>}<Text style={ui.text}>{s.price_from != null ? "Desde " + formatPrice(s.price_from, s.currency) : "Preço sob consulta"}</Text></View>)}
     </View>}
+    <PortfolioGallery target={kind === "providers" ? { providerId: id } : { businessId: id }} />
+    {kind === "businesses" && <BusinessProducts ownerId={item.owner_id} businessId={id} />}
     <Message error={error} ok={notice} />
     {!mine && <RequestServiceBox target={target} signedIn={!!uid} />}
     {!mine && <View style={ui.card}>

@@ -116,7 +116,7 @@ export async function getBusiness(client: SupabaseClient, id: string) {
   return client.from("businesses").select("id,owner_id,name,description,category_id,custom_category,municipality_id,phone,whatsapp,logo_url,address_text,market_id,verified,active,created_at,categories(name),municipalities(name),markets(id,name)").eq("id", id).maybeSingle();
 }
 export async function listMyBusinesses(client: SupabaseClient, ownerId: string) {
-  return client.from("businesses").select("id,name,description,category_id,custom_category,municipality_id,phone,whatsapp,address_text,market_id,verified,active").eq("owner_id", ownerId).order("created_at");
+  return client.from("businesses").select("id,name,description,category_id,custom_category,municipality_id,phone,whatsapp,address_text,market_id,verified,active,logo_url").eq("owner_id", ownerId).order("created_at");
 }
 export async function saveBusiness(client: SupabaseClient, ownerId: string, input: BusinessInput, id?: string) {
   const invalid = validateBusinessInput(input);

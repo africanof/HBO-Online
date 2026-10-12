@@ -1,15 +1,16 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getProvider, saveMyProviderProfile, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
+import { getProvider, saveMyProviderProfile, setProviderPhoto, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../../lib/supabase";
 import { useTerritory } from "../../../components/Directory";
+import { PhotoPicker, PortfolioManager } from "../../../components/Portfolio";
 
 type Option = { id: string; name: string };
 const empty = { displayName: "", headline: "", bio: "", categoryId: "", customCategory: "", municipalityId: "", phone: "", whatsapp: "", active: true };
 
 export default function PerfilProfissional() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
-  const [form, setForm] = useState(empty); const [exists, setExists] = useState(false);
+  const [form, setForm] = useState(empty); const [exists, setExists] = useState(false); const [avatar, setAvatar] = useState<string | null>(null);
   const [services, setServices] = useState<any[]>([]); const [svc, setSvc] = useState({ title: "", description: "", price: "" });
   const [categories, setCategories] = useState<Option[]>([]); const { provinces, municipalities, provinceId, setProvinceId } = useTerritory();
   const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
@@ -17,7 +18,7 @@ export default function PerfilProfissional() {
   async function load(id: string) {
     const c = supabase();
     const p = await getProvider(c, id);
-    if (p.data) { setExists(true); setForm({ displayName: p.data.display_name ?? "", headline: p.data.headline ?? "", bio: p.data.bio ?? "", ...categoryFormValues(p.data), municipalityId: p.data.municipality_id ?? "", phone: p.data.phone ?? "", whatsapp: p.data.whatsapp ?? "", active: p.data.active }); }
+    if (p.data) { setExists(true); setAvatar(p.data.avatar_url ?? null); setForm({ displayName: p.data.display_name ?? "", headline: p.data.headline ?? "", bio: p.data.bio ?? "", ...categoryFormValues(p.data), municipalityId: p.data.municipality_id ?? "", phone: p.data.phone ?? "", whatsapp: p.data.whatsapp ?? "", active: p.data.active }); }
     const s = await listProviderServices(c, id, true); setServices(s.data ?? []);
   }
   useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) void load(id); }); void listDirectoryCategories(supabase(), "providers").then(({ data }) => setCategories(data ?? [])); }, []);
@@ -53,6 +54,9 @@ export default function PerfilProfissional() {
       <label style={{ display: "flex", gap: 10, alignItems: "center" }}><input type="checkbox" checked={form.active} onChange={e => setForm({ ...form, active: e.target.checked })} style={{ width: 24, height: 24 }} /> Perfil visível ao público</label>
       <button disabled={busy}>{exists ? "Guardar perfil" : "Criar perfil"}</button>
     </form>
+    {exists && <section className="card stack"><h2 style={{ margin: 0 }}>Fotografia do perfil</h2>
+      <PhotoPicker uid={uid} current={avatar} label="Fotografia" onSave={url => setProviderPhoto(supabase(), uid, url)} /></section>}
+    {exists && <PortfolioManager uid={uid} target={{ providerId: uid }} />}
     {exists && <section className="stack">
       <h2>Os meus serviços</h2>
       <form className="stack card" onSubmit={e => { e.preventDefault(); void run(() => saveService(supabase(), uid, { title: svc.title, description: svc.description, priceFrom: parsePrice(svc.price), categoryId: form.categoryId === OTHER_CATEGORY ? undefined : form.categoryId }), "Serviço adicionado.").then(ok => { if (ok) setSvc({ title: "", description: "", price: "" }); }); }}>

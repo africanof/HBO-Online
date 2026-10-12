@@ -101,6 +101,7 @@ const errorMessages: [RegExp, string][] = [
   [/NOT_ORDER_PARTY/, "Esta encomenda não é sua."],
   [/INVALID_BUY_NOW_PRICE/, "O preço «Comprar já» tem de ser maior que o preço inicial e não menor que o preço mínimo de venda."],
   [/BUY_NOW_NOT_AVAILABLE/, "«Comprar já» já não está disponível: alguém licitou primeiro."],
+  [/PORTFOLIO_FULL/, "Já tem 40 trabalhos no portfólio. Apague um para juntar outro."],
   [/MAX_MUST_INCREASE/, "Já está a ganhar: para mudar, escreva um máximo maior do que o atual."],
   [/RETRACT_TOO_LATE/, "Faltam menos de 12 horas para o fim do leilão: só pode retirar um lance feito há menos de 1 hora."],
   [/NO_BID_TO_RETRACT/, "Não tem lances para retirar neste leilão."],

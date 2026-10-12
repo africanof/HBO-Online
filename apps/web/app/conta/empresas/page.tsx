@@ -1,16 +1,17 @@
 "use client";
 import { MarketPicker } from "../../../components/MarketPicker";
 import { useEffect, useState } from "react";
-import { listMyBusinesses, saveBusiness, deleteBusiness, listDirectoryCategories, friendlyError, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
+import { listMyBusinesses, saveBusiness, setBusinessLogo, deleteBusiness, listDirectoryCategories, friendlyError, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../../lib/supabase";
 import { useTerritory } from "../../../components/Directory";
+import { PhotoPicker, PortfolioManager } from "../../../components/Portfolio";
 
 type Option = { id: string; name: string };
 const empty = { name: "", description: "", categoryId: "", customCategory: "", municipalityId: "", marketId: "", phone: "", whatsapp: "", addressText: "", active: true };
 
 export default function MinhasEmpresas() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
-  const [items, setItems] = useState<any[]>([]); const [form, setForm] = useState(empty); const [editing, setEditing] = useState<string | null>(null);
+  const [items, setItems] = useState<any[]>([]); const [form, setForm] = useState(empty); const [editing, setEditing] = useState<string | null>(null); const [showcase, setShowcase] = useState<string | null>(null);
   const [categories, setCategories] = useState<Option[]>([]); const { provinces, municipalities, provinceId, setProvinceId } = useTerritory();
   const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
 
@@ -38,9 +39,15 @@ export default function MinhasEmpresas() {
       <strong>{b.name}{b.verified ? " ✔️" : ""}{b.active ? "" : " (oculta)"}</strong>
       <div className="row">
         <a className="btn secondary" href={"/empresas/" + b.id}>Ver</a>
+        <button className={showcase === b.id ? "" : "secondary"} aria-expanded={showcase === b.id} onClick={() => setShowcase(showcase === b.id ? null : b.id)}>📸 Logótipo e portfólio</button>
         <button className="secondary" onClick={() => { setEditing(b.id); setForm({ name: b.name ?? "", description: b.description ?? "", ...categoryFormValues(b), municipalityId: b.municipality_id ?? "", marketId: b.market_id ?? "", phone: b.phone ?? "", whatsapp: b.whatsapp ?? "", addressText: b.address_text ?? "", active: b.active }); window.scrollTo(0, document.body.scrollHeight); }}>Editar</button>
         <button className="danger" onClick={async () => { if (!confirm("Apagar esta empresa?")) return; const r = await deleteBusiness(supabase(), b.id); if (r.error) setError(friendlyError(r.error)); else await load(uid); }}>Apagar</button>
       </div>
+      {showcase === b.id && <div className="stack" style={{ marginTop: 8 }}>
+        <strong>Logótipo</strong>
+        <PhotoPicker uid={uid} current={b.logo_url ?? null} label="Logótipo" onSave={url => setBusinessLogo(supabase(), b.id, url)} />
+        <PortfolioManager uid={uid} target={{ businessId: b.id }} />
+      </div>}
     </div>)}
     <form className="stack card" onSubmit={submit}>
       <h2 style={{ margin: 0 }}>{editing ? "Editar empresa" : "Registar empresa"}</h2>

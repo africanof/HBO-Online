@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { Alert, ScrollView, Switch, Text, TextInput, View } from "react-native";
-import { getProvider, saveMyProviderProfile, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
+import { getProvider, saveMyProviderProfile, setProviderPhoto, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { Button, Chips, Message } from "../../components/Ui";
 import { useTerritory } from "../../components/Directory";
+import { PhotoPicker, PortfolioManager } from "../../components/Portfolio";
 
 type Option = { id: string; name: string };
 const empty = { displayName: "", headline: "", bio: "", categoryId: "", customCategory: "", municipalityId: "", phone: "", whatsapp: "", active: true };
@@ -13,7 +14,7 @@ const empty = { displayName: "", headline: "", bio: "", categoryId: "", customCa
 export default function PerfilProfissional() {
   const router = useRouter();
   const [uid, setUid] = useState<string | null | undefined>(undefined);
-  const [form, setForm] = useState(empty); const [exists, setExists] = useState(false);
+  const [form, setForm] = useState(empty); const [exists, setExists] = useState(false); const [avatar, setAvatar] = useState<string | null>(null);
   const [services, setServices] = useState<any[]>([]); const [svc, setSvc] = useState({ title: "", description: "", price: "" });
   const [categories, setCategories] = useState<Option[]>([]); const { provinces, municipalities, provinceId, setProvinceId } = useTerritory();
   const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
@@ -21,7 +22,7 @@ export default function PerfilProfissional() {
   async function load(id: string) {
     const c = supabase();
     const p = await getProvider(c, id);
-    if (p.data) { setExists(true); setForm({ displayName: p.data.display_name ?? "", headline: p.data.headline ?? "", bio: p.data.bio ?? "", ...categoryFormValues(p.data), municipalityId: p.data.municipality_id ?? "", phone: p.data.phone ?? "", whatsapp: p.data.whatsapp ?? "", active: p.data.active }); }
+    if (p.data) { setExists(true); setAvatar(p.data.avatar_url ?? null); setForm({ displayName: p.data.display_name ?? "", headline: p.data.headline ?? "", bio: p.data.bio ?? "", ...categoryFormValues(p.data), municipalityId: p.data.municipality_id ?? "", phone: p.data.phone ?? "", whatsapp: p.data.whatsapp ?? "", active: p.data.active }); }
     const s = await listProviderServices(c, id, true); setServices(s.data ?? []);
   }
   useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) void load(id); }); void listDirectoryCategories(supabase(), "providers").then(({ data }) => setCategories(data ?? [])); }, []);
@@ -57,6 +58,9 @@ export default function PerfilProfissional() {
       <Button title={exists ? "Guardar perfil" : "Criar perfil"} disabled={busy} onPress={() => void run(() => saveMyProviderProfile(supabase(), uid, form), "Perfil guardado.")} />
     </View>
     {exists && <View style={{ gap: 10 }}>
+      <Text style={ui.h2}>Fotografia do perfil</Text>
+      <PhotoPicker uid={uid} current={avatar} label="Fotografia" onSave={url => setProviderPhoto(supabase(), uid, url)} />
+      <PortfolioManager uid={uid} target={{ providerId: uid }} />
       <Text style={ui.h2}>Os meus serviços</Text>
       <View style={ui.card}>
         <Text style={ui.label}>Serviço</Text><TextInput style={ui.input} value={svc.title} onChangeText={v => setSvc({ ...svc, title: v })} />
