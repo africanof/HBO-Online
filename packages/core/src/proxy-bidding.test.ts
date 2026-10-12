@@ -41,3 +41,32 @@ describe("leilões como no eBay (licitação automática)", () => {
     expect(rpc).toHaveBeenCalledWith("auction_bids_for_v2", { p_auction_id: "a1" });
   });
 });
+
+import { validateAuctionInput, startListingAuction, buyAuctionNow, listMyAuctionBids, groupMyBids, getListingAuction, BID_STANDING_LABELS } from "./listing-auctions";
+describe("comprar já e as minhas licitações", () => {
+  it("valida o preço «Comprar já»", () => {
+    expect(validateAuctionInput({ startingPrice: 1000, days: 7, buyNowPrice: 1000 })).toMatch(/Comprar já/);
+    expect(validateAuctionInput({ startingPrice: 1000, reservePrice: 3000, days: 7, buyNowPrice: 2000 })).toMatch(/Comprar já/);
+    expect(validateAuctionInput({ startingPrice: 1000, reservePrice: 3000, days: 7, buyNowPrice: 8000 })).toBeNull();
+  });
+  it("inicia o leilão e põe o preço «Comprar já»", async () => {
+    const rpc = vi.fn().mockImplementation((fn: string) => Promise.resolve({ data: fn === "create_classified_auction" ? { id: "a9" } : {}, error: null }));
+    await startListingAuction({ rpc } as any, "l1", { startingPrice: 1000, days: 3, buyNowPrice: 5000 });
+    expect(rpc).toHaveBeenLastCalledWith("set_auction_buy_now", { p_auction_id: "a9", p_price: 5000 });
+    await buyAuctionNow({ rpc } as any, "a9");
+    expect(rpc).toHaveBeenLastCalledWith("buy_auction_now", { p_auction_id: "a9" });
+    await getListingAuction({ rpc: (fn: string) => ({ maybeSingle: () => (rpc(fn), Promise.resolve({ data: null, error: null })) }) } as any, "l1");
+    expect(rpc).toHaveBeenLastCalledWith("auction_for_listing_v2");
+  });
+  it("agrupa as minhas licitações", async () => {
+    const it = (standing: string, status = "live") => ({ auction_id: standing, standing, status } as any);
+    const g = groupMyBids([it("winning"), it("outbid"), it("won", "ended"), it("retracted")]);
+    expect(g.live.map(x => x.standing)).toEqual(["winning", "outbid"]);
+    expect(g.ended.map(x => x.standing)).toEqual(["won", "retracted"]);
+    expect(g.needAttention).toBe(1);
+    expect(Object.keys(BID_STANDING_LABELS)).toHaveLength(8);
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: null });
+    expect((await listMyAuctionBids({ rpc } as any)).data).toEqual([]);
+    expect(rpc).toHaveBeenCalledWith("my_auction_bids");
+  });
+});

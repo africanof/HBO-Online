@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { requestRental, getListingAuction, startListingAuction, bidOnAuction, cancelAuction, nextMinimumBid, timeLeft,
-  formatPrice, parsePrice, friendlyError, listBidsForAuction, retractMyBid, cancelBidAsSeller, canRetractBid, RETRACT_REASON_LABELS,
+  formatPrice, parsePrice, friendlyError, buyAuctionNow, listBidsForAuction, retractMyBid, cancelBidAsSeller, canRetractBid, RETRACT_REASON_LABELS,
   type ListingAuction, type AuctionBid, type RetractReason } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 
@@ -36,7 +36,7 @@ export function RentalRequestForm({ listingId, uid, defaultPrice }: { listingId:
 export function AuctionPanel({ listingId, uid, mine, canStart }: { listingId: string; uid: string | null; mine: boolean; canStart: boolean }) {
   const [a, setA] = useState<ListingAuction | null>(null); const [loaded, setLoaded] = useState(false);
   const [amount, setAmount] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [ok, setOk] = useState("");
-  const [form, setForm] = useState({ open: false, starting: "", reserve: "", increment: "", days: "7" });
+  const [form, setForm] = useState({ open: false, starting: "", reserve: "", increment: "", days: "7", buyNow: "" });
   async function load() { const r = await getListingAuction(supabase(), listingId); setA((r.data as ListingAuction) ?? null); setLoaded(true); }
   useEffect(() => { void load(); }, [listingId]);
   async function run(fn: () => PromiseLike<{ error: any }>, msg: string) {
@@ -61,10 +61,11 @@ export function AuctionPanel({ listingId, uid, mine, canStart }: { listingId: st
     if (!mine || !canStart) return null;
     if (!form.open) return <button type="button" className="secondary" onClick={() => setForm({ ...form, open: true })}>🔨 Pôr em leilão</button>;
     return <form className="card stack" onSubmit={e => { e.preventDefault(); void run(() => startListingAuction(supabase(), listingId, {
-      startingPrice: parsePrice(form.starting) ?? NaN, reservePrice: parsePrice(form.reserve), minIncrement: parsePrice(form.increment), days: Number(form.days) }), "Leilão iniciado."); }}>
+      startingPrice: parsePrice(form.starting) ?? NaN, reservePrice: parsePrice(form.reserve), minIncrement: parsePrice(form.increment), days: Number(form.days), buyNowPrice: parsePrice(form.buyNow) }), "Leilão iniciado."); }}>
       <h2 style={{ margin: 0 }}>Pôr em leilão</h2>
       <label>Preço inicial (Kz)<input inputMode="decimal" value={form.starting} onChange={e => setForm({ ...form, starting: e.target.value })} /></label>
       <label>Preço mínimo de venda (opcional, Kz)<input inputMode="decimal" value={form.reserve} onChange={e => setForm({ ...form, reserve: e.target.value })} /></label>
+      <label>Preço «Comprar já» (opcional, Kz) — quem quiser pode comprar logo, até haver o primeiro lance<input inputMode="decimal" value={form.buyNow} onChange={e => setForm({ ...form, buyNow: e.target.value })} /></label>
       <label>Aumento mínimo por lance (Kz)<input inputMode="decimal" value={form.increment} onChange={e => setForm({ ...form, increment: e.target.value })} placeholder="Ex.: 1000" /></label>
       <label>Duração<select value={form.days} onChange={e => setForm({ ...form, days: e.target.value })}>{[1, 3, 5, 7, 10, 14].map(d => <option key={d} value={d}>{d} dia(s)</option>)}</select></label>
       {error && <p className="error" role="alert">{error}</p>}
@@ -76,7 +77,13 @@ export function AuctionPanel({ listingId, uid, mine, canStart }: { listingId: st
     <h2 style={{ margin: 0 }}>🔨 Leilão {live ? "a decorrer" : a.status === "scheduled" ? "agendado" : "terminado"}</h2>
     <span className="price">{formatPrice(a.current_price)}</span>
     <span>{a.bid_count} lance(s) · {live ? "termina em " + timeLeft(a.ends_at) : "terminou a " + new Date(a.ends_at).toLocaleString("pt-AO")}{!a.reserve_met && a.bid_count > 0 ? " · preço mínimo ainda não atingido" : ""}</span>
-    {a.status === "ended" && <strong>{a.winner_id ? (a.winner_id === uid ? "🎉 Ganhou este leilão. Contacte o vendedor." : "Leilão vendido.") : "Terminou sem vencedor."}</strong>}
+    {a.status === "ended" && <strong>{a.winner_id ? (a.winner_id === uid ? (a.bought_now ? "🎉 Comprou já este artigo. Contacte o vendedor." : "🎉 Ganhou este leilão. Contacte o vendedor.") : a.bought_now ? "Vendido com «Comprar já»." : "Leilão vendido.") : a.has_reserve && a.bid_count > 0 ? "Terminou sem atingir o preço mínimo de venda." : "Terminou sem vencedor."}</strong>}
+    {live && a.buy_now_available && a.buy_now_price != null && (mine
+      ? <span>🛒 «Comprar já» por <strong>{formatPrice(a.buy_now_price)}</strong> (desaparece com o primeiro lance)</span>
+      : <div className="card stack" style={{ gap: 6 }}>
+          <span>🛒 Não quer esperar? Compre já por <strong>{formatPrice(a.buy_now_price)}</strong>. Desaparece com o primeiro lance.</span>
+          <button type="button" disabled={busy} onClick={() => { if (!uid) { window.location.href = "/conta/login?voltar=" + encodeURIComponent(window.location.pathname); return; } if (confirm(`Comprar já por ${formatPrice(a.buy_now_price)}? O leilão termina e o artigo é seu.`)) void run(() => buyAuctionNow(supabase(), a.id), "Comprou! Contacte o vendedor para combinar a entrega."); }}>🛒 Comprar já por {formatPrice(a.buy_now_price)}</button>
+        </div>)}
     {live && !mine && <>
       {a.leader_is_me ? <span className="ok">✔ Está a ganhar. O seu máximo secreto: <strong>{formatPrice(a.my_best)}</strong>. Pode subi-lo.</span>
         : a.my_best != null ? <span className="error">Foi ultrapassado: outra pessoa tem um máximo maior. Suba o seu máximo para voltar a ganhar.</span> : null}
