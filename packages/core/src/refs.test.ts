@@ -50,7 +50,7 @@ describe("retirar lances", () => {
     await cancelBidAsSeller(c, "b1", "  Conta suspeita ");
     expect(rpc).toHaveBeenLastCalledWith("seller_cancel_bid", { p_bid_id: "b1", p_reason: "Conta suspeita" });
     await listBidsForAuction(c, "a1");
-    expect(rpc).toHaveBeenLastCalledWith("auction_bids_for", { p_auction_id: "a1" });
+    expect(rpc).toHaveBeenLastCalledWith("auction_bids_for_v2", { p_auction_id: "a1" });
     expect(Object.keys(RETRACT_REASON_LABELS)).toEqual(["typo", "listing_changed", "cannot_contact"]);
     expect(friendlyError(new Error("RETRACT_TOO_LATE"))).toMatch(/12 horas/);
     expect(friendlyError(new Error("BIDDER_BLOCKED"))).toMatch(/não pode voltar a licitar/);

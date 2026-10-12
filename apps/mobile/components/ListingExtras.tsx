@@ -51,6 +51,16 @@ export function AuctionPanel({ listingId, uid, mine, canStart }: { listingId: st
     const r = await fn(); setBusy(false);
     if (r.error) setError(friendlyError(r.error)); else { setOk(msg); setAmount(""); setForm(f => ({ ...f, open: false })); await load(); }
   }
+  async function placeMax() {
+    if (!a) return;
+    setBusy(true); setError(""); setOk("");
+    const r = await bidOnAuction(supabase(), a.id, parsePrice(amount) ?? NaN);
+    if (r.error) { setBusy(false); setError(friendlyError(r.error)); return; }
+    const fresh = (await getListingAuction(supabase(), listingId)).data as ListingAuction | null;
+    setBusy(false); setAmount(""); if (fresh) setA(fresh);
+    setOk(fresh?.leader_is_me ? `Está a ganhar com ${formatPrice(fresh.current_price)}. O sistema licita por si até ${formatPrice(fresh.my_best)}.` : "");
+    if (fresh && !fresh.leader_is_me) setError(`Foi ultrapassado de imediato: outra pessoa já tinha um máximo maior. Preço atual: ${formatPrice(fresh.current_price)}.`);
+  }
   if (!loaded) return null;
   const live = !!a && a.status === "live" && new Date(a.ends_at).getTime() > Date.now();
 
@@ -80,9 +90,12 @@ export function AuctionPanel({ listingId, uid, mine, canStart }: { listingId: st
     <Text style={ui.text}>{a.bid_count} lance(s) · {live ? "termina em " + timeLeft(a.ends_at) : "terminou a " + new Date(a.ends_at).toLocaleString("pt-AO")}{!a.reserve_met && a.bid_count > 0 ? " · preço mínimo ainda não atingido" : ""}</Text>
     {a.status === "ended" && <Text style={ui.label}>{a.winner_id ? (a.winner_id === uid ? "🎉 Ganhou este leilão. Contacte o vendedor." : "Leilão vendido.") : "Terminou sem vencedor."}</Text>}
     {live && !mine && <>
-      {a.leader_is_me && <Text style={ui.ok}>Está a ganhar este leilão.</Text>}
-      <TextInput style={ui.input} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} placeholder={"Mínimo " + formatPrice(nextMinimumBid(a))} accessibilityLabel="Valor do lance" />
-      <Button title="Licitar" disabled={busy} onPress={() => { if (!uid) { router.push("/login" as any); return; } void run(() => bidOnAuction(supabase(), a.id, parsePrice(amount) ?? NaN), "Lance registado."); }} />
+      {a.leader_is_me ? <Text style={ui.ok}>✔ Está a ganhar. O seu máximo secreto: {formatPrice(a.my_best)}. Pode subi-lo.</Text>
+        : a.my_best != null ? <Text style={ui.error}>Foi ultrapassado: outra pessoa tem um máximo maior. Suba o seu máximo para voltar a ganhar.</Text> : null}
+      <Text style={ui.text}>💡 Como no eBay: escreva o MÁXIMO que está disposto a pagar. O Huambo Online licita por si só o necessário para ficar à frente, até esse valor, que ninguém vê.</Text>
+      <Text style={ui.label}>{a.leader_is_me ? "Novo máximo (Kz)" : "O seu máximo (Kz)"}</Text>
+      <TextInput style={ui.input} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} placeholder={"Mínimo " + formatPrice(nextMinimumBid(a))} accessibilityLabel={a.leader_is_me ? "Novo máximo em Kz" : "O seu máximo em Kz"} />
+      <Button title={a.leader_is_me ? "Subir máximo" : "Licitar"} disabled={busy} onPress={() => { if (!uid) { router.push("/login" as any); return; } void placeMax(); }} />
     </>}
     {a.status !== "scheduled" && <BidHistory auction={a} mine={mine} uid={uid} version={a.current_price + ":" + a.bid_count} onChanged={m => { setOk(m); void load(); }} />}
     {mine && live && a.bid_count === 0 && <Button title="Cancelar leilão" variant="secondary" disabled={busy} onPress={() => Alert.alert("Cancelar o leilão?", "", [{ text: "Não" }, { text: "Sim", onPress: () => void run(() => cancelAuction(supabase(), a.id), "Leilão cancelado.") }])} />}
@@ -117,7 +130,7 @@ function BidHistory({ auction, mine, uid, version, onChanged }: { auction: Listi
   return <View style={{ gap: 8 }}>
     <Button title={open ? "Esconder lances" : `Ver lances (${bids.filter(b => !b.retracted).length})`} variant="secondary" onPress={() => setOpen(!open)} />
     {open && bids.map(b => <View key={b.id} style={{ gap: 4, opacity: b.retracted ? 0.7 : 1 }}>
-      <Text style={ui.text}><Text style={ui.label}>{b.bidder_label}</Text> · <Text style={b.retracted ? { textDecorationLine: "line-through" } : undefined}>{formatPrice(b.amount)}</Text> · {new Date(b.created_at).toLocaleString("pt-AO")}</Text>
+      <Text style={ui.text}><Text style={ui.label}>{b.bidder_label}</Text>{b.is_auto ? " (automático)" : ""} · <Text style={b.retracted ? { textDecorationLine: "line-through" } : undefined}>{formatPrice(b.amount)}</Text> · {new Date(b.created_at).toLocaleString("pt-AO")}</Text>
       {b.retracted && <Text style={ui.muted}>{b.retracted_by_seller ? "Cancelado pelo vendedor" : "Retirado"}{b.retract_reason ? ": " + b.retract_reason : ""}</Text>}
       {mine && live && !b.retracted && <Button title={"Cancelar lances de " + b.bidder_label} variant="secondary" onPress={() => { setCancelling(b); setWhy(""); setError(""); }} />}
     </View>)}
