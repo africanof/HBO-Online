@@ -44,6 +44,16 @@ export function AuctionPanel({ listingId, uid, mine, canStart }: { listingId: st
     const r = await fn(); setBusy(false);
     if (r.error) setError(friendlyError(r.error)); else { setOk(msg); setAmount(""); await load(); }
   }
+  async function placeMax() {
+    if (!a) return;
+    setBusy(true); setError(""); setOk("");
+    const r = await bidOnAuction(supabase(), a.id, parsePrice(amount) ?? NaN);
+    if (r.error) { setBusy(false); setError(friendlyError(r.error)); return; }
+    const fresh = (await getListingAuction(supabase(), listingId)).data as ListingAuction | null;
+    setBusy(false); setAmount(""); if (fresh) setA(fresh);
+    setOk(fresh?.leader_is_me ? `Está a ganhar com ${formatPrice(fresh.current_price)}. O sistema licita por si até ${formatPrice(fresh.my_best)}.` : "");
+    if (fresh && !fresh.leader_is_me) setError(`Foi ultrapassado de imediato: outra pessoa já tinha um máximo maior. Preço atual: ${formatPrice(fresh.current_price)}.`);
+  }
   if (!loaded) return null;
   const live = a && a.status === "live" && new Date(a.ends_at).getTime() > Date.now();
 
@@ -68,10 +78,13 @@ export function AuctionPanel({ listingId, uid, mine, canStart }: { listingId: st
     <span>{a.bid_count} lance(s) · {live ? "termina em " + timeLeft(a.ends_at) : "terminou a " + new Date(a.ends_at).toLocaleString("pt-AO")}{!a.reserve_met && a.bid_count > 0 ? " · preço mínimo ainda não atingido" : ""}</span>
     {a.status === "ended" && <strong>{a.winner_id ? (a.winner_id === uid ? "🎉 Ganhou este leilão. Contacte o vendedor." : "Leilão vendido.") : "Terminou sem vencedor."}</strong>}
     {live && !mine && <>
-      {a.leader_is_me && <span className="ok">Está a ganhar este leilão.</span>}
-      <form className="row" onSubmit={e => { e.preventDefault(); if (!uid) { window.location.href = "/conta/login?voltar=" + encodeURIComponent(window.location.pathname); return; } void run(() => bidOnAuction(supabase(), a.id, parsePrice(amount) ?? NaN), "Lance registado."); }}>
-        <input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder={"Mínimo " + formatPrice(nextMinimumBid(a))} style={{ maxWidth: 240 }} aria-label="Valor do lance" />
-        <button disabled={busy}>Licitar</button>
+      {a.leader_is_me ? <span className="ok">✔ Está a ganhar. O seu máximo secreto: <strong>{formatPrice(a.my_best)}</strong>. Pode subi-lo.</span>
+        : a.my_best != null ? <span className="error">Foi ultrapassado: outra pessoa tem um máximo maior. Suba o seu máximo para voltar a ganhar.</span> : null}
+      <p style={{ margin: 0 }}>💡 Como no eBay: escreva o <strong>máximo</strong> que está disposto a pagar. O Huambo Online licita por si só o necessário para ficar à frente, até esse valor, que ninguém vê.</p>
+      <form className="row" onSubmit={e => { e.preventDefault(); if (!uid) { window.location.href = "/conta/login?voltar=" + encodeURIComponent(window.location.pathname); return; } void placeMax(); }}>
+        <label style={{ flex: "1 1 220px" }}>{a.leader_is_me ? "Novo máximo (Kz)" : "O seu máximo (Kz)"}
+          <input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder={"Mínimo " + formatPrice(nextMinimumBid(a))} /></label>
+        <button disabled={busy} style={{ alignSelf: "end" }}>{a.leader_is_me ? "Subir máximo" : "Licitar"}</button>
       </form>
     </>}
     {a.status !== "scheduled" && <BidHistory auctionId={a.id} auction={a} mine={mine} uid={uid} version={a.current_price + ":" + a.bid_count} onChanged={(m) => { setOk(m); void load(); }} />}
@@ -106,7 +119,7 @@ function BidHistory({ auctionId, auction, mine, uid, version, onChanged }: { auc
   return <div className="stack" style={{ gap: 8 }}>
     <button type="button" className="secondary" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? "Esconder lances" : `Ver lances (${bids.filter(b => !b.retracted).length})`}</button>
     {open && <ol style={{ margin: 0, paddingLeft: 20 }}>{bids.map(b => <li key={b.id} style={{ opacity: b.retracted ? 0.7 : 1 }}>
-      <strong>{b.bidder_label}</strong> · {b.retracted ? <s>{formatPrice(b.amount)}</s> : formatPrice(b.amount)} · <small>{new Date(b.created_at).toLocaleString("pt-AO")}</small>
+      <strong>{b.bidder_label}</strong>{b.is_auto ? <small> (automático)</small> : null} · {b.retracted ? <s>{formatPrice(b.amount)}</s> : formatPrice(b.amount)} · <small>{new Date(b.created_at).toLocaleString("pt-AO")}</small>
       {b.retracted && <small> — {b.retracted_by_seller ? "cancelado pelo vendedor" : "retirado"}{b.retract_reason ? ": " + b.retract_reason : ""}</small>}
       {mine && live && !b.retracted && <> <button type="button" className="secondary" onClick={() => cancel(b)}>Cancelar lances</button></>}
     </li>)}</ol>}

@@ -99,6 +99,7 @@ const errorMessages: [RegExp, string][] = [
   [/DISPUTE_CLOSED/, "Este pedido já está fechado."],
   [/DISPUTE_NOT_FOUND/, "Pedido não encontrado."],
   [/NOT_ORDER_PARTY/, "Esta encomenda não é sua."],
+  [/MAX_MUST_INCREASE/, "Já está a ganhar: para mudar, escreva um máximo maior do que o atual."],
   [/RETRACT_TOO_LATE/, "Faltam menos de 12 horas para o fim do leilão: só pode retirar um lance feito há menos de 1 hora."],
   [/NO_BID_TO_RETRACT/, "Não tem lances para retirar neste leilão."],
   [/TOO_MANY_RETRACTIONS/, "Já retirou lances 3 vezes nos últimos 30 dias. Licite só quando tiver a certeza."],

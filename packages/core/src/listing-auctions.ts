@@ -10,8 +10,31 @@ export type ListingAuction = {
 /** Tipos de anúncio que o servidor aceita pôr em leilão. */
 export const AUCTIONABLE_TYPES = ["real_estate", "vehicle", "product", "classified"];
 
-/** Valor mínimo do próximo lance (igual à regra do servidor). */
-export function nextMinimumBid(a: Pick<ListingAuction, "bid_count" | "starting_price" | "current_price" | "min_increment">): number {
+/**
+ * Leilões como no eBay: cada pessoa indica o MÁXIMO que paga (fica secreto) e o sistema licita por ela
+ * só o necessário para ficar à frente. O incremento sobe com o preço (escalões em Kz) e nunca é menor
+ * que o escolhido pelo vendedor — igual à função auction_increment do servidor.
+ */
+export const BID_INCREMENT_STEPS: [number, number][] = [[1000, 50], [5000, 100], [25000, 250], [100000, 500], [250000, 1000], [1000000, 2500], [5000000, 5000]];
+export function bidIncrement(price: number, sellerMin = 0): number {
+  const step = BID_INCREMENT_STEPS.find(([limit]) => Number(price) < limit)?.[1] ?? 10000;
+  return Math.max(Number(sellerMin) || 0, step);
+}
+/**
+ * Preço depois de todos os máximos: 2.º maior máximo + incremento (sem passar do máximo de quem ganha);
+ * empate → ganha quem chegou primeiro; com reserva atingida o preço sobe até ela. Igual a auction_standing.
+ */
+export function proxyStanding(maxes: { bidder: string; max: number; at: string }[], startingPrice: number, sellerMin = 0, reserve?: number | null) {
+  const sorted = [...maxes].sort((x, y) => y.max - x.max || Date.parse(x.at) - Date.parse(y.at));
+  if (!sorted.length) return { leader: null as string | null, price: startingPrice };
+  const [first, second] = sorted;
+  let price = second ? Math.min(first.max, second.max + bidIncrement(second.max, sellerMin)) : startingPrice;
+  if (reserve != null && first.max >= reserve) price = Math.max(price, reserve);
+  return { leader: first.bidder, price: Math.min(Math.max(price, startingPrice), first.max) };
+}
+/** Valor mínimo que se pode escrever (o servidor já envia em min_increment o incremento atual). */
+export function nextMinimumBid(a: Pick<ListingAuction, "bid_count" | "starting_price" | "current_price" | "min_increment"> & Partial<Pick<ListingAuction, "leader_is_me" | "my_best">>): number {
+  if (a.leader_is_me && a.my_best != null) return Number(a.my_best) + 1; // quem ganha só pode subir o seu máximo
   return Number(a.bid_count) === 0 ? Number(a.starting_price) : Number(a.current_price) + Math.max(Number(a.min_increment), 1);
 }
 
@@ -62,7 +85,7 @@ export async function listSellerListings(client: SupabaseClient, ownerId: string
 }
 
 // --- Cancelar lances -------------------------------------------------------------------
-export type AuctionBid = { id: string; bidder_label: string; amount: number | string; created_at: string; is_mine: boolean; retracted: boolean; retract_reason: string | null; retracted_by_seller: boolean };
+export type AuctionBid = { id: string; bidder_label: string; amount: number | string; created_at: string; is_mine: boolean; is_auto?: boolean; retracted: boolean; retract_reason: string | null; retracted_by_seller: boolean };
 export type RetractReason = "typo" | "listing_changed" | "cannot_contact";
 export const RETRACT_REASON_LABELS: Record<RetractReason, string> = {
   typo: "Enganei-me no valor", listing_changed: "O vendedor mudou o anúncio", cannot_contact: "Não consigo contactar o vendedor"
@@ -81,7 +104,7 @@ export function canRetractBid(a: Pick<ListingAuction, "status" | "ends_at">, myB
   return { ok: true };
 }
 export async function listBidsForAuction(client: SupabaseClient, auctionId: string) {
-  const r = await client.rpc("auction_bids_for", { p_auction_id: auctionId });
+  const r = await client.rpc("auction_bids_for_v2", { p_auction_id: auctionId });
   return { data: (r.data ?? []) as AuctionBid[], error: r.error };
 }
 export function retractMyBid(client: SupabaseClient, auctionId: string, reason: RetractReason) {
