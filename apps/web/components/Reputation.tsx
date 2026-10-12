@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { getUserStats, requestService, validateServiceRequest, sellerBadge, friendlyError, validateReview, submitDealReview, listDealCandidates, setListingDeal,
-  updateClassifiedStatus, finalDealStatus, DEAL_ROLE_LABELS, type UserStats, type PendingReview, type DealCandidate } from "@huambo-online/core";
+  closeListing, getPlatformSettings, commissionFor, parsePrice, formatPrice, finalDealStatus, DEAL_ROLE_LABELS, type UserStats, type PendingReview, type DealCandidate } from "@huambo-online/core";
 
 const DEAL_BUTTON = { sold: "Marcar vendido", rented: "Marcar arrendado", closed: "Fechar" } as const;
 import { supabase } from "../lib/supabase";
@@ -73,20 +73,33 @@ export function DealReviewForm({ item, onDone }: { item: PendingReview; onDone: 
 }
 
 /** «Com quem fez negócio?» — fecha o anúncio e liga as duas pessoas para se avaliarem. */
-export function DealCloser({ listing, onDone }: { listing: { id: string; purpose: string; status: string; deal_with?: string | null }; onDone: (msg: string) => void }) {
+export function DealCloser({ listing, onDone }: { listing: { id: string; purpose: string; status: string; deal_with?: string | null; price?: number | string | null }; onDone: (msg: string) => void }) {
   const [open, setOpen] = useState(false); const [people, setPeople] = useState<DealCandidate[] | null>(null); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
+  const [amount, setAmount] = useState(listing.price != null ? String(Number(listing.price)) : ""); const [pct, setPct] = useState(5);
   const final = finalDealStatus(listing.purpose);
-  async function show() { setOpen(true); setError(""); const r = await listDealCandidates(supabase(), listing.id); if (r.error) setError(friendlyError(r.error)); setPeople(r.data); }
+  const charged = final === "sold" && listing.status === "published" && listing.purpose !== "auction";
+  async function show() {
+    setOpen(true); setError("");
+    const [r, s] = await Promise.all([listDealCandidates(supabase(), listing.id), getPlatformSettings(supabase())]);
+    if (r.error) setError(friendlyError(r.error)); setPeople(r.data); if (s.data?.listing_commission_pct != null) setPct(Number(s.data.listing_commission_pct));
+  }
   async function pick(userId: string | null) {
+    const sale = charged ? parsePrice(amount) ?? null : null;
+    if (charged && (sale == null || sale <= 0)) { setError("Indique por quanto vendeu."); return; }
     setBusy(true); setError("");
-    const r = userId ? await setListingDeal(supabase(), listing.id, final, userId) : await updateClassifiedStatus(supabase(), listing.id, final);
+    const r = userId ? await setListingDeal(supabase(), listing.id, final, userId, sale) : await closeListing(supabase(), listing.id, final, sale);
     setBusy(false);
     if (r.error) { setError(friendlyError(r.error)); return; }
-    setOpen(false); onDone(userId ? "Negócio registado. Já se podem avaliar um ao outro em «Avaliações»." : "Anúncio fechado.");
+    const fee = charged ? ` Comissão a pagar: ${formatPrice(commissionFor(sale, pct))} (em «Comissões»).` : "";
+    setOpen(false); onDone((userId ? "Negócio registado. Já se podem avaliar um ao outro em «Avaliações»." : "Anúncio fechado.") + fee);
   }
   if (listing.deal_with) return null;
   if (!open) return <button className="secondary" onClick={show}>{listing.status === "published" ? DEAL_BUTTON[final] : "⭐ Com quem fez negócio?"}</button>;
   return <div className="card" style={{ background: "var(--surface)" }}>
+    {charged && <div className="stack" style={{ gap: 6 }}>
+      <label>Por quanto vendeu? (Kz)<input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} /></label>
+      <span>Comissão da plataforma ({pct}%): <strong>{formatPrice(commissionFor(parsePrice(amount), pct))}</strong> — paga em 7 dias em «Comissões».</span>
+    </div>}
     <strong>Com quem fez negócio?</strong>
     <span>Escolha a pessoa para se avaliarem um ao outro.</span>
     {people === null && !error && <span>A carregar…</span>}

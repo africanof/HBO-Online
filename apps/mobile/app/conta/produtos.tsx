@@ -9,6 +9,7 @@ import { ui } from "../../lib/ui";
 import { MarketPicker } from "../../components/MarketPicker";
 import { VideoField } from "../../components/Video";
 import { Button, Chips, Message } from "../../components/Ui";
+import { PlanBanner } from "../../components/Plans";
 import { useTerritory } from "../../components/Directory";
 import { shrinkAsset } from "../../lib/image";
 
@@ -72,6 +73,7 @@ export default function MeusProdutos() {
   return <ScrollView ref={scroll} contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/conta" style={ui.link}>← Conta</Link>
     <Text style={ui.h1}>Os meus produtos</Text>
+    <PlanBanner kind="store" subjectId={uid} />
     <Button title="📦 As minhas vendas" variant="secondary" onPress={() => router.push("/encomendas?vendas=1" as any)} />
     <Message error={error} ok={notice} />
     {items.map(p => <View key={p.id} style={ui.card}>
