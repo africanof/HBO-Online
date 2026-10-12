@@ -3,7 +3,7 @@ import { MarketPicker } from "../../../components/MarketPicker";
 import { VideoField } from "../../../components/Video";
 import { useEffect, useState } from "react";
 import { listMyProducts, saveProduct, deleteProduct, listProductCategories, uploadClassifiedMedia, removeClassifiedMedia, parsePrice, formatPrice, friendlyError,
-  MAX_PRODUCT_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES } from "@huambo-online/core";
+  MAX_PRODUCT_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES, formatRef } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../../lib/supabase";
 import { useTerritory } from "../../../components/Directory";
 import { compressPhoto } from "../../../lib/image";
@@ -68,7 +68,7 @@ export default function MeusProdutos() {
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
     {items.map(p => <div key={p.id} className="card">
-      <strong>{p.name}{p.active ? "" : " (oculto)"}</strong>
+      <strong>{p.name}{p.active ? "" : " (oculto)"}</strong>{p.ref_no && <small className="muted">N.º {formatRef("product", p.ref_no)}</small>}
       <span>{formatPrice(p.price, p.currency)} · {p.stock} em stock</span>
       <div className="row">
         <a className="btn secondary" href={"/loja/" + p.id}>Ver</a>

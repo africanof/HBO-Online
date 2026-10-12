@@ -60,3 +60,33 @@ export async function getPublicSeller(client: SupabaseClient, userId: string) {
 export async function listSellerListings(client: SupabaseClient, ownerId: string) {
   return client.from("classified_listings").select("id,title,price,currency,media,purpose,listing_type,created_at,video_url").eq("owner_id", ownerId).eq("status", "published").order("created_at", { ascending: false }).limit(60);
 }
+
+// --- Cancelar lances -------------------------------------------------------------------
+export type AuctionBid = { id: string; bidder_label: string; amount: number | string; created_at: string; is_mine: boolean; retracted: boolean; retract_reason: string | null; retracted_by_seller: boolean };
+export type RetractReason = "typo" | "listing_changed" | "cannot_contact";
+export const RETRACT_REASON_LABELS: Record<RetractReason, string> = {
+  typo: "Enganei-me no valor", listing_changed: "O vendedor mudou o anúncio", cannot_contact: "Não consigo contactar o vendedor"
+};
+/** Regras para retirar (iguais às do servidor): faltam mais de 12 h, ou o último lance foi há menos de 1 h. */
+export const RETRACT_CUTOFF_HOURS = 12;
+export const RETRACT_GRACE_MINUTES = 60;
+export function canRetractBid(a: Pick<ListingAuction, "status" | "ends_at">, myBids: Pick<AuctionBid, "created_at" | "retracted">[], now = Date.now()): { ok: true } | { ok: false; why: string } {
+  const active = myBids.filter(b => !b.retracted);
+  const end = Date.parse(a.ends_at);
+  if (a.status !== "live" || !(end > now)) return { ok: false, why: "O leilão já terminou." };
+  if (!active.length) return { ok: false, why: "Não tem lances neste leilão." };
+  const latest = Math.max(...active.map(b => Date.parse(b.created_at)));
+  if (end - now <= RETRACT_CUTOFF_HOURS * 3600000 && now - latest > RETRACT_GRACE_MINUTES * 60000)
+    return { ok: false, why: `Faltam menos de ${RETRACT_CUTOFF_HOURS} horas para o fim: só pode retirar um lance feito há menos de 1 hora.` };
+  return { ok: true };
+}
+export async function listBidsForAuction(client: SupabaseClient, auctionId: string) {
+  const r = await client.rpc("auction_bids_for", { p_auction_id: auctionId });
+  return { data: (r.data ?? []) as AuctionBid[], error: r.error };
+}
+export function retractMyBid(client: SupabaseClient, auctionId: string, reason: RetractReason) {
+  return client.rpc("retract_auction_bid", { p_auction_id: auctionId, p_reason: reason });
+}
+export function cancelBidAsSeller(client: SupabaseClient, bidId: string, reason: string) {
+  return client.rpc("seller_cancel_bid", { p_bid_id: bidId, p_reason: reason.trim() });
+}

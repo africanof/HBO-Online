@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Gallery } from "../../../components/Video";
 import { useParams } from "next/navigation";
-import { getProduct, addToMyCart, getPublicProfile, formatPrice, friendlyError } from "@huambo-online/core";
+import { getProduct, addToMyCart, formatRef, getPublicProfile, formatPrice, friendlyError } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { SaveButton, ShareButton, useRecordView } from "../../../components/Engage";
 import { SellerBadge } from "../../../components/Reputation";
@@ -41,6 +41,7 @@ export default function Produto() {
         {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>🏪</span><span>Vendedor: <a href={"/vendedor/" + p.seller_id}><strong>{seller}</strong></a> <SellerBadge userId={p.seller_id} /><br /><a href={"/vendedor/" + p.seller_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver a loja do vendedor</a></span></div>}
         <div className="big-price">{formatPrice(p.price, p.currency)}</div>
         <dl className="facts">
+          {p.ref_no && <><dt>N.º do produto</dt><dd><strong>{formatRef("product", p.ref_no)}</strong></dd></>}
           <dt>Disponível</dt><dd style={{ color: p.stock > 0 ? "var(--ok)" : "var(--danger)" }}>{p.stock > 0 ? `${p.stock} em stock` : "Esgotado"}</dd>
           {p.categories?.name && <><dt>Categoria</dt><dd>{p.categories.name}</dd></>}
           {p.municipalities?.name && <><dt>Local</dt><dd>📍 {p.municipalities.name}</dd></>}

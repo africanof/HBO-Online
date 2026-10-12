@@ -10,7 +10,7 @@ import { ShareButton, useRecordView, browserStore } from "../../../components/En
 import { OfflineBanner } from "../../../components/Offline";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
 import { MarketFact } from "../../../components/MarketPicker";
-import { AUCTIONABLE_TYPES } from "@huambo-online/core";
+import { AUCTIONABLE_TYPES, formatRef } from "@huambo-online/core";
 import { SellerBadge } from "../../../components/Reputation";
 import { OfferBox, OffersList } from "../../../components/Offers";
 
@@ -122,6 +122,7 @@ export default function ClassifiedDetail() {
         {badges.length > 0 && <div className="row">{badges.map(b => <span key={b} className="mode-badge">{b}</span>)}</div>}
         {item.trade_wants && <p style={{ margin: 0 }}>🔁 Aceita em troca: <strong>{item.trade_wants}</strong></p>}
         <dl className="facts">
+          {item.ref_no && <><dt>N.º do anúncio</dt><dd><strong>{formatRef("listing", item.ref_no)}</strong></dd></>}
           <dt>Tipo</dt><dd>{typeLabel}</dd>
           <dt>Finalidade</dt><dd>{purposeLabel}</dd>
           {mode && SALE_MODE_INFO[mode] && <><dt>Como vende</dt><dd>{SALE_MODE_INFO[mode].icon} {SALE_MODE_INFO[mode].label}</dd></>}

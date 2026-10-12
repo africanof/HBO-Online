@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { VideoPlayer } from "../../components/Video";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
-import { getProduct, addToMyCart, getPublicProfile, formatPrice, friendlyError } from "@huambo-online/core";
+import { getProduct, addToMyCart, formatRef, getPublicProfile, formatPrice, friendlyError } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
 import { ui, C } from "../../lib/ui";
 import { Button, Message } from "../../components/Ui";
@@ -39,6 +39,7 @@ export default function Produto() {
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href={"/loja" as any} style={ui.link}>← Loja</Link>
     <Text style={ui.h1}>{p.name}</Text>
+    {!!p.ref_no && <Text style={ui.muted}>N.º do produto: {formatRef("product", p.ref_no)}</Text>}
     <Text style={ui.price}>{formatPrice(p.price, p.currency)}</Text>
     <Text style={ui.muted}>{p.stock > 0 ? `${p.stock} em stock` : "Esgotado"} · {[p.categories?.name, p.municipalities?.name].filter(Boolean).join(" · ")}</Text>
     {!!seller && <Link href={("/vendedor/" + p.seller_id) as any} style={ui.link}>Vendedor: {seller} →</Link>}

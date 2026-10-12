@@ -3,7 +3,7 @@ import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-rout
 import { Alert, Linking, ScrollView, Text, View } from "react-native";
 import { listOrders, changeOrderStatus, formatPrice, friendlyError, ORDER_STATUS_LABELS, PAYMENT_LABELS, FULFILLMENT_LABELS, NEXT_SELLER_STATUS,
   listMyDeliveries, requestOrderDelivery, cancelDeliveryRequest, latestDeliveryByOrder, isActiveDelivery, DELIVERY_STATUS_LABELS,
-  listMyDisputes, latestDisputeByOrder, canOpenDispute, DISPUTE_STATUS_LABELS, DISPUTE_OUTCOME_LABELS, type MyDispute,
+  listMyDisputes, latestDisputeByOrder, formatRef, canOpenDispute, DISPUTE_STATUS_LABELS, DISPUTE_OUTCOME_LABELS, type MyDispute,
   type OrderStatus, type PaymentMethod, type Fulfillment, type DeliveryStatus } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
 import { ui } from "../lib/ui";
@@ -46,7 +46,7 @@ export default function Encomendas() {
     {items.map(o => {
       const next = NEXT_SELLER_STATUS[o.status as OrderStatus];
       return <View key={o.id} style={ui.card}>
-        <Text style={ui.h2}>{formatPrice(o.total, o.currency)} · {ORDER_STATUS_LABELS[o.status as OrderStatus] ?? o.status}{o.payment_status === "paid" ? " · ✅ Paga" : o.payment_status === "refunded" ? " · ↩️ Reembolsada" : ""}</Text>
+        <Text style={ui.h2}>{o.ref_no ? formatRef("order", o.ref_no) + " · " : ""}{formatPrice(o.total, o.currency)} · {ORDER_STATUS_LABELS[o.status as OrderStatus] ?? o.status}{o.payment_status === "paid" ? " · ✅ Paga" : o.payment_status === "refunded" ? " · ↩️ Reembolsada" : ""}</Text>
         <Text style={ui.text}>{role === "seller" ? "Cliente" : "Vendedor"}: {o.other_name}</Text>
         <Text style={ui.muted}>{new Date(o.created_at).toLocaleString("pt-AO")} · {FULFILLMENT_LABELS[o.fulfillment_type as Fulfillment]} · {PAYMENT_LABELS[o.payment_method as PaymentMethod] ?? o.payment_method}</Text>
         {(o.items ?? []).map((it: any, i: number) => <Text key={i} style={ui.text}>• {it.quantity} × {it.name} — {formatPrice(it.line_total)}</Text>)}

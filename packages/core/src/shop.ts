@@ -50,10 +50,10 @@ export async function listProducts(client: SupabaseClient, f: { query?: string; 
   return client.rpc("product_catalog", { p_query: f.query?.trim() ?? "", p_category_id: f.categoryId || null, p_municipality_id: f.municipalityId || null, p_seller_id: f.sellerId || null, p_limit: f.limit ?? 40 });
 }
 export async function getProduct(client: SupabaseClient, id: string) {
-  return client.from("products").select("id,seller_id,business_id,name,description,category_id,price,currency,stock,media,municipality_id,market_id,video_url,active,created_at,categories(name),municipalities(name),markets(id,name)").eq("id", id).maybeSingle();
+  return client.from("products").select("id,ref_no,seller_id,business_id,name,description,category_id,price,currency,stock,media,municipality_id,market_id,video_url,active,created_at,categories(name),municipalities(name),markets(id,name)").eq("id", id).maybeSingle();
 }
 export async function listMyProducts(client: SupabaseClient, sellerId: string) {
-  return client.from("products").select("id,name,price,currency,stock,media,active,category_id,municipality_id,description,business_id,market_id,video_url").eq("seller_id", sellerId).order("created_at", { ascending: false });
+  return client.from("products").select("id,ref_no,name,price,currency,stock,media,active,category_id,municipality_id,description,business_id,market_id,video_url").eq("seller_id", sellerId).order("created_at", { ascending: false });
 }
 export async function saveProduct(client: SupabaseClient, sellerId: string, input: ProductInput, id?: string) {
   const invalid = validateProductInput(input);
@@ -84,7 +84,7 @@ export async function placeOrders(client: SupabaseClient, input: CheckoutInput) 
   if (!r.error) await client.from("cart_items").delete().not("ordered_at", "is", null);
   return r;
 }
-export async function listOrders(client: SupabaseClient, role: "buyer" | "seller") { return client.rpc("my_orders", { p_role: role }); }
+export async function listOrders(client: SupabaseClient, role: "buyer" | "seller") { return client.rpc("my_orders_v2", { p_role: role }); }
 export async function changeOrderStatus(client: SupabaseClient, orderId: string, status: OrderStatus, paid?: boolean) {
   return client.rpc("update_order_status", { p_order_id: orderId, p_status: status, p_paid: paid ?? null });
 }
