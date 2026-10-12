@@ -2,16 +2,18 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { listMyClassifiedListings, deleteClassifiedListing, updateClassifiedStatus, publishClassifiedListing, removeClassifiedMedia,
-  formatPrice, friendlyError, STATUS_LABELS, myOfferCounts, saleModeBadges, listingPriceLabel, formatRef } from "@huambo-online/core";
+  formatPrice, friendlyError, STATUS_LABELS, myOfferCounts, saleModeBadges, listingPriceLabel, formatRef, listMyBoosts, getPlatformSettings, type MyBoost, type PlatformSettings } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { DealCloser } from "../../components/Reputation";
 import { LiteImg } from "../../components/LiteImg";
+import { BoostBox } from "../../components/Boosts";
 
 function MeusAnuncios() {
   const params = useSearchParams();
   const [items, setItems] = useState<any[] | null>(null);
   const [error, setError] = useState(params.get("erro") ? "O anúncio foi guardado como rascunho mas não foi publicado: " + params.get("erro") : "");
   const [busy, setBusy] = useState(""); const [notice, setNotice] = useState(""); const [offers, setOffers] = useState<Record<string, number>>({});
+  const [uid, setUid] = useState(""); const [boosts, setBoosts] = useState<MyBoost[]>([]); const [settings, setSettings] = useState<PlatformSettings | null>(null);
 
   async function load() {
     const uid = await currentUserId();
@@ -19,6 +21,8 @@ function MeusAnuncios() {
     const r = await listMyClassifiedListings(supabase(), uid);
     if (r.error) setError(friendlyError(r.error)); setItems(r.data ?? []);
     setOffers((await myOfferCounts(supabase())).data);
+    setUid(uid);
+    const [b, s] = await Promise.all([listMyBoosts(supabase()), getPlatformSettings(supabase())]); setBoosts(b.data); setSettings(s.data);
   }
   useEffect(() => { void load(); }, []);
 
@@ -42,6 +46,7 @@ function MeusAnuncios() {
       <strong style={{ fontSize: 20 }}>{x.title}</strong>{x.ref_no && <small className="muted">N.º {formatRef("listing", x.ref_no)}</small>}
       <span><span className="badge">{STATUS_LABELS[x.status as keyof typeof STATUS_LABELS] ?? x.status}</span> · {listingPriceLabel(x)}{saleModeBadges(x).map(b => <span key={b}> · <span className="mode-badge">{b}</span></span>)}</span>
       {offers[x.id] > 0 && <a href={"/classificados/" + x.id + "#propostas"} className="ok">💬 {offers[x.id]} proposta(s) à espera de resposta →</a>}
+      {uid && <BoostBox listing={x} uid={uid} boosts={boosts} settings={settings} onDone={msg => { setNotice(msg); void load(); }} />}
       {x.deal_with && <span>🤝 Negócio registado — <a href="/avaliacoes">avaliar</a></span>}
       <div className="row">
         <a className="btn secondary" href={"/classificados/" + x.id}>Ver</a>

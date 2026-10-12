@@ -10,6 +10,7 @@ import { listCommissionsForAdmin, updateCommissionAsAdmin, COMMISSION_STATUS_LAB
   PLAN_KIND_LABELS, PLAN_STATE_LABELS, PLAN_METHOD_LABELS, PLAN_MONTH_OPTIONS,
   type PlatformSettings, type AdminPlanPayment, type MyPlan, type PaymentMethodPlan } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
+import { AdminBoosts } from "./Boosts";
 import { shrinkAsset } from "../lib/image";
 import { C, ui } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
@@ -100,11 +101,11 @@ export function AdminPlans() {
   async function save() {
     if (!s) return;
     const num = (v: unknown) => Number(String(v ?? "").replace(/\s/g, "").replace(",", "."));
-    const provider = num(s.provider_monthly_kz), business = num(s.business_monthly_kz), store = num(s.store_monthly_kz), days = Number(s.trial_days), pct = num(s.listing_commission_pct), due = Number(s.commission_due_days);
-    if (!(provider >= 0) || !(business >= 0) || !(store >= 0) || !Number.isInteger(days) || days < 0 || days > 365 || !(pct >= 0 && pct <= 50) || !Number.isInteger(due) || due < 1 || due > 90) { setError("Verifique os preços, a percentagem e os dias."); return; }
+    const provider = num(s.provider_monthly_kz), business = num(s.business_monthly_kz), store = num(s.store_monthly_kz), days = Number(s.trial_days), pct = num(s.listing_commission_pct), due = Number(s.commission_due_days), boostPrice = num(s.boost_price_kz ?? 500), boostDays = Number(s.boost_days ?? 7);
+    if (!(provider >= 0) || !(business >= 0) || !(store >= 0) || !Number.isInteger(days) || days < 0 || days > 365 || !(pct >= 0 && pct <= 50) || !Number.isInteger(due) || due < 1 || due > 90 || !(boostPrice >= 0) || !Number.isInteger(boostDays) || boostDays < 1 || boostDays > 60) { setError("Verifique os preços, a percentagem e os dias."); return; }
     const bad = validatePaymentAccounts(accounts); if (bad) { setError(bad); return; }
     const clean = accounts.map(a => ({ bank: a.bank.trim(), iban: a.iban.trim(), holder: a.holder.trim() }));
-    const r = await updatePlatformSettings(supabase(), { provider_monthly_kz: provider, business_monthly_kz: business, store_monthly_kz: store, trial_days: days, listing_commission_pct: pct, commission_due_days: due,
+    const r = await updatePlatformSettings(supabase(), { provider_monthly_kz: provider, business_monthly_kz: business, store_monthly_kz: store, trial_days: days, listing_commission_pct: pct, commission_due_days: due, boost_price_kz: boostPrice, boost_days: boostDays,
       payment_accounts: clean, bank_name: clean[0]?.bank ?? null, iban: clean[0]?.iban ?? null, account_holder: clean[0]?.holder ?? null,
       express_number: s.express_number?.trim() || null, payment_note: s.payment_note?.trim() || null });
     if (r.error) setError(friendlyError(r.error)); else setNotice("Dados guardados.");
@@ -134,6 +135,7 @@ export function AdminPlans() {
       </>)}
     </View>)}
     <AdminCommissions />
+    <AdminBoosts />
     {s && <View style={ui.card}>
       <Text style={ui.h2}>Preços e dados para pagamento</Text>
       {field("provider_monthly_kz", "Mensalidade dos profissionais (Kz)", true)}
@@ -141,6 +143,8 @@ export function AdminPlans() {
       {field("store_monthly_kz", "Mensalidade das Lojas (Kz)", true)}
       {field("listing_commission_pct", "Comissão dos anúncios vendidos (%)", true)}
       {field("commission_due_days", "Dias para pagar a comissão", true)}
+      {field("boost_price_kz", "Preço do destaque de anúncio (Kz)", true)}
+      {field("boost_days", "Dias de cada destaque", true)}
       {field("trial_days", "Dias grátis para perfis novos", true)}
       <Text style={ui.label}>Contas para receber ({accounts.length}/{MAX_PAYMENT_ACCOUNTS})</Text>
       {accounts.map((a, i) => <View key={i} style={[ui.card, { gap: 6 }]}>

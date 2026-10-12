@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { loadWithCache, isOfflineError, searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyError, parsePrice, readExploreParams, timeAgo,
-  LISTING_TYPE_LABELS, PURPOSE_LABELS, type ClassifiedSearchFilters, listingPriceLabel, SALE_MODE_FILTERS, cardSaleTag } from "@huambo-online/core";
+  LISTING_TYPE_LABELS, PURPOSE_LABELS, type ClassifiedSearchFilters, listingPriceLabel, SALE_MODE_FILTERS, cardSaleTag, isFeatured } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../../components/ItemCard";
 import { OfflineBanner } from "../../components/Offline";
@@ -93,7 +93,7 @@ export default function ExplorarPage() {
         {notice && <p className="ok" role="status">{notice}</p>}
         {items?.length === 0 && <div className="card"><strong>Nenhum anúncio encontrado.</strong><span>Experimente outras palavras ou menos filtros, ou <a href="/classificados/publicar">publique o primeiro!</a></span></div>}
         <div className="results-grid">
-          {items?.map(x => <ItemCard key={x.id} video={!!x.video_url} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={listingPriceLabel(x)}
+          {items?.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={listingPriceLabel(x)}
             icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : cardSaleTag(x)} tagRed={x.purpose === "auction"}
             meta={[LISTING_TYPE_LABELS[x.listing_type as keyof typeof LISTING_TYPE_LABELS], timeAgo(x.published_at ?? x.created_at)].filter(Boolean).join(" · ")} />)}
         </div>

@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { ScrollView, Text, TextInput, View } from "react-native";
-import { listTrades, listingPriceLabel, friendlyError, timeAgo, PUBLISH_TRADE_HREF } from "@huambo-online/core";
+import { listTrades, listingPriceLabel, friendlyError, timeAgo, PUBLISH_TRADE_HREF, isFeatured } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
@@ -30,7 +30,7 @@ export default function Trocas() {
     <Message error={error} />
     {items === null && !error && <Text style={ui.text}>A carregar…</Text>}
     {items?.length === 0 && <Text style={ui.text}>Ainda não há trocas{q ? ` com «${q}»` : ""}. Seja o primeiro a publicar uma troca.</Text>}
-    {!!items?.length && <Grid>{items.map(x => <ItemCard key={x.id} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
+    {!!items?.length && <Grid>{items.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
       price={listingPriceLabel(x)} icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.sale_mode === "trade" ? "Troca" : "Aceita troca"}
       meta={[x.trade_wants ? "Quer: " + x.trade_wants : "", timeAgo(x.published_at ?? x.created_at)].filter(Boolean).join(" · ")} />)}</Grid>}
   </ScrollView>;

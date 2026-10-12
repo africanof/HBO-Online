@@ -70,3 +70,4 @@ export * from "./plans";
 export * from "./commissions";
 export * from "./protected-payments";
 export * from "./data-saver";
+export * from "./boosts";

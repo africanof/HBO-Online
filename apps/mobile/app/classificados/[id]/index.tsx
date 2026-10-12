@@ -4,7 +4,7 @@ import { WantedHelpers } from "../../../components/WantedHelpers";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
-  reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatRef, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage } from "@huambo-online/core";
+  reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatRef, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ui, C } from "../../../lib/ui";
 import { Button, Message } from "../../../components/Ui";
@@ -114,6 +114,7 @@ export default function ClassifiedDetail() {
     <OfflineBanner show={offline.on} savedAt={offline.at} />
     {item.status !== "published" && <Text style={ui.error}>{STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] ?? item.status} — só você vê este anúncio</Text>}
     {item.purpose === "wanted" && <Text style={[ui.label, { backgroundColor: C.yellowSoft, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }]}>🔎 PROCURA-SE — pedido de comprador</Text>}
+    {isFeatured(item) && <Text style={[ui.label, { alignSelf: "flex-start", backgroundColor: "#FFF4D6", color: "#4A3700", borderColor: "#E0B100", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2 }]}>⭐ Destaque</Text>}
     <Text style={ui.h1}>{item.title}</Text>
     {!!item.ref_no && <Text style={ui.muted}>N.º do anúncio: {formatRef("listing", item.ref_no)}</Text>}
     {item.purpose === "wanted" ? <Text style={ui.price}>Orçamento: {listingPriceLabel(item)}</Text> : <Text style={ui.price}>{listingPriceLabel(item)}</Text>}

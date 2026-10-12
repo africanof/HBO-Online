@@ -4,7 +4,7 @@ import { Gallery } from "../../../components/Video";
 import { WantedHelpers } from "../../../components/WantedHelpers";
 import { useParams } from "next/navigation";
 import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
-  reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage } from "@huambo-online/core";
+  reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ShareButton, SellerWhatsApp, useRecordView, browserStore } from "../../../components/Engage";
 import { OfflineBanner } from "../../../components/Offline";
@@ -116,6 +116,7 @@ export default function ClassifiedDetail() {
       <Gallery media={media} video={item.video_url} icon={item.purpose === "wanted" ? "🔎" : "🏷️"} title={item.title} />
       <section className="buybox">
         {item.purpose === "wanted" && <span className="badge" style={{ justifySelf: "start", background: "var(--yellow-soft)", borderColor: "var(--yellow-line)", color: "var(--yellow-text)" }}>🔎 PROCURA-SE — pedido de comprador</span>}
+        {isFeatured(item) && <span className="badge" style={{ justifySelf: "start", background: "var(--yellow-soft)", borderColor: "var(--yellow-line)", color: "var(--yellow-text)" }}>⭐ Destaque</span>}
         <h1>{item.title}</h1>
         {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>👤</span><span>{item.purpose === "wanted" ? "Comprador" : "Anunciante"}: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a> <SellerBadge userId={item.owner_id} /><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver outros anúncios</a></span></div>}
         {item.purpose === "wanted" ? <div><span className="muted">Orçamento</span><div className="big-price">{listingPriceLabel(item)}</div></div> : <div className="big-price">{listingPriceLabel(item)}</div>}

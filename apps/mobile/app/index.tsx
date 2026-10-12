@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted, listTrades, cardSaleTag, loadWithCache, isOfflineError } from "@huambo-online/core";
+import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted, listTrades, cardSaleTag, loadWithCache, isOfflineError, isFeatured } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ui, C, themed } from "../lib/ui";
 import { Button } from "../components/Ui";
@@ -49,7 +49,7 @@ export default function Home() {
     });
   }, []));
 
-  const listing = (x: any) => <ItemCard key={x.id} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
+  const listing = (x: any) => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
     icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : cardSaleTag(x)}
     tagRed={x.purpose === "auction"} meta={timeAgo(x.published_at ?? x.created_at)} />;
 

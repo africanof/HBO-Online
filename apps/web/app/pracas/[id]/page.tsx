@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { getMarket, listMarketContents, formatPrice, friendlyError, timeAgo, PURPOSE_LABELS, listingPriceLabel } from "@huambo-online/core";
+import { getMarket, listMarketContents, formatPrice, friendlyError, timeAgo, PURPOSE_LABELS, listingPriceLabel, isFeatured } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../../../components/ItemCard";
 
@@ -43,7 +43,7 @@ export default function Praca() {
     <nav className="row" role="tablist">{tabs.map(([t, l, n]) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}>{l} ({n})</button>)}</nav>
     {c === null && <p>A carregar…</p>}
     {c && tab === "products" && (c.products.length ? <div className="results-grid">{c.products.map(p => <ItemCard key={p.id} video={!!p.video_url} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)} meta={p.stock > 0 ? `${p.stock} em stock` : "Esgotado"} />)}</div> : <p>Ainda não há produtos desta praça.</p>)}
-    {c && tab === "listings" && (c.listings.length ? <div className="results-grid">{c.listings.map(x => <ItemCard key={x.id} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)} icon={LISTING_ICON[x.listing_type] ?? "🏷️"} meta={[PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS], timeAgo(x.created_at)].filter(Boolean).join(" · ")} />)}</div> : <p>Ainda não há anúncios desta praça.</p>)}
+    {c && tab === "listings" && (c.listings.length ? <div className="results-grid">{c.listings.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)} icon={LISTING_ICON[x.listing_type] ?? "🏷️"} meta={[PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS], timeAgo(x.created_at)].filter(Boolean).join(" · ")} />)}</div> : <p>Ainda não há anúncios desta praça.</p>)}
     {c && tab === "businesses" && (c.businesses.length ? <section className="grid">{c.businesses.map(b => <a key={b.id} href={"/empresas/" + b.id} className="card" style={{ color: "inherit", textDecoration: "none", fontWeight: 400 }}>
       <strong style={{ fontSize: 19 }}>{b.name}{b.verified ? " ✔️" : ""}</strong>{b.description && <span className="item-meta">{String(b.description).slice(0, 120)}</span>}</a>)}</section> : <p>Ainda não há lojas registadas nesta praça. <a href="/conta/empresas">Registe a sua banca ou loja →</a></p>)}
   </main>;

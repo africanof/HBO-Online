@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { analyzePhoto, photoSearchesLeft, photoSearchMessage, searchByKeywords, fitWithin, formatPrice, timeAgo,
-  PHOTO_SEARCH_DAILY_LIMIT, PURPOSE_LABELS, type PhotoSearchResult, listingPriceLabel } from "@huambo-online/core";
+  PHOTO_SEARCH_DAILY_LIMIT, PURPOSE_LABELS, type PhotoSearchResult, listingPriceLabel, isFeatured } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../../components/ItemCard";
 
@@ -69,7 +69,7 @@ export default function PesquisarFoto() {
       <h2>{total ? `${total} resultado(s)` : "Ainda não há nada parecido à venda."}</h2>
       {!total && <p>Experimente as palavras acima na pesquisa, ou <a href="/pesquisas-guardadas">guarde uma pesquisa</a> para receber alertas.</p>}
       <div className="results-grid">
-        {items.listings.map(x => <ItemCard key={x.id} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
+        {items.listings.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
           icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : undefined} tagRed={x.purpose === "auction"} meta={timeAgo(x.created_at)} />)}
         {items.products.map(p => <ItemCard key={p.id} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)} tag="Loja" meta={[p.seller_name, p.municipality_name].filter(Boolean).join(" · ")} />)}
       </div>
