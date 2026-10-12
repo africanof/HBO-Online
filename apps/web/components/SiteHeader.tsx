@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getCurrentUserProfile, getMyAdminRole, canModerate, searchHref, SEARCH_SCOPES, LOGO_PARTS, INFO_LINKS, type SearchScope } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { useUnreadCounts } from "./NotificationBell";
-import { ThemePicker } from "./ThemePicker";
+import { ThemePicker, ThemeToggle } from "./ThemePicker";
 
 /** Cores do logótipo a partir do tema (claro/escuro). */
 const LOGO_VARS = ["var(--logo-blue)", "var(--logo-red)", "var(--logo-yellow)", "var(--logo-green)"];
@@ -56,6 +56,7 @@ export function SiteHeader() {
       <a className="hide-sm" href="/profissionais">Serviços</a>
       <a className="hide-sm" href="/empresas">Empresas</a>
       <span className="spacer" />
+      <ThemeToggle />
       <a href="/classificados/publicar"><strong>Vender</strong></a>
       <a className="hide-sm" href="/guardados">Guardados</a>
       <a className="hide-sm" href="/conta">A minha conta</a>
