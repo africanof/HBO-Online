@@ -12,7 +12,9 @@ export type MyPlan = { id: string; kind: PlanKind; subject_id: string; name: str
   state: PlanState; monthly_price: number | string; pending_payment_id: string | null; pending_amount: number | string | null; last_rejected_note: string | null };
 export type PlatformSettings = { provider_monthly_kz: number | string; business_monthly_kz: number | string; store_monthly_kz?: number | string; trial_days: number;
   listing_commission_pct?: number | string; commission_due_days?: number;
-  bank_name: string | null; iban: string | null; account_holder: string | null; express_number: string | null; payment_note: string | null };
+  bank_name: string | null; iban: string | null; account_holder: string | null; express_number: string | null; payment_note: string | null;
+  payment_accounts?: PaymentAccount[] };
+export type PaymentAccount = { bank: string; iban: string; holder: string };
 export type AdminPlanPayment = { id: string; subscription_id: string; kind: PlanKind; subject_id: string; subject_name: string; owner_id: string; owner_name: string; phone: string | null;
   months: number; amount: number | string; method: PaymentMethodPlan; reference: string | null; proof_path: string | null; status: "pending" | "confirmed" | "rejected";
   admin_note: string | null; created_at: string; active_until: string };
@@ -61,7 +63,7 @@ export async function listMyPlans(client: SupabaseClient) {
   return { data: (r.data ?? []) as MyPlan[], error: r.error };
 }
 export async function getPlatformSettings(client: SupabaseClient) {
-  const r = await client.from("platform_settings").select("provider_monthly_kz,business_monthly_kz,store_monthly_kz,trial_days,listing_commission_pct,commission_due_days,bank_name,iban,account_holder,express_number,payment_note").eq("id", 1).maybeSingle();
+  const r = await client.from("platform_settings").select("provider_monthly_kz,business_monthly_kz,store_monthly_kz,trial_days,listing_commission_pct,commission_due_days,bank_name,iban,account_holder,express_number,payment_note,payment_accounts").eq("id", 1).maybeSingle();
   return { data: (r.data ?? null) as PlatformSettings | null, error: r.error };
 }
 export function updatePlatformSettings(client: SupabaseClient, s: Partial<PlatformSettings>) {
@@ -88,4 +90,67 @@ export function decidePlanPayment(client: SupabaseClient, paymentId: string, con
 export async function paymentProofUrl(client: SupabaseClient, path: string) {
   const r = await client.storage.from(PLAN_PROOF_BUCKET).createSignedUrl(path, 600);
   return { data: r.data?.signedUrl ?? null, error: r.error };
+}
+
+// --- Contas para receber pagamentos ------------------------------------------------------------
+export const MAX_PAYMENT_ACCOUNTS = 6;
+/** Contas a mostrar a quem paga: a lista nova, ou a conta antiga (banco/IBAN/titular) se a lista estiver vazia. */
+export function paymentAccounts(s: Pick<PlatformSettings, "payment_accounts" | "bank_name" | "iban" | "account_holder"> | null | undefined): PaymentAccount[] {
+  if (!s) return [];
+  const list = (s.payment_accounts ?? []).filter(a => a && (a.iban?.trim() || a.bank?.trim()));
+  if (list.length) return list;
+  return s.iban?.trim() ? [{ bank: s.bank_name ?? "", iban: s.iban, holder: s.account_holder ?? "" }] : [];
+}
+export function hasPaymentDetails(s: PlatformSettings | null | undefined): boolean {
+  return !!s && (paymentAccounts(s).length > 0 || !!s.express_number?.trim());
+}
+export function validatePaymentAccounts(list: PaymentAccount[]): string | null {
+  if (list.length > MAX_PAYMENT_ACCOUNTS) return `No máximo ${MAX_PAYMENT_ACCOUNTS} contas.`;
+  for (const [i, a] of list.entries()) {
+    if (!a.bank.trim()) return `Conta ${i + 1}: escreva o nome do banco.`;
+    if (a.iban.replace(/\s/g, "").length < 15) return `Conta ${i + 1}: o IBAN parece incompleto.`;
+    if (!a.holder.trim()) return `Conta ${i + 1}: escreva o titular.`;
+  }
+  return null;
+}
+/** Guarda a lista e mantém a 1.ª conta nos campos antigos (para versões antigas da APP). */
+export function savePaymentAccounts(client: SupabaseClient, list: PaymentAccount[], expressNumber: string | null, note: string | null) {
+  const clean = list.map(a => ({ bank: a.bank.trim(), iban: a.iban.trim(), holder: a.holder.trim() }));
+  const first = clean[0];
+  return client.from("platform_settings").update({ payment_accounts: clean, bank_name: first?.bank ?? null, iban: first?.iban ?? null, account_holder: first?.holder ?? null,
+    express_number: expressNumber?.trim() || null, payment_note: note?.trim() || null, updated_at: new Date().toISOString() }).eq("id", 1);
+}
+
+// --- Relatório de receitas (administração) -------------------------------------------------------
+export type RevenueKind = "plan_provider" | "plan_business" | "plan_store" | "commission";
+export type RevenueRow = { paid_at: string; kind: RevenueKind; description: string; payer_name: string; amount: number | string; method: PaymentMethodPlan | null; reference: string | null };
+export const REVENUE_KIND_LABELS: Record<RevenueKind, string> = {
+  plan_provider: "Mensalidade — profissional", plan_business: "Mensalidade — empresa", plan_store: "Mensalidade — Loja", commission: "Comissão de venda"
+};
+export async function listRevenue(client: SupabaseClient, from: string, to: string) {
+  const r = await client.rpc("admin_revenue", { p_from: from, p_to: to });
+  return { data: (r.data ?? []) as RevenueRow[], error: r.error };
+}
+/** Primeiro e último dia de um mês "AAAA-MM". */
+export function monthRange(month: string): { from: string; to: string } {
+  const [y, m] = month.split("-").map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return { from: `${month}-01`, to: `${month}-${String(last).padStart(2, "0")}` };
+}
+export function revenueSummary(rows: RevenueRow[]) {
+  const byKind = {} as Record<RevenueKind, number>;
+  let total = 0;
+  for (const r of rows) { const a = Number(r.amount) || 0; total += a; byKind[r.kind] = (byKind[r.kind] ?? 0) + a; }
+  return { total, count: rows.length, byKind };
+}
+/** CSV para abrir no Excel (separador «;», como em Angola/Portugal). */
+export function revenueCsv(rows: RevenueRow[]): string {
+  const esc = (v: unknown) => { const s = String(v ?? ""); return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const lines = [["Data", "Tipo", "Descrição", "Quem pagou", "Valor (Kz)", "Método", "Referência"].join(";")];
+  for (const r of rows) {
+    const d = new Date(r.paid_at);
+    const date = isNaN(d.getTime()) ? "" : `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
+    lines.push([date, REVENUE_KIND_LABELS[r.kind] ?? r.kind, r.description, r.payer_name, String(Number(r.amount)).replace(".", ","), r.method ? PLAN_METHOD_LABELS[r.method] : "", r.reference ?? ""].map(esc).join(";"));
+  }
+  return "\uFEFF" + lines.join("\r\n");
 }
