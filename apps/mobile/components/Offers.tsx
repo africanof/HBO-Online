@@ -18,7 +18,7 @@ export function OfferBox({ listingId, uid, offerMoney, offerTrade, tradeOnly, tr
     const r = await makeOffer(supabase(), listingId, { amount: value, tradeItem: offerTrade ? trade : undefined, message }); setBusy(false);
     if (r.error) setError(friendlyError(r.error)); else setDone(true);
   }
-  if (done) return <View style={ui.card}><Text style={ui.ok}>Proposta enviada! O vendedor vai responder.</Text><Link href={"/propostas" as any} style={ui.link}>As minhas propostas →</Link></View>;
+  if (done) return <View style={ui.card}><Text style={ui.ok}>Proposta enviada! O vendedor vai responder. Pode retirá-la em «As minhas propostas» enquanto ele não responder.</Text><Link href={"/propostas" as any} style={ui.link}>As minhas propostas →</Link></View>;
   return <View style={ui.card}>
     <Text style={ui.h2}>{tradeOnly ? "🔁 Propor troca" : offerTrade ? "💬 Fazer proposta ou troca" : "💬 Fazer proposta"}</Text>
     {!!tradeWants && <Text style={ui.text}>O vendedor aceita em troca: <Text style={ui.label}>{tradeWants}</Text></Text>}

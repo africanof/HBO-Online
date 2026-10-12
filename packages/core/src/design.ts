@@ -1,3 +1,4 @@
+import { parseRef } from "./refs";
 /**
  * Identidade visual do Huambo Online (inspirada no eBay: fundo branco, azul forte nas ações,
  * pesquisa grande no topo, categorias redondas e montras de artigos). Igual no Site e na APP.
@@ -33,6 +34,8 @@ export const SEARCH_SCOPES: { value: SearchScope; label: string; path: string }[
 
 /** Endereço da página de resultados para a pesquisa do topo. */
 export function searchHref(scope: SearchScope, query: string, extra: Record<string, string | undefined> = {}): string {
+  const ref = parseRef(query);
+  if (ref) return "/ref/" + ref.code; // número de anúncio, produto ou encomenda → vai direto
   const path = SEARCH_SCOPES.find(s => s.value === scope)?.path ?? "/explorar";
   const params = new URLSearchParams();
   if (query.trim()) params.set("q", query.trim());

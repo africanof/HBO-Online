@@ -3,7 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { listOrders, changeOrderStatus, formatPrice, friendlyError, ORDER_STATUS_LABELS, PAYMENT_LABELS, FULFILLMENT_LABELS, NEXT_SELLER_STATUS,
   listMyDeliveries, requestOrderDelivery, cancelDeliveryRequest, latestDeliveryByOrder, isActiveDelivery, DELIVERY_STATUS_LABELS,
-  listMyDisputes, latestDisputeByOrder, canOpenDispute, DISPUTE_STATUS_LABELS, DISPUTE_OUTCOME_LABELS, type MyDispute,
+  listMyDisputes, latestDisputeByOrder, formatRef, canOpenDispute, DISPUTE_STATUS_LABELS, DISPUTE_OUTCOME_LABELS, type MyDispute,
   type OrderStatus, type PaymentMethod, type Fulfillment, type DeliveryStatus } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 
@@ -21,6 +21,13 @@ function Encomendas() {
     setDisputes(ds.data);
   }
   const lastDispute = latestDisputeByOrder(disputes);
+  // aberto pelo número (E-1001): mostra a encomenda certa, nas compras ou nas vendas
+  useEffect(() => {
+    const id = window.location.hash.replace(/^#encomenda-/, "");
+    if (!id || !items.length) return;
+    const el = document.getElementById("encomenda-" + id);
+    if (el) el.scrollIntoView({ block: "start" }); else if (role === "buyer") setRole("seller");
+  }, [items]);
   async function run(fn: () => PromiseLike<{ error: any }>, msg: string) {
     setError(""); setNotice("");
     const r = await fn();
@@ -47,8 +54,8 @@ function Encomendas() {
     {items.length === 0 && <p>Sem encomendas.</p>}
     {items.map(o => {
       const next = NEXT_SELLER_STATUS[o.status as OrderStatus];
-      return <article key={o.id} className="card">
-        <strong>{formatPrice(o.total, o.currency)} · <span className="badge">{ORDER_STATUS_LABELS[o.status as OrderStatus] ?? o.status}</span>{o.payment_status === "paid" ? " · ✅ Paga" : o.payment_status === "refunded" ? " · ↩️ Reembolsada" : ""}</strong>
+      return <article key={o.id} id={"encomenda-" + o.id} className="card">
+        <strong>{o.ref_no ? formatRef("order", o.ref_no) + " · " : ""}{formatPrice(o.total, o.currency)} · <span className="badge">{ORDER_STATUS_LABELS[o.status as OrderStatus] ?? o.status}</span>{o.payment_status === "paid" ? " · ✅ Paga" : o.payment_status === "refunded" ? " · ↩️ Reembolsada" : ""}</strong>
         <span>{role === "seller" ? "Cliente" : "Vendedor"}: {o.other_name} · {new Date(o.created_at).toLocaleString("pt-AO")}</span>
         <span>{FULFILLMENT_LABELS[o.fulfillment_type as Fulfillment]} · {PAYMENT_LABELS[o.payment_method as PaymentMethod] ?? o.payment_method}</span>
         <ul style={{ margin: 0 }}>{(o.items ?? []).map((it: any, i: number) => <li key={i}>{it.quantity} × {it.name} — {formatPrice(it.line_total)}</li>)}</ul>

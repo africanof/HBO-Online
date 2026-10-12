@@ -34,6 +34,7 @@ export function termsPage(email?: string | null): InfoPage {
         "A administração pode esconder ou retirar anúncios, produtos e perfis que não cumpram estas regras, e suspender contas."] },
       { title: "4. Propostas, leilões, trocas e encomendas", paragraphs: [
         "Uma proposta aceite, um lance vencedor ou uma encomenda confirmada é um compromisso entre as duas pessoas. Cumpra o que combinou.",
+        "Pode retirar uma proposta enquanto não tiver resposta. Um lance só pode ser retirado com motivo, se faltarem mais de 12 horas para o fim do leilão ou se foi feito há menos de 1 hora; quem retira lances muitas vezes pode ser impedido de licitar.",
         "Nunca pague adiantado a quem não conhece. Prefira encontrar-se num local público, ver o artigo e pagar na entrega.",
         "Nas encomendas da Loja, o comprador pode pedir devolução, reembolso ou troca até 14 dias depois da entrega, e o vendedor deve responder. Veja «Devoluções e reembolsos»."] },
       { title: "5. Avaliações e denúncias", paragraphs: [
@@ -148,6 +149,9 @@ export const HELP_FAQ: FaqItem[] = [
   { q: "O que é «Preço fixo», «Negociável» e «Aberto a propostas»?", a: "Preço fixo: quem quiser compra pelo preço indicado («Quero comprar»). Negociável: o comprador pode fazer uma proposta mais baixa. Aberto a propostas: o preço é só uma referência e os compradores dizem quanto pagam." },
   { q: "Como funcionam as trocas?", a: "Escolha «Só troca» ou marque «Também aceito troca» e diga o que aceita. Quem estiver interessado propõe um artigo (e pode juntar dinheiro). Veja todas em «Trocas»." },
   { q: "Como faço uma proposta?", a: "No anúncio, carregue em «Fazer proposta», indique o valor e/ou o que oferece em troca. O vendedor aceita ou recusa e recebe uma notificação; acompanhe em «As minhas propostas»." },
+  { q: "Como retiro uma proposta?", a: "Em «As minhas propostas», carregue em «Retirar proposta». Só é possível enquanto o vendedor ainda não respondeu; depois de aceite, combine com ele pelas mensagens." },
+  { q: "Como cancelo um lance num leilão?", a: "No anúncio do leilão, abra «Ver lances» e carregue em «Retirar o meu lance», escolhendo o motivo. Pode fazê-lo se faltarem mais de 12 horas para o fim, ou se o lance foi feito há menos de 1 hora. No máximo 3 vezes em 30 dias. O vendedor também pode cancelar os lances de uma pessoa, explicando porquê." },
+  { q: "O que é o número do anúncio (ex.: A-1001)?", a: "Cada anúncio (A-…), produto (P-…) e encomenda (E-…) tem um número curto, que aparece na página. Use-o para falar com o vendedor ou com a administração, ou escreva-o na pesquisa para abrir o artigo diretamente." },
   { q: "Como peço um serviço a um profissional?", a: "Abra a página do profissional ou empresa e use «Pedir serviço». Quando o serviço terminar, confirme e avalie — a avaliação fica marcada «Serviço confirmado»." },
   { q: "Como avalio um vendedor ou comprador?", a: "Depois de uma encomenda concluída, ou quando o anúncio é marcado como vendido com a pessoa certa, aparece em «Avaliações» para avaliar." },
   { q: "Como fico com o selo «Verificado»?", a: "Em «A sua conta», abra «Verificar perfil» e envie a fotografia do BI (ou do alvará/NIF da empresa). O documento fica privado; a administração responde por notificação." },

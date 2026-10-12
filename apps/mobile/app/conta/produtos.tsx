@@ -3,7 +3,7 @@ import { Link, useRouter } from "expo-router";
 import { Alert, Image, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { listMyProducts, saveProduct, deleteProduct, listProductCategories, uploadClassifiedMedia, removeClassifiedMedia, base64ToArrayBuffer,
-  parsePrice, formatPrice, friendlyError, MAX_PRODUCT_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES } from "@huambo-online/core";
+  parsePrice, formatPrice, friendlyError, MAX_PRODUCT_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, formatRef } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { MarketPicker } from "../../components/MarketPicker";
@@ -76,6 +76,7 @@ export default function MeusProdutos() {
     <Message error={error} ok={notice} />
     {items.map(p => <View key={p.id} style={ui.card}>
       <Text style={ui.h2}>{p.name}{p.active ? "" : " (oculto)"}</Text>
+      {!!p.ref_no && <Text style={ui.muted}>N.º {formatRef("product", p.ref_no)}</Text>}
       <Text style={ui.text}>{formatPrice(p.price, p.currency)} · {p.stock} em stock</Text>
       <Button title="Ver" variant="secondary" onPress={() => router.push(("/loja/" + p.id) as any)} />
       <Button title="Editar" variant="secondary" onPress={() => edit(p)} />

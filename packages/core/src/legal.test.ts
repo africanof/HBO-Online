@@ -24,7 +24,7 @@ describe("páginas de informação", () => {
   });
   it("a ajuda cobre as funções principais", () => {
     const qs = HELP_FAQ.map(f => f.q).join(" ");
-    for (const w of ["publico", "propostas", "trocas", "serviço", "avalio", "Verificado", "burlas", "internet", "apago", "devolução"]) expect(qs.toLowerCase()).toContain(w.toLowerCase());
+    for (const w of ["publico", "propostas", "trocas", "serviço", "avalio", "Verificado", "burlas", "internet", "apago", "devolução", "retiro uma proposta", "cancelo um lance", "número do anúncio"]) expect(qs.toLowerCase()).toContain(w.toLowerCase());
   });
   it("a política de devoluções bate certo com as regras do servidor", () => {
     const p = returnsPage("ajuda@huambo.ao");

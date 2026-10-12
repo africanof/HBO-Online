@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { Alert, Text, TextInput, View } from "react-native";
 import { requestRental, getListingAuction, startListingAuction, bidOnAuction, cancelAuction, nextMinimumBid, timeLeft,
-  formatPrice, parsePrice, friendlyError, type ListingAuction } from "@huambo-online/core";
+  formatPrice, parsePrice, friendlyError, listBidsForAuction, retractMyBid, cancelBidAsSeller, canRetractBid, RETRACT_REASON_LABELS,
+  type ListingAuction, type AuctionBid, type RetractReason } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
@@ -83,7 +84,61 @@ export function AuctionPanel({ listingId, uid, mine, canStart }: { listingId: st
       <TextInput style={ui.input} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} placeholder={"Mínimo " + formatPrice(nextMinimumBid(a))} accessibilityLabel="Valor do lance" />
       <Button title="Licitar" disabled={busy} onPress={() => { if (!uid) { router.push("/login" as any); return; } void run(() => bidOnAuction(supabase(), a.id, parsePrice(amount) ?? NaN), "Lance registado."); }} />
     </>}
+    {a.status !== "scheduled" && <BidHistory auction={a} mine={mine} uid={uid} version={a.current_price + ":" + a.bid_count} onChanged={m => { setOk(m); void load(); }} />}
     {mine && live && a.bid_count === 0 && <Button title="Cancelar leilão" variant="secondary" disabled={busy} onPress={() => Alert.alert("Cancelar o leilão?", "", [{ text: "Não" }, { text: "Sim", onPress: () => void run(() => cancelAuction(supabase(), a.id), "Leilão cancelado.") }])} />}
     <Message error={error} ok={ok} />
+  </View>;
+}
+
+/** Lances do leilão: retirar os meus (com motivo) ou, para o vendedor, cancelar os de uma pessoa. */
+function BidHistory({ auction, mine, uid, version, onChanged }: { auction: ListingAuction; mine: boolean; uid: string | null; version: string; onChanged: (msg: string) => void }) {
+  const [bids, setBids] = useState<AuctionBid[]>([]); const [open, setOpen] = useState(false); const [error, setError] = useState("");
+  const [reason, setReason] = useState<RetractReason | "">(""); const [asking, setAsking] = useState(false); const [busy, setBusy] = useState(false);
+  const [cancelling, setCancelling] = useState<AuctionBid | null>(null); const [why, setWhy] = useState("");
+  async function load() { const r = await listBidsForAuction(supabase(), auction.id); if (!r.error) setBids(r.data); }
+  useEffect(() => { void load(); }, [auction.id, version, uid]);
+  const live = auction.status === "live" && new Date(auction.ends_at).getTime() > Date.now();
+  const myBids = bids.filter(b => b.is_mine);
+  const can = canRetractBid(auction, myBids);
+  async function retract() {
+    if (!reason) { setError("Escolha o motivo."); return; }
+    setBusy(true); setError("");
+    const r = await retractMyBid(supabase(), auction.id, reason); setBusy(false);
+    if (r.error) setError(friendlyError(r.error)); else { setAsking(false); setReason(""); onChanged("Os seus lances foram retirados."); await load(); }
+  }
+  async function cancel() {
+    if (!cancelling) return;
+    if (!why.trim()) { setError("Escreva o motivo (a pessoa vai ler)."); return; }
+    setBusy(true); setError("");
+    const r = await cancelBidAsSeller(supabase(), cancelling.id, why); setBusy(false);
+    if (r.error) setError(friendlyError(r.error)); else { setCancelling(null); setWhy(""); onChanged("Lances cancelados. A pessoa não pode voltar a licitar neste leilão."); await load(); }
+  }
+  if (!bids.length) return null;
+  return <View style={{ gap: 8 }}>
+    <Button title={open ? "Esconder lances" : `Ver lances (${bids.filter(b => !b.retracted).length})`} variant="secondary" onPress={() => setOpen(!open)} />
+    {open && bids.map(b => <View key={b.id} style={{ gap: 4, opacity: b.retracted ? 0.7 : 1 }}>
+      <Text style={ui.text}><Text style={ui.label}>{b.bidder_label}</Text> · <Text style={b.retracted ? { textDecorationLine: "line-through" } : undefined}>{formatPrice(b.amount)}</Text> · {new Date(b.created_at).toLocaleString("pt-AO")}</Text>
+      {b.retracted && <Text style={ui.muted}>{b.retracted_by_seller ? "Cancelado pelo vendedor" : "Retirado"}{b.retract_reason ? ": " + b.retract_reason : ""}</Text>}
+      {mine && live && !b.retracted && <Button title={"Cancelar lances de " + b.bidder_label} variant="secondary" onPress={() => { setCancelling(b); setWhy(""); setError(""); }} />}
+    </View>)}
+    {cancelling && <View style={ui.card}>
+      <Text style={ui.label}>Cancelar os lances de {cancelling.bidder_label}</Text>
+      <TextInput style={[ui.input, ui.area]} multiline value={why} onChangeText={setWhy} accessibilityLabel="Motivo" placeholder="Motivo (a pessoa vai ler)" />
+      <Message error={error} />
+      <Button title="Cancelar lances" variant="danger" disabled={busy} onPress={() => void cancel()} />
+      <Button title="Voltar" variant="secondary" onPress={() => setCancelling(null)} />
+    </View>}
+    {!mine && live && myBids.some(b => !b.retracted) && (asking
+      ? <View style={ui.card}>
+          <Text style={ui.label}>Retirar os meus lances</Text>
+          <Text style={ui.text}>Todos os seus lances neste leilão deixam de contar. Só pode fazê-lo 3 vezes em 30 dias.</Text>
+          <Chips options={(Object.keys(RETRACT_REASON_LABELS) as RetractReason[]).map(k => ({ value: k, label: RETRACT_REASON_LABELS[k] }))} value={reason} onChange={v => { setReason(v); setError(""); }} />
+          <Message error={error} />
+          <Button title="Retirar lances" variant="danger" disabled={busy} onPress={() => void retract()} />
+          <Button title="Voltar" variant="secondary" onPress={() => setAsking(false)} />
+        </View>
+      : can.ok ? <Button title="↩️ Retirar o meu lance" variant="secondary" onPress={() => setAsking(true)} />
+      : <Text style={ui.muted}>{can.why}</Text>)}
+    {!asking && !cancelling && <Message error={error} />}
   </View>;
 }

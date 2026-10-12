@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { requestRental, getListingAuction, startListingAuction, bidOnAuction, cancelAuction, nextMinimumBid, timeLeft,
-  formatPrice, parsePrice, friendlyError, type ListingAuction } from "@huambo-online/core";
+  formatPrice, parsePrice, friendlyError, listBidsForAuction, retractMyBid, cancelBidAsSeller, canRetractBid, RETRACT_REASON_LABELS,
+  type ListingAuction, type AuctionBid, type RetractReason } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -73,8 +74,52 @@ export function AuctionPanel({ listingId, uid, mine, canStart }: { listingId: st
         <button disabled={busy}>Licitar</button>
       </form>
     </>}
+    {a.status !== "scheduled" && <BidHistory auctionId={a.id} auction={a} mine={mine} uid={uid} version={a.current_price + ":" + a.bid_count} onChanged={(m) => { setOk(m); void load(); }} />}
     {mine && live && a.bid_count === 0 && <button type="button" className="secondary" disabled={busy} onClick={() => { if (confirm("Cancelar o leilão?")) void run(() => cancelAuction(supabase(), a.id), "Leilão cancelado."); }}>Cancelar leilão</button>}
     {error && <p className="error" role="alert">{error}</p>}
     {ok && <p className="ok" role="status">{ok}</p>}
   </section>;
+}
+
+/** Lances do leilão: retirar os meus (com motivo) ou, para o vendedor, cancelar os de uma pessoa. */
+function BidHistory({ auctionId, auction, mine, uid, version, onChanged }: { auctionId: string; auction: ListingAuction; mine: boolean; uid: string | null; version: string; onChanged: (msg: string) => void }) {
+  const [bids, setBids] = useState<AuctionBid[]>([]); const [open, setOpen] = useState(false); const [error, setError] = useState("");
+  const [reason, setReason] = useState<RetractReason | "">(""); const [asking, setAsking] = useState(false); const [busy, setBusy] = useState(false);
+  async function load() { const r = await listBidsForAuction(supabase(), auctionId); if (!r.error) setBids(r.data); }
+  useEffect(() => { void load(); }, [auctionId, version, uid]);
+  const live = auction.status === "live" && new Date(auction.ends_at).getTime() > Date.now();
+  const myBids = bids.filter(b => b.is_mine);
+  const can = canRetractBid(auction, myBids);
+  async function retract() {
+    if (!reason) { setError("Escolha o motivo."); return; }
+    setBusy(true); setError("");
+    const r = await retractMyBid(supabase(), auctionId, reason); setBusy(false);
+    if (r.error) setError(friendlyError(r.error)); else { setAsking(false); setReason(""); onChanged("Os seus lances foram retirados."); await load(); }
+  }
+  async function cancel(b: AuctionBid) {
+    const why = prompt(`Cancelar todos os lances de ${b.bidder_label}? Escreva o motivo (a pessoa vai ler):`) ?? "";
+    if (!why.trim()) return;
+    const r = await cancelBidAsSeller(supabase(), b.id, why);
+    if (r.error) setError(friendlyError(r.error)); else { onChanged("Lances cancelados. A pessoa não pode voltar a licitar neste leilão."); await load(); }
+  }
+  if (!bids.length) return null;
+  return <div className="stack" style={{ gap: 8 }}>
+    <button type="button" className="secondary" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? "Esconder lances" : `Ver lances (${bids.filter(b => !b.retracted).length})`}</button>
+    {open && <ol style={{ margin: 0, paddingLeft: 20 }}>{bids.map(b => <li key={b.id} style={{ opacity: b.retracted ? 0.7 : 1 }}>
+      <strong>{b.bidder_label}</strong> · {b.retracted ? <s>{formatPrice(b.amount)}</s> : formatPrice(b.amount)} · <small>{new Date(b.created_at).toLocaleString("pt-AO")}</small>
+      {b.retracted && <small> — {b.retracted_by_seller ? "cancelado pelo vendedor" : "retirado"}{b.retract_reason ? ": " + b.retract_reason : ""}</small>}
+      {mine && live && !b.retracted && <> <button type="button" className="secondary" onClick={() => cancel(b)}>Cancelar lances</button></>}
+    </li>)}</ol>}
+    {!mine && live && myBids.some(b => !b.retracted) && (asking
+      ? <div className="card stack">
+          <strong>Retirar os meus lances</strong>
+          <span>Todos os seus lances neste leilão deixam de contar. Só pode fazê-lo 3 vezes em 30 dias.</span>
+          <div className="row" role="radiogroup" aria-label="Motivo">{(Object.keys(RETRACT_REASON_LABELS) as RetractReason[]).map(k => <button key={k} type="button" role="radio" aria-checked={reason === k} className={reason === k ? "" : "secondary"} onClick={() => { setReason(k); setError(""); }}>{RETRACT_REASON_LABELS[k]}</button>)}</div>
+          {error && <p className="error" role="alert">{error}</p>}
+          <div className="row"><button type="button" className="danger" disabled={busy} onClick={retract}>Retirar lances</button><button type="button" className="secondary" onClick={() => setAsking(false)}>Voltar</button></div>
+        </div>
+      : can.ok ? <button type="button" className="secondary" onClick={() => setAsking(true)}>↩️ Retirar o meu lance</button>
+      : <small className="muted">{can.why}</small>)}
+    {!asking && error && <p className="error" role="alert">{error}</p>}
+  </div>;
 }
