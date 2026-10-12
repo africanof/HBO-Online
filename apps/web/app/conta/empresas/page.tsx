@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { listMyBusinesses, saveBusiness, setBusinessLogo, deleteBusiness, listDirectoryCategories, friendlyError, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../../lib/supabase";
 import { useTerritory } from "../../../components/Directory";
+import { PlanBanner } from "../../../components/Plans";
 import { PhotoPicker, PortfolioManager } from "../../../components/Portfolio";
 
 type Option = { id: string; name: string };
@@ -37,6 +38,7 @@ export default function MinhasEmpresas() {
     {notice && <p className="ok" role="status">{notice}</p>}
     {items.map(b => <div key={b.id} className="card">
       <strong>{b.name}{b.verified ? " ✔️" : ""}{b.active ? "" : " (oculta)"}</strong>
+      <PlanBanner kind="business" subjectId={b.id} />
       <div className="row">
         <a className="btn secondary" href={"/empresas/" + b.id}>Ver</a>
         <button className={showcase === b.id ? "" : "secondary"} aria-expanded={showcase === b.id} onClick={() => setShowcase(showcase === b.id ? null : b.id)}>📸 Logótipo e portfólio</button>

@@ -7,6 +7,7 @@ import { ui } from "../../lib/ui";
 import { Button, Chips, Message } from "../../components/Ui";
 import { useTerritory } from "../../components/Directory";
 import { PhotoPicker, PortfolioManager } from "../../components/Portfolio";
+import { PlanBanner } from "../../components/Plans";
 
 type Option = { id: string; name: string };
 const empty = { displayName: "", headline: "", bio: "", categoryId: "", customCategory: "", municipalityId: "", phone: "", whatsapp: "", active: true };
@@ -58,6 +59,7 @@ export default function PerfilProfissional() {
       <Button title={exists ? "Guardar perfil" : "Criar perfil"} disabled={busy} onPress={() => void run(() => saveMyProviderProfile(supabase(), uid, form), "Perfil guardado.")} />
     </View>
     {exists && <View style={{ gap: 10 }}>
+      <PlanBanner kind="provider" subjectId={uid} />
       <Text style={ui.h2}>Fotografia do perfil</Text>
       <PhotoPicker uid={uid} current={avatar} label="Fotografia" onSave={url => setProviderPhoto(supabase(), uid, url)} />
       <PortfolioManager uid={uid} target={{ providerId: uid }} />

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { getProvider, saveMyProviderProfile, setProviderPhoto, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../../lib/supabase";
 import { useTerritory } from "../../../components/Directory";
+import { PlanBanner } from "../../../components/Plans";
 import { PhotoPicker, PortfolioManager } from "../../../components/Portfolio";
 
 type Option = { id: string; name: string };
@@ -39,6 +40,7 @@ export default function PerfilProfissional() {
     <h1>{exists ? "O meu perfil profissional" : "Criar perfil profissional"}</h1>
     <p>Apareça na lista de profissionais do Huambo Online e receba pedidos de clientes.</p>
     {exists && <a href={"/profissionais/" + uid}>Ver o meu perfil público →</a>}
+    {exists && <PlanBanner kind="provider" subjectId={uid} />}
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
     <form className="stack card" onSubmit={e => { e.preventDefault(); void run(() => saveMyProviderProfile(supabase(), uid, form), "Perfil guardado."); }}>
