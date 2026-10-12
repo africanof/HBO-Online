@@ -10,10 +10,10 @@ import { AdminCouriers } from "../../components/AdminCouriers";
 import { AdminMarkets } from "../../components/AdminMarkets";
 import { AdminVerifications, AdminAudit } from "../../components/AdminTrust";
 import { AdminDisputes } from "../../components/Disputes";
-import { AdminPlans } from "../../components/Plans";
+import { AdminPlans, AdminRevenue } from "../../components/Plans";
 
-type Tab = "stats" | "reports" | "plans" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
-const tabs: [Tab, string][] = [["stats", "Estatísticas"], ["reports", "Denúncias"], ["plans", "Mensalidades e comissões"], ["disputes", "Disputas"], ["verifications", "Verificações"], ["listings", "Anúncios"], ["users", "Utilizadores"], ["categories", "Categorias"], ["couriers", "Estafetas"], ["markets", "Praças"], ["audit", "Registo"]];
+type Tab = "stats" | "reports" | "revenue" | "plans" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+const tabs: [Tab, string][] = [["stats", "Estatísticas"], ["reports", "Denúncias"], ["revenue", "Receitas"], ["plans", "Mensalidades e comissões"], ["disputes", "Disputas"], ["verifications", "Verificações"], ["listings", "Anúncios"], ["users", "Utilizadores"], ["categories", "Categorias"], ["couriers", "Estafetas"], ["markets", "Praças"], ["audit", "Registo"]];
 
 export default function AdminPage() {
   const [role, setRole] = useState<AdminRole | null>(null);
@@ -60,6 +60,7 @@ export default function AdminPage() {
     {tab === "verifications" && <AdminVerifications />}
     {tab === "disputes" && <AdminDisputes />}
     {tab === "plans" && <AdminPlans />}
+    {tab === "revenue" && <AdminRevenue />}
     {tab === "audit" && <AdminAudit />}
     {tab === "stats" && stats && <section className="grid">{ADMIN_STAT_LABELS.map(([k, l]) => <div key={k} className="card"><span>{l}</span><strong style={{ fontSize: 32 }}>{stats[k]}</strong></div>)}</section>}
 

@@ -1,30 +1,40 @@
 "use client";
 import { useEffect, useState } from "react";
 import { listCommissionsForAdmin, updateCommissionAsAdmin, COMMISSION_STATUS_LABELS, type AdminCommission, type CommissionStatus,
-  getPlatformSettings, updatePlatformSettings, listMyPlans, planSummary, needsPayment, PLAN_STATE_LABELS, listPlanPaymentsForAdmin, decidePlanPayment, paymentProofUrl, formatPrice, friendlyError,
+  listRevenue, revenueSummary, revenueCsv, monthRange, REVENUE_KIND_LABELS, type RevenueRow, type RevenueKind,
+  getPlatformSettings, updatePlatformSettings, paymentAccounts, hasPaymentDetails, validatePaymentAccounts, MAX_PAYMENT_ACCOUNTS, type PaymentAccount, listMyPlans, planSummary, needsPayment, PLAN_STATE_LABELS, listPlanPaymentsForAdmin, decidePlanPayment, paymentProofUrl, formatPrice, friendlyError,
   PLAN_KIND_LABELS, PLAN_METHOD_LABELS, type PlatformSettings, type AdminPlanPayment } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 
 /** Dados para pagamento (IBAN, Multicaixa Express) definidos pela administração. */
 export function PaymentDetails({ s }: { s: PlatformSettings | null }) {
-  if (!s || !(s.iban || s.express_number)) return <p className="muted" style={{ margin: 0 }}>Os dados para pagamento ainda não foram publicados pela administração. Contacte-nos pelas mensagens.</p>;
-  return <dl className="facts" style={{ margin: 0 }}>
-    {s.bank_name && <><dt>Banco</dt><dd>{s.bank_name}</dd></>}
-    {s.iban && <><dt>IBAN</dt><dd><strong style={{ overflowWrap: "anywhere" }}>{s.iban}</strong></dd></>}
-    {s.account_holder && <><dt>Titular</dt><dd>{s.account_holder}</dd></>}
-    {s.express_number && <><dt>Multicaixa Express</dt><dd><strong>{s.express_number}</strong></dd></>}
-    {s.payment_note && <><dt>Nota</dt><dd>{s.payment_note}</dd></>}
-  </dl>;
+  if (!hasPaymentDetails(s)) return <p className="muted" style={{ margin: 0 }}>Os dados para pagamento ainda não foram publicados pela administração. Contacte-nos pelas mensagens.</p>;
+  const accounts = paymentAccounts(s);
+  return <div className="stack" style={{ gap: 8 }}>
+    {accounts.length > 1 && <span>Pode pagar para qualquer uma destas contas:</span>}
+    {accounts.map((a, i) => <dl key={i} className="facts card" style={{ margin: 0 }}>
+      <dt>Banco</dt><dd><strong>{a.bank}</strong></dd>
+      <dt>IBAN</dt><dd><strong style={{ overflowWrap: "anywhere" }}>{a.iban}</strong> <CopyButton text={a.iban} /></dd>
+      <dt>Titular</dt><dd>{a.holder}</dd>
+    </dl>)}
+    {s!.express_number && <dl className="facts card" style={{ margin: 0 }}><dt>Multicaixa Express</dt><dd><strong>{s!.express_number}</strong> <CopyButton text={s!.express_number} /></dd></dl>}
+    {s!.payment_note && <span>{s!.payment_note}</span>}
+  </div>;
+}
+function CopyButton({ text }: { text: string }) {
+  const [done, setDone] = useState(false);
+  return <button type="button" className="secondary" style={{ padding: "4px 12px", minHeight: 36 }} aria-label={"Copiar " + text}
+    onClick={() => void navigator.clipboard?.writeText(text.replace(/\s/g, "")).then(() => { setDone(true); setTimeout(() => setDone(false), 2000); })}>{done ? "Copiado ✔" : "Copiar"}</button>;
 }
 
 /** Administração: preços, dias grátis, dados para pagamento e pagamentos por confirmar. */
 export function AdminPlans() {
-  const [s, setS] = useState<PlatformSettings | null>(null); const [items, setItems] = useState<AdminPlanPayment[]>([]);
+  const [s, setS] = useState<PlatformSettings | null>(null); const [accounts, setAccounts] = useState<PaymentAccount[]>([]); const [items, setItems] = useState<AdminPlanPayment[]>([]);
   const [status, setStatus] = useState<"pending" | "confirmed" | "rejected" | "">("pending");
   const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
   async function load() {
     const [a, b] = await Promise.all([getPlatformSettings(supabase()), listPlanPaymentsForAdmin(supabase(), status)]);
-    setS(a.data); if (b.error) setError(friendlyError(b.error)); setItems(b.data);
+    setS(a.data); setAccounts(paymentAccounts(a.data)); if (b.error) setError(friendlyError(b.error)); setItems(b.data);
   }
   useEffect(() => { void load(); }, [status]);
   async function saveSettings(e: React.FormEvent) {
@@ -32,9 +42,12 @@ export function AdminPlans() {
     const num = (v: unknown) => Number(String(v ?? "").replace(/\s/g, "").replace(",", "."));
     const provider = num(s.provider_monthly_kz), business = num(s.business_monthly_kz), store = num(s.store_monthly_kz), days = Number(s.trial_days), pct = num(s.listing_commission_pct), due = Number(s.commission_due_days);
     if (!(provider >= 0) || !(business >= 0) || !(store >= 0) || !Number.isInteger(days) || days < 0 || days > 365 || !(pct >= 0 && pct <= 50) || !Number.isInteger(due) || due < 1 || due > 90) { setError("Verifique os preços, a percentagem e os dias."); return; }
+    const bad = validatePaymentAccounts(accounts); if (bad) { setError(bad); return; }
     setBusy(true); setError(""); setNotice("");
+    const clean = accounts.map(a => ({ bank: a.bank.trim(), iban: a.iban.trim(), holder: a.holder.trim() }));
     const r = await updatePlatformSettings(supabase(), { provider_monthly_kz: provider, business_monthly_kz: business, store_monthly_kz: store, trial_days: days, listing_commission_pct: pct, commission_due_days: due,
-      bank_name: s.bank_name?.trim() || null, iban: s.iban?.trim() || null, account_holder: s.account_holder?.trim() || null, express_number: s.express_number?.trim() || null, payment_note: s.payment_note?.trim() || null });
+      payment_accounts: clean, bank_name: clean[0]?.bank ?? null, iban: clean[0]?.iban ?? null, account_holder: clean[0]?.holder ?? null,
+      express_number: s.express_number?.trim() || null, payment_note: s.payment_note?.trim() || null });
     setBusy(false); if (r.error) setError(friendlyError(r.error)); else setNotice("Dados guardados.");
   }
   async function decide(p: AdminPlanPayment, ok: boolean) {
@@ -73,9 +86,15 @@ export function AdminPlans() {
       <label>Comissão dos anúncios vendidos (%)<input inputMode="decimal" value={String(s.listing_commission_pct ?? "")} onChange={set("listing_commission_pct")} /></label>
       <label>Dias para pagar a comissão<input inputMode="numeric" value={String(s.commission_due_days ?? "")} onChange={set("commission_due_days")} /></label>
       <label>Dias grátis para perfis novos<input inputMode="numeric" value={String(s.trial_days)} onChange={set("trial_days")} /></label>
-      <label>Banco<input value={s.bank_name ?? ""} onChange={set("bank_name")} placeholder="Ex.: BAI" /></label>
-      <label>IBAN<input value={s.iban ?? ""} onChange={set("iban")} placeholder="AO06 …" /></label>
-      <label>Titular da conta<input value={s.account_holder ?? ""} onChange={set("account_holder")} /></label>
+      <strong>Contas para receber ({accounts.length}/{MAX_PAYMENT_ACCOUNTS})</strong>
+      {accounts.map((a, i) => <fieldset key={i} className="card stack" style={{ margin: 0 }}>
+        <legend>Conta {i + 1}</legend>
+        <label>Banco<input value={a.bank} onChange={e => setAccounts(accounts.map((x, j) => j === i ? { ...x, bank: e.target.value } : x))} placeholder="Ex.: Banco Yetu" /></label>
+        <label>IBAN<input value={a.iban} onChange={e => setAccounts(accounts.map((x, j) => j === i ? { ...x, iban: e.target.value } : x))} placeholder="AO06 …" /></label>
+        <label>Titular<input value={a.holder} onChange={e => setAccounts(accounts.map((x, j) => j === i ? { ...x, holder: e.target.value } : x))} /></label>
+        <button type="button" className="danger" style={{ justifySelf: "start" }} onClick={() => setAccounts(accounts.filter((_, j) => j !== i))}>Tirar esta conta</button>
+      </fieldset>)}
+      {accounts.length < MAX_PAYMENT_ACCOUNTS && <button type="button" className="secondary" style={{ justifySelf: "start" }} onClick={() => setAccounts([...accounts, { bank: "", iban: "", holder: "" }])}>➕ Juntar conta bancária</button>}
       <label>Número Multicaixa Express<input value={s.express_number ?? ""} onChange={set("express_number")} placeholder="9xx xxx xxx" /></label>
       <label>Nota para quem paga (opcional)<input value={s.payment_note ?? ""} onChange={set("payment_note")} maxLength={500} placeholder="Ex.: escreva o seu nome no descritivo" /></label>
       <button disabled={busy} style={{ justifySelf: "start" }}>Guardar</button>
@@ -128,6 +147,37 @@ function AdminCommissions() {
         {c.status === "submitted" && <button className="secondary" onClick={() => act(c, "reject")}>✖ Não recebido</button>}
         {(c.status === "submitted" || c.status === "due") && <><button className="secondary" onClick={() => act(c, "adjust")}>Corrigir valor da venda</button><button className="secondary" onClick={() => act(c, "waive")}>Anular</button></>}
       </div>
+    </article>)}
+  </section>;
+}
+
+/** Administração: receitas confirmadas (mensalidades e comissões) de um mês, com ficheiro para o Excel. */
+export function AdminRevenue() {
+  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [rows, setRows] = useState<RevenueRow[]>([]); const [error, setError] = useState(""); const [loading, setLoading] = useState(false);
+  useEffect(() => { if (!/^\d{4}-\d{2}$/.test(month)) return; setLoading(true); const { from, to } = monthRange(month);
+    void listRevenue(supabase(), from, to).then(r => { setLoading(false); if (r.error) setError(friendlyError(r.error)); else { setError(""); setRows(r.data); } }); }, [month]);
+  const sum = revenueSummary(rows);
+  function download() {
+    const url = URL.createObjectURL(new Blob([revenueCsv(rows)], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a"); a.href = url; a.download = `receitas-huambo-online-${month}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  return <section className="stack">
+    <h2 style={{ margin: 0 }}>💰 Receitas</h2>
+    <p style={{ margin: 0 }}>Mensalidades e comissões já confirmadas pela administração.</p>
+    <label style={{ maxWidth: 260 }}>Mês<input type="month" value={month} onChange={e => setMonth(e.target.value)} /></label>
+    {error && <p className="error" role="alert">{error}</p>}
+    <div className="grid">
+      <div className="card"><span>Total do mês</span><strong style={{ fontSize: 30 }}>{formatPrice(sum.total)}</strong><small>{sum.count} pagamento(s)</small></div>
+      {(Object.keys(REVENUE_KIND_LABELS) as RevenueKind[]).map(k => <div key={k} className="card"><span>{REVENUE_KIND_LABELS[k]}</span><strong style={{ fontSize: 24 }}>{formatPrice(sum.byKind[k] ?? 0)}</strong></div>)}
+    </div>
+    <button type="button" className="secondary" style={{ justifySelf: "start" }} disabled={!rows.length} onClick={download}>⬇️ Descarregar para Excel (CSV)</button>
+    {loading && <p>A carregar…</p>}
+    {!loading && rows.length === 0 && <p>Sem receitas confirmadas neste mês.</p>}
+    {rows.map((r, i) => <article key={i} className="card">
+      <strong>{formatPrice(r.amount)} · {REVENUE_KIND_LABELS[r.kind]}</strong>
+      <span style={{ overflowWrap: "anywhere" }}>{r.description} · {r.payer_name}</span>
+      <small>{new Date(r.paid_at).toLocaleString("pt-AO")}{r.method ? " · " + PLAN_METHOD_LABELS[r.method] : ""}{r.reference ? " · Ref.: " + r.reference : ""}</small>
     </article>)}
   </section>;
 }
