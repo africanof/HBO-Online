@@ -4,7 +4,7 @@ import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { getProduct, addToMyCart, getPublicProfile, formatPrice, friendlyError } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
-import { ui } from "../../lib/ui";
+import { ui, C } from "../../lib/ui";
 import { Button, Message } from "../../components/Ui";
 import { SaveButton, ShareButton, useRecordView } from "../../components/Engage";
 import { SellerBadge } from "../../components/Reputation";
@@ -45,8 +45,8 @@ export default function Produto() {
     {!!seller && <SellerBadge userId={p.seller_id} />}
     {!!p.markets?.name && <Link href={("/pracas/" + p.markets.id) as any} style={ui.link}>🧺 {p.markets.name} →</Link>}
     {media.length > 0 && <View style={{ gap: 8 }}>
-      <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: "#eee" }} resizeMode="contain" />
-      {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} style={{ borderWidth: 3, borderColor: i === photo ? "#111" : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}
+      <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: C.surface }} resizeMode="contain" />
+      {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} style={{ borderWidth: 3, borderColor: i === photo ? C.ink : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}
     </View>}
     {!!p.video_url && <VideoPlayer url={p.video_url} />}
     {!!p.description && <Text style={ui.text}>{p.description}</Text>}

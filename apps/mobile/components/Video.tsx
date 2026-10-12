@@ -65,6 +65,6 @@ export function VideoPlayer({ url }: { url: string }) {
   return <Pressable accessibilityRole="button" accessibilityLabel="Ver vídeo" onPress={() => setOn(true)}
     style={{ width: width - 32, height: (width - 32) * 0.5625, backgroundColor: "#111", borderRadius: 12, alignItems: "center", justifyContent: "center", gap: 6 }}>
     <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: C.white, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 28, color: C.ink, marginLeft: 4 }}>▶</Text></View>
-    <Text style={{ color: C.white, fontWeight: "800", fontSize: 16 }}>Ver vídeo</Text>
+    <Text style={{ color: "#FFFFFF", fontWeight: "800", fontSize: 16 }}>Ver vídeo</Text>
   </Pressable>;
 }

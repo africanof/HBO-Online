@@ -18,7 +18,7 @@ export default function ProcuraSe() {
   }
   useFocusEffect(useCallback(() => { void search(); }, []));
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
-    <View style={{ backgroundColor: "#fff4d6", borderRadius: 20, padding: 18, gap: 8 }}>
+    <View style={{ backgroundColor: C.yellowSoft, borderRadius: 20, padding: 18, gap: 8 }}>
       <Text style={ui.h1}>🔎 Procura-se</Text>
       <Text style={ui.text}>Pedidos de compradores e de quem precisa de um serviço (eletricista, canalizador, doméstica, decoradora…). Tem o que procuram? Responda.</Text>
       <Button title="+ Publicar o que procuro" onPress={() => router.push("/classificados/publicar?finalidade=wanted" as any)} />

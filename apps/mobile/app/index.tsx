@@ -3,7 +3,7 @@ import { Link, useFocusEffect, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted, listTrades, cardSaleTag, loadWithCache, isOfflineError } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
-import { ui, C } from "../lib/ui";
+import { ui, C, themed } from "../lib/ui";
 import { Button } from "../components/Ui";
 import { NotificationBell } from "../components/NotificationBell";
 import { Logo, SearchBar } from "../components/Brand";
@@ -97,7 +97,7 @@ export default function Home() {
       </Pressable>
     </Link>)}</Shelf>}
 
-    <View style={[st.banner, { backgroundColor: "#fff4d6" }]}>
+    <View style={[st.banner, { backgroundColor: C.yellowSoft }]}>
       <Text style={ui.h2}>Tem algo para vender?</Text>
       <Text style={ui.text}>Publique grátis com fotografias e receba mensagens de compradores.</Text>
       <Button title="+ Publicar anúncio" onPress={() => router.push("/classificados/publicar" as any)} />
@@ -129,7 +129,7 @@ export default function Home() {
       </Link>)}
     </View>
 
-    <View style={[st.banner, { backgroundColor: "#e6f4ec" }]}>
+    <View style={[st.banner, { backgroundColor: C.greenSoft }]}>
       <Text style={ui.h2}>Profissional, empresa ou estafeta?</Text>
       <Text style={ui.text}>Crie o seu perfil e receba clientes de todo o Huambo.</Text>
       <Button title="Sou profissional" variant="secondary" onPress={() => router.push("/conta/profissional" as any)} />
@@ -139,18 +139,18 @@ export default function Home() {
   </ScrollView>;
 }
 
-const st = StyleSheet.create({
+const st = themed(C => StyleSheet.create({
   top: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   welcome: { gap: 10, backgroundColor: C.blueSoft, borderRadius: 16, padding: 14 },
-  hero: { backgroundColor: C.blue, borderRadius: 20, padding: 20, gap: 8 },
-  heroTitle: { color: C.white, fontSize: 26, fontWeight: "800", lineHeight: 31 },
-  heroText: { color: C.white, fontSize: 16 },
-  heroBtn: { alignSelf: "flex-start", backgroundColor: C.white, borderRadius: 999, paddingHorizontal: 20, minHeight: 46, justifyContent: "center", marginTop: 6 },
-  heroBtnText: { color: C.ink, fontWeight: "800", fontSize: 16 },
+  hero: { backgroundColor: "#3665F3", borderRadius: 20, padding: 20, gap: 8 },
+  heroTitle: { color: "#FFFFFF", fontSize: 26, fontWeight: "800", lineHeight: 31 },
+  heroText: { color: "#FFFFFF", fontSize: 16 },
+  heroBtn: { alignSelf: "flex-start", backgroundColor: "#FFFFFF", borderRadius: 999, paddingHorizontal: 20, minHeight: 46, justifyContent: "center", marginTop: 6 },
+  heroBtnText: { color: "#191919", fontWeight: "800", fontSize: 16 },
   cat: { alignItems: "center", gap: 6, width: 84 },
   catCircle: { width: 76, height: 76, borderRadius: 38, backgroundColor: C.surface, alignItems: "center", justifyContent: "center" },
   catLabel: { fontSize: 13, fontWeight: "700", color: C.ink, textAlign: "center" },
   banner: { borderRadius: 20, padding: 18, gap: 10 },
   marketImg: { width: "100%", aspectRatio: 1, borderRadius: 16, backgroundColor: C.surface, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   rowLink: { flexDirection: "row", alignItems: "center", minHeight: 52, borderBottomWidth: 1, borderBottomColor: C.line }
-});
+}));

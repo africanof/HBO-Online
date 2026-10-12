@@ -164,7 +164,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
       {modes.length > 0 && <View style={{ gap: 8 }}>
         <Text style={ui.h2}>Como quer vender?</Text>
         {modes.map(m => <Pressable key={m} accessibilityRole="radio" accessibilityState={{ checked: saleMode === m }} onPress={() => setSaleMode(m)}
-          style={{ borderWidth: 2, borderColor: saleMode === m ? C.blue : C.line, backgroundColor: saleMode === m ? "#EEF3FF" : C.white, borderRadius: 14, padding: 12, gap: 2 }}>
+          style={{ borderWidth: 2, borderColor: saleMode === m ? C.blue : C.line, backgroundColor: saleMode === m ? C.blueSoft : C.white, borderRadius: 14, padding: 12, gap: 2 }}>
           <Text style={ui.label}>{saleMode === m ? "◉ " : "○ "}{SALE_MODE_INFO[m].icon} {SALE_MODE_INFO[m].label}</Text>
           <Text style={ui.muted}>{SALE_MODE_INFO[m].help}</Text>
         </Pressable>)}
@@ -192,7 +192,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
     <Button title="📷 Selecionar fotografias" variant="secondary" onPress={() => void pickPhotos()} disabled={busy || photos.length >= CLASSIFIED_MAX_PHOTOS} />
     <View style={ui.row}>
       {photos.map((p, i) => <View key={p.key} style={{ width: 104, gap: 6 }}>
-        <Image source={{ uri: p.uri }} style={{ width: 104, height: 104, borderRadius: 8, backgroundColor: "#eee" }} accessibilityLabel={`Fotografia ${i + 1}`} />
+        <Image source={{ uri: p.uri }} style={{ width: 104, height: 104, borderRadius: 8, backgroundColor: C.surface }} accessibilityLabel={`Fotografia ${i + 1}`} />
         <Pressable accessibilityRole="button" onPress={() => removePhoto(i)} style={[ui.buttonSecondary, { minHeight: 40 }]}><Text style={ui.buttonSecondaryText}>Remover</Text></Pressable>
       </View>)}
     </View>

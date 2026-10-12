@@ -3,7 +3,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { ScrollView, Text, TextInput, View } from "react-native";
 import { listTrades, listingPriceLabel, friendlyError, timeAgo, PUBLISH_TRADE_HREF } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
-import { ui } from "../lib/ui";
+import { ui, C } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
 import { ItemCard, Grid, LISTING_ICON } from "../components/ItemCard";
 
@@ -20,7 +20,7 @@ export default function Trocas() {
   }
   useFocusEffect(useCallback(() => { void search(); }, []));
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
-    <View style={{ backgroundColor: "#EEF3FF", borderRadius: 20, padding: 18, gap: 8 }}>
+    <View style={{ backgroundColor: C.blueSoft, borderRadius: 20, padding: 18, gap: 8 }}>
       <Text style={ui.h1}>🔁 Trocas</Text>
       <Text style={ui.text}>Troque o que já não usa por algo de que precisa. Também aparecem anúncios à venda que aceitam troca.</Text>
       <Button title="+ Publicar uma troca" onPress={() => router.push(PUBLISH_TRADE_HREF as any)} />

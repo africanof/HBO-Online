@@ -3,11 +3,15 @@ import { useEffect, useState } from "react";
 import { getCurrentUserProfile, getMyAdminRole, canModerate, searchHref, SEARCH_SCOPES, LOGO_PARTS, INFO_LINKS, type SearchScope } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { useUnreadCounts } from "./NotificationBell";
+import { ThemePicker } from "./ThemePicker";
+
+/** Cores do logótipo a partir do tema (claro/escuro). */
+const LOGO_VARS = ["var(--logo-blue)", "var(--logo-red)", "var(--logo-yellow)", "var(--logo-green)"];
 
 export function Logo({ size }: { size?: number }) {
   return <a href="/" className="logo" aria-label="Huambo Online — página inicial" style={size ? { fontSize: size } : undefined}>
     {/* Logótipo: um só nome para leitores de ecrã (as cores são a marca e estão isentas da regra de contraste). */}
-    <span role="img" aria-label="Huambo Online">{LOGO_PARTS.map(([t, color]) => <span key={t} aria-hidden="true" style={{ color }}>{t}</span>)}</span>
+    <span role="img" aria-label="Huambo Online">{LOGO_PARTS.map(([t], i) => <span key={t} aria-hidden="true" style={{ color: LOGO_VARS[i] }}>{t}</span>)}</span>
   </a>;
 }
 
@@ -92,6 +96,7 @@ export function SiteFooter() {
   ];
   return <footer className="footer"><div className="footer-in">
     {cols.map(([title, links]) => <nav key={title} aria-label={title}><h3>{title}</h3>{links.map(([l, h]) => <a key={h} href={h}>{l}</a>)}</nav>)}
+    <div className="stack" style={{ gap: 6 }}><h3 style={{ margin: 0 }}>Aparência</h3><ThemePicker /></div>
     <small>© {new Date().getFullYear()} Huambo Online · Comércio, serviços e negócios do Huambo.</small>
   </div></footer>;
 }

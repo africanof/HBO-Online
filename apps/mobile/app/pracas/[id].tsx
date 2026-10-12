@@ -35,7 +35,7 @@ export default function Praca() {
     <Text style={ui.text}>📍 {[m.address_text, m.municipalities?.name].filter(Boolean).join(", ") || "Huambo"}</Text>
     {!!m.opening_hours && <Text style={ui.text}>🕘 {m.opening_hours}</Text>}
     {!!m.description && <Text style={ui.text}>{m.description}</Text>}
-    <View style={{ backgroundColor: "#e6f4ec", borderRadius: 16, padding: 14, gap: 8 }}>
+    <View style={{ backgroundColor: C.greenSoft, borderRadius: 16, padding: 14, gap: 8 }}>
       <Text style={ui.label}>Vende nesta praça?</Text>
       <Text style={ui.text}>Ao publicar, escolha «{m.name}» no campo «Praça».</Text>
       <Button title="Publicar anúncio" onPress={() => router.push("/classificados/publicar" as any)} />

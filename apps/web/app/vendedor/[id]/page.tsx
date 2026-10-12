@@ -28,7 +28,7 @@ export default function Vendedor() {
   return <main className="stack">
     <a href="/explorar">← Explorar</a>
     <div className="row">
-      {s.avatar_url ? <img src={s.avatar_url} alt="" style={{ width: 88, height: 88, borderRadius: "50%", objectFit: "cover" }} /> : <div aria-hidden style={{ width: 88, height: 88, borderRadius: "50%", background: "#ddd" }} />}
+      {s.avatar_url ? <img src={s.avatar_url} alt="" style={{ width: 88, height: 88, borderRadius: "50%", objectFit: "cover" }} /> : <div aria-hidden style={{ width: 88, height: 88, borderRadius: "50%", background: "var(--placeholder)" }} />}
       <div><h1 style={{ margin: 0 }}>{s.full_name || "Utilizador"}</h1><p style={{ margin: 0 }}>{[s.municipality, "membro desde " + new Date(s.member_since).toLocaleDateString("pt-AO")].filter(Boolean).join(" · ")}</p></div>
     </div>
     {s.is_provider && <p>{ratingLabel(s.rating, s.review_count)} · <a href={"/profissionais/" + s.id}>Ver perfil profissional →</a></p>}

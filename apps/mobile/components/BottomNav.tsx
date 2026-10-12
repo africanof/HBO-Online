@@ -1,7 +1,7 @@
 import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C } from "../lib/ui";
+import { C, themed } from "../lib/ui";
 
 const TABS: { label: string; icon: string; href: string; match: (p: string) => boolean }[] = [
   { label: "Início", icon: "🏠", href: "/", match: p => p === "/" },
@@ -26,10 +26,10 @@ export function BottomNav() {
   </View>;
 }
 
-const s = StyleSheet.create({
+const s = themed(C => StyleSheet.create({
   bar: { flexDirection: "row", borderTopWidth: 1, borderTopColor: C.line, backgroundColor: C.white, paddingTop: 6 },
   tab: { flex: 1, alignItems: "center", gap: 2, minHeight: 52, justifyContent: "center" },
   icon: { fontSize: 22 },
   label: { fontSize: 12, color: C.muted, fontWeight: "600" },
   labelOn: { color: C.blue, fontWeight: "800" }
-});
+}));

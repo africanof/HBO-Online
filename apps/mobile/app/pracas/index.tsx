@@ -30,7 +30,7 @@ export default function Pracas() {
   }
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <SearchBar scope="pracas" initial={q} onSearch={v => { setQ(v); void search(v); }} />
-    <View style={{ backgroundColor: "#fff4d6", borderRadius: 20, padding: 18, gap: 6 }}>
+    <View style={{ backgroundColor: C.yellowSoft, borderRadius: 20, padding: 18, gap: 6 }}>
       <Text style={ui.h1}>🧺 Praças do Huambo</Text>
       <Text style={ui.text}>O que se vende nas praças — Kapango, Ferro, Cassilhas, Alemanha e outras — e os vendedores de cada uma.</Text>
     </View>

@@ -26,7 +26,7 @@ export default function ProcuraSe() {
     {items?.length === 0 && <div className="card"><strong>Ainda não há pedidos{q ? ` com «${q}»` : ""}.</strong><a href="/classificados/publicar?finalidade=wanted">Seja o primeiro a publicar o que procura →</a></div>}
     <section className="stack">
       {items?.map(x => <a key={x.id} href={"/classificados/" + x.id} className="card wanted-card">
-        <span className="badge" style={{ justifySelf: "start", background: "#fff4d6", borderColor: "#f5af02" }}>🔎 PROCURA-SE · {LISTING_TYPE_LABELS[x.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? x.listing_type}</span>
+        <span className="badge" style={{ justifySelf: "start", background: "var(--yellow-soft)", borderColor: "var(--yellow-line)", color: "var(--yellow-text)" }}>🔎 PROCURA-SE · {LISTING_TYPE_LABELS[x.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? x.listing_type}</span>
         <strong style={{ fontSize: 20 }}>{x.title}</strong>
         <span><span className="muted">Orçamento:</span> <strong style={{ fontSize: 19 }}>{listingPriceLabel(x)}</strong></span>
         {x.description && <span className="muted">{String(x.description).slice(0, 140)}</span>}

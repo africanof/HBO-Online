@@ -25,13 +25,13 @@ export function StatsBlock({ rows, footer }: { rows: { label: string; value: str
 export function StarPicker({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return <View style={ui.row} accessibilityRole="radiogroup">
     {[1, 2, 3, 4, 5].map(n => <Pressable key={n} accessibilityRole="radio" accessibilityState={{ checked: n === value }} accessibilityLabel={`${n} estrela(s)`} onPress={() => onChange(n)} style={{ padding: 6 }}>
-      <Text style={{ fontSize: 36, color: n <= value ? "#b07a00" : "#9a9a9a" }}>{n <= value ? "★" : "☆"}</Text>
+      <Text style={{ fontSize: 36, color: n <= value ? C.starOn : C.starOff }}>{n <= value ? "★" : "☆"}</Text>
     </Pressable>)}
   </View>;
 }
 
 export function VerifiedTag({ text }: { text: string }) {
-  return <Text style={{ alignSelf: "flex-start", fontWeight: "800", color: "#0b6b2b", backgroundColor: "#e5f6ea", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2, fontSize: 14 }}>{text}</Text>;
+  return <Text style={{ alignSelf: "flex-start", fontWeight: "800", color: C.greenText, backgroundColor: C.greenSoft, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2, fontSize: 14 }}>{text}</Text>;
 }
 
 /** «★ 4,8 (12) · 23 vendas» ao lado do nome do vendedor. */
@@ -39,7 +39,7 @@ export function SellerBadge({ userId }: { userId?: string | null }) {
   const [s, setS] = useState<UserStats | null>(null);
   useEffect(() => { if (userId) void getUserStats(supabase(), userId).then(r => setS(r.data)); }, [userId]);
   const text = sellerBadge(s);
-  return text ? <Text style={{ alignSelf: "flex-start", fontWeight: "800", color: "#6b4e00", backgroundColor: "#fff6d6", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2, fontSize: 15 }}>{text}</Text> : null;
+  return text ? <Text style={{ alignSelf: "flex-start", fontWeight: "800", color: C.goldText, backgroundColor: C.goldSoft, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2, fontSize: 15 }}>{text}</Text> : null;
 }
 
 /** Caixa «Pedir serviço» nas páginas de profissionais e empresas. */

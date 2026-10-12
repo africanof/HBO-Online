@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError, getMyAdminRole, canModerate, uploadAvatar, AVATAR_MAX_BYTES, AVATAR_MAX_SIDE, PHOTO_RAW_MAX_BYTES } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
 import { compressPhoto } from "../../lib/image";
+import { ThemePicker } from "../../components/ThemePicker";
 
 export default function ContaPage() {
   const [email, setEmail] = useState("");
@@ -39,7 +40,7 @@ export default function ContaPage() {
     <a href="/">← Huambo Online</a>
     <h1>A sua conta</h1>
     <div className="row">
-      {avatar ? <img src={avatar} alt="Fotografia de perfil" style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover" }} /> : <div aria-hidden style={{ width: 96, height: 96, borderRadius: "50%", background: "#ddd" }} />}
+      {avatar ? <img src={avatar} alt="Fotografia de perfil" style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover" }} /> : <div aria-hidden style={{ width: 96, height: 96, borderRadius: "50%", background: "var(--placeholder)" }} />}
       <label>Fotografia de perfil<input type="file" accept="image/*" disabled={busy} onChange={async e => {
         const raw = e.target.files?.[0]; e.target.value = ""; if (!raw) return;
         if (!raw.type.startsWith("image/") || raw.size > PHOTO_RAW_MAX_BYTES) { setErr("Escolha uma imagem."); return; }
@@ -67,6 +68,7 @@ export default function ContaPage() {
       <label>Confirmar palavra-passe<input type="password" autoComplete="new-password" value={pw2} onChange={e => setPw2(e.target.value)} /></label>
       <button disabled={busy}>Alterar palavra-passe</button>
     </form>
+    <section className="card"><h2 style={{ margin: 0 }}>🌓 Aparência</h2><p style={{ margin: 0 }}>Escolha o modo claro, escuro, ou automático (segue o seu telemóvel ou computador).</p><ThemePicker /></section>
     <form className="stack card" onSubmit={async e => { e.preventDefault(); if (await run(() => deleteCurrentUserAccount(supabase(), del), "Conta eliminada.")) window.location.href = "/"; }}>
       <h2 style={{ margin: 0 }}>Privacidade</h2>
       <p>Eliminar a conta remove permanentemente os seus dados.</p>

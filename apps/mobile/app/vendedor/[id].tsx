@@ -4,7 +4,7 @@ import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { getPublicSeller, listSellerListings, listProducts, formatPrice, ratingLabel, friendlyError, PURPOSE_LABELS, type PublicSeller, listingPriceLabel,
   getUserStats, listUserReviews, userStatsRows, DEAL_ROLE_LABELS, type UserStats, type UserReview } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
-import { ui } from "../../lib/ui";
+import { ui, C } from "../../lib/ui";
 import { StatsBlock, VerifiedTag, stars } from "../../components/Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "../../components/Trust";
 import { currentUserId } from "../../lib/supabase";
@@ -29,7 +29,7 @@ export default function Vendedor() {
   return <ScrollView contentContainerStyle={ui.screen}>
     <Link href="/explorar" style={ui.link}>← Explorar</Link>
     <View style={[ui.row, { alignItems: "center", gap: 14 }]}>
-      {s.avatar_url ? <Image source={{ uri: s.avatar_url }} style={{ width: 80, height: 80, borderRadius: 40 }} accessibilityLabel="Fotografia" /> : <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: "#ddd" }} />}
+      {s.avatar_url ? <Image source={{ uri: s.avatar_url }} style={{ width: 80, height: 80, borderRadius: 40 }} accessibilityLabel="Fotografia" /> : <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: C.placeholder }} />}
       <View style={{ flex: 1 }}><Text style={ui.h1}>{s.full_name || "Utilizador"}</Text>
         <Text style={ui.muted}>{[s.municipality, "membro desde " + new Date(s.member_since).toLocaleDateString("pt-AO")].filter(Boolean).join(" · ")}</Text></View>
     </View>

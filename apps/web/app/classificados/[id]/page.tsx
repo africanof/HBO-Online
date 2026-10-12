@@ -115,7 +115,7 @@ export default function ClassifiedDetail() {
     <div className="itempage">
       <Gallery media={media} video={item.video_url} icon={item.purpose === "wanted" ? "🔎" : "🏷️"} title={item.title} />
       <section className="buybox">
-        {item.purpose === "wanted" && <span className="badge" style={{ justifySelf: "start", background: "#fff4d6", borderColor: "#f5af02" }}>🔎 PROCURA-SE — pedido de comprador</span>}
+        {item.purpose === "wanted" && <span className="badge" style={{ justifySelf: "start", background: "var(--yellow-soft)", borderColor: "var(--yellow-line)", color: "var(--yellow-text)" }}>🔎 PROCURA-SE — pedido de comprador</span>}
         <h1>{item.title}</h1>
         {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>👤</span><span>{item.purpose === "wanted" ? "Comprador" : "Anunciante"}: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a> <SellerBadge userId={item.owner_id} /><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver outros anúncios</a></span></div>}
         {item.purpose === "wanted" ? <div><span className="muted">Orçamento</span><div className="big-price">{listingPriceLabel(item)}</div></div> : <div className="big-price">{listingPriceLabel(item)}</div>}
