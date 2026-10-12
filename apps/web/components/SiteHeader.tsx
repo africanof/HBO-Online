@@ -4,6 +4,7 @@ import { getCurrentUserProfile, getMyAdminRole, canModerate, searchHref, SEARCH_
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { useUnreadCounts } from "./NotificationBell";
 import { ThemePicker, ThemeToggle } from "./ThemePicker";
+import { DataSaverPicker, DataSaverToggle } from "./DataSaver";
 
 /** Cores do logótipo a partir do tema (claro/escuro). */
 const LOGO_VARS = ["var(--logo-blue)", "var(--logo-red)", "var(--logo-yellow)", "var(--logo-green)"];
@@ -56,6 +57,7 @@ export function SiteHeader() {
       <a className="hide-sm" href="/profissionais">Serviços</a>
       <a className="hide-sm" href="/empresas">Empresas</a>
       <span className="spacer" />
+      <DataSaverToggle />
       <ThemeToggle />
       <a href="/classificados/publicar"><strong>Vender</strong></a>
       <a className="hide-sm" href="/guardados">Guardados</a>
@@ -97,7 +99,7 @@ export function SiteFooter() {
   ];
   return <footer className="footer"><div className="footer-in">
     {cols.map(([title, links]) => <nav key={title} aria-label={title}><h3>{title}</h3>{links.map(([l, h]) => <a key={h} href={h}>{l}</a>)}</nav>)}
-    <div className="stack" style={{ gap: 6 }}><h3 style={{ margin: 0 }}>Aparência</h3><ThemePicker /></div>
+    <div className="stack" style={{ gap: 6 }}><h3 style={{ margin: 0 }}>Aparência</h3><ThemePicker /><h3 style={{ margin: "8px 0 0" }}>Poupar dados</h3><DataSaverPicker /></div>
     <small>© {new Date().getFullYear()} Huambo Online · Comércio, serviços e negócios do Huambo.</small>
   </div></footer>;
 }

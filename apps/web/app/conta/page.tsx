@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabase";
 import { compressPhoto } from "../../lib/image";
 import { ThemePicker } from "../../components/ThemePicker";
 import { WhatsAppSettings } from "../../components/Engage";
+import { DataSaverPicker } from "../../components/DataSaver";
 
 export default function ContaPage() {
   const [email, setEmail] = useState("");
@@ -71,6 +72,7 @@ export default function ContaPage() {
       <button disabled={busy}>Alterar palavra-passe</button>
     </form>
     <section className="card"><h2 style={{ margin: 0 }}>🌓 Aparência</h2><p style={{ margin: 0 }}>Escolha o modo claro, escuro, ou automático (segue o seu telemóvel ou computador).</p><ThemePicker /></section>
+    <section className="card" id="poupar-dados"><h2 style={{ margin: 0 }}>📉 Poupar dados</h2><p style={{ margin: 0 }}>Gaste menos saldo: as fotografias das listas não carregam e, nos anúncios, só carregam quando tocar.</p><DataSaverPicker /></section>
     <form className="stack card" onSubmit={async e => { e.preventDefault(); if (await run(() => deleteCurrentUserAccount(supabase(), del), "Conta eliminada.")) window.location.href = "/"; }}>
       <h2 style={{ margin: 0 }}>Privacidade</h2>
       <p>Eliminar a conta remove permanentemente os seus dados.</p>

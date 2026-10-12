@@ -4,6 +4,7 @@ import { listPortfolio, savePortfolioItem, deletePortfolioItem, reorderPortfolio
   removeClassifiedMedia, friendlyError, PORTFOLIO_MAX_ITEMS, PORTFOLIO_MAX_PHOTOS, type PortfolioItem, type PortfolioTarget } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { compressPhoto } from "../lib/image";
+import { LiteImg } from "./LiteImg";
 
 async function uploadAll(uid: string, files: File[]): Promise<string[]> {
   const urls: string[] = [];
@@ -118,7 +119,7 @@ export function PortfolioGallery({ target }: { target: PortfolioTarget }) {
     <h2 style={{ margin: 0 }}>📸 Trabalhos realizados ({items.length})</h2>
     <div className="portfolio-grid">
       {items.map(it => <button key={it.id} type="button" className="portfolio-tile" onClick={() => setView({ item: it, i: 0 })} aria-label={`Ver «${it.title}» (${it.photos.length} fotografias)`}>
-        <img src={it.photos[0]} alt="" loading="lazy" />
+        <LiteImg src={it.photos[0]} alt="" loading="lazy" placeholder="🖼️" />
         <span className="portfolio-caption"><strong>{it.title}</strong>{it.done_on ? <small>{portfolioDateLabel(it.done_on)}</small> : null}</span>
         {it.photos.length > 1 && <span className="portfolio-count" aria-hidden>📷 {it.photos.length}</span>}
       </button>)}

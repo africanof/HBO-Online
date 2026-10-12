@@ -8,6 +8,7 @@ import { SaveButton, ShareButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, stars } from "./Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "./Trust";
 import { PortfolioGallery } from "./Portfolio";
+import { LiteImg } from "./LiteImg";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string };
@@ -66,7 +67,7 @@ export function DirectoryList({ kind }: { kind: Kind }) {
         const pic = kind === "providers" ? x.avatar_url : x.logo_url;
         return <a key={id} href={`${t.base}/${id}`} className="card" style={{ color: "inherit", textDecoration: "none", fontWeight: 400 }}>
           <div className="row" style={{ flexWrap: "nowrap" }}>
-            {pic ? <img src={pic} alt="" style={{ width: 56, height: 56, borderRadius: kind === "providers" ? "50%" : 12, objectFit: "cover" }} /> : <span aria-hidden style={{ width: 56, height: 56, borderRadius: kind === "providers" ? "50%" : 12, background: "var(--surface)", display: "grid", placeItems: "center", fontSize: 28 }}>{kind === "providers" ? "👷" : "🏢"}</span>}
+            {pic ? <LiteImg placeholder={kind === "providers" ? "👤" : "🏪"} src={pic} alt="" style={{ width: 56, height: 56, borderRadius: kind === "providers" ? "50%" : 12, objectFit: "cover" }} /> : <span aria-hidden style={{ width: 56, height: 56, borderRadius: kind === "providers" ? "50%" : 12, background: "var(--surface)", display: "grid", placeItems: "center", fontSize: 28 }}>{kind === "providers" ? "👷" : "🏢"}</span>}
             <strong style={{ fontSize: 19 }}>{name}{x.verified ? " ✔️" : ""}</strong>
           </div>
           {kind === "providers" ? x.headline && <span>{x.headline}</span> : x.description && <span>{String(x.description).slice(0, 120)}</span>}
@@ -85,7 +86,7 @@ function BusinessProducts({ ownerId, businessId }: { ownerId: string; businessId
   if (!items.length) return null;
   return <section className="stack"><h2 style={{ margin: 0 }}>🛍️ Produtos na Loja ({items.length})</h2>
     <div className="portfolio-grid">{items.slice(0, 12).map(p => <a key={p.id} className="portfolio-tile" href={"/loja/" + p.id} aria-label={`${p.name}, ${formatPrice(p.price, p.currency)}`}>
-      {(p.media ?? [])[0] ? <img src={p.media[0]} alt="" loading="lazy" /> : <span aria-hidden style={{ display: "grid", placeItems: "center", height: "100%", fontSize: 44 }}>📦</span>}
+      {(p.media ?? [])[0] ? <LiteImg src={p.media[0]} alt="" loading="lazy" placeholder="📦" /> : <span aria-hidden style={{ display: "grid", placeItems: "center", height: "100%", fontSize: 44 }}>📦</span>}
       <span className="portfolio-caption"><strong>{p.name}</strong><small>{formatPrice(p.price, p.currency)}</small></span>
     </a>)}</div>
   </section>;

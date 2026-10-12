@@ -7,6 +7,7 @@ import { supabase, currentUserId } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
 import { DealCloser } from "../components/Reputation";
+import { LiteImage } from "../components/LiteImage";
 
 export default function MeusAnuncios() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function MeusAnuncios() {
     {items === null && <Text style={ui.text}>A carregar…</Text>}
     {items?.length === 0 && !error && <Text style={ui.text}>Ainda não publicou anúncios.</Text>}
     {items?.map(x => <View key={x.id} style={ui.card}>
-      {Array.isArray(x.media) && x.media[0] && <Image source={{ uri: x.media[0] }} style={{ width: "100%", height: 160, borderRadius: 10 }} />}
+      {Array.isArray(x.media) && x.media[0] && <LiteImage source={{ uri: x.media[0] }} style={{ width: "100%", height: 160, borderRadius: 10 }} />}
       <Text style={ui.h2}>{x.title}</Text>
       {!!x.ref_no && <Text style={ui.muted}>N.º {formatRef("listing", x.ref_no)}</Text>}
       <Text style={ui.text}>{STATUS_LABELS[x.status as keyof typeof STATUS_LABELS] ?? x.status} · {listingPriceLabel(x)}{saleModeBadges(x).map(b => " · " + b).join("")}</Text>

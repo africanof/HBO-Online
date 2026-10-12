@@ -11,6 +11,7 @@ import { SaveButton, ShareButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, VerifiedTag, stars } from "./Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "./Trust";
 import { PortfolioGallery, BusinessProducts } from "./Portfolio";
+import { LiteImage } from "./LiteImage";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string };
@@ -66,7 +67,7 @@ export function DirectoryList({ kind }: { kind: Kind }) {
       const id = kind === "providers" ? x.user_id : x.id;
       const pic = kind === "providers" ? x.avatar_url : x.logo_url;
       return <Pressable key={id} style={ui.card} accessibilityRole="link" onPress={() => router.push(`${t.base}/${id}` as any)}>
-        {pic ? <Image source={{ uri: pic }} style={{ width: 56, height: 56, borderRadius: kind === "providers" ? 28 : 12 }} /> : <Text style={{ fontSize: 36 }}>{kind === "providers" ? "👷" : "🏢"}</Text>}
+        {pic ? <LiteImage placeholder={kind === "providers" ? "👤" : "🏪"} source={{ uri: pic }} style={{ width: 56, height: 56, borderRadius: kind === "providers" ? 28 : 12 }} /> : <Text style={{ fontSize: 36 }}>{kind === "providers" ? "👷" : "🏢"}</Text>}
         <Text style={ui.h2}>{kind === "providers" ? x.display_name : x.name}{x.verified ? " ✔️" : ""}</Text>
         {!!(kind === "providers" ? x.headline : x.description) && <Text style={ui.text}>{String(kind === "providers" ? x.headline : x.description).slice(0, 120)}</Text>}
         <Text style={ui.muted}>{[x.category_name, x.municipality_name].filter(Boolean).join(" · ")}</Text>

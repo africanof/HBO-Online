@@ -9,6 +9,7 @@ import { supabase } from "../lib/supabase";
 import { shrinkAsset } from "../lib/image";
 import { C, ui } from "../lib/ui";
 import { Button, Message } from "./Ui";
+import { LiteImage } from "./LiteImage";
 
 type Local = { uri: string; base64?: string | null; mimeType: string };
 async function pickPhotos(max: number, camera = false): Promise<Local[] | string> {
@@ -140,7 +141,7 @@ export function PortfolioGallery({ target }: { target: PortfolioTarget }) {
     <Text style={ui.h2}>📸 Trabalhos realizados ({items.length})</Text>
     <View style={[ui.row, { gap: 10 }]}>
       {items.map(it => <Pressable key={it.id} onPress={() => setView({ item: it, i: 0 })} accessibilityRole="button" accessibilityLabel={`Ver «${it.title}», ${it.photos.length} fotografias`} style={{ width: tile, gap: 4 }}>
-        <Image source={{ uri: it.photos[0] }} style={{ width: tile, height: tile, borderRadius: 12 }} />
+        <LiteImage placeholder="🖼️" source={{ uri: it.photos[0] }} style={{ width: tile, height: tile, borderRadius: 12 }} />
         <Text style={ui.label} numberOfLines={2}>{it.title}</Text>
         {(it.done_on || it.photos.length > 1) && <Text style={ui.muted}>{[portfolioDateLabel(it.done_on), it.photos.length > 1 ? "📷 " + it.photos.length : ""].filter(Boolean).join(" · ")}</Text>}
       </Pressable>)}
@@ -170,7 +171,7 @@ export function BusinessProducts({ ownerId, businessId }: { ownerId: string; bus
   return <View style={{ gap: 8 }}>
     <Text style={ui.h2}>🛍️ Produtos na Loja ({items.length})</Text>
     {items.slice(0, 12).map(p => <Pressable key={p.id} onPress={() => router.push(("/loja/" + p.id) as any)} accessibilityRole="link" style={[ui.card, { flexDirection: "row", gap: 10, alignItems: "center" }]}>
-      {(p.media ?? [])[0] ? <Image source={{ uri: p.media[0] }} style={{ width: 56, height: 56, borderRadius: 8 }} /> : <Text style={{ fontSize: 32 }}>📦</Text>}
+      {(p.media ?? [])[0] ? <LiteImage placeholder="📦" source={{ uri: p.media[0] }} style={{ width: 56, height: 56, borderRadius: 8 }} /> : <Text style={{ fontSize: 32 }}>📦</Text>}
       <View style={{ flex: 1 }}><Text style={ui.label}>{p.name}</Text><Text style={ui.text}>{formatPrice(p.price, p.currency)}</Text></View>
     </Pressable>)}
   </View>;

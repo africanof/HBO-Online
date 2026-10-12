@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { listMarkets, suggestMarket, marketSummary, friendlyError, type Market } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { useTerritory } from "../../components/Directory";
+import { LiteImg } from "../../components/LiteImg";
 
 export default function Pracas() {
   const [q, setQ] = useState(""); const [municipalityId, setMunicipalityId] = useState("");
@@ -37,7 +38,7 @@ export default function Pracas() {
     {items?.length === 0 && <p>Nenhuma praça encontrada.</p>}
     <section className="grid">
       {items?.map(m => <a key={m.id} href={"/pracas/" + m.id} className="item card" style={{ padding: 12 }}>
-        <div className="item-img" style={{ aspectRatio: "16/9" }}>{m.photo_url ? <img src={m.photo_url} alt="" loading="lazy" /> : <span aria-hidden>🧺</span>}</div>
+        <div className="item-img" style={{ aspectRatio: "16/9" }}>{m.photo_url ? <LiteImg src={m.photo_url} alt="" loading="lazy" placeholder="🧺" /> : <span aria-hidden>🧺</span>}</div>
         <strong style={{ fontSize: 19 }}>{m.name}</strong>
         <span className="item-meta">📍 {[m.address_text, m.municipality_name].filter(Boolean).join(", ") || "Huambo"}</span>
         {m.opening_hours && <span className="item-meta">🕘 {m.opening_hours}</span>}

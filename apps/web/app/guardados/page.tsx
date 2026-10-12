@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { listMySaved, toggleSaved, itemHref, friendlyError, SAVED_KIND_LABELS, type SavedKind } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
+import { LiteImg } from "../../components/LiteImg";
 
 export default function Guardados() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
@@ -22,7 +23,7 @@ export default function Guardados() {
     {error && <p className="error" role="alert">{error}</p>}
     {shown.length === 0 && <p>Ainda não guardou nada aqui. Use o botão «☆ Guardar» nos anúncios, profissionais, empresas e produtos.</p>}
     <section className="grid">{shown.map(x => <article key={x.id} className="card">
-      {x.image ? <img className="thumb" src={x.image} alt="" /> : null}
+      {x.image ? <LiteImg className="thumb" src={x.image} alt="" /> : null}
       <small>{SAVED_KIND_LABELS[x.kind as SavedKind] ?? ""}</small>
       <strong style={{ fontSize: 19 }}>{x.title}</strong>
       {x.subtitle && <span>{x.subtitle}</span>}

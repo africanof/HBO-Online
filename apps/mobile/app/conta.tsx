@@ -9,6 +9,7 @@ import { Button, Message } from "../components/Ui";
 import { shrinkAsset } from "../lib/image";
 import { ThemePicker } from "../components/ThemePicker";
 import { WhatsAppSettings } from "../components/Engage";
+import { DataSaverPicker } from "../components/DataSaver";
 
 export default function Conta() {
   const router = useRouter();
@@ -37,7 +38,7 @@ export default function Conta() {
   }
 
   if (!loaded) return <View style={ui.screen}><Text style={ui.text}>A carregar…</Text></View>;
-  if (!email) return <View style={ui.screen}><Link href="/" style={ui.link}>← Huambo Online</Link><Text style={ui.h1}>A sua conta</Text><Text style={ui.text}>Inicie sessão para gerir a sua conta.</Text><Button title="Entrar" onPress={() => router.push("/login")} /><Button title="Criar conta" variant="secondary" onPress={() => router.push("/criar-conta")} /><ThemePicker /></View>;
+  if (!email) return <View style={ui.screen}><Link href="/" style={ui.link}>← Huambo Online</Link><Text style={ui.h1}>A sua conta</Text><Text style={ui.text}>Inicie sessão para gerir a sua conta.</Text><Button title="Entrar" onPress={() => router.push("/login")} /><Button title="Criar conta" variant="secondary" onPress={() => router.push("/criar-conta")} /><ThemePicker /><DataSaverPicker /></View>;
 
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/" style={ui.link}>← Huambo Online</Link>
@@ -83,6 +84,7 @@ export default function Conta() {
       {isStaff && <Button title="🛡️ Administração" onPress={() => router.push("/admin" as any)} />}
     </View>
     <ThemePicker />
+    <DataSaverPicker />
     {!!uid && <WhatsAppSettings uid={uid} />}
     <Message error={err} ok={msg} />
     {form && <View style={ui.card}>

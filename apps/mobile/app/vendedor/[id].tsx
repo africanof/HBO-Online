@@ -8,6 +8,7 @@ import { ui, C } from "../../lib/ui";
 import { StatsBlock, VerifiedTag, stars } from "../../components/Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "../../components/Trust";
 import { currentUserId } from "../../lib/supabase";
+import { LiteImage } from "../../components/LiteImage";
 
 export default function Vendedor() {
   const router = useRouter();
@@ -39,13 +40,13 @@ export default function Vendedor() {
     <Text style={ui.h2}>Anúncios ({listings.length})</Text>
     {listings.length === 0 && <Text style={ui.text}>Sem anúncios publicados.</Text>}
     {listings.map(x => <Pressable key={x.id} style={ui.card} accessibilityRole="link" onPress={() => router.push(("/classificados/" + x.id) as any)}>
-      {Array.isArray(x.media) && !!x.media[0] && <Image source={{ uri: x.media[0] }} style={{ width: "100%", height: 160, borderRadius: 8 }} />}
+      {Array.isArray(x.media) && !!x.media[0] && <LiteImage source={{ uri: x.media[0] }} style={{ width: "100%", height: 160, borderRadius: 8 }} />}
       <Text style={ui.label}>{x.title}</Text><Text style={ui.price}>{listingPriceLabel(x)}</Text>
       <Text style={ui.muted}>{PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] ?? x.purpose}</Text>
     </Pressable>)}
     {products.length > 0 && <><Text style={ui.h2}>Produtos na loja ({products.length})</Text>
       {products.map(p => <Pressable key={p.id} style={ui.card} accessibilityRole="link" onPress={() => router.push(("/loja/" + p.id) as any)}>
-        {Array.isArray(p.media) && !!p.media[0] && <Image source={{ uri: p.media[0] }} style={{ width: "100%", height: 160, borderRadius: 8 }} />}
+        {Array.isArray(p.media) && !!p.media[0] && <LiteImage placeholder="📦" source={{ uri: p.media[0] }} style={{ width: "100%", height: 160, borderRadius: 8 }} />}
         <Text style={ui.label}>{p.name}</Text><Text style={ui.price}>{formatPrice(p.price, p.currency)}</Text>
       </Pressable>)}</>}
     <Text style={ui.h2}>Avaliações de negócios ({reviews.length})</Text>

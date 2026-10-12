@@ -5,13 +5,14 @@ import { listMyAuctionBids, groupMyBids, formatPrice, formatRef, timeLeft, frien
 import { supabase, currentUserId } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
+import { LiteImage } from "../components/LiteImage";
 
 function Row({ b }: { b: MyAuctionBid }) {
   const router = useRouter();
   const live = b.status === "live" && Date.parse(b.ends_at) > Date.now();
   const open = () => b.listing_id && router.push(("/classificados/" + b.listing_id) as any);
   return <View style={[ui.card, { flexDirection: "row", gap: 12 }]}>
-    {b.photo ? <Image source={{ uri: b.photo }} style={{ width: 72, height: 72, borderRadius: 10 }} accessibilityIgnoresInvertColors /> : <Text style={{ fontSize: 40 }}>🔨</Text>}
+    {b.photo ? <LiteImage source={{ uri: b.photo }} style={{ width: 72, height: 72, borderRadius: 10 }} accessibilityIgnoresInvertColors /> : <Text style={{ fontSize: 40 }}>🔨</Text>}
     <View style={{ flex: 1, gap: 4 }}>
       <Text style={ui.h2} onPress={open} accessibilityRole="link">{b.title}</Text>
       <Text style={b.standing === "winning" || b.standing === "won" ? ui.ok : b.standing === "outbid" ? ui.error : ui.label}>{BID_STANDING_LABELS[b.standing]}</Text>

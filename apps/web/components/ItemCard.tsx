@@ -1,4 +1,5 @@
 import { firstPhoto } from "@huambo-online/core";
+import { LiteImg } from "./LiteImg";
 
 /** Cartão de artigo ao estilo eBay: fotografia quadrada, título em duas linhas, preço forte, detalhes discretos. */
 export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = "📦", video }: {
@@ -7,7 +8,7 @@ export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = 
   const photo = firstPhoto(media);
   return <a href={href} className="item">
     <div className="item-img">
-      {photo ? <img src={photo} alt="" loading="lazy" /> : <span aria-hidden>{icon}</span>}
+      {photo ? <LiteImg src={photo} alt="" loading="lazy" placeholder={icon} /> : <span aria-hidden>{icon}</span>}
       {tag && <span className={"item-tag" + (tagRed ? " red" : "")}>{tag}</span>}
       {video && <span className="item-video">▶ Vídeo</span>}
     </div>
