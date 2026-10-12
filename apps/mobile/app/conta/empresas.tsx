@@ -8,6 +8,7 @@ import { MarketPicker } from "../../components/MarketPicker";
 import { Button, Chips, Message } from "../../components/Ui";
 import { useTerritory } from "../../components/Directory";
 import { PhotoPicker, PortfolioManager } from "../../components/Portfolio";
+import { PlanBanner } from "../../components/Plans";
 
 type Option = { id: string; name: string };
 const empty = { name: "", description: "", categoryId: "", customCategory: "", municipalityId: "", marketId: "", phone: "", whatsapp: "", addressText: "", active: true };
@@ -41,6 +42,7 @@ export default function MinhasEmpresas() {
     <Message error={error} ok={notice} />
     {items.map(b => <View key={b.id} style={ui.card}>
       <Text style={ui.h2}>{b.name}{b.verified ? " ✔️" : ""}{b.active ? "" : " (oculta)"}</Text>
+      <PlanBanner kind="business" subjectId={b.id} />
       <Button title="Ver" variant="secondary" onPress={() => router.push(("/empresas/" + b.id) as any)} />
       <Button title="📸 Logótipo e portfólio" variant={showcase === b.id ? "primary" : "secondary"} onPress={() => setShowcase(showcase === b.id ? null : b.id)} />
       {showcase === b.id && <View style={{ gap: 10 }}>

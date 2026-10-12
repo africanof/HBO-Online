@@ -7,6 +7,7 @@ export type AdminStats = {
   products_active?: number; providers?: number; businesses?: number; orders_30d?: number; orders_completed_30d?: number; sales_value_30d?: number;
   services_30d?: number; services_done_30d?: number; deals_30d?: number; reviews_30d?: number; verifications_pending?: number;
   disputes_open?: number; disputes_escalated?: number; refunds_30d?: number;
+  plans_trial?: number; plans_paid?: number; plans_expired?: number; plan_payments_pending?: number; plan_revenue_30d?: number;
 };
 export type ReportStatus = "open" | "reviewing" | "resolved" | "dismissed";
 export type UserStatus = "active" | "suspended" | "banned";
@@ -18,10 +19,10 @@ export const ROLE_LABELS: Record<AdminRole, string> = { user: "Utilizador", mode
 export const ADMIN_STAT_LABELS: [keyof AdminStats, string][] = [
   ["users", "Utilizadores"], ["users_7d", "Novos (7 dias)"], ["users_suspended", "Suspensos"],
   ["listings_published", "Anúncios publicados"], ["listings_total", "Anúncios (total)"], ["listings_7d", "Anúncios novos (7 dias)"],
-  ["reports_open", "Denúncias por tratar"], ["verifications_pending", "Verificações por analisar"], ["disputes_escalated", "Disputas para decidir"], ["disputes_open", "Devoluções e reembolsos abertos"], ["conversations", "Conversas"], ["messages_7d", "Mensagens (7 dias)"],
+  ["reports_open", "Denúncias por tratar"], ["verifications_pending", "Verificações por analisar"], ["plan_payments_pending", "Pagamentos de mensalidade por confirmar"], ["disputes_escalated", "Disputas para decidir"], ["disputes_open", "Devoluções e reembolsos abertos"], ["conversations", "Conversas"], ["messages_7d", "Mensagens (7 dias)"],
   ["products_active", "Produtos na loja"], ["providers", "Profissionais"], ["businesses", "Empresas"],
   ["orders_30d", "Encomendas (30 dias)"], ["orders_completed_30d", "Encomendas concluídas (30 dias)"], ["sales_value_30d", "Vendas concluídas em Kz (30 dias)"],
-  ["services_30d", "Pedidos de serviço (30 dias)"], ["services_done_30d", "Serviços prestados (30 dias)"], ["deals_30d", "Negócios em anúncios (30 dias)"], ["reviews_30d", "Avaliações (30 dias)"], ["refunds_30d", "Reembolsado em Kz (30 dias)"]
+  ["services_30d", "Pedidos de serviço (30 dias)"], ["services_done_30d", "Serviços prestados (30 dias)"], ["deals_30d", "Negócios em anúncios (30 dias)"], ["reviews_30d", "Avaliações (30 dias)"], ["refunds_30d", "Reembolsado em Kz (30 dias)"], ["plans_trial", "Perfis no mês grátis"], ["plans_paid", "Perfis com mensalidade paga"], ["plans_expired", "Perfis sem pagamento (escondidos)"], ["plan_revenue_30d", "Mensalidades recebidas em Kz (30 dias)"]
 ];
 
 export function canModerate(role: string | null | undefined) { return role === "moderator" || role === "admin"; }

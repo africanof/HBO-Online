@@ -37,15 +37,19 @@ export function termsPage(email?: string | null): InfoPage {
         "Pode retirar uma proposta enquanto não tiver resposta. Um lance só pode ser retirado com motivo, se faltarem mais de 12 horas para o fim do leilão ou se foi feito há menos de 1 hora; quem retira lances muitas vezes pode ser impedido de licitar.",
         "Nunca pague adiantado a quem não conhece. Prefira encontrar-se num local público, ver o artigo e pagar na entrega.",
         "Nas encomendas da Loja, o comprador pode pedir devolução, reembolso ou troca até 14 dias depois da entrega, e o vendedor deve responder. Veja «Devoluções e reembolsos»."] },
-      { title: "5. Avaliações e denúncias", paragraphs: [
+      { title: "5. Mensalidades de profissionais e empresas", paragraphs: [
+        "Os perfis de profissionais e de empresas têm um mês grátis. Depois, pagam uma mensalidade à plataforma: 2 000 Kz por mês para profissionais e 5 000 Kz por mês para empresas (os valores em vigor aparecem em «O meu plano»).",
+        "O pagamento é feito por transferência bancária ou Multicaixa Express, com a referência ou o comprovativo, e fica válido quando a administração o confirma.",
+        "Sem mês grátis nem pagamento em dia, o perfil deixa de aparecer aos clientes, mas não é apagado. Volta a aparecer quando o pagamento é confirmado. Anúncios classificados e a Loja não pagam mensalidade."] },
+      { title: "6. Avaliações e denúncias", paragraphs: [
         "Só quem fez negócio pode avaliar. As avaliações devem ser honestas e sem insultos.",
         "Se vir algo errado, use «Denunciar». A administração analisa as denúncias e pode retirar conteúdos."] },
-      { title: "6. Verificação de perfis", paragraphs: [
+      { title: "7. Verificação de perfis", paragraphs: [
         "O selo «Verificado» quer dizer que a administração viu um documento. Não é uma garantia sobre a pessoa nem sobre o negócio: continue a ter cuidado."] },
-      { title: "7. Responsabilidade", paragraphs: [
+      { title: "8. Responsabilidade", paragraphs: [
         "O Huambo Online faz o possível para manter o serviço a funcionar e seguro, mas não garante que esteja sempre disponível nem responde pelos negócios feitos entre utilizadores.",
         "Estes termos podem mudar. Quando mudarem, a data no topo é atualizada."] },
-      { title: "8. Contacto", paragraphs: [contactLine(email)] }
+      { title: "9. Contacto", paragraphs: [contactLine(email)] }
     ]
   };
 }
@@ -154,6 +158,7 @@ export const HELP_FAQ: FaqItem[] = [
   { q: "Como cancelo um lance num leilão?", a: "No anúncio do leilão, abra «Ver lances» e carregue em «Retirar o meu lance», escolhendo o motivo. Pode fazê-lo se faltarem mais de 12 horas para o fim, ou se o lance foi feito há menos de 1 hora. No máximo 3 vezes em 30 dias. O vendedor também pode cancelar os lances de uma pessoa, explicando porquê." },
   { q: "O que é o número do anúncio (ex.: A-1001)?", a: "Cada anúncio (A-…), produto (P-…) e encomenda (E-…) tem um número curto, que aparece na página. Use-o para falar com o vendedor ou com a administração, ou escreva-o na pesquisa para abrir o artigo diretamente." },
   { q: "Como mostro os meus trabalhos (portfólio)?", a: "Profissionais: em «A sua conta» → «Perfil profissional» → «Portfólio», carregue em «Juntar trabalho», dê um título e junte até 8 fotografias. Empresas: em «As minhas empresas» → «Logótipo e portfólio». Os trabalhos aparecem na sua página pública, em «Trabalhos realizados», e pode mudar a ordem." },
+  { q: "Quanto custa ter perfil de profissional ou de empresa?", a: "O primeiro mês é grátis. Depois, os profissionais pagam 2 000 Kz por mês e as empresas 5 000 Kz por mês. Pague em «A sua conta» → «O meu plano», com a referência ou o comprovativo da transferência ou do Multicaixa Express. Recebe avisos 7 dias e 1 dia antes do fim. Sem pagamento, o perfil deixa de aparecer aos clientes até pagar." },
   { q: "Como peço um serviço a um profissional?", a: "Abra a página do profissional ou empresa e use «Pedir serviço». Quando o serviço terminar, confirme e avalie — a avaliação fica marcada «Serviço confirmado»." },
   { q: "Como avalio um vendedor ou comprador?", a: "Depois de uma encomenda concluída, ou quando o anúncio é marcado como vendido com a pessoa certa, aparece em «Avaliações» para avaliar." },
   { q: "Como fico com o selo «Verificado»?", a: "Em «A sua conta», abra «Verificar perfil» e envie a fotografia do BI (ou do alvará/NIF da empresa). O documento fica privado; a administração responde por notificação." },

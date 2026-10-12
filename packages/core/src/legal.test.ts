@@ -24,7 +24,7 @@ describe("páginas de informação", () => {
   });
   it("a ajuda cobre as funções principais", () => {
     const qs = HELP_FAQ.map(f => f.q).join(" ");
-    for (const w of ["publico", "propostas", "trocas", "serviço", "avalio", "Verificado", "burlas", "internet", "apago", "devolução", "retiro uma proposta", "cancelo um lance", "leilões", "portfólio", "número do anúncio"]) expect(qs.toLowerCase()).toContain(w.toLowerCase());
+    for (const w of ["publico", "propostas", "trocas", "serviço", "avalio", "Verificado", "burlas", "internet", "apago", "devolução", "retiro uma proposta", "cancelo um lance", "leilões", "portfólio", "quanto custa", "número do anúncio"]) expect(qs.toLowerCase()).toContain(w.toLowerCase());
   });
   it("a política de devoluções bate certo com as regras do servidor", () => {
     const p = returnsPage("ajuda@huambo.ao");
@@ -33,5 +33,6 @@ describe("páginas de informação", () => {
     expect(txt).toMatch(/14 dias/); expect(txt).toMatch(/3 dias/); expect(txt).toMatch(/4 fotografias/);
     expect(txt).toMatch(/não guarda o dinheiro/); expect(txt).toMatch(/ajuda@huambo\.ao/);
     expect(termsPage().sections.flatMap(x => x.paragraphs).join(" ")).toMatch(/Devoluções e reembolsos/);
+    expect(termsPage().sections.flatMap(x => x.paragraphs).join(" ")).toMatch(/2 000 Kz por mês para profissionais e 5 000 Kz por mês para empresas/);
   });
 });
