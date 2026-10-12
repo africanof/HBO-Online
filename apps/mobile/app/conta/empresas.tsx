@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { Alert, ScrollView, Switch, Text, TextInput, View } from "react-native";
-import { listMyBusinesses, saveBusiness, deleteBusiness, listDirectoryCategories, friendlyError, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
+import { listMyBusinesses, saveBusiness, setBusinessLogo, deleteBusiness, listDirectoryCategories, friendlyError, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { MarketPicker } from "../../components/MarketPicker";
 import { Button, Chips, Message } from "../../components/Ui";
 import { useTerritory } from "../../components/Directory";
+import { PhotoPicker, PortfolioManager } from "../../components/Portfolio";
 
 type Option = { id: string; name: string };
 const empty = { name: "", description: "", categoryId: "", customCategory: "", municipalityId: "", marketId: "", phone: "", whatsapp: "", addressText: "", active: true };
@@ -15,7 +16,7 @@ export default function MinhasEmpresas() {
   const router = useRouter();
   const scroll = useRef<ScrollView>(null);
   const [uid, setUid] = useState<string | null | undefined>(undefined);
-  const [items, setItems] = useState<any[]>([]); const [form, setForm] = useState(empty); const [editing, setEditing] = useState<string | null>(null);
+  const [items, setItems] = useState<any[]>([]); const [form, setForm] = useState(empty); const [editing, setEditing] = useState<string | null>(null); const [showcase, setShowcase] = useState<string | null>(null);
   const [categories, setCategories] = useState<Option[]>([]); const { provinces, municipalities, provinceId, setProvinceId } = useTerritory();
   const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
 
@@ -41,6 +42,12 @@ export default function MinhasEmpresas() {
     {items.map(b => <View key={b.id} style={ui.card}>
       <Text style={ui.h2}>{b.name}{b.verified ? " ✔️" : ""}{b.active ? "" : " (oculta)"}</Text>
       <Button title="Ver" variant="secondary" onPress={() => router.push(("/empresas/" + b.id) as any)} />
+      <Button title="📸 Logótipo e portfólio" variant={showcase === b.id ? "primary" : "secondary"} onPress={() => setShowcase(showcase === b.id ? null : b.id)} />
+      {showcase === b.id && <View style={{ gap: 10 }}>
+        <Text style={ui.label}>Logótipo</Text>
+        <PhotoPicker uid={uid} current={b.logo_url ?? null} label="Logótipo" onSave={url => setBusinessLogo(supabase(), b.id, url)} />
+        <PortfolioManager uid={uid} target={{ businessId: b.id }} />
+      </View>}
       <Button title="Editar" variant="secondary" onPress={() => { setEditing(b.id); setForm({ name: b.name ?? "", description: b.description ?? "", ...categoryFormValues(b), municipalityId: b.municipality_id ?? "", marketId: b.market_id ?? "", phone: b.phone ?? "", whatsapp: b.whatsapp ?? "", addressText: b.address_text ?? "", active: b.active }); scroll.current?.scrollToEnd(); }} />
       <Button title="Apagar" variant="danger" onPress={() => Alert.alert("Apagar empresa", "Tem a certeza?", [{ text: "Cancelar", style: "cancel" }, { text: "Apagar", style: "destructive", onPress: async () => { const r = await deleteBusiness(supabase(), b.id); if (r.error) setError(friendlyError(r.error)); else await load(uid); } }])} />
     </View>)}

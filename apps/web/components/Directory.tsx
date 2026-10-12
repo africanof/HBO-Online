@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import { listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
+import { listBusinessProducts, listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
   listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
   listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { SaveButton, ShareButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, stars } from "./Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "./Trust";
+import { PortfolioGallery } from "./Portfolio";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string };
@@ -77,6 +78,19 @@ export function DirectoryList({ kind }: { kind: Kind }) {
   </main>;
 }
 
+/** Produtos da empresa na Loja. */
+function BusinessProducts({ ownerId, businessId }: { ownerId: string; businessId: string }) {
+  const [items, setItems] = useState<any[]>([]);
+  useEffect(() => { void listBusinessProducts(supabase(), ownerId, businessId).then(r => setItems(r.data)); }, [businessId]);
+  if (!items.length) return null;
+  return <section className="stack"><h2 style={{ margin: 0 }}>🛍️ Produtos na Loja ({items.length})</h2>
+    <div className="portfolio-grid">{items.slice(0, 12).map(p => <a key={p.id} className="portfolio-tile" href={"/loja/" + p.id} aria-label={`${p.name}, ${formatPrice(p.price, p.currency)}`}>
+      {(p.media ?? [])[0] ? <img src={p.media[0]} alt="" loading="lazy" /> : <span aria-hidden style={{ display: "grid", placeItems: "center", height: "100%", fontSize: 44 }}>📦</span>}
+      <span className="portfolio-caption"><strong>{p.name}</strong><small>{formatPrice(p.price, p.currency)}</small></span>
+    </a>)}</div>
+  </section>;
+}
+
 export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
   const target: ReviewTarget = kind === "providers" ? { providerId: id } : { businessId: id };
   const [item, setItem] = useState<any>(null); const [services, setServices] = useState<any[]>([]); const [reviews, setReviews] = useState<any[]>([]);
@@ -127,7 +141,10 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
 
   return <main className="stack">
     <a href={TEXT[kind].base}>← Voltar</a>
-    <h1>{name}{item.verified ? " ✔️" : ""}</h1>
+    <div className="row" style={{ alignItems: "center", gap: 14, flexWrap: "nowrap" }}>
+      {(item.avatar_url || item.logo_url) && <img className="profile-pic" src={item.avatar_url || item.logo_url} alt={kind === "providers" ? "Fotografia de " + name : "Logótipo de " + name} />}
+      <h1 style={{ margin: 0, overflowWrap: "anywhere" }}>{name}{item.verified ? " ✔️" : ""}</h1>
+    </div>
     {kind === "providers" && item.headline && <p style={{ fontSize: 19 }}>{item.headline}</p>}
     <p>{[categoryLabel(item), item.municipalities?.name, item.address_text].filter(Boolean).join(" · ")}</p>
     {item.markets?.name && <p>🧺 Na <a href={"/pracas/" + item.markets.id}>{item.markets.name}</a></p>}
@@ -145,6 +162,8 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     {kind === "providers" && services.length > 0 && <section className="stack"><h2>Serviços</h2>
       {services.map(s => <div key={s.id} className="card"><strong>{s.title}</strong>{s.description && <span>{s.description}</span>}<span>{s.price_from != null ? "Desde " + formatPrice(s.price_from, s.currency) : "Preço sob consulta"}</span></div>)}
     </section>}
+    <PortfolioGallery target={kind === "providers" ? { providerId: id } : { businessId: id }} />
+    {kind === "businesses" && <BusinessProducts ownerId={item.owner_id} businessId={id} />}
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
     {!mine && <RequestServiceBox target={target} signedIn={!!uid} />}
