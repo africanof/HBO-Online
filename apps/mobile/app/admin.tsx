@@ -12,10 +12,11 @@ import { Button, Chips, Message } from "../components/Ui";
 import { AdminCouriers } from "../components/AdminCouriers";
 import { AdminMarkets } from "../components/AdminMarkets";
 import { AdminVerifications, AdminAudit } from "../components/AdminTrust";
+import { AdminDisputes } from "../components/Disputes";
 
-type Tab = "stats" | "reports" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+type Tab = "stats" | "reports" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
 const tabOptions: { value: Tab; label: string }[] = [
-  { value: "stats", label: "Estatísticas" }, { value: "reports", label: "Denúncias" }, { value: "verifications", label: "Verificações" }, { value: "listings", label: "Anúncios" },
+  { value: "stats", label: "Estatísticas" }, { value: "reports", label: "Denúncias" }, { value: "disputes", label: "Disputas" }, { value: "verifications", label: "Verificações" }, { value: "listings", label: "Anúncios" },
   { value: "users", label: "Utilizadores" }, { value: "categories", label: "Categorias" }, { value: "couriers", label: "Estafetas" }, { value: "markets", label: "Praças" }, { value: "audit", label: "Registo" }
 ];
 
@@ -35,7 +36,7 @@ export default function Admin() {
 
   async function load(t: Tab) {
     setError("");
-    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit") return;
+    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "disputes") return;
     const c = supabase();
     const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReportsV2(c, reportFilter || undefined)
       : t === "listings" ? await listListingsForModeration(c, "", listingQuery) : t === "users" ? await listUsersForAdmin(c, userQuery) : await listAllCategories(c);
@@ -62,6 +63,7 @@ export default function Admin() {
     {tab === "couriers" && <AdminCouriers />}
     {tab === "markets" && <AdminMarkets />}
     {tab === "verifications" && <AdminVerifications />}
+    {tab === "disputes" && <AdminDisputes />}
     {tab === "audit" && <AdminAudit />}
     {tab === "stats" && stats && ADMIN_STAT_LABELS.map(([k, l]) => <View key={k} style={ui.card}><Text style={ui.text}>{l}</Text><Text style={ui.h1}>{stats[k]}</Text></View>)}
 

@@ -13,7 +13,7 @@ export function InfoPageView({ page }: { page: Page }) {
       {s.paragraphs.map((p, i) => <p key={i} style={{ margin: 0, lineHeight: 1.6 }}>{p}</p>)}
     </section>)}
     <nav className="row" aria-label="Mais informação" style={{ marginTop: 12 }}>
-      <a href="/ajuda">Ajuda</a> · <a href="/termos">Termos</a> · <a href="/privacidade">Privacidade</a> · <a href="/apagar-conta">Apagar conta</a>
+      <a href="/ajuda">Ajuda</a> · <a href="/termos">Termos</a> · <a href="/privacidade">Privacidade</a> · <a href="/devolucoes">Devoluções</a> · <a href="/apagar-conta">Apagar conta</a>
     </nav>
   </main>;
 }

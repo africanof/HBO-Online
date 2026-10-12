@@ -63,3 +63,4 @@ export * from "./sale-modes";
 export * from "./photos";
 export * from "./legal";
 export * from "./theme";
+export * from "./disputes";
