@@ -9,9 +9,10 @@ import { supabase } from "../../lib/supabase";
 import { AdminCouriers } from "../../components/AdminCouriers";
 import { AdminMarkets } from "../../components/AdminMarkets";
 import { AdminVerifications, AdminAudit } from "../../components/AdminTrust";
+import { AdminDisputes } from "../../components/Disputes";
 
-type Tab = "stats" | "reports" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
-const tabs: [Tab, string][] = [["stats", "Estatísticas"], ["reports", "Denúncias"], ["verifications", "Verificações"], ["listings", "Anúncios"], ["users", "Utilizadores"], ["categories", "Categorias"], ["couriers", "Estafetas"], ["markets", "Praças"], ["audit", "Registo"]];
+type Tab = "stats" | "reports" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+const tabs: [Tab, string][] = [["stats", "Estatísticas"], ["reports", "Denúncias"], ["disputes", "Disputas"], ["verifications", "Verificações"], ["listings", "Anúncios"], ["users", "Utilizadores"], ["categories", "Categorias"], ["couriers", "Estafetas"], ["markets", "Praças"], ["audit", "Registo"]];
 
 export default function AdminPage() {
   const [role, setRole] = useState<AdminRole | null>(null);
@@ -56,6 +57,7 @@ export default function AdminPage() {
     {tab === "couriers" && <AdminCouriers />}
     {tab === "markets" && <AdminMarkets />}
     {tab === "verifications" && <AdminVerifications />}
+    {tab === "disputes" && <AdminDisputes />}
     {tab === "audit" && <AdminAudit />}
     {tab === "stats" && stats && <section className="grid">{ADMIN_STAT_LABELS.map(([k, l]) => <div key={k} className="card"><span>{l}</span><strong style={{ fontSize: 32 }}>{stats[k]}</strong></div>)}</section>}
 

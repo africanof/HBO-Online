@@ -6,7 +6,7 @@
 export type InfoSection = { title: string; paragraphs: string[] };
 export type InfoPage = { slug: string; title: string; intro: string; updated: string; sections: InfoSection[] };
 
-export const LEGAL_UPDATED = "2026-10-11";
+export const LEGAL_UPDATED = "2026-10-12";
 /** E-mail de contacto público (opcional). Sem e-mail, as páginas indicam a Conta e as Mensagens. */
 export function contactLine(email?: string | null): string {
   const e = (email ?? "").trim();
@@ -34,7 +34,8 @@ export function termsPage(email?: string | null): InfoPage {
         "A administração pode esconder ou retirar anúncios, produtos e perfis que não cumpram estas regras, e suspender contas."] },
       { title: "4. Propostas, leilões, trocas e encomendas", paragraphs: [
         "Uma proposta aceite, um lance vencedor ou uma encomenda confirmada é um compromisso entre as duas pessoas. Cumpra o que combinou.",
-        "Nunca pague adiantado a quem não conhece. Prefira encontrar-se num local público, ver o artigo e pagar na entrega."] },
+        "Nunca pague adiantado a quem não conhece. Prefira encontrar-se num local público, ver o artigo e pagar na entrega.",
+        "Nas encomendas da Loja, o comprador pode pedir devolução, reembolso ou troca até 14 dias depois da entrega, e o vendedor deve responder. Veja «Devoluções e reembolsos»."] },
       { title: "5. Avaliações e denúncias", paragraphs: [
         "Só quem fez negócio pode avaliar. As avaliações devem ser honestas e sem insultos.",
         "Se vir algo errado, use «Denunciar». A administração analisa as denúncias e pode retirar conteúdos."] },
@@ -104,6 +105,43 @@ export function deleteAccountPage(email?: string | null): InfoPage {
   };
 }
 
+export function returnsPage(email?: string | null): InfoPage {
+  return {
+    slug: "devolucoes", title: "Devoluções e reembolsos", updated: LEGAL_UPDATED,
+    intro: "Como pedir a devolução, o reembolso ou a troca de uma encomenda feita na Loja do Huambo Online, e o que acontece em cada passo.",
+    sections: [
+      { title: "1. Quando posso pedir", paragraphs: [
+        "Numa encomenda da Loja que já pagou ou que já recebeu, até 14 dias depois da entrega.",
+        "Motivos: não recebeu, chegou estragado ou partido, é diferente do anúncio, artigo errado (modelo, tamanho, cor) ou faltam artigos.",
+        "Se a encomenda ainda está «Pendente», não precisa de pedido: carregue em «Cancelar»."] },
+      { title: "2. O que posso pedir", paragraphs: [
+        "Reembolso: o vendedor devolve-lhe o dinheiro (todo ou parte).",
+        "Devolução e reembolso: devolve o artigo ao vendedor e ele devolve-lhe o dinheiro.",
+        "Troca: o vendedor envia-lhe outro artigo igual, em bom estado."] },
+      { title: "3. Como pedir", paragraphs: [
+        "Abra «Encomendas», escolha a encomenda e carregue em «Pedir devolução ou reembolso».",
+        "Escolha o motivo, explique o que aconteceu e junte até 4 fotografias. As fotografias ficam privadas: só o vendedor e a administração as veem.",
+        "Acompanhe tudo em «Devoluções e reembolsos». Cada passo envia uma notificação à outra pessoa."] },
+      { title: "4. O que o vendedor faz", paragraphs: [
+        "Aceita o pedido ou recusa-o explicando o motivo.",
+        "Se aceitar uma devolução, combinem pelas mensagens onde entregar o artigo. Quando o receber, confirma e devolve o dinheiro.",
+        "Quando devolver o dinheiro, carrega em «Já devolvi o dinheiro» e o comprador confirma que recebeu."] },
+      { title: "5. Se não se entenderem", paragraphs: [
+        "Se o vendedor recusar, pode chamar a administração logo. Se alguém não responder em 3 dias, qualquer um dos dois pode chamar a administração.",
+        "A administração vê o pedido, as mensagens e as fotografias, e decide: reembolso (todo ou parte), devolução, troca ou recusa. A decisão fica registada.",
+        "Quem não cumprir uma decisão pode ter a conta suspensa."] },
+      { title: "6. Encomenda paga e cancelada", paragraphs: [
+        "Se a encomenda já estava paga e foi cancelada, o pedido de reembolso abre sozinho: o vendedor tem de devolver o dinheiro todo."] },
+      { title: "7. Como chega o dinheiro", paragraphs: [
+        "O Huambo Online não guarda o dinheiro das compras. O reembolso é feito pelo vendedor, pelo mesmo meio do pagamento (dinheiro, transferência ou Multicaixa Express), salvo outro acordo entre os dois.",
+        "Guarde os comprovativos de pagamento e de reembolso: podem ser pedidos pela administração."] },
+      { title: "8. Negócios fora da Loja", paragraphs: [
+        "Nos anúncios classificados (venda, troca, arrendamento) o negócio é feito diretamente entre as pessoas. Se algo correr mal, use «Denunciar» e a administração analisa."] },
+      { title: "9. Contacto", paragraphs: [contactLine(email)] }
+    ]
+  };
+}
+
 export type FaqItem = { q: string; a: string };
 export const HELP_FAQ: FaqItem[] = [
   { q: "Como publico um anúncio?", a: "Carregue em «Vender» ou «Publicar anúncio», escolha o tipo e a finalidade, diga como quer vender (preço fixo, negociável, propostas, leilão ou troca), junte fotografias e publique." },
@@ -114,6 +152,7 @@ export const HELP_FAQ: FaqItem[] = [
   { q: "Como avalio um vendedor ou comprador?", a: "Depois de uma encomenda concluída, ou quando o anúncio é marcado como vendido com a pessoa certa, aparece em «Avaliações» para avaliar." },
   { q: "Como fico com o selo «Verificado»?", a: "Em «A sua conta», abra «Verificar perfil» e envie a fotografia do BI (ou do alvará/NIF da empresa). O documento fica privado; a administração responde por notificação." },
   { q: "Como evito burlas?", a: "Não pague adiantado a quem não conhece. Encontre-se num local público, veja o artigo e pague na entrega. Desconfie de preços demasiado baixos. Se suspeitar, use «Denunciar»." },
+  { q: "Como peço uma devolução ou reembolso?", a: "Em «Encomendas», escolha a encomenda e carregue em «Pedir devolução ou reembolso» (até 14 dias depois da entrega). Explique o problema e junte fotografias. Se o vendedor recusar ou não responder, pode chamar a administração. Veja «Devoluções e reembolsos»." },
   { q: "Posso usar sem internet?", a: "Pode ver a página inicial, a última pesquisa e os últimos anúncios que abriu. Para publicar, enviar mensagens ou propostas precisa de ligação." },
   { q: "Como apago a minha conta?", a: "Em «A sua conta», no fim da página, escreva ELIMINAR e confirme. Veja os pormenores em «Como apagar a minha conta»." }
 ];
@@ -121,5 +160,5 @@ export const HELP_FAQ: FaqItem[] = [
 /** Ligações para o rodapé do Site e para a Conta na APP. */
 export const INFO_LINKS: { href: string; label: string }[] = [
   { href: "/ajuda", label: "Ajuda" }, { href: "/termos", label: "Termos de Uso" },
-  { href: "/privacidade", label: "Política de Privacidade" }, { href: "/apagar-conta", label: "Como apagar a conta" }
+  { href: "/privacidade", label: "Política de Privacidade" }, { href: "/devolucoes", label: "Devoluções e reembolsos" }, { href: "/apagar-conta", label: "Como apagar a conta" }
 ];

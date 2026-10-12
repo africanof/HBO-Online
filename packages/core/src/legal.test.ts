@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { termsPage, privacyPage, deleteAccountPage, HELP_FAQ, INFO_LINKS, contactLine } from "./legal";
+import { termsPage, privacyPage, deleteAccountPage, returnsPage, HELP_FAQ, INFO_LINKS, contactLine } from "./legal";
 
 describe("páginas de informação", () => {
   it("mostra o e-mail só quando é válido", () => {
@@ -13,7 +13,7 @@ describe("páginas de informação", () => {
     expect(pages.map(p => p.slug)).toEqual(["termos", "privacidade", "apagar-conta"]);
     for (const p of pages) { expect(p.sections.length).toBeGreaterThan(1); expect(p.updated).toMatch(/^\d{4}-\d{2}-\d{2}$/); }
     expect(deleteAccountPage().sections[0].paragraphs.join(" ")).toMatch(/ELIMINAR/);
-    expect(INFO_LINKS.map(l => l.href)).toEqual(["/ajuda", "/termos", "/privacidade", "/apagar-conta"]);
+    expect(INFO_LINKS.map(l => l.href)).toEqual(["/ajuda", "/termos", "/privacidade", "/devolucoes", "/apagar-conta"]);
   });
   it("a privacidade descreve o que a APP faz de verdade", () => {
     const txt = privacyPage().sections.flatMap(s => s.paragraphs).join(" ");
@@ -24,6 +24,14 @@ describe("páginas de informação", () => {
   });
   it("a ajuda cobre as funções principais", () => {
     const qs = HELP_FAQ.map(f => f.q).join(" ");
-    for (const w of ["publico", "propostas", "trocas", "serviço", "avalio", "Verificado", "burlas", "internet", "apago"]) expect(qs.toLowerCase()).toContain(w.toLowerCase());
+    for (const w of ["publico", "propostas", "trocas", "serviço", "avalio", "Verificado", "burlas", "internet", "apago", "devolução"]) expect(qs.toLowerCase()).toContain(w.toLowerCase());
+  });
+  it("a política de devoluções bate certo com as regras do servidor", () => {
+    const p = returnsPage("ajuda@huambo.ao");
+    const txt = p.sections.flatMap(x => x.paragraphs).join(" ");
+    expect(p.slug).toBe("devolucoes");
+    expect(txt).toMatch(/14 dias/); expect(txt).toMatch(/3 dias/); expect(txt).toMatch(/4 fotografias/);
+    expect(txt).toMatch(/não guarda o dinheiro/); expect(txt).toMatch(/ajuda@huambo\.ao/);
+    expect(termsPage().sections.flatMap(x => x.paragraphs).join(" ")).toMatch(/Devoluções e reembolsos/);
   });
 });
