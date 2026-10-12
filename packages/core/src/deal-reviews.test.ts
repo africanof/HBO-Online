@@ -65,7 +65,7 @@ describe("reputação", () => {
     await confirmService(client, uuid, 4, "");
     await listMyServiceRequests(client, "provider");
     await listPendingReviews(client);
-    expect(calls.map(c => c.fn)).toEqual(["public_user_stats", "submit_deal_review", "set_listing_deal", "listing_deal_candidates", "request_service_v2",
+    expect(calls.map(c => c.fn)).toEqual(["public_user_stats", "submit_deal_review", "set_listing_deal_v2", "listing_deal_candidates", "request_service_v2",
       "update_service_request", "confirm_service", "my_service_requests_v2", "my_pending_reviews"]);
     expect(calls[1].args).toEqual({ p_kind: "order", p_ref: uuid, p_rating: 5, p_comment: "Bom" });
     expect(calls[4].args).toEqual({ p_provider_id: null, p_business_id: uuid, p_description: "Pintar", p_preferred_date: null });

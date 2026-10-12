@@ -17,7 +17,7 @@ import { AdminPlans } from "../components/Plans";
 
 type Tab = "stats" | "reports" | "plans" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
 const tabOptions: { value: Tab; label: string }[] = [
-  { value: "stats", label: "Estatísticas" }, { value: "reports", label: "Denúncias" }, { value: "plans", label: "Mensalidades" }, { value: "disputes", label: "Disputas" }, { value: "verifications", label: "Verificações" }, { value: "listings", label: "Anúncios" },
+  { value: "stats", label: "Estatísticas" }, { value: "reports", label: "Denúncias" }, { value: "plans", label: "Mensalidades e comissões" }, { value: "disputes", label: "Disputas" }, { value: "verifications", label: "Verificações" }, { value: "listings", label: "Anúncios" },
   { value: "users", label: "Utilizadores" }, { value: "categories", label: "Categorias" }, { value: "couriers", label: "Estafetas" }, { value: "markets", label: "Praças" }, { value: "audit", label: "Registo" }
 ];
 

@@ -5,18 +5,19 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * depois pagam por mês (2 000 Kz profissionais, 5 000 Kz empresas — a administração pode mudar).
  * Sem pagamento em dia, o perfil deixa de aparecer ao público até pagar.
  */
-export type PlanKind = "provider" | "business";
+export type PlanKind = "provider" | "business" | "store";
 export type PlanState = "trial" | "trial_ending" | "paid" | "expiring" | "expired";
 export type PaymentMethodPlan = "bank_transfer" | "multicaixa_express" | "cash";
 export type MyPlan = { id: string; kind: PlanKind; subject_id: string; name: string; trial_ends_at: string; paid_until: string | null; active_until: string;
   state: PlanState; monthly_price: number | string; pending_payment_id: string | null; pending_amount: number | string | null; last_rejected_note: string | null };
-export type PlatformSettings = { provider_monthly_kz: number | string; business_monthly_kz: number | string; trial_days: number;
+export type PlatformSettings = { provider_monthly_kz: number | string; business_monthly_kz: number | string; store_monthly_kz?: number | string; trial_days: number;
+  listing_commission_pct?: number | string; commission_due_days?: number;
   bank_name: string | null; iban: string | null; account_holder: string | null; express_number: string | null; payment_note: string | null };
 export type AdminPlanPayment = { id: string; subscription_id: string; kind: PlanKind; subject_id: string; subject_name: string; owner_id: string; owner_name: string; phone: string | null;
   months: number; amount: number | string; method: PaymentMethodPlan; reference: string | null; proof_path: string | null; status: "pending" | "confirmed" | "rejected";
   admin_note: string | null; created_at: string; active_until: string };
 
-export const PLAN_KIND_LABELS: Record<PlanKind, string> = { provider: "Perfil profissional", business: "Empresa" };
+export const PLAN_KIND_LABELS: Record<PlanKind, string> = { provider: "Perfil profissional", business: "Empresa", store: "Loja" };
 export const PLAN_STATE_LABELS: Record<PlanState, string> = {
   trial: "Mês grátis", trial_ending: "Mês grátis a terminar", paid: "Pago ✔", expiring: "Pago — termina em breve", expired: "Sem pagamento — não aparece ao público"
 };
@@ -60,7 +61,7 @@ export async function listMyPlans(client: SupabaseClient) {
   return { data: (r.data ?? []) as MyPlan[], error: r.error };
 }
 export async function getPlatformSettings(client: SupabaseClient) {
-  const r = await client.from("platform_settings").select("provider_monthly_kz,business_monthly_kz,trial_days,bank_name,iban,account_holder,express_number,payment_note").eq("id", 1).maybeSingle();
+  const r = await client.from("platform_settings").select("provider_monthly_kz,business_monthly_kz,store_monthly_kz,trial_days,listing_commission_pct,commission_due_days,bank_name,iban,account_holder,express_number,payment_note").eq("id", 1).maybeSingle();
   return { data: (r.data ?? null) as PlatformSettings | null, error: r.error };
 }
 export function updatePlatformSettings(client: SupabaseClient, s: Partial<PlatformSettings>) {

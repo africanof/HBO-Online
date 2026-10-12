@@ -149,8 +149,8 @@ export async function listDealCandidates(client: SupabaseClient, listingId: stri
   const r = await client.rpc("listing_deal_candidates", { p_listing_id: listingId });
   return { data: (r.data ?? []) as DealCandidate[], error: r.error };
 }
-export function setListingDeal(client: SupabaseClient, listingId: string, status: "sold" | "rented" | "closed", counterpartId: string) {
-  return client.rpc("set_listing_deal", { p_listing_id: listingId, p_status: status, p_counterpart: counterpartId });
+export function setListingDeal(client: SupabaseClient, listingId: string, status: "sold" | "rented" | "closed", counterpartId: string, saleAmount?: number | null) {
+  return client.rpc("set_listing_deal_v2", { p_listing_id: listingId, p_status: status, p_counterpart: counterpartId, p_sale_amount: status === "sold" ? saleAmount ?? null : null });
 }
 export function requestService(client: SupabaseClient, target: { providerId?: string; businessId?: string }, description: string, preferredDate?: string) {
   return client.rpc("request_service_v2", { p_provider_id: target.providerId ?? null, p_business_id: target.businessId ?? null, p_description: description.trim(), p_preferred_date: preferredDate || null });

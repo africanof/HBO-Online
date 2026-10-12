@@ -7,6 +7,7 @@ import { listMyProducts, saveProduct, deleteProduct, listProductCategories, uplo
 import { supabase, currentUserId } from "../../../lib/supabase";
 import { useTerritory } from "../../../components/Directory";
 import { compressPhoto } from "../../../lib/image";
+import { PlanBanner } from "../../../components/Plans";
 
 type Option = { id: string; name: string };
 type Photo = { key: string; src: string; file?: File };
@@ -64,6 +65,7 @@ export default function MeusProdutos() {
   return <main className="stack" style={{ maxWidth: 760 }}>
     <a href="/conta">← Conta</a>
     <h1>Os meus produtos</h1>
+    <PlanBanner kind="store" subjectId={uid} />
     <a className="btn secondary" href="/encomendas?vendas=1" style={{ justifySelf: "start" }}>📦 As minhas vendas</a>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}

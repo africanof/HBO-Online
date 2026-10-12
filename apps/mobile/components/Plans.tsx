@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Alert, Image, Linking, Text, TextInput, View } from "react-native";
-import { getPlatformSettings, updatePlatformSettings, listMyPlans, listPlanPaymentsForAdmin, decidePlanPayment, paymentProofUrl, submitPlanPayment, uploadPaymentProof,
+import { listCommissionsForAdmin, updateCommissionAsAdmin, COMMISSION_STATUS_LABELS, type AdminCommission,
+  getPlatformSettings, updatePlatformSettings, listMyPlans, listPlanPaymentsForAdmin, decidePlanPayment, paymentProofUrl, submitPlanPayment, uploadPaymentProof,
   validatePlanPayment, planSummary, planTotal, needsPayment, base64ToArrayBuffer, formatPrice, friendlyError,
   PLAN_KIND_LABELS, PLAN_STATE_LABELS, PLAN_METHOD_LABELS, PLAN_MONTH_OPTIONS,
   type PlatformSettings, type AdminPlanPayment, type MyPlan, type PaymentMethodPlan } from "@huambo-online/core";
@@ -65,7 +66,7 @@ export function PayForm({ plan, uid, settings, onDone }: { plan: MyPlan; uid: st
   </View>;
 }
 
-export function PlanBanner({ kind, subjectId }: { kind: "provider" | "business"; subjectId: string }) {
+export function PlanBanner({ kind, subjectId }: { kind: "provider" | "business" | "store"; subjectId: string }) {
   const [plan, setPlan] = useState<MyPlan | null>(null);
   useEffect(() => { void listMyPlans(supabase()).then(r => setPlan(r.data.find(p => p.kind === kind && p.subject_id === subjectId) ?? null)); }, [kind, subjectId]);
   if (!plan) return null;
@@ -91,9 +92,10 @@ export function AdminPlans() {
   }
   async function save() {
     if (!s) return;
-    const provider = Number(String(s.provider_monthly_kz).replace(/\s/g, "")), business = Number(String(s.business_monthly_kz).replace(/\s/g, "")), days = Number(s.trial_days);
-    if (!(provider >= 0) || !(business >= 0) || !Number.isInteger(days) || days < 0 || days > 365) { setError("Verifique os preços e os dias grátis."); return; }
-    const r = await updatePlatformSettings(supabase(), { provider_monthly_kz: provider, business_monthly_kz: business, trial_days: days,
+    const num = (v: unknown) => Number(String(v ?? "").replace(/\s/g, "").replace(",", "."));
+    const provider = num(s.provider_monthly_kz), business = num(s.business_monthly_kz), store = num(s.store_monthly_kz), days = Number(s.trial_days), pct = num(s.listing_commission_pct), due = Number(s.commission_due_days);
+    if (!(provider >= 0) || !(business >= 0) || !(store >= 0) || !Number.isInteger(days) || days < 0 || days > 365 || !(pct >= 0 && pct <= 50) || !Number.isInteger(due) || due < 1 || due > 90) { setError("Verifique os preços, a percentagem e os dias."); return; }
+    const r = await updatePlatformSettings(supabase(), { provider_monthly_kz: provider, business_monthly_kz: business, store_monthly_kz: store, trial_days: days, listing_commission_pct: pct, commission_due_days: due,
       bank_name: s.bank_name?.trim() || null, iban: s.iban?.trim() || null, account_holder: s.account_holder?.trim() || null, express_number: s.express_number?.trim() || null, payment_note: s.payment_note?.trim() || null });
     if (r.error) setError(friendlyError(r.error)); else setNotice("Dados guardados.");
   }
@@ -121,13 +123,55 @@ export function AdminPlans() {
         <Button title="✖ Recusar" variant="secondary" onPress={() => { setReject(p.id); setNote(""); }} />
       </>)}
     </View>)}
+    <AdminCommissions />
     {s && <View style={ui.card}>
       <Text style={ui.h2}>Preços e dados para pagamento</Text>
       {field("provider_monthly_kz", "Mensalidade dos profissionais (Kz)", true)}
       {field("business_monthly_kz", "Mensalidade das empresas (Kz)", true)}
+      {field("store_monthly_kz", "Mensalidade das Lojas (Kz)", true)}
+      {field("listing_commission_pct", "Comissão dos anúncios vendidos (%)", true)}
+      {field("commission_due_days", "Dias para pagar a comissão", true)}
       {field("trial_days", "Dias grátis para perfis novos", true)}
       {field("bank_name", "Banco")}{field("iban", "IBAN")}{field("account_holder", "Titular da conta")}{field("express_number", "Número Multicaixa Express")}{field("payment_note", "Nota para quem paga")}
       <Button title="Guardar" onPress={() => void save()} />
     </View>}
+  </View>;
+}
+
+function AdminCommissions() {
+  const [items, setItems] = useState<AdminCommission[]>([]); const [status, setStatus] = useState<"submitted" | "overdue" | "due" | "paid">("submitted");
+  const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [edit, setEdit] = useState<string | null>(null); const [note, setNote] = useState(""); const [amount, setAmount] = useState("");
+  async function load() { const r = await listCommissionsForAdmin(supabase(), status); if (r.error) setError(friendlyError(r.error)); setItems(r.data); }
+  useEffect(() => { void load(); }, [status]);
+  async function act(c: AdminCommission, action: "confirm" | "reject" | "waive" | "adjust") {
+    if ((action === "reject" || action === "waive") && !note.trim()) { setError("Escreva o motivo."); return; }
+    const value = action === "adjust" ? Number(amount.replace(/\s/g, "").replace(",", ".")) : undefined;
+    if (action === "adjust" && !(value! >= 0)) { setError("Valor inválido."); return; }
+    const r = await updateCommissionAsAdmin(supabase(), c.id, action, note, value);
+    if (r.error) setError(friendlyError(r.error)); else { setNotice("Comissão atualizada."); setEdit(null); setNote(""); setAmount(""); await load(); }
+  }
+  return <View style={{ gap: 10 }}>
+    <Text style={ui.h2}>Comissões dos anúncios</Text>
+    <Chips options={[{ value: "submitted" as const, label: "Por confirmar" }, { value: "overdue" as const, label: "Em atraso" }, { value: "due" as const, label: "Por pagar" }, { value: "paid" as const, label: "Pagas" }]} value={status} onChange={setStatus} />
+    <Message error={error} ok={notice} />
+    {items.length === 0 && <Text style={ui.text}>Sem comissões.</Text>}
+    {items.map(c => <View key={c.id} style={ui.card}>
+      <Text style={ui.h2}>{formatPrice(c.amount)} · {COMMISSION_STATUS_LABELS[c.status]}</Text>
+      <Text style={ui.text}>{c.listing_title} · {c.owner_name}{c.phone ? " · " + c.phone : ""}</Text>
+      <Text style={ui.muted}>Venda {formatPrice(c.sale_amount)}{c.listed_price != null ? " (anunciado " + formatPrice(c.listed_price) + ")" : ""} · prazo {new Date(c.due_at).toLocaleDateString("pt-AO")}</Text>
+      {!!c.reference && <Text style={ui.text}>Ref.: {c.reference}</Text>}
+      {!!c.proof_path && <Button title="📄 Comprovativo" variant="secondary" onPress={async () => { const r = await paymentProofUrl(supabase(), c.proof_path!); if (r.data) void Linking.openURL(r.data); }} />}
+      {(c.status === "submitted" || c.status === "due") && (edit === c.id ? <>
+        <TextInput style={ui.input} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} placeholder="Valor real da venda (para corrigir)" placeholderTextColor={C.muted} accessibilityLabel="Valor real da venda" />
+        <TextInput style={ui.input} value={note} onChangeText={setNote} placeholder="Motivo / nota" placeholderTextColor={C.muted} accessibilityLabel="Motivo" />
+        {!!amount && <Button title="Corrigir valor" onPress={() => void act(c, "adjust")} />}
+        {c.status === "submitted" && <Button title="✖ Não recebido" variant="secondary" onPress={() => void act(c, "reject")} />}
+        <Button title="Anular comissão" variant="secondary" onPress={() => void act(c, "waive")} />
+        <Button title="Voltar" variant="secondary" onPress={() => setEdit(null)} />
+      </> : <>
+        <Button title="✔ Confirmar pagamento" onPress={() => Alert.alert("Confirmar pagamento", formatPrice(c.amount) + " de " + c.owner_name + "?", [{ text: "Não" }, { text: "Confirmar", onPress: () => void act(c, "confirm") }])} />
+        <Button title="Outras ações" variant="secondary" onPress={() => { setEdit(c.id); setNote(""); setAmount(""); }} />
+      </>)}
+    </View>)}
   </View>;
 }

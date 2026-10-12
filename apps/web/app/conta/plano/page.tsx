@@ -52,10 +52,10 @@ export default function Plano() {
   return <main className="stack" style={{ maxWidth: 760 }}>
     <a href="/conta">← A sua conta</a>
     <h1>💳 O meu plano</h1>
-    <p style={{ margin: 0 }}>Profissionais e empresas têm <strong>{settings?.trial_days ?? 30} dias grátis</strong>. Depois: profissionais <strong>{price("provider_monthly_kz")}</strong> por mês, empresas <strong>{price("business_monthly_kz")}</strong> por mês. Sem pagamento, o perfil deixa de aparecer aos clientes (não é apagado) e volta a aparecer quando o pagamento é confirmado.</p>
+    <p style={{ margin: 0 }}>Profissionais e empresas têm <strong>{settings?.trial_days ?? 30} dias grátis</strong>. Depois: profissionais <strong>{price("provider_monthly_kz")}</strong> por mês, empresas e Lojas <strong>{price("business_monthly_kz")}</strong> por mês. Sem pagamento, o perfil deixa de aparecer aos clientes (não é apagado) e volta a aparecer quando o pagamento é confirmado.</p>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
-    {plans.length === 0 && <p>Ainda não tem perfil profissional nem empresa. <a href="/conta/profissional">Criar perfil profissional</a> · <a href="/conta/empresas">Registar empresa</a></p>}
+    {plans.length === 0 && <p>Ainda não tem perfil profissional, empresa nem Loja. <a href="/conta/profissional">Criar perfil profissional</a> · <a href="/conta/empresas">Registar empresa</a></p>}
     {plans.map(p => <article key={p.id} className="card stack">
       <strong style={{ fontSize: 20 }}>{PLAN_KIND_LABELS[p.kind]}: {p.name}</strong>
       <span><span className="badge">{PLAN_STATE_LABELS[p.state]}</span></span>

@@ -22,9 +22,9 @@ export default function Plano() {
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/conta" style={ui.link}>← A sua conta</Link>
     <Text style={ui.h1}>💳 O meu plano</Text>
-    <Text style={ui.text}>Profissionais e empresas têm {settings?.trial_days ?? 30} dias grátis. Depois: profissionais {formatPrice(settings?.provider_monthly_kz ?? 2000)} por mês, empresas {formatPrice(settings?.business_monthly_kz ?? 5000)} por mês. Sem pagamento, o perfil deixa de aparecer aos clientes (não é apagado).</Text>
+    <Text style={ui.text}>Profissionais e empresas têm {settings?.trial_days ?? 30} dias grátis. Depois: profissionais {formatPrice(settings?.provider_monthly_kz ?? 2000)} por mês, empresas e Lojas {formatPrice(settings?.business_monthly_kz ?? 5000)} por mês. Sem pagamento, o perfil deixa de aparecer aos clientes (não é apagado).</Text>
     <Message error={error} ok={notice} />
-    {plans.length === 0 && <Text style={ui.text}>Ainda não tem perfil profissional nem empresa.</Text>}
+    {plans.length === 0 && <Text style={ui.text}>Ainda não tem perfil profissional, empresa nem Loja.</Text>}
     {plans.map(p => <View key={p.id} style={ui.card}>
       <Text style={ui.h2}>{PLAN_KIND_LABELS[p.kind]}: {p.name}</Text>
       <Text style={ui.label}>{PLAN_STATE_LABELS[p.state]}</Text>

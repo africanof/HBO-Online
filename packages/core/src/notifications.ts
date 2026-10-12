@@ -21,6 +21,7 @@ export async function listSavedSearchNotifications(client:SupabaseClient,userId?
 /** Ligação extra para notificações de encomendas e avaliações (igual no Site e na APP). */
 export function getNotificationLink(n: Pick<AppNotification, "data" | "type" | "title">): { href: string; label: string } | null {
   const d = n.data ?? {};
+  if (d.for === "commission") return { href: "/conta/comissoes", label: "💸 Ver as minhas comissões →" };
   if (d.for === "plan") return { href: "/conta/plano", label: "💳 Ver o meu plano →" };
   if (d.for === "dispute" && isUuid(d.dispute_id)) return { href: "/disputas", label: "⚖️ Ver devolução / reembolso →" };
   if (n.type === "order" && isUuid(d.order_id)) return /^Nova encomenda/.test(n.title) ? { href: "/encomendas?vendas=1", label: "📦 Ver venda →" } : { href: "/encomendas", label: "📦 Ver encomenda →" };
