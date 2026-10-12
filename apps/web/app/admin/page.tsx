@@ -11,9 +11,10 @@ import { AdminMarkets } from "../../components/AdminMarkets";
 import { AdminVerifications, AdminAudit } from "../../components/AdminTrust";
 import { AdminDisputes } from "../../components/Disputes";
 import { AdminPlans, AdminRevenue } from "../../components/Plans";
+import { AdminProtected } from "../../components/ProtectedPayment";
 
-type Tab = "stats" | "reports" | "revenue" | "plans" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
-const tabs: [Tab, string][] = [["stats", "Estatísticas"], ["reports", "Denúncias"], ["revenue", "Receitas"], ["plans", "Mensalidades e comissões"], ["disputes", "Disputas"], ["verifications", "Verificações"], ["listings", "Anúncios"], ["users", "Utilizadores"], ["categories", "Categorias"], ["couriers", "Estafetas"], ["markets", "Praças"], ["audit", "Registo"]];
+type Tab = "stats" | "reports" | "revenue" | "protected" | "plans" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+const tabs: [Tab, string][] = [["stats", "Estatísticas"], ["reports", "Denúncias"], ["revenue", "Receitas"], ["protected", "Pagamento protegido"], ["plans", "Mensalidades e comissões"], ["disputes", "Disputas"], ["verifications", "Verificações"], ["listings", "Anúncios"], ["users", "Utilizadores"], ["categories", "Categorias"], ["couriers", "Estafetas"], ["markets", "Praças"], ["audit", "Registo"]];
 
 export default function AdminPage() {
   const [role, setRole] = useState<AdminRole | null>(null);
@@ -30,7 +31,7 @@ export default function AdminPage() {
 
   async function load(t: Tab) {
     setError("");
-    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit") return;
+    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "protected" || t === "plans" || t === "revenue" || t === "disputes") return;
     const c = supabase();
     const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReportsV2(c, reportFilter || undefined)
       : t === "listings" ? await listListingsForModeration(c, listingFilter, listingQuery) : t === "users" ? await listUsersForAdmin(c, userQuery) : await listAllCategories(c);
@@ -60,6 +61,7 @@ export default function AdminPage() {
     {tab === "verifications" && <AdminVerifications />}
     {tab === "disputes" && <AdminDisputes />}
     {tab === "plans" && <AdminPlans />}
+    {tab === "protected" && <AdminProtected />}
     {tab === "revenue" && <AdminRevenue />}
     {tab === "audit" && <AdminAudit />}
     {tab === "stats" && stats && <section className="grid">{ADMIN_STAT_LABELS.map(([k, l]) => <div key={k} className="card"><span>{l}</span><strong style={{ fontSize: 32 }}>{stats[k]}</strong></div>)}</section>}

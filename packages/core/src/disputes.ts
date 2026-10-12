@@ -18,10 +18,14 @@ export type MyDispute = {
   id: string; order_id: string; my_role: DisputeRole; other_name: string; request: DisputeRequest; reason: DisputeReason; description: string | null;
   amount: number | string | null; status: DisputeStatus; outcome: DisputeOutcome | null; admin_note: string | null; created_at: string; updated_at: string;
   order_total: number | string; order_items: { name: string; quantity: number }[]; events: DisputeEvent[];
+  /** Pagamento protegido: com o dinheiro ainda guardado («held»), quem devolve é o Huambo Online. */
+  protected?: boolean | null; escrow_status?: string | null; refund_to?: string | null;
 };
 export type AdminDispute = Omit<MyDispute, "my_role" | "other_name" | "order_items"> & {
-  buyer_id: string; buyer_name: string; seller_id: string; seller_name: string; payment_method: string | null; order_status: string;
+  buyer_id: string; buyer_name: string; seller_id: string; seller_name: string; payment_method: string | null; order_status: string; order_ref?: string | null;
 };
+/** O dinheiro desta encomenda ainda está guardado pelo Huambo Online (o reembolso sai da plataforma). */
+export const platformRefunds = (d: Pick<MyDispute, "protected" | "escrow_status">) => !!d.protected && d.escrow_status === "held";
 
 export const DISPUTE_REQUEST_LABELS: Record<DisputeRequest, string> = {
   refund: "Reembolso (devolver o dinheiro)", return_refund: "Devolver o artigo e receber o dinheiro", replacement: "Trocar por outro igual"
@@ -107,14 +111,14 @@ export function validateDispute(input: DisputeInput, maxAmount: number): string 
 }
 
 /** Botões que cada lado vê em cada passo (o servidor confirma sempre). */
-export function disputeActions(d: Pick<MyDispute, "status" | "updated_at">, role: DisputeRole, now = Date.now()): DisputeAction[] {
+export function disputeActions(d: Pick<MyDispute, "status" | "updated_at"> & Partial<Pick<MyDispute, "protected" | "escrow_status">>, role: DisputeRole, now = Date.now()): DisputeAction[] {
   if (d.status === "resolved") return [];
   const stale = now - Date.parse(d.updated_at) > DISPUTE_ESCALATE_DAYS * DAY;
   const out: DisputeAction[] = [];
   if (role === "seller") {
     if (d.status === "open") out.push("accept", "decline");
     if (d.status === "returned") out.push("confirm_return");
-    if (d.status === "awaiting_refund") out.push("mark_refunded");
+    if (d.status === "awaiting_refund" && !platformRefunds(d)) out.push("mark_refunded");
     if (stale && !["open", "declined", "escalated"].includes(d.status)) out.push("escalate");
   } else {
     if (d.status === "awaiting_return") out.push("mark_returned");
@@ -126,8 +130,12 @@ export function disputeActions(d: Pick<MyDispute, "status" | "updated_at">, role
   return out;
 }
 /** O que fazer agora, numa frase, para quem está a ver. */
-export function disputeNextStep(d: Pick<MyDispute, "status" | "request" | "outcome">, role: DisputeRole): string {
+export function disputeNextStep(d: Pick<MyDispute, "status" | "request" | "outcome"> & Partial<Pick<MyDispute, "protected" | "escrow_status" | "refund_to">>, role: DisputeRole): string {
   const me = role === "buyer";
+  if (platformRefunds(d) && d.status === "awaiting_refund") return me
+    ? (d.refund_to ? `O Huambo Online vai devolver o dinheiro para ${d.refund_to}.` : "O Huambo Online vai devolver o dinheiro guardado. Indique abaixo para onde (IBAN ou Multicaixa Express).")
+    : "O Huambo Online vai devolver ao comprador o dinheiro que estava guardado. Não precisa de enviar dinheiro.";
+  if (platformRefunds(d) && d.status === "refund_sent") return me ? "O Huambo Online enviou o reembolso. Confirme quando receber." : "O Huambo Online enviou o reembolso ao comprador.";
   switch (d.status) {
     case "open": return me ? "O vendedor tem de responder. Se não responder em 3 dias, pode chamar a administração." : "Responda ao pedido: aceite ou explique porque recusa.";
     case "declined": return me ? "O vendedor recusou. Se não concorda, chame a administração." : "Recusou o pedido. O comprador pode chamar a administração.";
@@ -167,11 +175,11 @@ export function disputeAction(client: SupabaseClient, disputeId: string, action:
   return client.rpc("dispute_action", { p_dispute_id: disputeId, p_action: action, p_note: note?.trim() || null, p_photos: photos });
 }
 export async function listMyDisputes(client: SupabaseClient) {
-  const r = await client.rpc("my_disputes");
+  const r = await client.rpc("my_disputes_v2");
   return { data: (r.data ?? []) as MyDispute[], error: r.error };
 }
-export async function listDisputesForAdmin(client: SupabaseClient, status: DisputeStatus | "active" | "" = "escalated") {
-  const r = await client.rpc("admin_list_disputes", { p_status: status || null });
+export async function listDisputesForAdmin(client: SupabaseClient, status: DisputeStatus | "active" | "escrow_refunds" | "" = "escalated") {
+  const r = await client.rpc("admin_list_disputes_v2", { p_status: status || null });
   return { data: (r.data ?? []) as AdminDispute[], error: r.error };
 }
 export function decideDispute(client: SupabaseClient, disputeId: string, decision: DisputeDecision, note: string, amount?: number | null) {

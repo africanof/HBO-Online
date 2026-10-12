@@ -29,7 +29,8 @@ export function validateProductInput(input: ProductInput): string | null {
   return null;
 }
 
-export type CheckoutInput = { fulfillment: Fulfillment; paymentMethod: PaymentMethod; phone: string; deliveryText?: string; note?: string };
+/** protected: pagamento protegido (paga ao Huambo Online, que guarda o dinheiro até o comprador receber). */
+export type CheckoutInput = { fulfillment: Fulfillment; paymentMethod: PaymentMethod; phone: string; deliveryText?: string; note?: string; protected?: boolean };
 export function validateCheckout(input: CheckoutInput): string | null {
   if (!/^\+?[0-9 ]{9,15}$/.test(input.phone.trim())) return "Indique um telefone válido para o vendedor o contactar.";
   if (input.fulfillment === "delivery" && !input.deliveryText?.trim()) return "Indique a morada ou ponto de referência para a entrega.";
@@ -78,13 +79,15 @@ export async function getMyCart(client: SupabaseClient) { return client.rpc("car
 export async function placeOrders(client: SupabaseClient, input: CheckoutInput) {
   const invalid = validateCheckout(input);
   if (invalid) return { data: null, error: new Error(invalid) };
-  const r = await client.rpc("place_orders", { p_fulfillment: input.fulfillment, p_payment_method: input.paymentMethod, p_contact_phone: input.phone.trim(),
-    p_delivery_text: input.deliveryText?.trim() || null, p_note: input.note?.trim() || null });
+  const args = { p_fulfillment: input.fulfillment, p_payment_method: input.paymentMethod, p_contact_phone: input.phone.trim(),
+    p_delivery_text: input.deliveryText?.trim() || null, p_note: input.note?.trim() || null };
+  const r = input.protected ? await client.rpc("place_orders_v2", { ...args, p_protected: true }) : await client.rpc("place_orders", args);
   // A encomenda já está feita; os artigos ficam marcados como encomendados e saem do carrinho.
   if (!r.error) await client.from("cart_items").delete().not("ordered_at", "is", null);
   return r;
 }
-export async function listOrders(client: SupabaseClient, role: "buyer" | "seller") { return client.rpc("my_orders_v2", { p_role: role }); }
+/** Encomendas com o estado do pagamento protegido (my_orders_v3 tem tudo o que a v2 tinha e mais). */
+export async function listOrders(client: SupabaseClient, role: "buyer" | "seller") { return client.rpc("my_orders_v3", { p_role: role }); }
 export async function changeOrderStatus(client: SupabaseClient, orderId: string, status: OrderStatus, paid?: boolean) {
   return client.rpc("update_order_status", { p_order_id: orderId, p_status: status, p_paid: paid ?? null });
 }

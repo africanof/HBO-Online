@@ -1,8 +1,8 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { ScrollView, Text, TextInput, View } from "react-native";
 import { getMyCart, setCartQuantity, placeOrders, groupCartBySeller, formatPrice, friendlyError, PAYMENT_LABELS, FULFILLMENT_LABELS,
-  type Fulfillment, type PaymentMethod } from "@huambo-online/core";
+  getProtectedSettings, PROTECTED_STEPS, type Fulfillment, type PaymentMethod } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
@@ -13,14 +13,17 @@ export default function Carrinho() {
   const [items, setItems] = useState<any[]>([]); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
   const [fulfillment, setFulfillment] = useState<Fulfillment>("delivery"); const [payment, setPayment] = useState<PaymentMethod>("cash_on_delivery");
   const [phone, setPhone] = useState(""); const [address, setAddress] = useState(""); const [note, setNote] = useState("");
+  const [protectedOn, setProtectedOn] = useState(false); const [useProtected, setUseProtected] = useState<"yes" | "no">("yes");
+  useEffect(() => { void getProtectedSettings(supabase()).then(r => setProtectedOn(!!r.data?.protected_enabled)); }, []);
+  const isProtected = protectedOn && useProtected === "yes";
   async function load() { const r = await getMyCart(supabase()); if (r.error) setError(friendlyError(r.error)); else setItems((r.data as any[]) ?? []); }
   useFocusEffect(useCallback(() => { void currentUserId().then(id => { setUid(id); if (id) void load(); }); }, []));
   async function qty(productId: string, q: number) { const r = await setCartQuantity(supabase(), productId, q); if (r.error) setError(friendlyError(r.error)); else await load(); }
   async function checkout() {
     if (busy) return; setError(""); setBusy(true);
-    const r = await placeOrders(supabase(), { fulfillment, paymentMethod: payment, phone, deliveryText: address, note }); setBusy(false);
+    const r = await placeOrders(supabase(), { fulfillment, paymentMethod: payment, phone, deliveryText: address, note, protected: isProtected }); setBusy(false);
     if (r.error) { setError(friendlyError(r.error)); await load(); return; }
-    router.replace("/encomendas?novas=1" as any);
+    router.replace((isProtected ? "/encomendas?novas=1&pagar=1" : "/encomendas?novas=1") as any);
   }
   if (uid === undefined) return <View style={ui.screen}><Text style={ui.text}>A carregar…</Text></View>;
   if (!uid) return <View style={ui.screen}><Link href={"/loja" as any} style={ui.link}>← Loja</Link><Text style={ui.h1}>Carrinho</Text><Button title="Entrar" onPress={() => router.push("/login")} /></View>;
@@ -51,11 +54,17 @@ export default function Carrinho() {
       <Text style={ui.label}>Receber</Text>
       <Chips options={Object.entries(FULFILLMENT_LABELS).map(([value, label]) => ({ value: value as Fulfillment, label }))} value={fulfillment} onChange={setFulfillment} />
       {fulfillment === "delivery" && <><Text style={ui.label}>Morada / referência</Text><TextInput style={ui.input} value={address} onChangeText={setAddress} placeholder="Bairro, rua, referência" /></>}
-      <Text style={ui.label}>Pagamento</Text>
-      <Chips options={Object.entries(PAYMENT_LABELS).map(([value, label]) => ({ value: value as PaymentMethod, label }))} value={payment} onChange={setPayment} />
+      {protectedOn && <>
+        <Text style={ui.label}>Como quer pagar?</Text>
+        <Chips options={[{ value: "yes" as const, label: "🛡️ Pagamento protegido (recomendado)" }, { value: "no" as const, label: "🤝 Combinar com o vendedor" }]} value={useProtected} onChange={setUseProtected} />
+        {isProtected && <View style={[ui.card, { gap: 4 }]}>{PROTECTED_STEPS.map((t, i) => <Text key={i} style={ui.text}>{i + 1}. {t}</Text>)}</View>}
+      </>}
+      {!isProtected && <><Text style={ui.label}>Pagamento</Text>
+      <Chips options={Object.entries(PAYMENT_LABELS).map(([value, label]) => ({ value: value as PaymentMethod, label }))} value={payment} onChange={setPayment} /></>}
       <Text style={ui.label}>Telefone para contacto</Text><TextInput style={ui.input} keyboardType="phone-pad" value={phone} onChangeText={setPhone} placeholder="923 000 000" />
       <Text style={ui.label}>Nota (opcional)</Text><TextInput style={ui.input} value={note} onChangeText={setNote} />
-      <Text style={ui.muted}>O pagamento é combinado com o vendedor. Ainda não há pagamentos online.</Text>
+      <Text style={ui.muted}>{isProtected ? "Depois de confirmar, paga ao Huambo Online (Multicaixa Express ou transferência). O vendedor só envia depois de o pagamento ser confirmado."
+        : protectedOn ? "O pagamento é combinado com o vendedor: o Huambo Online não guarda este dinheiro." : "O pagamento é combinado com o vendedor. Ainda não há pagamentos online."}</Text>
       <Button title={busy ? "A enviar…" : "Confirmar encomenda"} disabled={busy} onPress={() => void checkout()} />
     </View>}
   </ScrollView>;
