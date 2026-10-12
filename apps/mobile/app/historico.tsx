@@ -5,6 +5,7 @@ import { loadHistory, clearHistory, itemHref, SAVED_KIND_LABELS, type HistoryEnt
 import { deviceStore } from "../components/Engage";
 import { ui } from "../lib/ui";
 import { Button } from "../components/Ui";
+import { LiteImage } from "../components/LiteImage";
 
 export default function Historico() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function Historico() {
     {!!items?.length && <Button title="Limpar histórico" variant="secondary" onPress={async () => { await clearHistory(deviceStore); setItems([]); }} />}
     {items?.length === 0 && <Text style={ui.text}>Ainda não viu nenhum anúncio, produto, profissional ou empresa.</Text>}
     {items?.map(x => <Pressable key={x.kind + x.id} style={ui.card} accessibilityRole="link" onPress={() => router.push(itemHref(x.kind, x.id) as any)}>
-      {!!x.image && <Image source={{ uri: x.image }} style={{ width: "100%", height: 140, borderRadius: 10 }} />}
+      {!!x.image && <LiteImage source={{ uri: x.image }} style={{ width: "100%", height: 140, borderRadius: 10 }} />}
       <Text style={ui.muted}>{SAVED_KIND_LABELS[x.kind]} · {new Date(x.at).toLocaleString("pt-AO")}</Text>
       <Text style={ui.h2}>{x.title}</Text>
     </Pressable>)}

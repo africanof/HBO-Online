@@ -5,6 +5,7 @@ import { listMySaved, toggleSaved, itemHref, friendlyError, SAVED_KIND_LABELS, t
 import { supabase, currentUserId } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
+import { LiteImage } from "../components/LiteImage";
 
 export default function Guardados() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function Guardados() {
     <Message error={error} />
     {shown.length === 0 && <Text style={ui.text}>Ainda não guardou nada aqui. Use «☆ Guardar» nos anúncios, profissionais, empresas e produtos.</Text>}
     {shown.map(x => <View key={x.id} style={ui.card}>
-      {!!x.image && <Image source={{ uri: x.image }} style={{ width: "100%", height: 160, borderRadius: 10 }} />}
+      {!!x.image && <LiteImage source={{ uri: x.image }} style={{ width: "100%", height: 160, borderRadius: 10 }} />}
       <Text style={ui.muted}>{SAVED_KIND_LABELS[x.kind as SavedKind] ?? ""}</Text>
       <Text style={ui.h2}>{x.title}</Text>
       {!!x.subtitle && <Text style={ui.text}>{x.subtitle}</Text>}

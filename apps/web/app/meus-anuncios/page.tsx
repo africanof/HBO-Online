@@ -5,6 +5,7 @@ import { listMyClassifiedListings, deleteClassifiedListing, updateClassifiedStat
   formatPrice, friendlyError, STATUS_LABELS, myOfferCounts, saleModeBadges, listingPriceLabel, formatRef } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { DealCloser } from "../../components/Reputation";
+import { LiteImg } from "../../components/LiteImg";
 
 function MeusAnuncios() {
   const params = useSearchParams();
@@ -37,7 +38,7 @@ function MeusAnuncios() {
     {items === null && <p>A carregar…</p>}
     {items?.length === 0 && !error && <p>Ainda não publicou anúncios.</p>}
     {items?.map(x => <article key={x.id} className="card">
-      {Array.isArray(x.media) && x.media[0] && <img className="thumb" src={x.media[0]} alt="" style={{ maxWidth: 240 }} />}
+      {Array.isArray(x.media) && x.media[0] && <LiteImg className="thumb" src={x.media[0]} alt="" style={{ maxWidth: 240 }} />}
       <strong style={{ fontSize: 20 }}>{x.title}</strong>{x.ref_no && <small className="muted">N.º {formatRef("listing", x.ref_no)}</small>}
       <span><span className="badge">{STATUS_LABELS[x.status as keyof typeof STATUS_LABELS] ?? x.status}</span> · {listingPriceLabel(x)}{saleModeBadges(x).map(b => <span key={b}> · <span className="mode-badge">{b}</span></span>)}</span>
       {offers[x.id] > 0 && <a href={"/classificados/" + x.id + "#propostas"} className="ok">💬 {offers[x.id]} proposta(s) à espera de resposta →</a>}

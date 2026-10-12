@@ -2,12 +2,13 @@
 import { useEffect, useState } from "react";
 import { listMyAuctionBids, groupMyBids, formatPrice, formatRef, timeLeft, friendlyError, BID_STANDING_LABELS, type MyAuctionBid } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
+import { LiteImg } from "../../components/LiteImg";
 
 function Row({ b }: { b: MyAuctionBid }) {
   const live = b.status === "live" && Date.parse(b.ends_at) > Date.now();
   const tone = b.standing === "winning" || b.standing === "won" ? "ok" : b.standing === "outbid" ? "error" : "";
   return <article className="card" style={{ gridTemplateColumns: "72px minmax(0,1fr)", display: "grid", gap: 12, alignItems: "start" }}>
-    {b.photo ? <img src={b.photo} alt="" width={72} height={72} style={{ objectFit: "cover", borderRadius: 10 }} /> : <span aria-hidden style={{ fontSize: 44, textAlign: "center" }}>🔨</span>}
+    {b.photo ? <LiteImg src={b.photo} alt="" width={72} height={72} style={{ objectFit: "cover", borderRadius: 10 }} /> : <span aria-hidden style={{ fontSize: 44, textAlign: "center" }}>🔨</span>}
     <div className="stack" style={{ gap: 4, minWidth: 0 }}>
       <a href={b.listing_id ? "/classificados/" + b.listing_id : "#"} style={{ overflowWrap: "anywhere" }}><strong>{b.title}</strong></a>
       <span className={tone} style={{ margin: 0 }}><strong>{BID_STANDING_LABELS[b.standing]}</strong></span>

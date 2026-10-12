@@ -2,6 +2,7 @@ import { Link } from "expo-router";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { firstPhoto } from "@huambo-online/core";
 import { C, themed } from "../lib/ui";
+import { LiteImage } from "./LiteImage";
 
 export const LISTING_ICON: Record<string, string> = { real_estate: "🏠", vehicle: "🚗", product: "📦", service: "🛠️", classified: "🏷️" };
 
@@ -13,7 +14,7 @@ export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = 
   return <Link href={href as any} asChild>
     <Pressable accessibilityRole="link" accessibilityLabel={`${title}, ${price}`} style={({ pressed }) => [s.card, width !== undefined && { width }, pressed && { opacity: 0.85 }]}>
       <View style={s.img}>
-        {photo ? <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : <Text style={{ fontSize: 44 }}>{icon}</Text>}
+        {photo ? <LiteImage placeholder={icon} source={{ uri: photo }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : <Text style={{ fontSize: 44 }}>{icon}</Text>}
         {!!tag && <View style={[s.tag, tagRed && { backgroundColor: C.red }]}><Text style={[s.tagText, tagRed && { color: C.onAccent }]}>{tag}</Text></View>}
         {!!video && <View style={s.video}><Text style={s.videoText}>▶ Vídeo</Text></View>}
       </View>

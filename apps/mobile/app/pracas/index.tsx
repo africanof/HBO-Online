@@ -7,6 +7,7 @@ import { ui, C } from "../../lib/ui";
 import { Button, Chips, Message } from "../../components/Ui";
 import { useTerritory } from "../../components/Directory";
 import { SearchBar } from "../../components/Brand";
+import { LiteImage } from "../../components/LiteImage";
 
 export default function Pracas() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export default function Pracas() {
     {items?.length === 0 && <Text style={ui.text}>Nenhuma praça encontrada.</Text>}
     {items?.map(m => <Pressable key={m.id} style={ui.card} accessibilityRole="link" onPress={() => router.push(("/pracas/" + m.id) as any)}>
       <View style={{ height: 120, borderRadius: 12, backgroundColor: C.surface, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-        {m.photo_url ? <Image source={{ uri: m.photo_url }} style={{ width: "100%", height: "100%" }} /> : <Text style={{ fontSize: 48 }}>🧺</Text>}
+        {m.photo_url ? <LiteImage placeholder="🧺" source={{ uri: m.photo_url }} style={{ width: "100%", height: "100%" }} /> : <Text style={{ fontSize: 48 }}>🧺</Text>}
       </View>
       <Text style={ui.h2}>{m.name}</Text>
       <Text style={ui.muted}>📍 {[m.address_text, m.municipality_name].filter(Boolean).join(", ") || "Huambo"}</Text>

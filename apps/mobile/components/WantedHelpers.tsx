@@ -5,6 +5,7 @@ import { findHelpers, ratingLabel } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Shelf } from "./ItemCard";
+import { LiteImage } from "./LiteImage";
 
 /** «Profissionais e empresas que podem ajudar» num pedido «Procura-se». */
 export function WantedHelpers({ title, mine }: { title: string; mine: boolean }) {
@@ -16,7 +17,7 @@ export function WantedHelpers({ title, mine }: { title: string; mine: boolean })
     {mine && <Text style={ui.muted}>Os profissionais abaixo já foram avisados do seu pedido. Pode também contactá-los diretamente.</Text>}
     <Shelf title={mine ? "🛠️ Podem ajudar" : "🛠️ Também podem ajudar"}>
       {h.providers.map(p => <Pressable key={p.user_id} accessibilityRole="link" onPress={() => router.push(("/profissionais/" + p.user_id) as any)} style={[ui.card, { width: 180 }]}>
-        {p.avatar_url ? <Image source={{ uri: p.avatar_url }} style={{ width: 52, height: 52, borderRadius: 26 }} /> : <Text style={{ fontSize: 34 }}>👷</Text>}
+        {p.avatar_url ? <LiteImage placeholder="👤" source={{ uri: p.avatar_url }} style={{ width: 52, height: 52, borderRadius: 26 }} /> : <Text style={{ fontSize: 34 }}>👷</Text>}
         <Text style={ui.label} numberOfLines={2}>{p.display_name}{p.verified ? " ✔️" : ""}</Text>
         <Text style={ui.muted} numberOfLines={1}>{[p.category_name, p.municipality_name].filter(Boolean).join(" · ")}</Text>
         <Text style={ui.muted}>{ratingLabel(p.rating, p.review_count)}</Text>

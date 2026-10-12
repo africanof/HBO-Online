@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import { uploadVideo, removeUnsavedVideo, validateVideo, friendlyError, VIDEO_MAX_SECONDS } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
+import { useDataSaver } from "../lib/dataSaver";
 
 /** Lê a duração de um vídeo no navegador (segundos), ou null se não conseguir. */
 function readDuration(file: File): Promise<number | null> {
@@ -58,7 +59,16 @@ export function Gallery({ media, video, icon, title }: { media: string[]; video?
   const [i, setI] = useState(0); // índice da foto; -1 = vídeo
   const showVideo = !!video && (i === -1 || media.length === 0);
   const tiles = media.length + (video ? 1 : 0);
+  const saver = useDataSaver(); const [reveal, setReveal] = useState(false);
   if (!tiles) return <section className="gallery" aria-label="Fotografias"><div className="gallery-empty" aria-hidden>{icon}</div></section>;
+  // Poupar dados: as fotografias só carregam quando a pessoa pede.
+  if (saver && !reveal && media.length > 0) return <section className="gallery single" aria-label="Fotografias e vídeo">
+    <div className="gallery-reveal"><span aria-hidden style={{ fontSize: 48 }}>{icon}</span>
+      <span>📉 Poupar dados ligado: as fotografias ainda não foram carregadas.</span>
+      <button type="button" onClick={() => setReveal(true)}>📷 Ver {media.length === 1 ? "a fotografia" : `as ${media.length} fotografias`}</button>
+      {video && <button type="button" className="secondary" onClick={() => { setReveal(true); setI(-1); }}>▶ Ver vídeo</button>}
+    </div>
+  </section>;
   return <section className={"gallery" + (tiles === 1 ? " single" : "")} aria-label="Fotografias e vídeo">
     <div className="thumbs">{tiles > 1 && <>
       {media.map((m, j) => <button key={m} type="button" aria-current={!showVideo && i === j} onClick={() => setI(j)} aria-label={`Ver fotografia ${j + 1}`}><img src={m} alt="" /></button>)}

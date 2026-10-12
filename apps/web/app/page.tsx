@@ -5,6 +5,7 @@ import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../components/ItemCard";
 import { OfflineBanner } from "../components/Offline";
 import { browserStore } from "../components/Engage";
+import { LiteImg } from "../components/LiteImg";
 
 type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[] };
 
@@ -61,7 +62,7 @@ export default function Home() {
 
     {!!s?.markets.length && <><ShelfHead title="🧺 Praças do Huambo" href="/pracas" /><div className="shelf">
       {s.markets.map(m => <a key={m.id} href={"/pracas/" + m.id} className="item">
-        <div className="item-img">{m.photo_url ? <img src={m.photo_url} alt="" loading="lazy" /> : <span aria-hidden>🧺</span>}</div>
+        <div className="item-img">{m.photo_url ? <LiteImg src={m.photo_url} alt="" loading="lazy" placeholder="🧺" /> : <span aria-hidden>🧺</span>}</div>
         <span className="item-title"><strong>{m.name}</strong></span>
         <span className="item-meta">{marketSummary(m)}</span>
       </a>)}
@@ -92,7 +93,7 @@ export default function Home() {
 
     {!!s?.providers.length && <><ShelfHead title="🛠️ Profissionais de confiança" href="/profissionais" /><div className="shelf">
       {s.providers.map(p => <a key={p.user_id} href={"/profissionais/" + p.user_id} className="card" style={{ color: "inherit", textDecoration: "none", fontWeight: 400 }}>
-        {p.avatar_url ? <img src={p.avatar_url} alt="" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ fontSize: 40 }} aria-hidden>👷</span>}
+        {p.avatar_url ? <LiteImg placeholder="👤" src={p.avatar_url} alt="" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ fontSize: 40 }} aria-hidden>👷</span>}
         <strong>{p.display_name}{p.verified ? " ✔️" : ""}</strong>
         <span className="item-meta">{[p.category_name, p.municipality_name].filter(Boolean).join(" · ")}</span>
         <span className="item-meta">{ratingLabel(p.rating, p.review_count)}</span>

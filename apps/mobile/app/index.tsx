@@ -7,10 +7,12 @@ import { ui, C, themed } from "../lib/ui";
 import { Button } from "../components/Ui";
 import { NotificationBell } from "../components/NotificationBell";
 import { ThemeToggle } from "../components/ThemePicker";
+import { DataSaverToggle } from "../components/DataSaver";
 import { Logo, SearchBar } from "../components/Brand";
 import { ItemCard, Shelf, LISTING_ICON } from "../components/ItemCard";
 import { OfflineBanner } from "../components/Offline";
 import { deviceStore } from "../components/Engage";
+import { LiteImage } from "../components/LiteImage";
 
 type Shelves = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[] };
 
@@ -53,7 +55,7 @@ export default function Home() {
 
   return <ScrollView contentContainerStyle={[ui.screen, { gap: 22 }]} keyboardShouldPersistTaps="handled">
     <View style={st.top}><Logo /><NotificationBell /></View>
-    <View style={{ alignItems: "flex-end", marginTop: -14 }}><ThemeToggle /></View>
+    <View style={{ flexDirection: "row", justifyContent: "flex-end", flexWrap: "wrap", gap: 8, marginTop: -14 }}><DataSaverToggle /><ThemeToggle /></View>
     <SearchBar />
     <OfflineBanner show={offline.on} savedAt={offline.at} />
 
@@ -84,7 +86,7 @@ export default function Home() {
     {!!s?.auctions.length && <Shelf title="🔨 Leilões a decorrer" href="/explorar?finalidade=auction">{s.auctions.map(listing)}</Shelf>}
     {!!s?.markets.length && <Shelf title="🧺 Praças do Huambo" href="/pracas">{s.markets.map(m => <Link key={m.id} href={("/pracas/" + m.id) as any} asChild>
       <Pressable accessibilityRole="link" accessibilityLabel={m.name} style={{ width: 160, gap: 4 }}>
-        <View style={st.marketImg}>{m.photo_url ? <Image source={{ uri: m.photo_url }} style={{ width: "100%", height: "100%" }} /> : <Text style={{ fontSize: 44 }}>🧺</Text>}</View>
+        <View style={st.marketImg}>{m.photo_url ? <LiteImage placeholder="🧺" source={{ uri: m.photo_url }} style={{ width: "100%", height: "100%" }} /> : <Text style={{ fontSize: 44 }}>🧺</Text>}</View>
         <Text style={ui.label} numberOfLines={2}>{m.name}</Text>
         <Text style={ui.muted} numberOfLines={2}>{marketSummary(m)}</Text>
       </Pressable>
@@ -112,7 +114,7 @@ export default function Home() {
     {!!s?.trades?.length && <Shelf title="🔁 Trocas" href="/trocas">{s.trades.map(listing)}</Shelf>}
     {!!s?.providers.length && <Shelf title="🛠️ Profissionais" href="/profissionais">{s.providers.map(p => <Link key={p.user_id} href={("/profissionais/" + p.user_id) as any} asChild>
       <Pressable accessibilityRole="link" style={[ui.card, { width: 180 }]}>
-        {p.avatar_url ? <Image source={{ uri: p.avatar_url }} style={{ width: 56, height: 56, borderRadius: 28 }} /> : <Text style={{ fontSize: 36 }}>👷</Text>}
+        {p.avatar_url ? <LiteImage placeholder="👤" source={{ uri: p.avatar_url }} style={{ width: 56, height: 56, borderRadius: 28 }} /> : <Text style={{ fontSize: 36 }}>👷</Text>}
         <Text style={ui.label} numberOfLines={2}>{p.display_name}{p.verified ? " ✔️" : ""}</Text>
         <Text style={ui.muted} numberOfLines={1}>{[p.category_name, p.municipality_name].filter(Boolean).join(" · ")}</Text>
         <Text style={ui.muted}>{ratingLabel(p.rating, p.review_count)}</Text>

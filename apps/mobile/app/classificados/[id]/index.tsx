@@ -14,6 +14,7 @@ import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtr
 import { MarketLink } from "../../../components/MarketPicker";
 import { SellerBadge } from "../../../components/Reputation";
 import { OfferBox, OffersList } from "../../../components/Offers";
+import { PhotoGallery } from "../../../components/PhotoGallery";
 
 export default function ClassifiedDetail() {
   const router = useRouter();
@@ -123,10 +124,7 @@ export default function ClassifiedDetail() {
     {!!seller && <Link href={("/vendedor/" + item.owner_id) as any} style={ui.link}>{item.purpose === "wanted" ? "Comprador" : "Anunciante"}: {seller} →</Link>}
     {!!seller && <SellerBadge userId={item.owner_id} />}
     <MarketLink id={item.market_id} />
-    {media.length > 0 && <View style={{ gap: 8 }}>
-      <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: C.surface }} resizeMode="contain" accessibilityLabel={`Fotografia ${photo + 1} de ${media.length}`} />
-      {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} accessibilityLabel={`Ver fotografia ${i + 1}`} style={{ borderWidth: 3, borderColor: i === photo ? C.ink : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}
-    </View>}
+    <PhotoGallery media={media} icon={item.purpose === "wanted" ? "🔎" : "🏷️"} />
     {!!item.video_url && <VideoPlayer url={item.video_url} />}
     {item.purpose === "wanted" && item.status === "published" && <WantedHelpers title={item.title} mine={mine} />}
     {!!item.description && <Text style={ui.text}>{item.description}</Text>}

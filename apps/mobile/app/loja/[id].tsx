@@ -9,6 +9,7 @@ import { Button, Message } from "../../components/Ui";
 import { SaveButton, ShareButton, SellerWhatsApp, useRecordView } from "../../components/Engage";
 import { SellerBadge } from "../../components/Reputation";
 import { ReportButton } from "../../components/Trust";
+import { PhotoGallery } from "../../components/PhotoGallery";
 
 export default function Produto() {
   const router = useRouter(); const { width } = useWindowDimensions();
@@ -45,10 +46,7 @@ export default function Produto() {
     {!!seller && <Link href={("/vendedor/" + p.seller_id) as any} style={ui.link}>Vendedor: {seller} →</Link>}
     {!!seller && <SellerBadge userId={p.seller_id} />}
     {!!p.markets?.name && <Link href={("/pracas/" + p.markets.id) as any} style={ui.link}>🧺 {p.markets.name} →</Link>}
-    {media.length > 0 && <View style={{ gap: 8 }}>
-      <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: C.surface }} resizeMode="contain" />
-      {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} style={{ borderWidth: 3, borderColor: i === photo ? C.ink : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}
-    </View>}
+    <PhotoGallery media={media} icon={"📦"} />
     {!!p.video_url && <VideoPlayer url={p.video_url} />}
     {!!p.description && <Text style={ui.text}>{p.description}</Text>}
     {!mine && <SellerWhatsApp sellerId={p.seller_id} kind="product" id={id} title={p.name} refCode={p.ref_no ? formatRef("product", p.ref_no) : null} />}
