@@ -1,4 +1,4 @@
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { THEME_OPTIONS, type ThemePreference } from "@huambo-online/core";
 import { useTheme } from "../lib/theme";
 import { ui } from "../lib/ui";
@@ -12,4 +12,14 @@ export function ThemePicker() {
     <Text style={ui.muted}>Automático segue o modo claro ou escuro do seu telemóvel.</Text>
     <Chips<ThemePreference> options={THEME_OPTIONS} value={preference} onChange={setPreference} />
   </View>;
+}
+
+/** Botão rápido: «🌙 Modo escuro» / «☀️ Modo claro» (troca e fica guardado). */
+export function ThemeToggle() {
+  const { mode, setPreference } = useTheme();
+  const dark = mode === "dark";
+  return <Pressable accessibilityRole="button" accessibilityLabel={dark ? "Mudar para o modo claro" : "Mudar para o modo escuro"}
+    onPress={() => setPreference(dark ? "light" : "dark")} style={[ui.chip, { paddingVertical: 6 }]}>
+    <Text style={ui.chipText}>{dark ? "☀️ Modo claro" : "🌙 Modo escuro"}</Text>
+  </Pressable>;
 }

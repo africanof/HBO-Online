@@ -6,6 +6,7 @@ import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ui, C, themed } from "../lib/ui";
 import { Button } from "../components/Ui";
 import { NotificationBell } from "../components/NotificationBell";
+import { ThemeToggle } from "../components/ThemePicker";
 import { Logo, SearchBar } from "../components/Brand";
 import { ItemCard, Shelf, LISTING_ICON } from "../components/ItemCard";
 import { OfflineBanner } from "../components/Offline";
@@ -52,6 +53,7 @@ export default function Home() {
 
   return <ScrollView contentContainerStyle={[ui.screen, { gap: 22 }]} keyboardShouldPersistTaps="handled">
     <View style={st.top}><Logo /><NotificationBell /></View>
+    <View style={{ alignItems: "flex-end", marginTop: -14 }}><ThemeToggle /></View>
     <SearchBar />
     <OfflineBanner show={offline.on} savedAt={offline.at} />
 

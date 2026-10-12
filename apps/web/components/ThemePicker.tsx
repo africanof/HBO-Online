@@ -2,9 +2,29 @@
 import { useEffect, useState } from "react";
 import { THEME_OPTIONS, THEME_STORAGE_KEY, readThemePreference, resolveTheme, type ThemePreference } from "@huambo-online/core";
 
+const CHANGED = "huambo:tema-mudou";
 function apply(pref: ThemePreference) {
   const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   document.documentElement.dataset.theme = resolveTheme(pref, dark);
+}
+function save(p: ThemePreference) {
+  try { if (p === "system") localStorage.removeItem(THEME_STORAGE_KEY); else localStorage.setItem(THEME_STORAGE_KEY, p); } catch { /* sem armazenamento */ }
+  apply(p);
+  window.dispatchEvent(new CustomEvent(CHANGED, { detail: p }));
+}
+
+/** Botão rápido no topo: «🌙 Escuro» / «☀️ Claro» (troca e fica guardado). */
+export function ThemeToggle() {
+  const [dark, setDark] = useState(false);
+  useEffect(() => {
+    const read = () => setDark(document.documentElement.dataset.theme === "dark");
+    read();
+    window.addEventListener(CHANGED, read);
+    const mq = window.matchMedia("(prefers-color-scheme: dark)"); mq.addEventListener("change", read);
+    return () => { window.removeEventListener(CHANGED, read); mq.removeEventListener("change", read); };
+  }, []);
+  return <button type="button" className="theme-toggle" onClick={() => save(dark ? "light" : "dark")}
+    aria-label={dark ? "Mudar para o modo claro" : "Mudar para o modo escuro"} aria-pressed={dark}>{dark ? "☀️" : "🌙"}<span className="theme-label"> {dark ? "Claro" : "Escuro"}</span></button>;
 }
 
 /** «Aparência: Automático · Claro · Escuro» (fica guardado neste aparelho). */
@@ -18,13 +38,11 @@ export function ThemePicker() {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const onChange = () => { let cur: ThemePreference = "system"; try { cur = readThemePreference(localStorage.getItem(THEME_STORAGE_KEY)); } catch { /* */ } if (cur === "system") apply("system"); };
     mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
+    const onToggle = (e: Event) => setPref((e as CustomEvent<ThemePreference>).detail);
+    window.addEventListener(CHANGED, onToggle);
+    return () => { mq.removeEventListener("change", onChange); window.removeEventListener(CHANGED, onToggle); };
   }, []);
-  function choose(p: ThemePreference) {
-    setPref(p);
-    try { if (p === "system") localStorage.removeItem(THEME_STORAGE_KEY); else localStorage.setItem(THEME_STORAGE_KEY, p); } catch { /* sem armazenamento */ }
-    apply(p);
-  }
+  function choose(p: ThemePreference) { setPref(p); save(p); }
   return <div className="row" role="radiogroup" aria-label="Aparência">
     {THEME_OPTIONS.map(o => <button key={o.value} type="button" role="radio" aria-checked={pref === o.value} className={"chip" + (pref === o.value ? " on" : "")} onClick={() => choose(o.value)}>{o.label}</button>)}
   </div>;
