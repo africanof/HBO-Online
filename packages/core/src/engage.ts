@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { uploadClassifiedMedia } from "./classified-listings";
+import { uploadClassifiedMedia, formatPrice } from "./classified-listings";
 
 /** Favoritos, histórico, partilha e fotografia de perfil — iguais no Site e na APP. */
 
@@ -49,10 +49,49 @@ export async function recordView(store: KeyValueStore, entry: Omit<HistoryEntry,
 export async function clearHistory(store: KeyValueStore) { try { await store.setItem(HISTORY_KEY, "[]"); } catch { /* opcional */ } }
 
 // Partilha
-export function shareMessage(siteUrl: string, kind: SavedKind, id: string, title: string) {
+export type ShareExtra = { price?: number | string | null; currency?: string | null; refCode?: string | null; place?: string | null };
+/** Texto para partilhar (WhatsApp, SMS…): título, preço, número do anúncio, local e ligação. */
+export function shareMessage(siteUrl: string, kind: SavedKind, id: string, title: string, extra: ShareExtra = {}) {
   const base = siteUrl.replace(/\/$/, "");
   const url = base ? base + itemHref(kind, id) : "";
-  return { url, text: url ? `${title} — Huambo Online\n${url}` : `${title} — Huambo Online` };
+  const price = extra.price != null && Number(extra.price) > 0 ? formatPrice(extra.price, extra.currency ?? "AOA") : "";
+  const details = [price && "💰 " + price, extra.refCode, extra.place && "📍 " + extra.place].filter(Boolean).join(" · ");
+  const lines = [`${title} — Huambo Online`, details, url && "👉 " + url].filter(Boolean);
+  return { url, text: lines.join("\n") };
+}
+/** Abre o WhatsApp para escolher a quem enviar. */
+export function whatsappShareUrl(text: string): string { return "https://wa.me/?text=" + encodeURIComponent(text); }
+/** Mensagem pronta para escrever ao vendedor pelo WhatsApp. */
+export function sellerWhatsappMessage(kind: "listing" | "product", title: string, refCode?: string | null, url?: string | null): string {
+  const what = kind === "product" ? "o seu produto" : "o seu anúncio";
+  return `Olá! Vi ${what} «${title}»${refCode ? ` (${refCode})` : ""} no Huambo Online e tenho interesse.${url ? "\n" + url : ""}`;
+}
+/** Número de WhatsApp em formato internacional sem «+» (Angola: 244 + 9 algarismos), ou null. Igual ao servidor. */
+export function normalizeWhatsapp(input: string | null | undefined): string | null {
+  let d = (input ?? "").replace(/\D/g, "");
+  if (d.startsWith("00")) d = d.slice(2);
+  if (/^9\d{8}$/.test(d)) return "244" + d;
+  if (/^2449\d{8}$/.test(d)) return d;
+  if (d.startsWith("244")) return null;
+  return /^[1-9]\d{9,14}$/.test(d) ? d : null;
+}
+/** «244923000000» → «+244 923 000 000». */
+export function formatWhatsapp(n: string | null | undefined): string {
+  const d = (n ?? "").replace(/\D/g, "");
+  return d.startsWith("244") && d.length === 12 ? `+244 ${d.slice(3, 6)} ${d.slice(6, 9)} ${d.slice(9)}` : d ? "+" + d : "";
+}
+export async function getMyWhatsapp(client: SupabaseClient, userId: string) {
+  const r = await client.from("profiles").select("whatsapp,whatsapp_public").eq("id", userId).maybeSingle();
+  return { data: (r.data ?? null) as { whatsapp: string | null; whatsapp_public: boolean } | null, error: r.error };
+}
+export function setMyWhatsapp(client: SupabaseClient, number: string, visible: boolean) {
+  if (number.trim() && !normalizeWhatsapp(number)) return Promise.resolve({ data: null, error: new Error("INVALID_WHATSAPP") });
+  return client.rpc("set_my_whatsapp", { p_number: number.trim() || null, p_public: visible });
+}
+/** Número do vendedor, só se ele escolheu mostrá-lo e só para quem tem sessão iniciada. */
+export async function getSellerWhatsapp(client: SupabaseClient, userId: string): Promise<string | null> {
+  const r = await client.rpc("seller_whatsapp", { p_user_id: userId });
+  return typeof r.data === "string" && r.data ? r.data : null;
 }
 
 // Fotografia de perfil

@@ -91,6 +91,7 @@ const errorMessages: [RegExp, string][] = [
   [/CANNOT_BUY_OWN_PRODUCT/, "Não pode comprar o seu próprio produto."],
   [/DELIVERY_ADDRESS_REQUIRED/, "Indique a morada para a entrega."],
   [/PHONE_REQUIRED/, "Indique um telefone."],
+  [/INVALID_WHATSAPP/, "Escreva um número de WhatsApp válido (ex.: 923 000 000)."],
   [/PROTECTED_DISABLED/, "O pagamento protegido ainda não está disponível. Escolha outra forma de pagamento."],
   [/PROTECTED_PAID_BY_PLATFORM/, "Nesta encomenda o pagamento é confirmado pelo Huambo Online, não pelo vendedor."],
   [/AWAITING_PAYMENT/, "O cliente ainda não pagou: espere pelo aviso «Pagamento recebido» antes de preparar ou enviar."],

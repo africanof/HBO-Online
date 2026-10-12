@@ -36,7 +36,7 @@ describe("links and sharing", () => {
     expect(itemHref("product", "4")).toBe("/loja/4");
   });
   it("builds share text with the site link", () => {
-    expect(shareMessage("https://huambo.example/", "product", "9", "Arroz")).toEqual({ url: "https://huambo.example/loja/9", text: "Arroz — Huambo Online\nhttps://huambo.example/loja/9" });
+    expect(shareMessage("https://huambo.example/", "product", "9", "Arroz")).toEqual({ url: "https://huambo.example/loja/9", text: "Arroz — Huambo Online\n👉 https://huambo.example/loja/9" });
     expect(shareMessage("", "product", "9", "Arroz").url).toBe("");
   });
 });

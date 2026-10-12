@@ -6,7 +6,7 @@ import { getProduct, addToMyCart, formatRef, getPublicProfile, formatPrice, frie
 import { supabase } from "../../lib/supabase";
 import { ui, C } from "../../lib/ui";
 import { Button, Message } from "../../components/Ui";
-import { SaveButton, ShareButton, useRecordView } from "../../components/Engage";
+import { SaveButton, ShareButton, SellerWhatsApp, useRecordView } from "../../components/Engage";
 import { SellerBadge } from "../../components/Reputation";
 import { ReportButton } from "../../components/Trust";
 
@@ -51,8 +51,9 @@ export default function Produto() {
     </View>}
     {!!p.video_url && <VideoPlayer url={p.video_url} />}
     {!!p.description && <Text style={ui.text}>{p.description}</Text>}
+    {!mine && <SellerWhatsApp sellerId={p.seller_id} kind="product" id={id} title={p.name} refCode={p.ref_no ? formatRef("product", p.ref_no) : null} />}
     {!mine && <SaveButton kind="product" id={id} />}
-    <ShareButton kind="product" id={id} title={p.name} />
+    <ShareButton kind="product" id={id} title={p.name} extra={{ price: p.price, currency: p.currency, refCode: p.ref_no ? formatRef("product", p.ref_no) : null, place: p.municipalities?.name }} />
     <Message error={error} ok={notice} />
     {!!notice && <Button title="Ver carrinho" variant="secondary" onPress={() => router.push("/carrinho" as any)} />}
     {mine ? <Button title="Gerir os meus produtos" onPress={() => router.push("/conta/produtos" as any)} /> : p.stock > 0 && <View style={{ gap: 8 }}>

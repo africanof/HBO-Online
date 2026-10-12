@@ -8,7 +8,7 @@ import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleM
 import { supabase } from "../../../lib/supabase";
 import { ui, C } from "../../../lib/ui";
 import { Button, Message } from "../../../components/Ui";
-import { ShareButton, useRecordView, deviceStore } from "../../../components/Engage";
+import { ShareButton, SellerWhatsApp, useRecordView, deviceStore } from "../../../components/Engage";
 import { OfflineBanner } from "../../../components/Offline";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
 import { MarketLink } from "../../../components/MarketPicker";
@@ -130,7 +130,7 @@ export default function ClassifiedDetail() {
     {!!item.video_url && <VideoPlayer url={item.video_url} />}
     {item.purpose === "wanted" && item.status === "published" && <WantedHelpers title={item.title} mine={mine} />}
     {!!item.description && <Text style={ui.text}>{item.description}</Text>}
-    {item.status === "published" && <ShareButton kind="listing" id={id} title={item.title} />}
+    {item.status === "published" && <ShareButton kind="listing" id={id} title={item.title} extra={{ price: item.purpose === "wanted" ? null : item.price, currency: item.currency, refCode: item.ref_no ? formatRef("listing", item.ref_no) : null, place }} />}
     {item.status === "published" && <AuctionPanel listingId={id} uid={uid} mine={mine} canStart={["sale", "auction"].includes(item.purpose) && AUCTIONABLE_TYPES.includes(item.listing_type)} />}
     {!mine && item.status === "published" && ["rent", "lease"].includes(item.purpose) && <RentalRequestForm listingId={id} uid={uid} defaultPrice={item.price} />}
     <Message error={error} ok={notice} />
@@ -139,6 +139,7 @@ export default function ClassifiedDetail() {
       <Button title="Os meus anúncios" variant="secondary" onPress={() => router.push("/meus-anuncios" as any)} />
       {item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} />}
     </View> : <View style={{ gap: 12 }}>
+      {item.status === "published" && <SellerWhatsApp sellerId={item.owner_id} kind="listing" id={id} title={item.title} refCode={item.ref_no ? formatRef("listing", item.ref_no) : null} />}
       {can.buyNow && <Button title={"🛒 Quero comprar" + (item.price != null ? " por " + formatPrice(item.price, item.currency) : "")} disabled={busy} onPress={() => void buyNow()} />}
       {(can.offerMoney || can.offerTrade) && <OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} />}
       <Button title={savedId ? "★ Guardado" : "☆ Guardar anúncio"} variant="secondary" onPress={() => void toggleSaved()} disabled={busy} />

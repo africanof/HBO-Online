@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { findSaved, toggleSaved, recordView, shareMessage, friendlyError, type SavedKind, type KeyValueStore } from "@huambo-online/core";
+import { findSaved, toggleSaved, recordView, shareMessage, whatsappShareUrl, sellerWhatsappMessage, getSellerWhatsapp, getMyWhatsapp, setMyWhatsapp, formatWhatsapp, whatsappLink, friendlyError,
+  type SavedKind, type KeyValueStore, type ShareExtra } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 
 /** localStorage com proteção (modo privado, bloqueios). */
@@ -32,21 +33,53 @@ export function SaveButton({ kind, id }: { kind: SavedKind; id: string }) {
   </>;
 }
 
-export function ShareButton({ kind, id, title }: { kind: SavedKind; id: string; title: string }) {
+export function ShareButton({ kind, id, title, extra }: { kind: SavedKind; id: string; title: string; extra?: ShareExtra }) {
   const [done, setDone] = useState("");
   async function click() {
-    const { url, text } = shareMessage(window.location.origin, kind, id, title);
+    const { url, text } = shareMessage(window.location.origin, kind, id, title, extra);
     try {
       if (navigator.share) { await navigator.share({ title, text, url }); return; }
       await navigator.clipboard.writeText(url); setDone("Link copiado.");
     } catch { /* partilha cancelada */ }
   }
   function whatsapp() {
-    window.open("https://wa.me/?text=" + encodeURIComponent(shareMessage(window.location.origin, kind, id, title).text), "_blank", "noopener");
+    window.open(whatsappShareUrl(shareMessage(window.location.origin, kind, id, title, extra).text), "_blank", "noopener");
   }
   return <>
     <button type="button" className="secondary" onClick={click}>🔗 Partilhar</button>
-    <button type="button" className="secondary" onClick={whatsapp}>Enviar por WhatsApp</button>
+    <button type="button" className="secondary" onClick={whatsapp}>📲 Partilhar no WhatsApp</button>
     {done && <span className="ok" role="status">{done}</span>}
   </>;
+}
+
+/** «Falar no WhatsApp» com o vendedor: só aparece se ele escolheu mostrar o número e para quem tem sessão iniciada. */
+export function SellerWhatsApp({ sellerId, kind, id, title, refCode }: { sellerId: string; kind: "listing" | "product"; id: string; title: string; refCode?: string | null }) {
+  const [number, setNumber] = useState<string | null>(null);
+  useEffect(() => { void getSellerWhatsapp(supabase(), sellerId).then(setNumber); }, [sellerId]);
+  if (!number) return null;
+  const url = shareMessage(window.location.origin, kind, id, title).url;
+  const href = whatsappLink(number, sellerWhatsappMessage(kind, title, refCode, url));
+  return href ? <a className="btn secondary" href={href} target="_blank" rel="noopener">💬 Falar no WhatsApp</a> : null;
+}
+
+/** «A sua conta»: número de WhatsApp e se aparece nos anúncios e produtos. */
+export function WhatsAppSettings({ uid }: { uid: string }) {
+  const [number, setNumber] = useState(""); const [visible, setVisible] = useState(false);
+  const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
+  useEffect(() => { void getMyWhatsapp(supabase(), uid).then(r => { setNumber(formatWhatsapp(r.data?.whatsapp)); setVisible(!!r.data?.whatsapp_public); }); }, [uid]);
+  async function save(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true); setMsg(""); setErr("");
+    const r = await setMyWhatsapp(supabase(), number, visible); setBusy(false);
+    if (r.error) setErr(friendlyError(r.error)); else setMsg(!number.trim() ? "Número de WhatsApp apagado." : visible ? "Guardado. O botão «Falar no WhatsApp» aparece nos seus anúncios e produtos." : "Guardado. O número fica escondido.");
+  }
+  return <form className="stack card" onSubmit={save}>
+    <h2 style={{ margin: 0 }}>💬 WhatsApp</h2>
+    <p style={{ margin: 0 }}>Os compradores podem falar consigo pelo WhatsApp, além das mensagens do Huambo Online.</p>
+    <label>Número de WhatsApp<input type="tel" value={number} onChange={e => setNumber(e.target.value)} placeholder="923 000 000" autoComplete="tel" /></label>
+    <label className="row" style={{ gap: 8 }}><input type="checkbox" checked={visible} onChange={e => setVisible(e.target.checked)} style={{ width: 24, height: 24 }} /> Mostrar o botão «Falar no WhatsApp» nos meus anúncios e produtos</label>
+    <small>Só quem tem sessão iniciada vê o seu número. Pode esconder ou apagar quando quiser.</small>
+    {msg && <p className="ok" role="status">{msg}</p>}
+    {err && <p className="error" role="alert">{err}</p>}
+    <button disabled={busy} style={{ justifySelf: "start" }}>Guardar WhatsApp</button>
+  </form>;
 }

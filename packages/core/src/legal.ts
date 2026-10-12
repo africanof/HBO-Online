@@ -80,7 +80,8 @@ export function privacyPage(email?: string | null): InfoPage {
         "Não vendemos os seus dados a ninguém e não mostramos publicidade com base neles."] },
       { title: "3. O que é público", paragraphs: [
         "Os anúncios publicados, produtos, perfis de profissionais e empresas, o seu nome, a fotografia de perfil, as avaliações e os números do perfil (vendas, serviços prestados).",
-        "O seu e-mail não é mostrado. O telefone só aparece se o puser no anúncio ou no perfil."] },
+        "O seu e-mail não é mostrado. O telefone só aparece se o puser no anúncio ou no perfil.",
+        "O seu número de WhatsApp só aparece se escolher «Mostrar o botão Falar no WhatsApp» em «A sua conta», e só para quem tem sessão iniciada. Pode escondê-lo ou apagá-lo quando quiser."] },
       { title: "4. O que é privado", paragraphs: [
         "Mensagens, propostas, encomendas e pedidos de serviço: só as pessoas envolvidas os veem.",
         "Os documentos de verificação ficam num espaço privado: só o próprio e a administração os podem abrir, através de uma ligação temporária."] },
@@ -175,6 +176,8 @@ export const HELP_FAQ: FaqItem[] = [
   { q: "Como fico com o selo «Verificado»?", a: "Em «A sua conta», abra «Verificar perfil» e envie a fotografia do BI (ou do alvará/NIF da empresa). O documento fica privado; a administração responde por notificação." },
   { q: "O que é o «Pagamento protegido»?", a: "Nas compras da Loja, pode pagar ao Huambo Online em vez de pagar ao vendedor. Guardamos o dinheiro e o vendedor só o recebe depois de confirmar que recebeu a encomenda. Se houver problema, peça reembolso em «Encomendas»: o dinheiro fica congelado até se resolver. Se não confirmar nem reclamar uns dias depois da entrega, o pagamento vai para o vendedor." },
   { q: "Vendo na Loja: como recebo o dinheiro do pagamento protegido?", a: "Espere pelo aviso «Pagamento recebido» antes de enviar. Depois de entregar, marque a encomenda como «Entregue». Quando o cliente confirmar (ou passar o prazo sem reclamação), o dinheiro passa para «A sua conta» → «O meu saldo». Indique o seu IBAN ou número Multicaixa Express e carregue em «Pedir levantamento»." },
+  { q: "Como partilho um anúncio no WhatsApp?", a: "Abra o anúncio ou o produto e carregue em «📲 Partilhar no WhatsApp». A mensagem leva o título, o preço, o número do anúncio (ex.: A-1023) e a ligação, e no WhatsApp aparece a fotografia. Escolha o contacto ou o grupo." },
+  { q: "Como recebo mensagens de compradores pelo WhatsApp?", a: "Em «A sua conta» → «WhatsApp», escreva o seu número e ligue «Mostrar o botão Falar no WhatsApp». O botão aparece nos seus anúncios e produtos, só para quem tem sessão iniciada, com uma mensagem pronta a dizer de que anúncio se trata." },
   { q: "Como evito burlas?", a: "Não pague adiantado a quem não conhece. Encontre-se num local público, veja o artigo e pague na entrega. Desconfie de preços demasiado baixos. Se suspeitar, use «Denunciar»." },
   { q: "Como peço uma devolução ou reembolso?", a: "Em «Encomendas», escolha a encomenda e carregue em «Pedir devolução ou reembolso» (até 14 dias depois da entrega). Explique o problema e junte fotografias. Se o vendedor recusar ou não responder, pode chamar a administração. Veja «Devoluções e reembolsos»." },
   { q: "Posso usar sem internet?", a: "Pode ver a página inicial, a última pesquisa e os últimos anúncios que abriu. Para publicar, enviar mensagens ou propostas precisa de ligação." },

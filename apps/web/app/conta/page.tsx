@@ -4,6 +4,7 @@ import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, ch
 import { supabase } from "../../lib/supabase";
 import { compressPhoto } from "../../lib/image";
 import { ThemePicker } from "../../components/ThemePicker";
+import { WhatsAppSettings } from "../../components/Engage";
 
 export default function ContaPage() {
   const [email, setEmail] = useState("");
@@ -62,6 +63,7 @@ export default function ContaPage() {
       <label>Município<input value={form.municipality} onChange={e => setForm({ ...form, municipality: e.target.value })} /></label>
       <button disabled={busy}>Guardar alterações</button>
     </form>}
+    {uid && <WhatsAppSettings uid={uid} />}
     <form className="stack card" onSubmit={async e => { e.preventDefault(); if (await run(() => changeCurrentUserPassword(supabase(), pw, pw2), "Palavra-passe alterada com sucesso.")) { setPw(""); setPw2(""); } }}>
       <h2 style={{ margin: 0 }}>Segurança</h2>
       <label>Nova palavra-passe<input type="password" autoComplete="new-password" value={pw} onChange={e => setPw(e.target.value)} /></label>
