@@ -5,6 +5,7 @@ export type ListingAuction = {
   id: string; seller_id: string; title: string; starting_price: number; reserve_met: boolean; min_increment: number;
   current_price: number; starts_at: string; ends_at: string; status: "draft" | "scheduled" | "live" | "ended" | "cancelled";
   winner_id: string | null; bid_count: number; my_best: number | null; leader_is_me: boolean;
+  has_reserve?: boolean; buy_now_price?: number | null; buy_now_available?: boolean; bought_now?: boolean;
 };
 
 /** Tipos de anúncio que o servidor aceita pôr em leilão. */
@@ -48,7 +49,9 @@ export function timeLeft(endsAt: string, now = Date.now()): string {
   return `${Math.max(min, 1)} min`;
 }
 
-export function validateAuctionInput(input: { startingPrice: number; reservePrice?: number; minIncrement?: number; days: number }): string | null {
+export function validateAuctionInput(input: { startingPrice: number; reservePrice?: number; minIncrement?: number; days: number; buyNowPrice?: number }): string | null {
+  if (input.buyNowPrice !== undefined && (!Number.isFinite(input.buyNowPrice) || input.buyNowPrice <= input.startingPrice || input.buyNowPrice < (input.reservePrice ?? 0)))
+    return "O preço «Comprar já» tem de ser maior que o preço inicial e não menor que o preço mínimo de venda.";
   if (!Number.isFinite(input.startingPrice) || input.startingPrice <= 0) return "Indique o preço inicial.";
   if (input.reservePrice !== undefined && (!Number.isFinite(input.reservePrice) || input.reservePrice < input.startingPrice)) return "O preço mínimo de venda não pode ser menor que o inicial.";
   if (input.minIncrement !== undefined && (!Number.isFinite(input.minIncrement) || input.minIncrement < 0)) return "Indique um incremento válido.";
@@ -57,17 +60,21 @@ export function validateAuctionInput(input: { startingPrice: number; reservePric
 }
 
 export async function getListingAuction(client: SupabaseClient, listingId: string) {
-  return client.rpc("auction_for_listing", { p_listing_id: listingId }).maybeSingle<ListingAuction>();
+  return client.rpc("auction_for_listing_v2", { p_listing_id: listingId }).maybeSingle<ListingAuction>();
 }
-export async function startListingAuction(client: SupabaseClient, listingId: string, input: { startingPrice: number; reservePrice?: number; minIncrement?: number; days: number }) {
+export async function startListingAuction(client: SupabaseClient, listingId: string, input: { startingPrice: number; reservePrice?: number; minIncrement?: number; days: number; buyNowPrice?: number }) {
   const invalid = validateAuctionInput(input);
   if (invalid) return { data: null, error: new Error(invalid) };
   const start = new Date();
   const end = new Date(start.getTime() + input.days * 86400000);
-  return client.rpc("create_classified_auction", {
+  const created = await client.rpc("create_classified_auction", {
     p_listing_id: listingId, p_starts_at: start.toISOString(), p_ends_at: end.toISOString(),
     p_starting_price: input.startingPrice, p_reserve_price: input.reservePrice ?? null, p_min_increment: input.minIncrement ?? 0
   });
+  const id = (created.data as { id?: string } | null)?.id;
+  if (created.error || input.buyNowPrice === undefined || !id) return created;
+  const bn = await setBuyNow(client, id, input.buyNowPrice);
+  return bn.error ? { data: created.data, error: bn.error } : created;
 }
 export async function bidOnAuction(client: SupabaseClient, auctionId: string, amount: number) {
   if (!Number.isFinite(amount) || amount <= 0) return { data: null, error: new Error("Indique o valor do lance.") };
@@ -112,4 +119,28 @@ export function retractMyBid(client: SupabaseClient, auctionId: string, reason: 
 }
 export function cancelBidAsSeller(client: SupabaseClient, bidId: string, reason: string) {
   return client.rpc("seller_cancel_bid", { p_bid_id: bidId, p_reason: reason.trim() });
+}
+
+// --- Comprar já e «As minhas licitações» ---------------------------------------------------
+export function setBuyNow(client: SupabaseClient, auctionId: string, price: number | null) {
+  return client.rpc("set_auction_buy_now", { p_auction_id: auctionId, p_price: price });
+}
+export function buyAuctionNow(client: SupabaseClient, auctionId: string) {
+  return client.rpc("buy_auction_now", { p_auction_id: auctionId });
+}
+export type BidStanding = "winning" | "outbid" | "won" | "lost" | "reserve_not_met" | "retracted" | "cancelled" | "auction_cancelled";
+export const BID_STANDING_LABELS: Record<BidStanding, string> = {
+  winning: "✔ Está a ganhar", outbid: "⚠️ Foi ultrapassado", won: "🎉 Ganhou", lost: "Perdeu", reserve_not_met: "Preço mínimo de venda não atingido",
+  retracted: "Retirou os lances", cancelled: "Lances cancelados pelo vendedor", auction_cancelled: "Leilão cancelado"
+};
+export type MyAuctionBid = { auction_id: string; listing_id: string | null; ref_no: number | null; title: string; photo: string | null; status: string; ends_at: string;
+  current_price: number | string; my_max: number | string | null; standing: BidStanding; bid_count: number };
+export async function listMyAuctionBids(client: SupabaseClient) {
+  const r = await client.rpc("my_auction_bids");
+  return { data: (r.data ?? []) as MyAuctionBid[], error: r.error };
+}
+/** Separa em «a decorrer» e «terminados», e conta os que precisam de atenção (ultrapassado). */
+export function groupMyBids(items: MyAuctionBid[]) {
+  const live = items.filter(i => i.status === "live" && ["winning", "outbid"].includes(i.standing));
+  return { live, ended: items.filter(i => !live.includes(i)), needAttention: live.filter(i => i.standing === "outbid").length };
 }

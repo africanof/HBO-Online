@@ -92,7 +92,7 @@ export function SiteFooter() {
     ["Comprar", [["Classificados", "/explorar"], ["Procura-se (pedidos)", "/procura-se"], ["Publicar o que procuro", "/classificados/publicar?finalidade=wanted"], ["Trocas", "/trocas"], ["Praças", "/pracas"], ["Loja", "/loja"], ["Leilões", "/explorar?finalidade=auction"], ["Carrinho", "/carrinho"], ["Encomendas", "/encomendas"]]],
     ["Vender", [["Publicar anúncio", "/classificados/publicar"], ["Os meus anúncios", "/meus-anuncios"], ["Vender produtos", "/conta/produtos"], ["Alugueres", "/alugueres"]]],
     ["Serviços", [["Profissionais", "/profissionais"], ["Empresas", "/empresas"], ["Ser profissional", "/conta/profissional"], ["Ser estafeta", "/entregas"]]],
-    ["A minha conta", [["Conta", "/conta"], ["Mensagens", "/mensagens"], ["Notificações", "/notificacoes"], ["Guardados", "/guardados"], ["Pesquisas guardadas", "/pesquisas-guardadas"]]],
+    ["A minha conta", [["Conta", "/conta"], ["Mensagens", "/mensagens"], ["Notificações", "/notificacoes"], ["Guardados", "/guardados"], ["As minhas licitações", "/licitacoes"], ["Pesquisas guardadas", "/pesquisas-guardadas"]]],
     ["Ajuda e informação", INFO_LINKS.map(l => [l.label, l.href] as [string, string])]
   ];
   return <footer className="footer"><div className="footer-in">
