@@ -4,7 +4,7 @@ import { ScrollView, Text, TextInput, View } from "react-native";
 import { getMyCart, setCartQuantity, placeOrders, groupCartBySeller, formatPrice, friendlyError, PAYMENT_LABELS, FULFILLMENT_LABELS,
   type Fulfillment, type PaymentMethod } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
-import { ui } from "../lib/ui";
+import { ui, C } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
 
 export default function Carrinho() {
@@ -33,7 +33,7 @@ export default function Carrinho() {
     {items.length === 0 && <Text style={ui.text}>O carrinho está vazio.</Text>}
     {groups.map(g => <View key={g.sellerId} style={ui.card}>
       <Text style={ui.label}>Vendedor: {g.sellerName}</Text>
-      {g.items.map((it: any) => <View key={it.product_id} style={{ gap: 6, borderTopWidth: 1, borderColor: "#eee", paddingTop: 8 }}>
+      {g.items.map((it: any) => <View key={it.product_id} style={{ gap: 6, borderTopWidth: 1, borderColor: C.surface, paddingTop: 8 }}>
         <Text style={ui.text}>{it.name} — {formatPrice(it.price, it.currency)}</Text>
         {(!it.active || it.stock < it.quantity) && <Text style={ui.error}>Stock insuficiente</Text>}
         <View style={ui.row}>

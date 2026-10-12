@@ -1,7 +1,7 @@
 import { Link } from "expo-router";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { firstPhoto } from "@huambo-online/core";
-import { C } from "../lib/ui";
+import { C, themed } from "../lib/ui";
 
 export const LISTING_ICON: Record<string, string> = { real_estate: "🏠", vehicle: "🚗", product: "📦", service: "🛠️", classified: "🏷️" };
 
@@ -37,7 +37,7 @@ export function Grid({ children }: { children: React.ReactNode }) {
   return <View style={s.grid}>{children}</View>;
 }
 
-const s = StyleSheet.create({
+const s = themed(C => StyleSheet.create({
   card: { width: 160, gap: 4 },
   img: { width: "100%", aspectRatio: 1, borderRadius: 16, backgroundColor: C.surface, overflow: "hidden", alignItems: "center", justifyContent: "center", marginBottom: 4 },
   tag: { position: "absolute", left: 8, top: 8, backgroundColor: C.white, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
@@ -51,4 +51,4 @@ const s = StyleSheet.create({
   headTitle: { fontSize: 21, fontWeight: "800", color: C.ink, flexShrink: 1 },
   more: { color: C.blue, fontWeight: "800", fontSize: 16, textDecorationLine: "underline", padding: 4 },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 18 }
-});
+}));

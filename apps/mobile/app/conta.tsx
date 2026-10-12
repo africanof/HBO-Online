@@ -4,7 +4,7 @@ import { Image, ScrollView, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError, getMyAdminRole, canModerate, uploadAvatar, base64ToArrayBuffer, AVATAR_MAX_BYTES, AVATAR_MAX_SIDE } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
-import { ui } from "../lib/ui";
+import { ui, C } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
 import { shrinkAsset } from "../lib/image";
 
@@ -40,7 +40,7 @@ export default function Conta() {
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/" style={ui.link}>← Huambo Online</Link>
     <Text style={ui.h1}>A sua conta</Text>
-    {avatar ? <Image source={{ uri: avatar }} style={{ width: 96, height: 96, borderRadius: 48 }} accessibilityLabel="Fotografia de perfil" /> : <View style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: "#ddd" }} />}
+    {avatar ? <Image source={{ uri: avatar }} style={{ width: 96, height: 96, borderRadius: 48 }} accessibilityLabel="Fotografia de perfil" /> : <View style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: C.placeholder }} />}
     <Button title="📷 Mudar fotografia de perfil" variant="secondary" disabled={busy} onPress={async () => {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) { setErr("Autorize o acesso às fotografias."); return; }

@@ -6,7 +6,7 @@ import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimension
 import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
   reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
-import { ui } from "../../../lib/ui";
+import { ui, C } from "../../../lib/ui";
 import { Button, Message } from "../../../components/Ui";
 import { ShareButton, useRecordView, deviceStore } from "../../../components/Engage";
 import { OfflineBanner } from "../../../components/Offline";
@@ -112,10 +112,10 @@ export default function ClassifiedDetail() {
     <Link href="/explorar" style={ui.link}>← Explorar</Link>
     <OfflineBanner show={offline.on} savedAt={offline.at} />
     {item.status !== "published" && <Text style={ui.error}>{STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] ?? item.status} — só você vê este anúncio</Text>}
-    {item.purpose === "wanted" && <Text style={[ui.label, { backgroundColor: "#fff4d6", alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }]}>🔎 PROCURA-SE — pedido de comprador</Text>}
+    {item.purpose === "wanted" && <Text style={[ui.label, { backgroundColor: C.yellowSoft, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }]}>🔎 PROCURA-SE — pedido de comprador</Text>}
     <Text style={ui.h1}>{item.title}</Text>
     {item.purpose === "wanted" ? <Text style={ui.price}>Orçamento: {listingPriceLabel(item)}</Text> : <Text style={ui.price}>{listingPriceLabel(item)}</Text>}
-    {badges.length > 0 && <View style={ui.row}>{badges.map(b => <Text key={b} style={{ backgroundColor: "#EEF3FF", color: "#1F3FAE", fontWeight: "800", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 }}>{b}</Text>)}</View>}
+    {badges.length > 0 && <View style={ui.row}>{badges.map(b => <Text key={b} style={{ backgroundColor: C.blueSoft, color: C.blueText, fontWeight: "800", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 }}>{b}</Text>)}</View>}
     {!!mode && !!SALE_MODE_INFO[mode] && <Text style={ui.muted}>{SALE_MODE_INFO[mode].icon} {SALE_MODE_INFO[mode].label}</Text>}
     {!!item.trade_wants && <Text style={ui.text}>🔁 Aceita em troca: <Text style={ui.label}>{item.trade_wants}</Text></Text>}
     <Text style={ui.text}>{LISTING_TYPE_LABELS[item.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? item.listing_type} · {PURPOSE_LABELS[item.purpose as keyof typeof PURPOSE_LABELS] ?? item.purpose}{place ? " · 📍 " + place : ""}</Text>
@@ -123,8 +123,8 @@ export default function ClassifiedDetail() {
     {!!seller && <SellerBadge userId={item.owner_id} />}
     <MarketLink id={item.market_id} />
     {media.length > 0 && <View style={{ gap: 8 }}>
-      <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: "#eee" }} resizeMode="contain" accessibilityLabel={`Fotografia ${photo + 1} de ${media.length}`} />
-      {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} accessibilityLabel={`Ver fotografia ${i + 1}`} style={{ borderWidth: 3, borderColor: i === photo ? "#111" : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}
+      <Image source={{ uri: media[photo] }} style={{ width: width - 40, height: (width - 40) * 0.75, borderRadius: 12, backgroundColor: C.surface }} resizeMode="contain" accessibilityLabel={`Fotografia ${photo + 1} de ${media.length}`} />
+      {media.length > 1 && <ScrollView horizontal contentContainerStyle={{ gap: 8 }}>{media.map((m, i) => <Pressable key={m} onPress={() => setPhoto(i)} accessibilityLabel={`Ver fotografia ${i + 1}`} style={{ borderWidth: 3, borderColor: i === photo ? C.ink : "transparent", borderRadius: 8 }}><Image source={{ uri: m }} style={{ width: 68, height: 68, borderRadius: 6 }} /></Pressable>)}</ScrollView>}
     </View>}
     {!!item.video_url && <VideoPlayer url={item.video_url} />}
     {item.purpose === "wanted" && item.status === "published" && <WantedHelpers title={item.title} mine={mine} />}

@@ -3,6 +3,7 @@ import "./globals.css";
 import { SiteHeader, SiteFooter } from "../components/SiteHeader";
 import { ConnectionWatcher } from "../components/Offline";
 import { SITE_URL } from "../lib/site";
+import { THEME_STORAGE_KEY } from "@huambo-online/core";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -11,9 +12,17 @@ export const metadata: Metadata = {
   keywords: ["Huambo", "Angola", "classificados", "comprar", "vender", "arrendar", "loja online", "profissionais", "empresas", "praça", "Kapango"],
   openGraph: { type: "website", locale: "pt_AO", siteName: "Huambo Online", url: SITE_URL, title: "Huambo Online", description: "Compre, venda e encontre tudo no Huambo." }
 };
-// "only light": o Site é sempre claro (contraste alto), mesmo com o telemóvel em modo escuro.
-export const viewport: Viewport = { themeColor: "#3665F3", width: "device-width", initialScale: 1, colorScheme: "only light" };
+export const viewport: Viewport = {
+  width: "device-width", initialScale: 1, colorScheme: "light dark",
+  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#3665F3" }, { media: "(prefers-color-scheme: dark)", color: "#121417" }]
+};
+
+// Aplica o tema (Automático / Claro / Escuro) antes de a página aparecer, para não piscar.
+const THEME_SCRIPT = `(function(){try{var p=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});var d=p==="dark"||(p!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="pt-AO" style={{ colorScheme: "only light", background: "#fff" }}><body><ConnectionWatcher /><SiteHeader />{children}<SiteFooter /></body></html>;
+  return <html lang="pt-AO" suppressHydrationWarning>
+    <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
+    <body><ConnectionWatcher /><SiteHeader />{children}<SiteFooter /></body>
+  </html>;
 }

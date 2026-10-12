@@ -5,7 +5,7 @@ import { listProviders, listBusinesses, getProvider, getBusiness, listProviderSe
   listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
   listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
-import { ui } from "../lib/ui";
+import { ui, C } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
 import { SaveButton, ShareButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, VerifiedTag, stars } from "./Reputation";
@@ -57,7 +57,7 @@ export function DirectoryList({ kind }: { kind: Kind }) {
     <Button title="Pesquisar" onPress={() => void search()} />
     <Message error={error} />
     {items?.length === 0 && <Text style={ui.text}>{t.empty}</Text>}
-    <View style={{ backgroundColor: "#fff4d6", borderRadius: 16, padding: 14, gap: 8 }}>
+    <View style={{ backgroundColor: C.yellowSoft, borderRadius: 16, padding: 14, gap: 8 }}>
       <Text style={ui.text}><Text style={{ fontWeight: "800" }}>Não encontrou quem procura?</Text> Publique «Procuro um eletricista, canalizador, doméstica…» e os profissionais da área são avisados.</Text>
       <Button title="🔎 Publicar o que procuro" onPress={() => router.push("/classificados/publicar?finalidade=wanted" as any)} />
     </View>

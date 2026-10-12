@@ -3,7 +3,7 @@ import { Link } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { countUnreadNotifications, subscribeToNotifications, countUnreadMessages, getMyCart } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
-import { C } from "../lib/ui";
+import { C, themed } from "../lib/ui";
 
 /** Contadores: notificações e mensagens por ler e artigos no carrinho (atualiza em tempo real). */
 export function useUnreadCounts() {
@@ -45,8 +45,8 @@ export function NotificationBell() {
   </View>;
 }
 
-const s = StyleSheet.create({
+const s = themed(C => StyleSheet.create({
   btn: { padding: 8 },
   count: { position: "absolute", top: -4, right: -10, minWidth: 20, height: 20, borderRadius: 10, backgroundColor: C.red, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
   countText: { color: C.white, fontSize: 11, fontWeight: "800" }
-});
+}));
