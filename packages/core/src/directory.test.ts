@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateProviderInput, validateServiceInput, validateBusinessInput, ratingLabel, whatsappLink, submitReview, contactDirectoryOwner, listProviders } from "./directory";
+import { validateProviderInput, validateServiceInput, validateBusinessInput, ratingLabel, whatsappLink, submitReview, contactDirectoryOwner, listProviders, categoryIdFromSlug, directoryHeading } from "./directory";
 
 const provider = { displayName: "João", categoryId: "c", municipalityId: "m" };
 
@@ -68,5 +68,17 @@ describe("área de atividade «Outra»", () => {
     expect(categoryFormValues({ category_id: "c1", custom_category: null })).toEqual({ categoryId: "c1", customCategory: "" });
     expect(categoryLabel({ categories: null, custom_category: "Costureira" })).toBe("Costureira");
     expect(categoryLabel({ categories: { name: "Limpeza" }, custom_category: null })).toBe("Limpeza");
+  });
+});
+
+describe("categoria pela ligação", () => {
+  it("«?categoria=fabricas» escolhe a categoria Fábricas", () => {
+    const cats = [{ id: "a", slug: "lojas" }, { id: "f", slug: "fabricas" }];
+    expect(categoryIdFromSlug(cats, "fabricas")).toBe("f");
+    expect(categoryIdFromSlug(cats, " FABRICAS ")).toBe("f");
+    expect(categoryIdFromSlug(cats, "nao-existe")).toBe("");
+    expect(categoryIdFromSlug(cats, null)).toBe("");
+    expect(directoryHeading("fabricas")).toEqual({ title: "🏭 Fábricas do Huambo", cta: "Registar a minha fábrica" });
+    expect(directoryHeading("lojas")).toBeNull();
   });
 });

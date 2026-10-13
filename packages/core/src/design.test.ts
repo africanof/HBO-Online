@@ -17,7 +17,9 @@ describe("design", () => {
     expect(readExploreParams(k => bad.get(k))).toEqual({ query: "", listingType: "", purpose: "", saleMode: "" });
   });
   it("as categorias da página inicial apontam para páginas existentes", () => {
-    for (const c of HOME_CATEGORIES) expect(c.href).toMatch(/^\/(explorar|loja|pracas|procura-se|trocas|profissionais|empresas)(\?|$)/);
+    for (const c of HOME_CATEGORIES) expect(c.href).toMatch(/^\/(explorar|loja|pracas|procura-se|trocas|profissionais|empresas|agricultura)(\?|$)/);
+    expect(HOME_CATEGORIES.map(c => c.label)).toEqual(expect.arrayContaining(["Campo", "Fábricas"]));
+    expect(HOME_CATEGORIES.find(c => c.label === "Fábricas")?.href).toBe("/empresas?categoria=fabricas");
     expect(LOGO_PARTS.map(p => p[0]).join("")).toBe("HuamboOnline");
     expect(BRAND.blue).toBe("#3665F3");
     // Todas as cores do logótipo têm contraste de pelo menos 3:1 sobre branco (texto grande, WCAG AA).

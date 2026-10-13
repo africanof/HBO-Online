@@ -18,7 +18,7 @@ export function Logo({ size }: { size?: number }) {
 
 const SCOPE_BY_PATH: [string, SearchScope][] = [["/loja", "loja"], ["/pracas", "pracas"], ["/profissionais", "profissionais"], ["/empresas", "empresas"]];
 const CATEGORY_LINKS: [string, string][] = [
-  ["Início", "/"], ["Classificados", "/explorar"], ["Imóveis", "/explorar?tipo=real_estate"], ["Viaturas", "/explorar?tipo=vehicle"], ["🌾 Campo", "/agricultura"], ["🎟️ Eventos", "/eventos"], ["🎬 Vídeos", "/videos"],
+  ["Início", "/"], ["Classificados", "/explorar"], ["Imóveis", "/explorar?tipo=real_estate"], ["Viaturas", "/explorar?tipo=vehicle"], ["🌾 Campo", "/agricultura"], ["🏭 Fábricas", "/empresas?categoria=fabricas"], ["🎟️ Eventos", "/eventos"], ["🎬 Vídeos", "/videos"],
   ["Arrendar", "/explorar?finalidade=rent"], ["Leilões", "/explorar?finalidade=auction"], ["Procura-se", "/procura-se"], ["Trocas", "/trocas"], ["Praças", "/pracas"], ["Eventos e bilhetes", "/eventos"], ["Loja", "/loja"],
   ["Profissionais", "/profissionais"], ["Empresas", "/empresas"], ["Vistos recentemente", "/historico"]
 ];

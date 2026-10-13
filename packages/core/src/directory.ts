@@ -146,7 +146,16 @@ export async function contactDirectoryOwner(client: SupabaseClient, target: Revi
 }
 
 /** Categorias do diretório (profissionais/serviços ou empresas). */
+/** Categoria pedida na ligação («?categoria=fabricas»): devolve o id, ou "" se não existir. */
+export function categoryIdFromSlug(categories: { id: string; slug?: string | null }[], slug: string | null | undefined): string {
+  if (!slug) return "";
+  return categories.find(c => c.slug === slug.trim().toLowerCase())?.id ?? "";
+}
+/** Textos especiais quando a lista de empresas está filtrada por «Fábricas». */
+export function directoryHeading(slug: string | null | undefined): { title: string; cta: string } | null {
+  return slug === "fabricas" ? { title: "🏭 Fábricas do Huambo", cta: "Registar a minha fábrica" } : null;
+}
 export async function listDirectoryCategories(client: SupabaseClient, kind: "providers" | "businesses") {
   const types = kind === "providers" ? ["professional", "service"] : ["business", "product"];
-  return client.from("categories").select("id,name,type").eq("active", true).in("type", types).order("name");
+  return client.from("categories").select("id,name,type,slug").eq("active", true).in("type", types).order("name");
 }
