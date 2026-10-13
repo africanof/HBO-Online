@@ -5,7 +5,7 @@ import * as ImagePicker from "expo-image-picker";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
   createAndPublishClassifiedListing, updateClassifiedListing, friendlyError, listingTerritory, base64ToArrayBuffer,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice,
-  saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode } from "@huambo-online/core";
+  saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
@@ -20,11 +20,20 @@ type Photo = { key: string; uri: string; base64?: string | null; mimeType?: stri
 const typeOptions = Object.entries(LISTING_TYPE_LABELS).map(([value, label]) => ({ value: value as ClassifiedListingType, label }));
 const purposeOptions = PUBLISHABLE_PURPOSES.map(value => ({ value, label: PURPOSE_LABELS[value] }));
 
-export function ListingForm({ listing, initialPurpose, initialSaleMode }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string }) {
+export function ListingForm({ listing, initialPurpose, initialSaleMode, initialAgro }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string; initialAgro?: boolean }) {
   const router = useRouter();
   const editing = Boolean(listing);
   const territory = listingTerritory(listing);
-  const [listingType, setListingType] = useState<ClassifiedListingType>(listing?.listing_type ?? "classified");
+  const [listingType, setListingType] = useState<ClassifiedListingType>(listing?.listing_type ?? (initialAgro ? "product" : "classified"));
+  // Produto do campo (agricultura, gado, insumos): unidade, quantidade e «disponível a partir de».
+  const agro0 = readAgro(listing?.attributes);
+  const [isAgro, setIsAgro] = useState<boolean>(!!agro0 || (!listing && !!initialAgro));
+  const [agroCat, setAgroCat] = useState<string>(agro0?.category ?? "");
+  const [agroUnit, setAgroUnit] = useState<string>(agro0?.unit ?? "kg");
+  const [agroQty, setAgroQty] = useState<string>(agro0?.quantity ? String(agro0.quantity) : "");
+  const [agroFrom, setAgroFrom] = useState<string>(agro0?.availableFrom ?? "");
+  const agroAllowed = listingType !== "real_estate";
+  const useAgro = isAgro && agroAllowed;
   const [purpose, setPurpose] = useState<ClassifiedPurpose>(listing?.purpose ?? initialPurpose ?? "sale");
   const [title, setTitle] = useState(listing?.title ?? "");
   const [description, setDescription] = useState(listing?.description ?? "");
@@ -99,6 +108,8 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
     const invalid = validateClassifiedDraft({ listingType, purpose, title, description, price: priceValue, provinceId, municipalityId, photoCount: photos.length })
       ?? (lockedAuction ? null : validateSaleMode({ purpose, listingType, saleMode, price: priceValue, auctionDays: Number(auctionDays), tradeWants, acceptsTrade }));
     if (invalid) { setError(invalid); return; }
+    const agroInvalid = useAgro ? validateAgro({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom.trim() || null }) : null;
+    if (agroInvalid) { setError(agroInvalid); return; }
     const mode = modes.length ? (saleMode || undefined) as SaleMode | undefined : undefined;
     const sale = lockedAuction ? { saleMode: "auction" as const, acceptsTrade: false } : { saleMode: mode, acceptsTrade: mode === "trade" || (canAlsoTrade(purpose, saleMode) && acceptsTrade), tradeWants };
     setBusy(true);
@@ -118,7 +129,9 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
         media.push(up.data);
       }
       setStatus(editing ? "A guardar…" : "A publicar…");
-      const input = { listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale };
+      const keep = Object.fromEntries(Object.entries((listing?.attributes ?? {}) as Record<string, unknown>).filter(([k]) => !["agro", "agroCategory", "unit", "quantity", "availableFrom", "provinceId", "municipalityId"].includes(k)));
+      const attributes = { ...keep, ...(useAgro ? agroAttributes({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom.trim() || null }) : {}) };
+      const input = { attributes, listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale };
       // O leilão começa logo depois de publicar (ou de guardar, ao mudar para leilão).
       const startAuction = async (id: string) => {
         if (mode !== "auction" || lockedAuction) return null;
@@ -157,6 +170,21 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
     <TextInput style={ui.input} value={title} maxLength={140} onChangeText={setTitle} placeholder={wanted ? (listingType === "service" ? "Ex.: Procuro um eletricista para instalação" : "Ex.: Preciso de um Router 5G da Unitel") : "Ex.: Toyota Hilux 2018"} />
     <Text style={ui.label}>Descrição</Text>
     <TextInput style={[ui.input, ui.area]} multiline value={description} onChangeText={setDescription} placeholder={wanted ? "Pormenores: estado, marca, zona, quando precisa…" : "Estado, características, como entregar…"} />
+    {agroAllowed && <View style={[ui.card, { gap: 8 }]}>
+      <Text style={ui.h2}>🌾 Agricultura e campo</Text>
+      <Chips options={[{ value: "yes" as const, label: "É do campo" }, { value: "no" as const, label: "Não" }]} value={isAgro ? "yes" : "no"} onChange={v => setIsAgro(v === "yes")} />
+      <Text style={ui.muted}>Colheita, gado, sementes, adubos, máquinas ou serviço agrícola.</Text>
+      {isAgro && <>
+        <Text style={ui.label}>Tipo</Text>
+        <Chips options={AGRO_CATEGORIES.map(c => ({ value: c.value as string, label: c.icon + " " + c.label.replace(/ \(.*\)$/, "") }))} value={agroCat} onChange={setAgroCat} />
+        <Text style={ui.label}>Vende ao/à</Text>
+        <Chips options={AGRO_UNITS.map(u => ({ value: u.value as string, label: u.label }))} value={agroUnit} onChange={setAgroUnit} />
+        <Text style={ui.label}>Quantidade disponível (opcional)</Text>
+        <TextInput style={ui.input} keyboardType="decimal-pad" value={agroQty} onChangeText={setAgroQty} placeholder={"Ex.: 200 (" + (agroUnitInfo(agroUnit)?.plural ?? "") + ")"} placeholderTextColor={C.muted} accessibilityLabel="Quantidade disponível" />
+        <Text style={ui.label}>Disponível a partir de (opcional, AAAA-MM-DD)</Text>
+        <TextInput style={ui.input} value={agroFrom} onChangeText={setAgroFrom} placeholder="Ex.: 2026-11-15" placeholderTextColor={C.muted} accessibilityLabel="Disponível a partir de" />
+      </>}
+    </View>}
     {wanted ? <View style={{ flexDirection: "row", gap: 10 }}>
       <View style={{ flex: 1, gap: 6 }}><Text style={ui.label}>Orçamento de (Kz)</Text><TextInput style={ui.input} keyboardType="decimal-pad" value={budgetMin} onChangeText={setBudgetMin} placeholder="20 000" /></View>
       <View style={{ flex: 1, gap: 6 }}><Text style={ui.label}>até (Kz)</Text><TextInput style={ui.input} keyboardType="decimal-pad" value={budgetMax} onChangeText={setBudgetMax} placeholder="25 000" /></View>
@@ -170,7 +198,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
         </Pressable>)}
       </View>}
       {lockedAuction && <Text style={ui.label}>🔨 Este anúncio está em leilão.</Text>}
-      <Text style={ui.label}>{saleMode === "auction" ? "Preço inicial do leilão (Kz)" : saleMode === "offers" || saleMode === "trade" ? "Preço de referência (Kz, opcional)" : "Preço (Kz)"}</Text>
+      <Text style={ui.label}>{saleMode === "auction" ? "Preço inicial do leilão (Kz)" : saleMode === "offers" || saleMode === "trade" ? "Preço de referência (Kz, opcional)" : useAgro ? `Preço por ${agroUnitInfo(agroUnit)?.short ?? "unidade"} (Kz)` : "Preço (Kz)"}</Text>
       <TextInput style={ui.input} keyboardType="decimal-pad" value={price} onChangeText={setPrice} placeholder={saleMode === "fixed" || saleMode === "negotiable" || saleMode === "auction" ? "Ex.: 85 000" : "Vazio = «sob consulta»"} />
       {saleMode === "auction" && !lockedAuction && <><Text style={ui.label}>Duração do leilão</Text>
         <Chips options={["1", "3", "5", "7", "10", "14"].map(d => ({ value: d, label: d + (d === "1" ? " dia" : " dias") }))} value={auctionDays} onChange={setAuctionDays} /></>}

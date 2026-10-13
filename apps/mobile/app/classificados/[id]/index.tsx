@@ -4,7 +4,7 @@ import { WantedHelpers } from "../../../components/WantedHelpers";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
-  reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatRef, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured } from "@huambo-online/core";
+  reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatRef, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ui, C } from "../../../lib/ui";
 import { Button, Message } from "../../../components/Ui";
@@ -122,6 +122,7 @@ export default function ClassifiedDetail() {
     {!!mode && !!SALE_MODE_INFO[mode] && <Text style={ui.muted}>{SALE_MODE_INFO[mode].icon} {SALE_MODE_INFO[mode].label}</Text>}
     {!!item.trade_wants && <Text style={ui.text}>🔁 Aceita em troca: <Text style={ui.label}>{item.trade_wants}</Text></Text>}
     <Text style={ui.text}>{LISTING_TYPE_LABELS[item.listing_type as keyof typeof LISTING_TYPE_LABELS] ?? item.listing_type} · {PURPOSE_LABELS[item.purpose as keyof typeof PURPOSE_LABELS] ?? item.purpose}{place ? " · 📍 " + place : ""}</Text>
+    {!!readAgro(item.attributes) && <Link href={"/agricultura" as any} style={ui.link}>{agroSummary(readAgro(item.attributes)!)}</Link>}
     {!!seller && <Link href={("/vendedor/" + item.owner_id) as any} style={ui.link}>{item.purpose === "wanted" ? "Comprador" : "Anunciante"}: {seller} →</Link>}
     {!!seller && <SellerBadge userId={item.owner_id} />}
     <MarketLink id={item.market_id} />

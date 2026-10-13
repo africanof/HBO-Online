@@ -1,3 +1,4 @@
+import { agroPriceLabel, readAgro } from "./agro";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatPrice } from "./classified-listings";
 import { searchClassifiedListings } from "./classified-search";
@@ -27,7 +28,9 @@ export function validateBudget(min: number | undefined, max: number | undefined)
 export function budgetPrice(min?: number, max?: number): number | undefined { return max ?? min; }
 
 /** Texto do preço num cartão: orçamento para pedidos "Procuro", preço normal para os outros. */
-export function listingPriceLabel(x: { purpose?: string; price?: number | string | null; currency?: string; budget_min?: number | string | null; budget_max?: number | string | null; sale_mode?: string | null }): string {
+export function listingPriceLabel(x: { purpose?: string; price?: number | string | null; currency?: string; budget_min?: number | string | null; budget_max?: number | string | null; sale_mode?: string | null; attributes?: unknown }): string {
+  const agro = x.purpose !== "wanted" ? agroPriceLabel(x.price, readAgro(x.attributes), x.currency) : null;
+  if (agro) return agro;
   if (x.purpose !== "wanted" && (x.price === null || x.price === undefined || x.price === "")) {
     if (x.sale_mode === "trade") return "🔁 Troca";
     if (x.sale_mode === "offers") return "Aceita propostas";
