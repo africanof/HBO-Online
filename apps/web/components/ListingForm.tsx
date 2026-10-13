@@ -2,8 +2,9 @@
 import { useEffect, useState } from "react";
 import { MarketPicker } from "./MarketPicker";
 import { VideoField } from "./Video";
+import { AgentCodeField, agentCodeFromUrl } from "./Agents";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
-  createAndPublishClassifiedListing, updateClassifiedListing, friendlyError, listingTerritory,
+  createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, friendlyError, listingTerritory,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES, validateBudget, budgetPrice,
   saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
@@ -46,6 +47,8 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
   const [municipalityId, setMunicipalityId] = useState(territory.municipalityId ?? "");
   const [marketId, setMarketId] = useState<string>(listing?.market_id ?? "");
   const [videoUrl, setVideoUrl] = useState<string>(listing?.video_url ?? "");
+  const [agentCode, setAgentCode] = useState("");
+  useEffect(() => { if (!listing) { const c = agentCodeFromUrl(); if (c) setAgentCode(c); } }, []);
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, src: u })));
   const [removed, setRemoved] = useState<string[]>([]);
   const [categories, setCategories] = useState<Option[]>([]);
@@ -139,11 +142,12 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
       if (editing) {
         const r = await updateClassifiedListing(c, listing.id, input);
         if (r.error) throw r.error;
+        if (agentCode.trim()) { const ag = await setListingAgent(c, listing.id, agentCode); if (ag.error) throw ag.error; }
         if (removed.length) await removeClassifiedMedia(c, removed);
         const ae = await startAuction(listing.id); if (ae) throw ae;
         window.location.href = "/classificados/" + listing.id;
       } else {
-        const r = await createAndPublishClassifiedListing(c, { ownerId: user.id, ...input });
+        const r = await createAndPublishClassifiedListing(c, { ownerId: user.id, ...input, agentCode });
         if (r.error) {
           if (r.draftId) { window.location.href = "/meus-anuncios?erro=" + encodeURIComponent(friendlyError(r.error)); return; }
           throw r.error;
@@ -233,6 +237,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
         </div>
       </fieldset>
       <VideoField value={videoUrl} onChange={setVideoUrl} />
+      {purpose !== "wanted" && <AgentCodeField value={agentCode} onChange={setAgentCode} />}
       {error && <p className="error" role="alert">{error}</p>}
       {status && <p role="status">{status}</p>}
       <button type="submit" disabled={busy}>{busy ? (status || "Aguarde…") : editing ? "Guardar alterações" : "Publicar anúncio"}</button>

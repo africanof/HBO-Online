@@ -11,7 +11,7 @@ export type PaymentMethodPlan = "bank_transfer" | "multicaixa_express" | "cash";
 export type MyPlan = { id: string; kind: PlanKind; subject_id: string; name: string; trial_ends_at: string; paid_until: string | null; active_until: string;
   state: PlanState; monthly_price: number | string; pending_payment_id: string | null; pending_amount: number | string | null; last_rejected_note: string | null };
 export type PlatformSettings = { provider_monthly_kz: number | string; business_monthly_kz: number | string; store_monthly_kz?: number | string; trial_days: number;
-  listing_commission_pct?: number | string; commission_due_days?: number; boost_price_kz?: number | string; boost_days?: number;
+  listing_commission_pct?: number | string; commission_due_days?: number; boost_price_kz?: number | string; boost_days?: number; agent_fee_kz?: number | string; agent_daily_cap?: number;
   bank_name: string | null; iban: string | null; account_holder: string | null; express_number: string | null; payment_note: string | null;
   payment_accounts?: PaymentAccount[] };
 export type PaymentAccount = { bank: string; iban: string; holder: string };
@@ -63,7 +63,7 @@ export async function listMyPlans(client: SupabaseClient) {
   return { data: (r.data ?? []) as MyPlan[], error: r.error };
 }
 export async function getPlatformSettings(client: SupabaseClient) {
-  const r = await client.from("platform_settings").select("provider_monthly_kz,business_monthly_kz,store_monthly_kz,trial_days,listing_commission_pct,commission_due_days,boost_price_kz,boost_days,bank_name,iban,account_holder,express_number,payment_note,payment_accounts").eq("id", 1).maybeSingle();
+  const r = await client.from("platform_settings").select("provider_monthly_kz,business_monthly_kz,store_monthly_kz,trial_days,listing_commission_pct,commission_due_days,boost_price_kz,boost_days,agent_fee_kz,agent_daily_cap,bank_name,iban,account_holder,express_number,payment_note,payment_accounts").eq("id", 1).maybeSingle();
   return { data: (r.data ?? null) as PlatformSettings | null, error: r.error };
 }
 export function updatePlatformSettings(client: SupabaseClient, s: Partial<PlatformSettings>) {

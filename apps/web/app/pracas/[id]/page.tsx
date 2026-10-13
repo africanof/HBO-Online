@@ -38,6 +38,7 @@ export default function Praca() {
           <div><strong>Vende nesta praça?</strong><p>Ao publicar um anúncio ou produto, escolha «{m.name}» no campo «Praça».</p></div>
           <div className="row"><a className="btn" href="/classificados/publicar">Publicar anúncio</a><a className="btn secondary" href="/conta/produtos">Vender produtos</a></div>
         </div>
+        <p style={{ margin: 0 }}>🤝 Conhece os vendedores daqui? <a href="/agente">Seja agente do Huambo Online</a> e ganhe por cada anúncio que ajudar a publicar.</p>
       </section>
     </div>
     <nav className="row" role="tablist">{tabs.map(([t, l, n]) => <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}>{l} ({n})</button>)}</nav>

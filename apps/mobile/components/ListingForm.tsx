@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { Image, Pressable, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
-  createAndPublishClassifiedListing, updateClassifiedListing, friendlyError, listingTerritory, base64ToArrayBuffer,
+  createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, normalizeAgentCode, friendlyError, listingTerritory, base64ToArrayBuffer,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice,
   saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
@@ -11,6 +11,7 @@ import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
 import { MarketPicker } from "./MarketPicker";
 import { VideoField } from "./Video";
+import { AgentCodeField } from "./Agents";
 import { Button, Chips, Message } from "./Ui";
 import { shrinkAsset } from "../lib/image";
 
@@ -20,7 +21,7 @@ type Photo = { key: string; uri: string; base64?: string | null; mimeType?: stri
 const typeOptions = Object.entries(LISTING_TYPE_LABELS).map(([value, label]) => ({ value: value as ClassifiedListingType, label }));
 const purposeOptions = PUBLISHABLE_PURPOSES.map(value => ({ value, label: PURPOSE_LABELS[value] }));
 
-export function ListingForm({ listing, initialPurpose, initialSaleMode, initialAgro }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string; initialAgro?: boolean }) {
+export function ListingForm({ listing, initialPurpose, initialSaleMode, initialAgro, initialAgent }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string; initialAgro?: boolean; initialAgent?: string }) {
   const router = useRouter();
   const editing = Boolean(listing);
   const territory = listingTerritory(listing);
@@ -53,6 +54,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
   const [municipalityId, setMunicipalityId] = useState(territory.municipalityId ?? "");
   const [marketId, setMarketId] = useState<string>(listing?.market_id ?? "");
   const [videoUrl, setVideoUrl] = useState<string>(listing?.video_url ?? "");
+  const [agentCode, setAgentCode] = useState(listing ? "" : normalizeAgentCode(initialAgent));
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, uri: u, remote: true })));
   const [removed, setRemoved] = useState<string[]>([]);
   const [categories, setCategories] = useState<Option[]>([]);
@@ -142,11 +144,12 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
       if (editing) {
         const r = await updateClassifiedListing(c, listing.id, input);
         if (r.error) throw r.error;
+        if (agentCode.trim()) { const ag = await setListingAgent(c, listing.id, agentCode); if (ag.error) throw ag.error; }
         if (removed.length) await removeClassifiedMedia(c, removed);
         const ae = await startAuction(listing.id); if (ae) throw ae;
         router.replace(("/classificados/" + listing.id) as any);
       } else {
-        const r = await createAndPublishClassifiedListing(c, { ownerId: user.id, ...input });
+        const r = await createAndPublishClassifiedListing(c, { ownerId: user.id, ...input, agentCode });
         if (r.error) {
           if (r.draftId) { router.replace(("/meus-anuncios?erro=" + encodeURIComponent(friendlyError(r.error))) as any); return; }
           throw r.error;
@@ -216,6 +219,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
     {provinceId ? <Chips options={municipalities.map(m => ({ value: m.id, label: m.name }))} value={municipalityId} onChange={setMunicipalityId} /> : <Text style={ui.muted}>Escolha primeiro a província.</Text>}
     <MarketPicker value={marketId} onChange={setMarketId} />
     <VideoField value={videoUrl} onChange={setVideoUrl} />
+    {purpose !== "wanted" && <AgentCodeField value={agentCode} onChange={setAgentCode} />}
     <Text style={ui.label}>Fotografias ({photos.length}/{CLASSIFIED_MAX_PHOTOS})</Text>
     <Button title="📷 Selecionar fotografias" variant="secondary" onPress={() => void pickPhotos()} disabled={busy || photos.length >= CLASSIFIED_MAX_PHOTOS} />
     <View style={ui.row}>
