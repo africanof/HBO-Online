@@ -7,9 +7,11 @@ import { BottomNav } from "../components/BottomNav";
 import { C } from "../lib/ui";
 import { ThemeProvider, useThemeController } from "../lib/theme";
 import { DataSaverProvider } from "../lib/dataSaver";
+import { startReferralClaim } from "../lib/referral";
 
 export default function Layout() {
   useEffect(() => startAuthAutoRefresh(), []);
+  useEffect(() => startReferralClaim(), []);
   const theme = useThemeController();
   // key={theme.mode}: ao mudar de tema, tudo é desenhado de novo com as cores do tema escolhido.
   return <ThemeProvider value={theme}><DataSaverProvider>

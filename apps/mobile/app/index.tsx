@@ -17,7 +17,7 @@ import { LiteImage } from "../components/LiteImage";
 type Shelves = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[] };
 
 const MORE: [string, string, string][] = [
-  ["🌾", "Agricultura e campo", "/agricultura"], ["👥", "A seguir", "/seguindo"], ["🛡️", "Segurança", "/seguranca"], ["🤝", "Ser agente", "/agente"], ["📋", "Os meus anúncios", "/meus-anuncios"], ["📦", "Encomendas", "/encomendas"], ["♥", "Guardados", "/guardados"],
+  ["🌾", "Agricultura e campo", "/agricultura"], ["👥", "A seguir", "/seguindo"], ["🛡️", "Segurança", "/seguranca"], ["🤝", "Ser agente", "/agente"], ["🎁", "Convidar amigos", "/convidar"], ["📋", "Os meus anúncios", "/meus-anuncios"], ["📦", "Encomendas", "/encomendas"], ["♥", "Guardados", "/guardados"],
   ["🕘", "Vistos recentemente", "/historico"], ["⭐", "Pesquisas guardadas", "/pesquisas-guardadas"], ["🔔", "Notificações", "/notificacoes"]
 ];
 
