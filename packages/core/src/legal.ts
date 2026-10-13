@@ -6,7 +6,7 @@
 export type InfoSection = { title: string; paragraphs: string[] };
 export type InfoPage = { slug: string; title: string; intro: string; updated: string; sections: InfoSection[] };
 
-export const LEGAL_UPDATED = "2026-10-12";
+export const LEGAL_UPDATED = "2026-10-13";
 /** E-mail de contacto público (opcional). Sem e-mail, as páginas indicam a Conta e as Mensagens. */
 export function contactLine(email?: string | null): string {
   const e = (email ?? "").trim();
@@ -30,6 +30,7 @@ export function termsPage(email?: string | null): InfoPage {
       { title: "3. Anúncios, produtos e serviços", paragraphs: [
         "Só pode anunciar o que é seu ou o que tem autorização para vender, arrendar, trocar ou prestar.",
         "O título, o preço, as fotografias e a descrição devem corresponder à verdade. Indique se o preço é fixo, negociável, aberto a propostas, leilão ou troca.",
+        "Garantia de conformidade: ao publicar, declara que o anúncio descreve o artigo com verdade e por completo, incluindo defeitos e o que falta. Se houver omissão ou erro, quem comprou ou arrendou tem direito a troca, devolução com reembolso ou reembolso (todo ou parte). Pode reclamar até 7 dias depois do negócio, em «Devoluções e reembolsos»; o dono responde em 3 dias e, se recusar ou não responder, a administração decide. Quem não cumprir a decisão pode ter a conta suspensa.",
         "É proibido anunciar: armas, drogas, medicamentos sem autorização, animais protegidos, produtos roubados ou falsificados, documentos, conteúdos sexuais, e tudo o que a lei angolana proíba.",
         "A administração pode esconder ou retirar anúncios, produtos e perfis que não cumpram estas regras, e suspender contas."] },
       { title: "4. Propostas, leilões, trocas e encomendas", paragraphs: [
@@ -125,6 +126,10 @@ export function returnsPage(email?: string | null): InfoPage {
     slug: "devolucoes", title: "Devoluções e reembolsos", updated: LEGAL_UPDATED,
     intro: "Como pedir a devolução, o reembolso ou a troca de uma encomenda feita na Loja do Huambo Online, e o que acontece em cada passo.",
     sections: [
+      { title: "Anúncios: o artigo tem de corresponder ao anúncio", paragraphs: [
+        "Quem publica um anúncio declara que a descrição, as fotografias e o preço correspondem ao artigo, incluindo defeitos.",
+        "Se comprou ou arrendou e o artigo tem um defeito escondido, é diferente da descrição, é outro artigo ou faltam peças, abra o anúncio e carregue em «O artigo não corresponde ao anúncio» (até 7 dias depois do negócio).",
+        "Escolha o que quer: troca, devolução e reembolso, ou reembolso. O dono tem 3 dias para responder; se recusar ou não responder, peça à administração para decidir. As reclamações aparecem nesta página."] },
       { title: "1. Quando posso pedir", paragraphs: [
         "Numa encomenda da Loja que já pagou ou que já recebeu, até 14 dias depois da entrega.",
         "Motivos: não recebeu, chegou estragado ou partido, é diferente do anúncio, artigo errado (modelo, tamanho, cor) ou faltam artigos.",
@@ -153,7 +158,7 @@ export function returnsPage(email?: string | null): InfoPage {
         "Nas compras com pagamento protegido, o dinheiro fica guardado pelo Huambo Online até confirmar a receção. Enquanto estiver guardado, o reembolso é feito pelo Huambo Online. Depois de entregue ao vendedor, é o vendedor que devolve.",
         "Guarde os comprovativos de pagamento e de reembolso: podem ser pedidos pela administração."] },
       { title: "8. Negócios fora da Loja", paragraphs: [
-        "Nos anúncios classificados (venda, troca, arrendamento) o negócio é feito diretamente entre as pessoas. Se algo correr mal, use «Denunciar» e a administração analisa."] },
+        "Nos anúncios classificados (venda, troca, arrendamento) o negócio é feito diretamente entre as pessoas, mas vale a garantia de conformidade: se o artigo não corresponder ao anúncio, use «O artigo não corresponde ao anúncio» na página do anúncio (veja acima). Para outros problemas, use «Denunciar» e a administração analisa."] },
       { title: "9. Contacto", paragraphs: [contactLine(email)] }
     ]
   };
@@ -184,6 +189,7 @@ export const HELP_FAQ: FaqItem[] = [
   { q: "Como recebo mensagens de compradores pelo WhatsApp?", a: "Em «A sua conta» → «WhatsApp», escreva o seu número e ligue «Mostrar o botão Falar no WhatsApp». O botão aparece nos seus anúncios e produtos, só para quem tem sessão iniciada, com uma mensagem pronta a dizer de que anúncio se trata." },
   { q: "Como funciona o «Convide um amigo»?", a: "Em «Conta» → «Convidar amigos» tem o seu código e a sua ligação. Quem criar conta com o seu convite (nos primeiros 14 dias) fica ligado a si. Quando essa pessoa pagar a primeira mensalidade (profissional, empresa ou loja), ganha 1 mês grátis na sua mensalidade. Se ainda não tiver mensalidade, o prémio fica guardado." },
   { q: "O que é um agente no terreno?", a: "É uma pessoa da praça (por exemplo, do Kapango) que ajuda os vendedores a pôr anúncios no Huambo Online. O anúncio fica sempre na conta do vendedor; ao publicar, o vendedor escreve o código do agente (ex.: AG1001). Quando esse anúncio é vendido, o agente ganha uma percentagem do valor da venda, que a administração confirma e que entra no saldo do agente. Para ser agente, abra «Conta» → «Ser agente»." },
+  { q: "E se o artigo não corresponder ao anúncio?", a: "Todos os anúncios têm garantia de conformidade: quem publica declara que a descrição é verdadeira e completa, incluindo defeitos. Se o artigo que comprou ou arrendou tiver um defeito escondido ou for diferente, abra o anúncio e carregue em «O artigo não corresponde ao anúncio» (até 7 dias depois do negócio). Pode pedir troca, devolução e reembolso, ou reembolso. Se o dono recusar ou não responder em 3 dias, a administração decide. Nas compras da Loja, use «Devoluções e reembolsos» na encomenda." },
   { q: "Como evito burlas?", a: "Encontre-se num lugar público e movimentado (veja «Pontos de encontro seguros» em «Segurança»), veja o artigo e pague na entrega, ou use o Pagamento protegido na Loja. Nunca pague adiantado nem dê códigos que recebe por SMS ou o PIN. Nas mensagens, o Huambo Online avisa quando alguém pede pagamento adiantado ou códigos. Se suspeitar, use «Bloquear» e «Denunciar»." },
   { q: "Como peço uma devolução ou reembolso?", a: "Em «Encomendas», escolha a encomenda e carregue em «Pedir devolução ou reembolso» (até 14 dias depois da entrega). Explique o problema e junte fotografias. Se o vendedor recusar ou não responder, pode chamar a administração. Veja «Devoluções e reembolsos»." },
   { q: "Como gasto menos dados (saldo)?", a: "Ligue «📉 Poupar dados» no topo do Site, na página inicial da APP ou em «A sua conta». As fotografias das listas deixam de carregar (aparece um ícone) e, nos anúncios, só carregam quando tocar em «Ver as fotografias». Os vídeos só carregam quando carregar em ▶. No Site, «Automático» liga sozinho quando o telemóvel está em poupança de dados." },

@@ -6,6 +6,7 @@ import { listMyDisputes, listOrders, openDispute, validateDispute, canOpenDisput
   type DisputeReason, type DisputeRequest, type MyDispute } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { DisputeCard, EvidencePicker, uploadEvidence } from "../../components/Disputes";
+import { ListingClaims } from "../../components/Conformity";
 
 function NewDispute({ order, uid, onDone }: { order: any; uid: string; onDone: () => void }) {
   const [reason, setReason] = useState<DisputeReason>("damaged");
@@ -84,6 +85,7 @@ function Disputas() {
     </div>
     {shown.length === 0 && <p>{filter === "active" ? "Não tem pedidos abertos." : "Ainda não há pedidos."} Para pedir, abra <a href="/encomendas">Encomendas</a> e escolha a encomenda.</p>}
     {shown.map(d => <DisputeCard key={d.id} d={d} uid={uid} onChanged={msg => { setNotice(msg); setError(""); void load(); }} />)}
+    <ListingClaims />
   </main>;
 }
 export default function Page() { return <Suspense fallback={<main><p>A carregar…</p></main>}><Disputas /></Suspense>; }

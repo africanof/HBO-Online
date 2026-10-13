@@ -13,6 +13,7 @@ import { AdminCouriers } from "../components/AdminCouriers";
 import { AdminMarkets } from "../components/AdminMarkets";
 import { AdminVerifications, AdminAudit } from "../components/AdminTrust";
 import { AdminDisputes } from "../components/Disputes";
+import { AdminListingClaims } from "../components/Conformity";
 import { AdminPlans, AdminRevenue } from "../components/Plans";
 import { AdminProtected } from "../components/ProtectedPayment";
 import { AdminSafeSpots } from "../components/Safety";
@@ -67,7 +68,7 @@ export default function Admin() {
     {tab === "couriers" && <AdminCouriers />}
     {tab === "markets" && <AdminMarkets />}
     {tab === "verifications" && <AdminVerifications />}
-    {tab === "disputes" && <AdminDisputes />}
+    {tab === "disputes" && <><AdminDisputes /><AdminListingClaims /></>}
     {tab === "plans" && <AdminPlans />}
     {tab === "revenue" && <AdminRevenue />}
     {tab === "protected" && <AdminProtected />}

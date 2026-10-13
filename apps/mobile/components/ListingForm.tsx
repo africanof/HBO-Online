@@ -11,6 +11,7 @@ import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
 import { MarketPicker } from "./MarketPicker";
 import { PlaceFields } from "./Place";
+import { ConformityCheck } from "./Conformity";
 import { VideoField } from "./Video";
 import { AgentCodeField } from "./Agents";
 import { Button, Chips, Message } from "./Ui";
@@ -57,6 +58,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
   const [videoUrl, setVideoUrl] = useState<string>(listing?.video_url ?? "");
   const [agentCode, setAgentCode] = useState(listing ? "" : normalizeAgentCode(initialAgent));
   const [directions, setDirections] = useState<string>(listing?.directions ?? "");
+  const [conform, setConform] = useState<boolean>(!!listing?.conformity_accepted_at);
   const [point, setPoint] = useState<GeoPoint | null>(pointFrom(listing?.geo_lat, listing?.geo_lng));
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, uri: u, remote: true })));
   const [removed, setRemoved] = useState<string[]>([]);
@@ -110,6 +112,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
     const budgetError = wanted ? validateBudget(minValue, maxValue) : null;
     if (budgetError) { setError(budgetError); return; }
     const priceValue = wanted ? budgetPrice(minValue, maxValue) : parsePrice(price);
+    if (purpose !== "wanted" && !conform) { setError("Para publicar, confirme que o anúncio descreve o artigo com verdade (incluindo defeitos)."); return; }
     const invalid = validateClassifiedDraft({ listingType, purpose, title, description, price: priceValue, provinceId, municipalityId, photoCount: photos.length })
       ?? (lockedAuction ? null : validateSaleMode({ purpose, listingType, saleMode, price: priceValue, auctionDays: Number(auctionDays), tradeWants, acceptsTrade }));
     if (invalid) { setError(invalid); return; }
@@ -136,7 +139,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
       setStatus(editing ? "A guardar…" : "A publicar…");
       const keep = Object.fromEntries(Object.entries((listing?.attributes ?? {}) as Record<string, unknown>).filter(([k]) => !["agro", "agroCategory", "unit", "quantity", "availableFrom", "provinceId", "municipalityId"].includes(k)));
       const attributes = { ...keep, ...(useAgro ? agroAttributes({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom.trim() || null }) : {}) };
-      const input = { attributes, listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale, directions, point };
+      const input = { attributes, listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale, directions, point, conformity: purpose !== "wanted" && conform };
       // O leilão começa logo depois de publicar (ou de guardar, ao mudar para leilão).
       const startAuction = async (id: string) => {
         if (mode !== "auction" || lockedAuction) return null;
@@ -224,6 +227,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
     {purpose !== "wanted" && <PlaceFields directions={directions} point={point} onDirections={setDirections} onPoint={setPoint} approximate />}
     <VideoField value={videoUrl} onChange={setVideoUrl} />
     {purpose !== "wanted" && <AgentCodeField value={agentCode} onChange={setAgentCode} />}
+    {purpose !== "wanted" && <ConformityCheck checked={conform} onChange={setConform} />}
     <Text style={ui.label}>Fotografias ({photos.length}/{CLASSIFIED_MAX_PHOTOS})</Text>
     <Button title="📷 Selecionar fotografias" variant="secondary" onPress={() => void pickPhotos()} disabled={busy || photos.length >= CLASSIFIED_MAX_PHOTOS} />
     <View style={ui.row}>

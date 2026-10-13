@@ -8,6 +8,7 @@ import { supabase, currentUserId } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
 import { DisputeCard, EvidencePicker, uploadEvidence, type Evidence } from "../components/Disputes";
+import { ListingClaims } from "../components/Conformity";
 
 function NewDispute({ order, uid, onDone, onCancel }: { order: any; uid: string; onDone: () => void; onCancel: () => void }) {
   const [reason, setReason] = useState<DisputeReason>("damaged");
@@ -84,5 +85,6 @@ export default function Disputas() {
     <Chips options={[{ value: "active" as const, label: `Abertos (${active.length})` }, { value: "all" as const, label: `Todos (${items.length})` }]} value={filter} onChange={setFilter} />
     {shown.length === 0 && <Text style={ui.text}>{filter === "active" ? "Não tem pedidos abertos." : "Ainda não há pedidos."} Para pedir, abra «Encomendas» e escolha a encomenda.</Text>}
     {shown.map(d => <DisputeCard key={d.id} d={d} uid={uid} onChanged={msg => { setNotice(msg); setError(""); void load(); }} />)}
+    <ListingClaims />
   </ScrollView>;
 }

@@ -78,3 +78,4 @@ export * from "./stats";
 export * from "./agents";
 export * from "./places";
 export * from "./referrals";
+export * from "./conformity";
