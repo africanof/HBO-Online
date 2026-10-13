@@ -245,3 +245,7 @@ details.faq[open] summary { margin-bottom: 6px; }
 /* Segurança: avisos de burla nas mensagens */
 .scam-warn { background: var(--yellow-soft); color: var(--yellow-text); border: 2px solid var(--yellow-line); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 6px; }
 .scam-warn strong { color: var(--yellow-text); }
+/* Estatísticas: gráfico de barras simples */
+.stats-chart { display: flex; align-items: flex-end; gap: 2px; height: 120px; border-bottom: 2px solid var(--line); }
+.stats-bar { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.stats-bar span { display: block; width: 100%; background: var(--accent); border-radius: 3px 3px 0 0; }

@@ -65,6 +65,7 @@ export default function MeusProdutos() {
   return <main className="stack" style={{ maxWidth: 760 }}>
     <a href="/conta">← Conta</a>
     <h1>Os meus produtos</h1>
+    <a className="btn secondary" href="/conta/estatisticas" style={{ justifySelf: "start" }}>📊 Ver estatísticas: vistas, guardados e contactos</a>
     <PlanBanner kind="store" subjectId={uid} />
     <a className="btn secondary" href="/encomendas?vendas=1" style={{ justifySelf: "start" }}>📦 As minhas vendas</a>
     {error && <p className="error" role="alert">{error}</p>}

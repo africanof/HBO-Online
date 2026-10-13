@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { Linking, Share, Switch, Text, TextInput, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { findSaved, toggleSaved, recordView, shareMessage, whatsappShareUrl, sellerWhatsappMessage, getSellerWhatsapp, getMyWhatsapp, setMyWhatsapp, formatWhatsapp, whatsappLink,
-  getFollowInfo, toggleFollow, followersText, followButtonLabel, type FollowKind,
+  getFollowInfo, toggleFollow, recordItemView, recordItemEvent, followersText, followButtonLabel, type FollowKind,
   friendlyError, type SavedKind, type KeyValueStore, type ShareExtra } from "@huambo-online/core";
 import { supabase, siteUrl, currentUserId } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
@@ -13,6 +13,7 @@ export const deviceStore: KeyValueStore = { getItem: k => AsyncStorage.getItem(k
 
 export function useRecordView(kind: SavedKind, id: string | undefined, title: string | undefined, image?: string | null) {
   useEffect(() => { if (id && title) void recordView(deviceStore, { kind, id, title, image: image ?? null }); }, [kind, id, title, image]);
+  useEffect(() => { if (id && title) void recordItemView(supabase(), deviceStore, kind, id); }, [kind, id, !!title]);
 }
 
 export function SaveButton({ kind, id }: { kind: SavedKind; id: string }) {
@@ -38,8 +39,8 @@ export function SaveButton({ kind, id }: { kind: SavedKind; id: string }) {
 export function ShareButton({ kind, id, title, extra }: { kind: SavedKind; id: string; title: string; extra?: ShareExtra }) {
   const { url, text } = shareMessage(siteUrl, kind, id, title, extra);
   return <>
-    <Button title="🔗 Partilhar" variant="secondary" onPress={() => void Share.share({ message: text, url: url || undefined, title })} />
-    <Button title="📲 Partilhar no WhatsApp" variant="secondary" onPress={() => void Linking.openURL(whatsappShareUrl(text))} />
+    <Button title="🔗 Partilhar" variant="secondary" onPress={() => { void recordItemEvent(supabase(), kind, id, "share"); void Share.share({ message: text, url: url || undefined, title }); }} />
+    <Button title="📲 Partilhar no WhatsApp" variant="secondary" onPress={() => { void recordItemEvent(supabase(), kind, id, "share"); void Linking.openURL(whatsappShareUrl(text)); }} />
   </>;
 }
 
@@ -49,7 +50,7 @@ export function SellerWhatsApp({ sellerId, kind, id, title, refCode }: { sellerI
   useEffect(() => { void getSellerWhatsapp(supabase(), sellerId).then(setNumber); }, [sellerId]);
   if (!number) return null;
   const href = whatsappLink(number, sellerWhatsappMessage(kind, title, refCode, shareMessage(siteUrl, kind, id, title).url));
-  return href ? <Button title="💬 Falar no WhatsApp" variant="secondary" onPress={() => void Linking.openURL(href)} /> : null;
+  return href ? <Button title="💬 Falar no WhatsApp" variant="secondary" onPress={() => { void recordItemEvent(supabase(), kind, id, "whatsapp"); void Linking.openURL(href); }} /> : null;
 }
 
 /** «A sua conta»: número de WhatsApp e se aparece nos anúncios e produtos. */

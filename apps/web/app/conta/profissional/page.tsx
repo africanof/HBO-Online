@@ -38,6 +38,7 @@ export default function PerfilProfissional() {
   return <main className="stack" style={{ maxWidth: 720 }}>
     <a href="/conta">← Conta</a>
     <h1>{exists ? "O meu perfil profissional" : "Criar perfil profissional"}</h1>
+    {exists && <a className="btn secondary" href="/conta/estatisticas" style={{ justifySelf: "start" }}>📊 Ver estatísticas: vistas, guardados e contactos</a>}
     <p>Apareça na lista de profissionais do Huambo Online e receba pedidos de clientes.</p>
     {exists && <a href={"/profissionais/" + uid}>Ver o meu perfil público →</a>}
     {exists && <PlanBanner kind="provider" subjectId={uid} />}

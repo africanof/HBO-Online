@@ -34,6 +34,7 @@ export default function MinhasEmpresas() {
   return <main className="stack" style={{ maxWidth: 720 }}>
     <a href="/conta">← Conta</a>
     <h1>As minhas empresas</h1>
+    <a className="btn secondary" href="/conta/estatisticas" style={{ justifySelf: "start" }}>📊 Ver estatísticas: vistas, guardados e contactos</a>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
     {items.map(b => <div key={b.id} className="card">

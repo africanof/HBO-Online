@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
-  listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
+  listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, recordItemEvent, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
   listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
@@ -134,8 +134,8 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <TrustBadges userId={kind === "providers" ? id : item.owner_id} />
     <StatsBlock rows={stats.rows} footer={stats.since} />
     {!!(item.bio || item.description) && <Text style={ui.text}>{item.bio || item.description}</Text>}
-    {!!item.phone && <Button title="📞 Ligar" variant="secondary" onPress={() => void Linking.openURL("tel:" + item.phone.replace(/\s/g, ""))} />}
-    {!!wa && <Button title="WhatsApp" variant="secondary" onPress={() => void Linking.openURL(wa)} />}
+    {!!item.phone && <Button title="📞 Ligar" variant="secondary" onPress={() => { void recordItemEvent(supabase(), viewKind, id, "call"); void Linking.openURL("tel:" + item.phone.replace(/\s/g, "")); }} />}
+    {!!wa && <Button title="WhatsApp" variant="secondary" onPress={() => { void recordItemEvent(supabase(), viewKind, id, "whatsapp"); void Linking.openURL(wa); }} />}
     {mine && <Button title="Editar" onPress={() => router.push((kind === "providers" ? "/conta/profissional" : "/conta/empresas") as any)} />}
     <FollowButton kind={kind === "providers" ? "provider" : "business"} id={id} mine={mine} />
     {!mine && <SaveButton kind={viewKind} id={id} />}

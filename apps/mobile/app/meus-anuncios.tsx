@@ -42,6 +42,7 @@ export default function MeusAnuncios() {
   return <ScrollView contentContainerStyle={ui.screen}>
     <Link href="/" style={ui.link}>← Huambo Online</Link>
     <Text style={ui.h1}>Os meus anúncios</Text>
+    <Button title="📊 Ver estatísticas" variant="secondary" onPress={() => router.push("/conta/estatisticas" as any)} />
     <Button title="+ Publicar anúncio" onPress={() => router.push("/classificados/publicar" as any)} />
     <Message error={error} ok={notice} />
     {items === null && <Text style={ui.text}>A carregar…</Text>}
