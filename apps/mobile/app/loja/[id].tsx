@@ -6,7 +6,7 @@ import { getProduct, addToMyCart, formatRef, getPublicProfile, formatPrice, frie
 import { supabase } from "../../lib/supabase";
 import { ui, C } from "../../lib/ui";
 import { Button, Message } from "../../components/Ui";
-import { SaveButton, ShareButton, SellerWhatsApp, useRecordView } from "../../components/Engage";
+import { SaveButton, ShareButton, SellerWhatsApp, FollowButton, useRecordView } from "../../components/Engage";
 import { SellerBadge } from "../../components/Reputation";
 import { ReportButton } from "../../components/Trust";
 import { PhotoGallery } from "../../components/PhotoGallery";
@@ -44,6 +44,7 @@ export default function Produto() {
     <Text style={ui.price}>{formatPrice(p.price, p.currency)}</Text>
     <Text style={ui.muted}>{p.stock > 0 ? `${p.stock} em stock` : "Esgotado"} · {[p.categories?.name, p.municipalities?.name].filter(Boolean).join(" · ")}</Text>
     {!!seller && <Link href={("/vendedor/" + p.seller_id) as any} style={ui.link}>Vendedor: {seller} →</Link>}
+    {!!seller && !mine && <FollowButton kind="seller" id={p.seller_id} />}
     {!!seller && <SellerBadge userId={p.seller_id} />}
     {!!p.markets?.name && <Link href={("/pracas/" + p.markets.id) as any} style={ui.link}>🧺 {p.markets.name} →</Link>}
     <PhotoGallery media={media} icon={"📦"} />

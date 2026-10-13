@@ -4,7 +4,7 @@ import { Gallery } from "../../../components/Video";
 import { useParams } from "next/navigation";
 import { getProduct, addToMyCart, formatRef, getPublicProfile, formatPrice, friendlyError } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
-import { SaveButton, ShareButton, SellerWhatsApp, useRecordView } from "../../../components/Engage";
+import { SaveButton, ShareButton, SellerWhatsApp, FollowButton, useRecordView } from "../../../components/Engage";
 import { SellerBadge } from "../../../components/Reputation";
 import { ReportButton } from "../../../components/Trust";
 
@@ -39,6 +39,7 @@ export default function Produto() {
       <section className="buybox">
         <h1>{p.name}</h1>
         {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>🏪</span><span>Vendedor: <a href={"/vendedor/" + p.seller_id}><strong>{seller}</strong></a> <SellerBadge userId={p.seller_id} /><br /><a href={"/vendedor/" + p.seller_id} style={{ fontWeight: 400, fontSize: 15 }}>Ver a loja do vendedor</a></span></div>}
+        {seller && !mine && <div className="row"><FollowButton kind="seller" id={p.seller_id} /></div>}
         <div className="big-price">{formatPrice(p.price, p.currency)}</div>
         <dl className="facts">
           {p.ref_no && <><dt>N.º do produto</dt><dd><strong>{formatRef("product", p.ref_no)}</strong></dd></>}

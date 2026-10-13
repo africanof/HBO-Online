@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { findSaved, toggleSaved, recordView, shareMessage, whatsappShareUrl, sellerWhatsappMessage, getSellerWhatsapp, getMyWhatsapp, setMyWhatsapp, formatWhatsapp, whatsappLink, friendlyError,
+  getFollowInfo, toggleFollow, followersText, followButtonLabel, type FollowKind,
   type SavedKind, type KeyValueStore, type ShareExtra } from "@huambo-online/core";
-import { supabase } from "../lib/supabase";
+import { supabase, currentUserId } from "../lib/supabase";
 
 /** localStorage com proteção (modo privado, bloqueios). */
 export const browserStore: KeyValueStore = {
@@ -82,4 +83,25 @@ export function WhatsAppSettings({ uid }: { uid: string }) {
     {err && <p className="error" role="alert">{err}</p>}
     <button disabled={busy} style={{ justifySelf: "start" }}>Guardar WhatsApp</button>
   </form>;
+}
+
+/** «➕ Seguir» / «✔ A seguir», com o número de seguidores. Sem sessão, leva a entrar. */
+export function FollowButton({ kind, id, mine = false }: { kind: FollowKind; id: string; mine?: boolean }) {
+  const [info, setInfo] = useState<{ followers: number; following: boolean } | null>(null);
+  const [busy, setBusy] = useState(false); const [err, setErr] = useState("");
+  useEffect(() => { void getFollowInfo(supabase(), kind, id).then(r => setInfo(r.data)); }, [kind, id]);
+  async function click() {
+    if (!(await currentUserId())) { window.location.href = "/conta/login?voltar=" + encodeURIComponent(window.location.pathname); return; }
+    setBusy(true); setErr("");
+    const r = await toggleFollow(supabase(), kind, id); setBusy(false);
+    if (r.error) { setErr(friendlyError(r.error)); return; }
+    setInfo(i => ({ following: !!r.data, followers: Math.max(0, (i?.followers ?? 0) + (r.data ? 1 : -1)) }));
+  }
+  if (!info) return null;
+  return <>
+    {mine ? <span className="badge">👥 {followersText(info.followers)}</span>
+      : <button type="button" className={info.following ? "secondary" : ""} aria-pressed={info.following} disabled={busy} onClick={click}
+          title={info.following ? "Carregue para deixar de seguir" : "Receba um aviso quando publicar algo novo"}>{followButtonLabel(info.following)} · {followersText(info.followers)}</button>}
+    {err && <span className="error" role="alert">{err}</span>}
+  </>;
 }

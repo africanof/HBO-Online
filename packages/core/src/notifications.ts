@@ -24,6 +24,10 @@ export function getNotificationLink(n: Pick<AppNotification, "data" | "type" | "
   if (d.for === "commission") return { href: "/conta/comissoes", label: "💸 Ver as minhas comissões →" };
   if (d.for === "plan") return { href: "/conta/plano", label: "💳 Ver o meu plano →" };
   if (d.for === "dispute" && isUuid(d.dispute_id)) return { href: "/disputas", label: "⚖️ Ver devolução / reembolso →" };
+  if (d.for === "follow" && isUuid(d.product_id)) return { href: "/loja/" + d.product_id, label: "🛍️ Ver produto →" };
+  if (d.for === "follow" && isUuid(d.provider_id)) return { href: "/profissionais/" + d.provider_id, label: "🧰 Ver perfil →" };
+  if (d.for === "follow" && isUuid(d.business_id)) return { href: "/empresas/" + d.business_id, label: "🏪 Ver empresa →" };
+  if (d.for === "new_follower") return { href: "/seguindo", label: "👥 Ver quem eu sigo →" };
   if (d.for === "boost") return { href: "/meus-anuncios", label: "⭐ Ver os meus anúncios →" };
   if (d.for === "wallet") return { href: "/conta/saldo", label: "💰 Ver o meu saldo →" };
   if (d.for === "sale" && isUuid(d.order_id)) return { href: "/encomendas?vendas=1", label: "📦 Ver venda →" };

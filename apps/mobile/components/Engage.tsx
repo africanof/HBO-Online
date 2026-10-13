@@ -3,8 +3,9 @@ import { useRouter } from "expo-router";
 import { Linking, Share, Switch, Text, TextInput, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { findSaved, toggleSaved, recordView, shareMessage, whatsappShareUrl, sellerWhatsappMessage, getSellerWhatsapp, getMyWhatsapp, setMyWhatsapp, formatWhatsapp, whatsappLink,
+  getFollowInfo, toggleFollow, followersText, followButtonLabel, type FollowKind,
   friendlyError, type SavedKind, type KeyValueStore, type ShareExtra } from "@huambo-online/core";
-import { supabase, siteUrl } from "../lib/supabase";
+import { supabase, siteUrl, currentUserId } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
 import { Button, Message } from "./Ui";
 
@@ -74,4 +75,25 @@ export function WhatsAppSettings({ uid }: { uid: string }) {
     <Message error={err} ok={msg} />
     <Button title="Guardar WhatsApp" disabled={busy} onPress={() => void save()} />
   </View>;
+}
+
+/** «➕ Seguir» / «✔ A seguir», com o número de seguidores. Sem sessão, leva a entrar. */
+export function FollowButton({ kind, id, mine = false }: { kind: FollowKind; id: string; mine?: boolean }) {
+  const router = useRouter();
+  const [info, setInfo] = useState<{ followers: number; following: boolean } | null>(null);
+  const [busy, setBusy] = useState(false); const [err, setErr] = useState("");
+  useEffect(() => { void getFollowInfo(supabase(), kind, id).then(r => setInfo(r.data)); }, [kind, id]);
+  async function press() {
+    if (!(await currentUserId())) { router.push("/login"); return; }
+    setBusy(true); setErr("");
+    const r = await toggleFollow(supabase(), kind, id); setBusy(false);
+    if (r.error) { setErr(friendlyError(r.error)); return; }
+    setInfo(i => ({ following: !!r.data, followers: Math.max(0, (i?.followers ?? 0) + (r.data ? 1 : -1)) }));
+  }
+  if (!info) return null;
+  return <>
+    {mine ? <Text style={ui.muted}>👥 {followersText(info.followers)}</Text>
+      : <Button title={`${followButtonLabel(info.following)} · ${followersText(info.followers)}`} variant={info.following ? "secondary" : "primary"} disabled={busy} onPress={() => void press()} />}
+    {!!err && <Text style={ui.error}>{err}</Text>}
+  </>;
 }

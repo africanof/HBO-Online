@@ -8,6 +8,7 @@ import { ItemCard, LISTING_ICON } from "../../../components/ItemCard";
 import { StatsBlock, stars } from "../../../components/Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "../../../components/Trust";
 import { currentUserId } from "../../../lib/supabase";
+import { FollowButton } from "../../../components/Engage";
 
 export default function Vendedor() {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +33,7 @@ export default function Vendedor() {
       <div><h1 style={{ margin: 0 }}>{s.full_name || "Utilizador"}</h1><p style={{ margin: 0 }}>{[s.municipality, "membro desde " + new Date(s.member_since).toLocaleDateString("pt-AO")].filter(Boolean).join(" · ")}</p></div>
     </div>
     {s.is_provider && <p>{ratingLabel(s.rating, s.review_count)} · <a href={"/profissionais/" + s.id}>Ver perfil profissional →</a></p>}
+    <div className="row"><FollowButton kind="seller" id={s.id} mine={me === s.id} /></div>
     <TrustBadges userId={s.id} />
     <StatsBlock rows={userStatsRows(stats)} />
     <h2>Anúncios ({listings.length})</h2>

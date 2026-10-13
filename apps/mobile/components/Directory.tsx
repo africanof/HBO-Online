@@ -7,7 +7,7 @@ import { listProviders, listBusinesses, getProvider, getBusiness, listProviderSe
 import { supabase } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
-import { SaveButton, ShareButton, useRecordView } from "./Engage";
+import { SaveButton, ShareButton, FollowButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, VerifiedTag, stars } from "./Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "./Trust";
 import { PortfolioGallery, BusinessProducts } from "./Portfolio";
@@ -137,6 +137,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     {!!item.phone && <Button title="📞 Ligar" variant="secondary" onPress={() => void Linking.openURL("tel:" + item.phone.replace(/\s/g, ""))} />}
     {!!wa && <Button title="WhatsApp" variant="secondary" onPress={() => void Linking.openURL(wa)} />}
     {mine && <Button title="Editar" onPress={() => router.push((kind === "providers" ? "/conta/profissional" : "/conta/empresas") as any)} />}
+    <FollowButton kind={kind === "providers" ? "provider" : "business"} id={id} mine={mine} />
     {!mine && <SaveButton kind={viewKind} id={id} />}
     <ShareButton kind={viewKind} id={id} title={kind === "providers" ? item.display_name : item.name} />
     {kind === "providers" && services.length > 0 && <View style={{ gap: 8 }}><Text style={ui.h2}>Serviços</Text>
