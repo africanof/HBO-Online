@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getMyAgentPanel, applyAsAgent, listMarketOptions, agentOfferText, agentInviteMessage, agentTotals, whatsappShareUrl, formatPrice, friendlyError,
+import { getMyAgentPanel, applyAsAgent, listMarketOptions, agentOfferText, agentInviteMessage, agentTotals, agentCommissionLine, whatsappShareUrl, formatPrice, friendlyError,
   AGENT_STATUS_LABELS, AGENT_COMMISSION_STATUS_LABELS, type AgentPanel } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 
@@ -31,12 +31,13 @@ export default function Agente() {
   if (uid === undefined) return <main><p>A carregar…</p></main>;
   const intro = <>
     <h1>🤝 Agentes no terreno</h1>
-    <p style={{ margin: 0, fontSize: 19 }}>Trabalha numa praça (por exemplo, o Kapango)? Ajude os vendedores a pôr os anúncios no Huambo Online e ganhe uma comissão por cada anúncio publicado.</p>
-    {p && <p className="ok" style={{ margin: 0 }}>{agentOfferText(p.fee_kz, p.daily_cap)}</p>}
+    <p style={{ margin: 0, fontSize: 19 }}>Trabalha numa praça (por exemplo, o Kapango)? Ajude os vendedores a pôr os anúncios no Huambo Online e ganhe uma comissão sempre que um desses anúncios for vendido.</p>
+    {p && <p className="ok" style={{ margin: 0 }}>{agentOfferText(p.sale_pct)}</p>}
     <ol style={{ margin: 0, paddingLeft: 22, display: "grid", gap: 4 }}>
       <li>Peça para ser agente (escolha a sua praça). A administração confirma.</li>
       <li>Recebe um código, por exemplo <strong>AG1001</strong>.</li>
       <li>Ajude o vendedor a publicar <strong>na conta dele</strong> e peça-lhe para escrever o seu código.</li>
+      <li>Quando o vendedor marcar o anúncio como <strong>vendido</strong>, ganha a sua parte do valor da venda.</li>
       <li>Depois de a administração confirmar, o valor entra no seu <a href="/conta/saldo">💰 saldo</a> e pode levantar.</li>
     </ol>
   </>;
@@ -79,14 +80,21 @@ export default function Agente() {
         </section>
         <section className="stats" aria-label="Resumo">
           <div className="stat"><strong>{t.listings}</strong><span>📋 Anúncios com o seu código</span></div>
+          <div className="stat"><strong>{t.sold}</strong><span>🎉 Já vendidos</span></div>
           <div className="stat"><strong>{formatPrice(t.pending)}</strong><span>⏳ À espera de confirmação</span></div>
           <div className="stat"><strong>{formatPrice(t.approved)}</strong><span>✅ Já no saldo (total)</span></div>
         </section>
         <a className="btn secondary" href="/conta/saldo" style={{ justifySelf: "start" }}>💰 Ver o meu saldo e levantar</a>
       </>}
+      {(p?.helped ?? []).length > 0 && <h2 style={{ margin: "8px 0 0" }}>Anúncios que ajudou a pôr</h2>}
+      {(p?.helped ?? []).map(h => <article key={h.id} className="card" style={{ gap: 4 }}>
+        <div className="row" style={{ justifyContent: "space-between" }}><a href={"/classificados/" + h.id}>{h.title}</a>{h.price != null && <span>{formatPrice(h.price, h.currency ?? undefined)}</span>}</div>
+        <small>{h.status === "sold" ? "🎉 Vendido" : h.status === "published" ? "À venda — ganha quando for vendido" : "Fora do ar"}</small>
+      </article>)}
       {(p?.commissions ?? []).length > 0 && <h2 style={{ margin: "8px 0 0" }}>Comissões</h2>}
       {(p?.commissions ?? []).map(c => <article key={c.id} className="card" style={{ gap: 4 }}>
         <div className="row" style={{ justifyContent: "space-between" }}>{c.listing_id && c.listing_status === "published" ? <a href={"/classificados/" + c.listing_id}>{c.listing_title}</a> : <span>{c.listing_title}</span>}<strong>{formatPrice(c.amount)}</strong></div>
+        <span>{agentCommissionLine(c)}</span>
         <small>{new Date(c.created_at).toLocaleDateString("pt-AO")} · {AGENT_COMMISSION_STATUS_LABELS[c.status]}{c.admin_note ? " · " + c.admin_note : ""}</small>
       </article>)}
     </>}

@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { Linking, ScrollView, Text, TextInput, View } from "react-native";
-import { getMyAgentPanel, applyAsAgent, listMarketOptions, agentOfferText, agentInviteMessage, agentTotals, whatsappShareUrl, formatPrice, friendlyError,
+import { getMyAgentPanel, applyAsAgent, listMarketOptions, agentOfferText, agentInviteMessage, agentTotals, agentCommissionLine, whatsappShareUrl, formatPrice, friendlyError,
   AGENT_STATUS_LABELS, AGENT_COMMISSION_STATUS_LABELS, type AgentPanel } from "@huambo-online/core";
 import { supabase, currentUserId, siteUrl } from "../lib/supabase";
 import { ui } from "../lib/ui";
@@ -34,12 +34,13 @@ export default function Agente() {
   }
   const intro = <>
     <Text style={ui.h1}>🤝 Agentes no terreno</Text>
-    <Text style={ui.text}>Trabalha numa praça (por exemplo, o Kapango)? Ajude os vendedores a pôr os anúncios no Huambo Online e ganhe uma comissão por cada anúncio publicado.</Text>
-    {!!p && <Text style={ui.ok}>{agentOfferText(p.fee_kz, p.daily_cap)}</Text>}
+    <Text style={ui.text}>Trabalha numa praça (por exemplo, o Kapango)? Ajude os vendedores a pôr os anúncios no Huambo Online e ganhe uma comissão sempre que um desses anúncios for vendido.</Text>
+    {!!p && <Text style={ui.ok}>{agentOfferText(p.sale_pct)}</Text>}
     <Text style={ui.text}>1. Peça para ser agente (escolha a sua praça). A administração confirma.</Text>
     <Text style={ui.text}>2. Recebe um código, por exemplo AG1001.</Text>
     <Text style={ui.text}>3. Ajude o vendedor a publicar na conta dele e peça-lhe para escrever o seu código.</Text>
-    <Text style={ui.text}>4. Depois de a administração confirmar, o valor entra no seu saldo e pode levantar.</Text>
+    <Text style={ui.text}>4. Quando o vendedor marcar o anúncio como vendido, ganha a sua parte do valor da venda.</Text>
+    <Text style={ui.text}>5. Depois de a administração confirmar, o valor entra no seu saldo e pode levantar.</Text>
   </>;
   if (uid === undefined) return <View style={ui.screen}><Text style={ui.text}>A carregar…</Text></View>;
   if (!uid) return <ScrollView contentContainerStyle={ui.screen}>{intro}<Button title="Entrar para pedir" onPress={() => router.push("/login")} /></ScrollView>;
@@ -81,14 +82,21 @@ export default function Agente() {
         <Button title="+ Publicar com um vendedor" variant="secondary" onPress={() => router.push(("/classificados/publicar?agente=" + a.code) as any)} />
         <View style={ui.card}>
           <Text style={ui.text}>📋 Anúncios com o seu código: {t.listings}</Text>
+          <Text style={ui.text}>🎉 Já vendidos: {t.sold}</Text>
           <Text style={ui.text}>⏳ À espera de confirmação: {formatPrice(t.pending)}</Text>
           <Text style={ui.text}>✅ Já no saldo (total): {formatPrice(t.approved)}</Text>
         </View>
         <Button title="💰 Ver o meu saldo e levantar" variant="secondary" onPress={() => router.push("/conta/saldo" as any)} />
       </>}
+      {(p?.helped ?? []).length > 0 && <Text style={ui.h2}>Anúncios que ajudou a pôr</Text>}
+      {(p?.helped ?? []).map(h => <View key={h.id} style={ui.card}>
+        <Link href={("/classificados/" + h.id) as any} style={ui.link}>{h.title}</Link>
+        <Text style={ui.muted}>{h.price != null ? formatPrice(h.price, h.currency ?? undefined) + " · " : ""}{h.status === "sold" ? "🎉 Vendido" : h.status === "published" ? "À venda — ganha quando for vendido" : "Fora do ar"}</Text>
+      </View>)}
       {(p?.commissions ?? []).length > 0 && <Text style={ui.h2}>Comissões</Text>}
       {(p?.commissions ?? []).map(c => <View key={c.id} style={ui.card}>
-        <Text style={ui.label}>{c.listing_title} · {formatPrice(c.amount)}</Text>
+        <Text style={ui.label}>{c.listing_title}</Text>
+        <Text style={ui.text}>{agentCommissionLine(c)}</Text>
         <Text style={ui.muted}>{new Date(c.created_at).toLocaleDateString("pt-AO")} · {AGENT_COMMISSION_STATUS_LABELS[c.status]}{c.admin_note ? " · " + c.admin_note : ""}</Text>
       </View>)}
     </>}

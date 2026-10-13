@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { checkAgentCode, isAgentCodeShape, listAgentsForAdmin, decideAgent, listAgentCommissionsForAdmin, decideAgentCommissions, sumCommissions,
-  getPlatformSettings, formatPrice, friendlyError, AGENT_STATUS_LABELS, AGENT_COMMISSION_STATUS_LABELS,
+  getPlatformSettings, formatPrice, friendlyError, agentCommissionLine, AGENT_STATUS_LABELS, AGENT_COMMISSION_STATUS_LABELS, SELLER_COMMISSION_LABELS,
   type AgentCodeInfo, type AdminAgent, type AdminAgentCommission, type AgentStatus, type AgentCommissionStatus } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
@@ -37,7 +37,7 @@ function Check({ on, label, onPress }: { on: boolean; label: string; onPress: ()
 export function AdminAgents() {
   const [agents, setAgents] = useState<AdminAgent[]>([]); const [items, setItems] = useState<AdminAgentCommission[]>([]);
   const [status, setStatus] = useState<AgentCommissionStatus | "all">("pending"); const [picked, setPicked] = useState<string[]>([]);
-  const [fee, setFee] = useState(""); const [cap, setCap] = useState("");
+  const [pct, setPct] = useState("");
   const [note, setNote] = useState(""); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
   async function load() {
     const [a, c] = await Promise.all([listAgentsForAdmin(supabase()), listAgentCommissionsForAdmin(supabase(), status === "all" ? "" : status)]);
@@ -45,7 +45,7 @@ export function AdminAgents() {
     setAgents(a.data); setItems(c.data); setPicked([]);
   }
   useEffect(() => { void load(); }, [status]);
-  useEffect(() => { void getPlatformSettings(supabase()).then(r => { const s = r.data; if (s) { setFee(String(s.agent_fee_kz ?? "")); setCap(String(s.agent_daily_cap ?? "")); } }); }, []);
+  useEffect(() => { void getPlatformSettings(supabase()).then(r => { const s = r.data; if (s) setPct(String(s.agent_sale_pct ?? "")); }); }, []);
   async function run(p: PromiseLike<{ error: any }>, msg: string) {
     setBusy(true); setError(""); setNotice("");
     const r = await p; setBusy(false);
@@ -58,20 +58,18 @@ export function AdminAgents() {
       { text: "Confirmar", style: "destructive", onPress: () => void run(decideAgent(supabase(), a.user_id, s, note), "Feito.") }]);
   }
   function saveRules() {
-    const f = Number(fee), k = Number(cap);
-    if (!(f >= 0) || !(k >= 1)) { setError("Escreva o valor (Kz) e o limite por dia."); return; }
-    void run(supabase().from("platform_settings").update({ agent_fee_kz: f, agent_daily_cap: k, updated_at: new Date().toISOString() }).eq("id", 1), "Regras dos agentes guardadas.");
+    const v = Number(pct.replace(",", "."));
+    if (!pct.trim() || !(v >= 0 && v <= 20)) { setError("Escreva a percentagem do agente (de 0 a 20)."); return; }
+    void run(supabase().from("platform_settings").update({ agent_sale_pct: v, updated_at: new Date().toISOString() }).eq("id", 1), "Regras dos agentes guardadas.");
   }
   const pend = items.filter(i => i.status === "pending");
   return <View style={{ gap: 12 }}>
     <Text style={ui.h2}>🤝 Agentes no terreno</Text>
     <Message error={error} ok={notice} />
     <View style={ui.card}>
-      <Text style={ui.label}>Comissão por anúncio publicado (Kz)</Text>
-      <TextInput accessibilityLabel="Comissão por anúncio (Kz)" keyboardType="numeric" value={fee} onChangeText={setFee} style={ui.input} />
-      <Text style={ui.label}>Máximo de anúncios por agente por dia</Text>
-      <TextInput accessibilityLabel="Máximo por dia" keyboardType="numeric" value={cap} onChangeText={setCap} style={ui.input} />
-      <Text style={ui.muted}>O mesmo vendedor só conta até 5 anúncios por dia para o mesmo agente.</Text>
+      <Text style={ui.label}>Percentagem do agente em cada venda (%)</Text>
+      <TextInput accessibilityLabel="Percentagem do agente (%)" keyboardType="decimal-pad" value={pct} onChangeText={setPct} style={ui.input} />
+      <Text style={ui.muted}>Quando um anúncio feito com o código do agente é vendido, o agente ganha esta percentagem do valor da venda. Antes de confirmar, veja se o vendedor já pagou a comissão da venda.</Text>
       <Button title="Guardar regras" disabled={busy} onPress={saveRules} />
     </View>
     <Text style={ui.label}>Motivo (para recusar ou suspender)</Text>
@@ -83,20 +81,20 @@ export function AdminAgents() {
       <Text style={ui.text}>{AGENT_STATUS_LABELS[a.status]}</Text>
       <Text style={ui.muted}>📍 {a.market_name ?? "Sem praça"} · 📞 {a.phone}</Text>
       {!!a.note && <Text style={ui.text}>«{a.note}»</Text>}
-      <Text style={ui.text}>{a.listings} anúncios · {a.pending_count} à espera ({formatPrice(a.pending_kz)}) · pago: {formatPrice(a.approved_kz)}</Text>
+      <Text style={ui.text}>{a.listings} anúncios · {a.sold} vendidos · {a.pending_count} à espera ({formatPrice(a.pending_kz)}) · pago: {formatPrice(a.approved_kz)}</Text>
       {!!a.admin_note && <Text style={ui.muted}>Nota: {a.admin_note}</Text>}
       {a.status !== "active" && <Button title="✅ Aprovar" disabled={busy} onPress={() => decide(a, "active")} />}
       {a.status === "pending" && <Button title="Recusar" variant="secondary" disabled={busy} onPress={() => decide(a, "rejected")} />}
       {a.status === "active" && <Button title="⛔ Suspender" variant="danger" disabled={busy} onPress={() => decide(a, "suspended")} />}
     </View>)}
     <Text style={ui.h2}>Comissões</Text>
-    <Chips options={[{ value: "pending" as const, label: "À espera" }, { value: "approved" as const, label: "Confirmadas" }, { value: "rejected" as const, label: "Recusadas" }, { value: "all" as const, label: "Todas" }]} value={status} onChange={setStatus} />
+    <Chips options={[{ value: "pending" as const, label: "À espera" }, { value: "approved" as const, label: "Confirmadas" }, { value: "rejected" as const, label: "Recusadas" }, { value: "cancelled" as const, label: "Anuladas" }, { value: "all" as const, label: "Todas" }]} value={status} onChange={setStatus} />
     {items.length === 0 && <Text style={ui.text}>Nada aqui.</Text>}
     {pend.length > 0 && <Check on={picked.length === pend.length} label={`Escolher todas as que estão à espera (${pend.length})`} onPress={() => setPicked(picked.length === pend.length ? [] : pend.map(i => i.id))} />}
     {items.map(i => <View key={i.id} style={ui.card}>
-      {i.status === "pending" ? <Check on={picked.includes(i.id)} label={`${i.listing_title} · ${formatPrice(i.amount)}`} onPress={() => setPicked(p => p.includes(i.id) ? p.filter(x => x !== i.id) : [...p, i.id])} />
-        : <Text style={ui.label}>{i.listing_title} · {formatPrice(i.amount)}</Text>}
-      <Text style={ui.text}>Agente {i.agent_name} ({i.agent_code}) · vendedor {i.owner_name} · anúncio {i.listing_status === "published" ? "publicado" : i.listing_status ?? "apagado"}</Text>
+      {i.status === "pending" ? <Check on={picked.includes(i.id)} label={`${i.listing_title} · ${agentCommissionLine(i)}`} onPress={() => setPicked(p => p.includes(i.id) ? p.filter(x => x !== i.id) : [...p, i.id])} />
+        : <Text style={ui.label}>{i.listing_title} · {agentCommissionLine(i)}</Text>}
+      <Text style={ui.text}>Agente {i.agent_name} ({i.agent_code}) · vendedor {i.owner_name}{i.seller_commission_status ? " · " + (SELLER_COMMISSION_LABELS[i.seller_commission_status] ?? i.seller_commission_status) : ""}</Text>
       <Text style={ui.muted}>{new Date(i.created_at).toLocaleString("pt-AO")} · {AGENT_COMMISSION_STATUS_LABELS[i.status]}{i.admin_note ? " · " + i.admin_note : ""}</Text>
     </View>)}
     {picked.length > 0 && <View style={ui.card}>
