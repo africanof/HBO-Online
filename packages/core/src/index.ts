@@ -80,3 +80,4 @@ export * from "./places";
 export * from "./referrals";
 export * from "./conformity";
 export * from "./events";
+export * from "./promo";

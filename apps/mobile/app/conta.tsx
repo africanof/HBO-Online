@@ -69,6 +69,7 @@ export default function Conta() {
       <Button title="📊 Estatísticas" variant="secondary" onPress={() => router.push("/conta/estatisticas" as any)} />
       <Button title="🤝 Ser agente" variant="secondary" onPress={() => router.push("/agente" as any)} />
       <Button title="🎟️ Os meus bilhetes" variant="secondary" onPress={() => router.push("/bilhetes" as any)} />
+      <Button title="🎬 Vídeos e lives" variant="secondary" onPress={() => router.push("/videos/meus" as any)} />
       <Button title="🎤 Os meus eventos" variant="secondary" onPress={() => router.push("/eventos/meus" as any)} />
       <Button title="🎁 Convidar amigos" variant="secondary" onPress={() => router.push("/convidar" as any)} />
       <Button title="📦 Encomendas" variant="secondary" onPress={() => router.push("/encomendas" as any)} />

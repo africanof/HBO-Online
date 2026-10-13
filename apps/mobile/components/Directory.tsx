@@ -12,6 +12,7 @@ import { SaveButton, ShareButton, FollowButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, VerifiedTag, stars } from "./Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "./Trust";
 import { PortfolioGallery, BusinessProducts } from "./Portfolio";
+import { PromoShelf } from "./Promo";
 import { LiteImage } from "./LiteImage";
 
 type Kind = "providers" | "businesses";
@@ -145,6 +146,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     {kind === "providers" && services.length > 0 && <View style={{ gap: 8 }}><Text style={ui.h2}>Serviços</Text>
       {services.map(s => <View key={s.id} style={ui.card}><Text style={ui.label}>{s.title}</Text>{!!s.description && <Text style={ui.text}>{s.description}</Text>}<Text style={ui.text}>{s.price_from != null ? "Desde " + formatPrice(s.price_from, s.currency) : "Preço sob consulta"}</Text></View>)}
     </View>}
+    <PromoShelf kind={kind === "providers" ? "provider" : "business"} id={id} />
     <PortfolioGallery target={kind === "providers" ? { providerId: id } : { businessId: id }} />
     {kind === "businesses" && <BusinessProducts ownerId={item.owner_id} businessId={id} />}
     <Message error={error} ok={notice} />
