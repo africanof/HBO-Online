@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { videoPlatform, youtubeId, youtubeThumb, liveStateAt, liveStateText, viewsText, promoShareMessage, promoRef, promoSubjectHref, validatePromo,
+import { videoPlatform, embedUrl, embedHint, youtubeId, youtubeThumb, liveStateAt, liveStateText, viewsText, promoShareMessage, promoRef, promoSubjectHref, validatePromo,
   savePromoPost, promoFeed, submitPromoBoost, decidePromoBoost, setPromoHidden, getPromoPost, type PromoInput } from "./promo";
 import { friendlyError } from "./classified-listings";
 import { getNotificationLink } from "./notifications";
@@ -24,6 +24,24 @@ describe("vídeos e lives", () => {
     expect(youtubeId("https://www.youtube.com/live/dQw4w9WgXcQ")).toBe("dQw4w9WgXcQ");
     expect(youtubeId("https://facebook.com/x")).toBeNull();
     expect(youtubeThumb("https://youtu.be/dQw4w9WgXcQ")).toBe("https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg");
+  });
+  it("ver dentro do Site e da APP", () => {
+    expect(embedUrl("https://youtu.be/dQw4w9WgXcQ")).toBe("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&playsinline=1&rel=0");
+    expect(embedUrl("https://www.youtube.com/live/dQw4w9WgXcQ?si=x")).toContain("/embed/dQw4w9WgXcQ");
+    expect(embedUrl("https://www.youtube.com/channel/UCabcdefghijklmnop12345/live")).toBe("https://www.youtube-nocookie.com/embed/live_stream?channel=UCabcdefghijklmnop12345&autoplay=1&playsinline=1");
+    expect(embedUrl("https://www.youtube.com/@oficinaze/live")).toBeNull();
+    expect(embedUrl("https://www.facebook.com/oficinaze/videos/123456/")).toBe("https://www.facebook.com/plugins/video.php?href=" + encodeURIComponent("https://www.facebook.com/oficinaze/videos/123456/") + "&show_text=false&autoplay=true&allowfullscreen=true");
+    expect(embedUrl("https://fb.watch/abc123/")).toContain("plugins/video.php");
+    expect(embedUrl("https://www.facebook.com/watch/?v=123")).toContain("plugins/video.php");
+    expect(embedUrl("https://www.facebook.com/oficinaze")).toBeNull();
+    expect(embedUrl("https://www.tiktok.com/@ze/live")).toBeNull();
+    expect(embedUrl("https://evil.com/videos/1")).toBeNull();
+    expect(embedUrl(null)).toBeNull();
+    expect(embedHint("")).toBeNull();
+    expect(embedHint("https://youtu.be/dQw4w9WgXcQ")?.ok).toBe(true);
+    expect(embedHint("https://www.youtube.com/@oficinaze/live")?.text).toContain("youtube.com/live/");
+    expect(embedHint("https://www.facebook.com/oficinaze")?.text).toContain("/videos/");
+    expect(embedHint("https://www.tiktok.com/@ze/live")?.text).toBe("O TikTok não deixa ver dentro de outros sites: as pessoas vão abrir o TikTok.");
   });
   it("estado da live e textos", () => {
     expect(liveStateAt(live, Date.parse("2026-10-18T18:00:00Z"))).toBe("upcoming");
