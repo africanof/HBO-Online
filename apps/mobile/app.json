@@ -40,6 +40,12 @@
           "cameraPermission": "O Huambo Online usa a câmara para fotografar artigos, pesquisar por fotografia e fotografar documentos para verificar o perfil.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O Huambo Online usa a localização só quando carrega em «Usar a minha localização», para marcar no mapa onde fica o anúncio, a empresa ou a entrega."
+        }
       ]
     ],
     "experiments": {

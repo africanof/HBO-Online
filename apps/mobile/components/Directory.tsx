@@ -1,3 +1,4 @@
+import { PlaceView } from "./Place";
 import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
@@ -134,6 +135,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <TrustBadges userId={kind === "providers" ? id : item.owner_id} />
     <StatsBlock rows={stats.rows} footer={stats.since} />
     {!!(item.bio || item.description) && <Text style={ui.text}>{item.bio || item.description}</Text>}
+    <PlaceView directions={item.directions} lat={item.geo_lat} lng={item.geo_lng} />
     {!!item.phone && <Button title="📞 Ligar" variant="secondary" onPress={() => { void recordItemEvent(supabase(), viewKind, id, "call"); void Linking.openURL("tel:" + item.phone.replace(/\s/g, "")); }} />}
     {!!wa && <Button title="WhatsApp" variant="secondary" onPress={() => { void recordItemEvent(supabase(), viewKind, id, "whatsapp"); void Linking.openURL(wa); }} />}
     {mine && <Button title="Editar" onPress={() => router.push((kind === "providers" ? "/conta/profissional" : "/conta/empresas") as any)} />}

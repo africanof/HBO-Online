@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isInAngola, type GeoPoint } from "./places";
 
 /** Marketplace: produtos, carrinho e encomendas — mesma lógica no Site e na APP. */
 
@@ -30,7 +31,9 @@ export function validateProductInput(input: ProductInput): string | null {
 }
 
 /** protected: pagamento protegido (paga ao Huambo Online, que guarda o dinheiro até o comprador receber). */
-export type CheckoutInput = { fulfillment: Fulfillment; paymentMethod: PaymentMethod; phone: string; deliveryText?: string; note?: string; protected?: boolean };
+export type CheckoutInput = { fulfillment: Fulfillment; paymentMethod: PaymentMethod; phone: string; deliveryText?: string; note?: string; protected?: boolean;
+  /** Ponto no mapa da entrega (opcional): só o comprador, o vendedor e o estafeta o veem. */
+  point?: GeoPoint | null };
 export function validateCheckout(input: CheckoutInput): string | null {
   if (!/^\+?[0-9 ]{9,15}$/.test(input.phone.trim())) return "Indique um telefone válido para o vendedor o contactar.";
   if (input.fulfillment === "delivery" && !input.deliveryText?.trim()) return "Indique a morada ou ponto de referência para a entrega.";
@@ -84,6 +87,9 @@ export async function placeOrders(client: SupabaseClient, input: CheckoutInput) 
   const r = input.protected ? await client.rpc("place_orders_v2", { ...args, p_protected: true }) : await client.rpc("place_orders", args);
   // A encomenda já está feita; os artigos ficam marcados como encomendados e saem do carrinho.
   if (!r.error) await client.from("cart_items").delete().not("ordered_at", "is", null);
+  // Ponto da entrega em cada encomenda (se falhar, a encomenda continua feita).
+  if (!r.error && input.fulfillment === "delivery" && input.point && isInAngola(input.point))
+    for (const id of (r.data as string[] | null) ?? []) await client.rpc("set_order_delivery_point", { p_order_id: id, p_lat: input.point.lat, p_lng: input.point.lng });
   return r;
 }
 /** Encomendas com o estado do pagamento protegido (my_orders_v3 tem tudo o que a v2 tinha e mais). */

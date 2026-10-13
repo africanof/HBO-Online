@@ -1,3 +1,4 @@
+import { PlaceView } from "../../../components/Place";
 import { useEffect, useState } from "react";
 import { VideoPlayer } from "../../../components/Video";
 import { WantedHelpers } from "../../../components/WantedHelpers";
@@ -131,6 +132,7 @@ export default function ClassifiedDetail() {
     {!!item.video_url && <VideoPlayer url={item.video_url} />}
     {item.purpose === "wanted" && item.status === "published" && <WantedHelpers title={item.title} mine={mine} />}
     {!!item.description && <Text style={ui.text}>{item.description}</Text>}
+    <PlaceView directions={item.directions} lat={item.geo_lat} lng={item.geo_lng} approximate />
     {item.status === "published" && <ShareButton kind="listing" id={id} title={item.title} extra={{ price: item.purpose === "wanted" ? null : item.price, currency: item.currency, refCode: item.ref_no ? formatRef("listing", item.ref_no) : null, place }} />}
     {item.status === "published" && <AuctionPanel listingId={id} uid={uid} mine={mine} canStart={["sale", "auction"].includes(item.purpose) && AUCTIONABLE_TYPES.includes(item.listing_type)} />}
     {!mine && item.status === "published" && ["rent", "lease"].includes(item.purpose) && <RentalRequestForm listingId={id} uid={uid} defaultPrice={item.price} />}

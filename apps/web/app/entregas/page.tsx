@@ -1,4 +1,5 @@
 "use client";
+import { OrderPoint } from "../../components/Place";
 import { useEffect, useState } from "react";
 import { getMyCourier, registerCourier, setCourierAvailable, listAvailableDeliveries, claimDelivery, updateDeliveryStatus, listMyDeliveries,
   nextCourierSteps, isActiveDelivery, formatPrice, friendlyError, DELIVERY_STATUS_LABELS, COURIER_STATUS_LABELS, VEHICLE_LABELS, STEP_LABELS,
@@ -71,6 +72,7 @@ export default function Entregas() {
           <strong>{formatPrice(d.total, d.currency)} · <span className="badge">{DELIVERY_STATUS_LABELS[d.status as DeliveryStatus]}</span></strong>
           <span>Recolher em: {d.seller_name}</span>
           <span>Entregar a: {d.buyer_name}{d.delivery_text ? " — " + d.delivery_text : ""}</span>
+          <OrderPoint orderId={d.order_id} canEdit={false} />
           {d.contact_phone && <span>Telefone do cliente: <a href={"tel:" + d.contact_phone.replace(/\s/g, "")}>{d.contact_phone}</a></span>}
           {d.notes && <span>Nota: {d.notes}</span>}
           <div className="row">{nextCourierSteps(d.status).map((s: CourierStep) => <button key={s} disabled={busy} className={s === "released" ? "secondary" : ""} onClick={() => { if (s !== "released" || confirm("Desistir desta entrega?")) void act(() => updateDeliveryStatus(supabase(), d.id, s), "Entrega atualizada."); }}>{STEP_LABELS[s]}</button>)}</div>

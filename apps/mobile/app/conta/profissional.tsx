@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { Alert, ScrollView, Switch, Text, TextInput, View } from "react-native";
-import { getProvider, saveMyProviderProfile, setProviderPhoto, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
+import { getProvider, saveMyProviderProfile, setProviderPhoto, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice, OTHER_CATEGORY, categoryFormValues, pointFrom, type GeoPoint } from "@huambo-online/core";
+import { PlaceFields } from "../../components/Place";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { Button, Chips, Message } from "../../components/Ui";
@@ -10,7 +11,7 @@ import { PhotoPicker, PortfolioManager } from "../../components/Portfolio";
 import { PlanBanner } from "../../components/Plans";
 
 type Option = { id: string; name: string };
-const empty = { displayName: "", headline: "", bio: "", categoryId: "", customCategory: "", municipalityId: "", phone: "", whatsapp: "", active: true };
+const empty = { displayName: "", headline: "", bio: "", categoryId: "", customCategory: "", municipalityId: "", phone: "", whatsapp: "", active: true, directions: "", point: null as GeoPoint | null };
 
 export default function PerfilProfissional() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function PerfilProfissional() {
   async function load(id: string) {
     const c = supabase();
     const p = await getProvider(c, id);
-    if (p.data) { setExists(true); setAvatar(p.data.avatar_url ?? null); setForm({ displayName: p.data.display_name ?? "", headline: p.data.headline ?? "", bio: p.data.bio ?? "", ...categoryFormValues(p.data), municipalityId: p.data.municipality_id ?? "", phone: p.data.phone ?? "", whatsapp: p.data.whatsapp ?? "", active: p.data.active }); }
+    if (p.data) { setExists(true); setAvatar(p.data.avatar_url ?? null); setForm({ displayName: p.data.display_name ?? "", headline: p.data.headline ?? "", bio: p.data.bio ?? "", ...categoryFormValues(p.data), municipalityId: p.data.municipality_id ?? "", phone: p.data.phone ?? "", whatsapp: p.data.whatsapp ?? "", active: p.data.active, directions: p.data.directions ?? "", point: pointFrom(p.data.geo_lat, p.data.geo_lng) }); }
     const s = await listProviderServices(c, id, true); setServices(s.data ?? []);
   }
   useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) void load(id); }); void listDirectoryCategories(supabase(), "providers").then(({ data }) => setCategories(data ?? [])); }, []);
@@ -55,6 +56,7 @@ export default function PerfilProfissional() {
       <Text style={ui.label}>Município</Text><Chips options={municipalities.map(m => ({ value: m.id, label: m.name }))} value={form.municipalityId} onChange={set("municipalityId")} />
       <Text style={ui.label}>Telefone</Text><TextInput style={ui.input} keyboardType="phone-pad" value={form.phone} onChangeText={set("phone")} />
       <Text style={ui.label}>WhatsApp</Text><TextInput style={ui.input} keyboardType="phone-pad" value={form.whatsapp} onChangeText={set("whatsapp")} />
+      <PlaceFields directions={form.directions} point={form.point} onDirections={v => setForm({ ...form, directions: v })} onPoint={p => setForm({ ...form, point: p })} hint="Marque a sua oficina ou loja. Se trabalha em casa dos clientes, deixe vazio." />
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}><Text style={ui.label}>Perfil visível ao público</Text><Switch value={form.active} onValueChange={v => setForm(f => ({ ...f, active: v }))} /></View>
       <Button title={exists ? "Guardar perfil" : "Criar perfil"} disabled={busy} onPress={() => void run(() => saveMyProviderProfile(supabase(), uid, form), "Perfil guardado.")} />
     </View>

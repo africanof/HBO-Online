@@ -1,3 +1,4 @@
+import { OrderPoint } from "../components/Place";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Alert, Linking, ScrollView, Text, View } from "react-native";
@@ -57,6 +58,7 @@ export default function Encomendas() {
           onChanged={(m, bad) => { if (bad) { setError(m); setNotice(""); } else { setError(""); setNotice(m); void load(); } }} />
         {(o.items ?? []).map((it: any, i: number) => <Text key={i} style={ui.text}>• {it.quantity} × {it.name} — {formatPrice(it.line_total)}</Text>)}
         {!!o.delivery_text && <Text style={ui.text}>Entrega: {o.delivery_text}</Text>}
+        {o.fulfillment_type === "delivery" && <OrderPoint orderId={o.id} canEdit={role === "buyer" && o.status !== "completed" && o.status !== "cancelled"} />}
         {!!o.buyer_note && <Text style={ui.text}>Nota: {o.buyer_note}</Text>}
         {!!deliveries[o.id] && <Text style={ui.label}>🛵 Entrega: {DELIVERY_STATUS_LABELS[deliveries[o.id].status as DeliveryStatus]}{deliveries[o.id].courier_name ? " · Estafeta: " + deliveries[o.id].courier_name : ""}</Text>}
         {!!deliveries[o.id]?.courier_phone && isActiveDelivery(deliveries[o.id].status) && <Button title={"📞 Estafeta " + deliveries[o.id].courier_phone} variant="secondary" onPress={() => void Linking.openURL("tel:" + deliveries[o.id].courier_phone.replace(/\s/g, ""))} />}
