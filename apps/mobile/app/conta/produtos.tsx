@@ -73,6 +73,7 @@ export default function MeusProdutos() {
   return <ScrollView ref={scroll} contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/conta" style={ui.link}>← Conta</Link>
     <Text style={ui.h1}>Os meus produtos</Text>
+    <Button title="📊 Ver estatísticas" variant="secondary" onPress={() => router.push("/conta/estatisticas" as any)} />
     <PlanBanner kind="store" subjectId={uid} />
     <Button title="📦 As minhas vendas" variant="secondary" onPress={() => router.push("/encomendas?vendas=1" as any)} />
     <Message error={error} ok={notice} />

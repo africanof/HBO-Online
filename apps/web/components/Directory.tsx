@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { listBusinessProducts, listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
-  listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
+  listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, recordItemEvent, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
   listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { SaveButton, ShareButton, FollowButton, useRecordView } from "./Engage";
@@ -155,8 +155,8 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     {(item.bio || item.description) && <p style={{ whiteSpace: "pre-wrap" }}>{item.bio || item.description}</p>}
     <div className="row">
       <FollowButton kind={kind === "providers" ? "provider" : "business"} id={id} mine={mine} />
-      {item.phone && <a className="btn secondary" href={"tel:" + item.phone.replace(/\s/g, "")}>📞 Ligar</a>}
-      {wa && <a className="btn secondary" href={wa} target="_blank" rel="noopener">WhatsApp</a>}
+      {item.phone && <a className="btn secondary" href={"tel:" + item.phone.replace(/\s/g, "")} onClick={() => void recordItemEvent(supabase(), viewKind, id, "call")}>📞 Ligar</a>}
+      {wa && <a className="btn secondary" href={wa} target="_blank" rel="noopener" onClick={() => void recordItemEvent(supabase(), viewKind, id, "whatsapp")}>WhatsApp</a>}
       {mine && <a className="btn" href={kind === "providers" ? "/conta/profissional" : "/conta/empresas"}>Editar</a>}
       {!mine && <SaveButton kind={viewKind} id={id} />}
       <ShareButton kind={viewKind} id={id} title={name} />

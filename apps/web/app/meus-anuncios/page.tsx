@@ -36,6 +36,7 @@ function MeusAnuncios() {
   return <main className="stack">
     <a href="/">← Huambo Online</a>
     <h1>Os meus anúncios</h1>
+    <a className="btn secondary" href="/conta/estatisticas" style={{ justifySelf: "start" }}>📊 Ver estatísticas: vistas, guardados e contactos</a>
     <a className="btn" href="/classificados/publicar">+ Publicar anúncio</a>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}

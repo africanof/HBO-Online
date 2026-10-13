@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { findSaved, toggleSaved, recordView, shareMessage, whatsappShareUrl, sellerWhatsappMessage, getSellerWhatsapp, getMyWhatsapp, setMyWhatsapp, formatWhatsapp, whatsappLink, friendlyError,
-  getFollowInfo, toggleFollow, followersText, followButtonLabel, type FollowKind,
+  getFollowInfo, toggleFollow, recordItemView, recordItemEvent, followersText, followButtonLabel, type FollowKind,
   type SavedKind, type KeyValueStore, type ShareExtra } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
 
@@ -13,6 +13,7 @@ export const browserStore: KeyValueStore = {
 
 export function useRecordView(kind: SavedKind, id: string | undefined, title: string | undefined, image?: string | null) {
   useEffect(() => { if (id && title) void recordView(browserStore, { kind, id, title, image: image ?? null }); }, [kind, id, title, image]);
+  useEffect(() => { if (id && title) void recordItemView(supabase(), browserStore, kind, id); }, [kind, id, !!title]);
 }
 
 export function SaveButton({ kind, id }: { kind: SavedKind; id: string }) {
@@ -37,6 +38,7 @@ export function SaveButton({ kind, id }: { kind: SavedKind; id: string }) {
 export function ShareButton({ kind, id, title, extra }: { kind: SavedKind; id: string; title: string; extra?: ShareExtra }) {
   const [done, setDone] = useState("");
   async function click() {
+    void recordItemEvent(supabase(), kind, id, "share");
     const { url, text } = shareMessage(window.location.origin, kind, id, title, extra);
     try {
       if (navigator.share) { await navigator.share({ title, text, url }); return; }
@@ -44,6 +46,7 @@ export function ShareButton({ kind, id, title, extra }: { kind: SavedKind; id: s
     } catch { /* partilha cancelada */ }
   }
   function whatsapp() {
+    void recordItemEvent(supabase(), kind, id, "share");
     window.open(whatsappShareUrl(shareMessage(window.location.origin, kind, id, title, extra).text), "_blank", "noopener");
   }
   return <>
@@ -60,7 +63,7 @@ export function SellerWhatsApp({ sellerId, kind, id, title, refCode }: { sellerI
   if (!number) return null;
   const url = shareMessage(window.location.origin, kind, id, title).url;
   const href = whatsappLink(number, sellerWhatsappMessage(kind, title, refCode, url));
-  return href ? <a className="btn secondary" href={href} target="_blank" rel="noopener">💬 Falar no WhatsApp</a> : null;
+  return href ? <a className="btn secondary" href={href} target="_blank" rel="noopener" onClick={() => void recordItemEvent(supabase(), kind, id, "whatsapp")}>💬 Falar no WhatsApp</a> : null;
 }
 
 /** «A sua conta»: número de WhatsApp e se aparece nos anúncios e produtos. */

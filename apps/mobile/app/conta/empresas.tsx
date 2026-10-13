@@ -39,6 +39,7 @@ export default function MinhasEmpresas() {
   return <ScrollView ref={scroll} contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/conta" style={ui.link}>← Conta</Link>
     <Text style={ui.h1}>As minhas empresas</Text>
+    <Button title="📊 Ver estatísticas" variant="secondary" onPress={() => router.push("/conta/estatisticas" as any)} />
     <Message error={error} ok={notice} />
     {items.map(b => <View key={b.id} style={ui.card}>
       <Text style={ui.h2}>{b.name}{b.verified ? " ✔️" : ""}{b.active ? "" : " (oculta)"}</Text>
