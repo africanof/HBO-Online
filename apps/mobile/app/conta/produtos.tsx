@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ConformityCheck } from "../../components/Conformity";
 import { Link, useRouter } from "expo-router";
 import { Alert, Image, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -41,14 +42,16 @@ export default function MeusProdutos() {
   }
   function edit(p: any) {
     setEditing(p.id); setRemoved([]);
-    setForm({ name: p.name, description: p.description ?? "", price: String(p.price), stock: String(p.stock), categoryId: p.category_id ?? "", municipalityId: p.municipality_id ?? "", marketId: p.market_id ?? "", videoUrl: p.video_url ?? "", active: p.active });
+    setForm({ name: p.name, description: p.description ?? "", price: String(p.price), stock: String(p.stock), categoryId: p.category_id ?? "", municipalityId: p.municipality_id ?? "", marketId: p.market_id ?? "", videoUrl: p.video_url ?? "", active: p.active }); setConform(!!p.conformity_accepted_at);
     setPhotos((Array.isArray(p.media) ? p.media : []).map((u: string) => ({ key: u, uri: u, remote: true })));
     scroll.current?.scrollToEnd();
   }
-  function reset() { setEditing(null); setForm(empty); setPhotos([]); setRemoved([]); }
+  const [conform, setConform] = useState(false);
+  function reset() { setEditing(null); setForm(empty); setPhotos([]); setRemoved([]); setConform(false); }
 
   async function submit() {
     if (!uid || busy) return;
+    if (form.active && !conform) { setError("Para pôr à venda, confirme que o anúncio descreve o produto com verdade (incluindo defeitos)."); return; }
     setBusy(true); setError(""); setNotice("");
     try {
       const media: string[] = [];
@@ -60,7 +63,7 @@ export default function MeusProdutos() {
         media.push(up.data);
       }
       const r = await saveProduct(supabase(), uid, { name: form.name, description: form.description, price: parsePrice(form.price) ?? NaN, stock: Number(form.stock),
-        categoryId: form.categoryId, municipalityId: form.municipalityId, marketId: form.marketId, videoUrl: form.videoUrl, media, active: form.active }, editing ?? undefined);
+        categoryId: form.categoryId, municipalityId: form.municipalityId, marketId: form.marketId, videoUrl: form.videoUrl, media, active: form.active, conformity: conform }, editing ?? undefined);
       if (r.error) throw r.error;
       if (removed.length) await removeClassifiedMedia(supabase(), removed);
       setNotice(editing ? "Produto atualizado." : "Produto publicado na loja."); reset(); await load(uid);
@@ -103,6 +106,7 @@ export default function MeusProdutos() {
         <Pressable accessibilityRole="button" onPress={() => { if (p.remote) setRemoved(r => [...r, p.uri]); setPhotos(x => x.filter((_, j) => j !== i)); }} style={[ui.buttonSecondary, { minHeight: 40 }]}><Text style={ui.buttonSecondaryText}>Remover</Text></Pressable>
       </View>)}</View>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}><Text style={ui.label}>Visível na loja</Text><Switch value={form.active} onValueChange={v => setForm(f => ({ ...f, active: v }))} /></View>
+      <ConformityCheck checked={conform} onChange={setConform} />
       <Button title={busy ? "A guardar…" : editing ? "Guardar" : "Publicar produto"} disabled={busy} onPress={() => void submit()} />
       {editing && <Button title="Cancelar" variant="secondary" onPress={reset} />}
     </View>

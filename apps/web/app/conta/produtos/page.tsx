@@ -1,4 +1,5 @@
 "use client";
+import { ConformityCheck } from "../../../components/Conformity";
 import { MarketPicker } from "../../../components/MarketPicker";
 import { VideoField } from "../../../components/Video";
 import { useEffect, useState } from "react";
@@ -34,14 +35,16 @@ export default function MeusProdutos() {
   }
   function edit(p: any) {
     setEditing(p.id); setRemoved([]);
-    setForm({ name: p.name, description: p.description ?? "", price: String(p.price), stock: String(p.stock), categoryId: p.category_id ?? "", municipalityId: p.municipality_id ?? "", marketId: p.market_id ?? "", videoUrl: p.video_url ?? "", active: p.active });
+    setForm({ name: p.name, description: p.description ?? "", price: String(p.price), stock: String(p.stock), categoryId: p.category_id ?? "", municipalityId: p.municipality_id ?? "", marketId: p.market_id ?? "", videoUrl: p.video_url ?? "", active: p.active }); setConform(!!p.conformity_accepted_at);
     setPhotos((Array.isArray(p.media) ? p.media : []).map((u: string) => ({ key: u, src: u })));
     window.scrollTo(0, document.body.scrollHeight);
   }
-  function reset() { setEditing(null); setForm(empty); setPhotos([]); setRemoved([]); }
+  const [conform, setConform] = useState(false);
+  function reset() { setEditing(null); setForm(empty); setPhotos([]); setRemoved([]); setConform(false); }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); if (!uid || busy) return;
+    if (form.active && !conform) { setError("Para pôr à venda, confirme que o anúncio descreve o produto com verdade (incluindo defeitos)."); return; }
     setBusy(true); setError(""); setNotice("");
     try {
       const media: string[] = [];
@@ -52,7 +55,7 @@ export default function MeusProdutos() {
         media.push(up.data);
       }
       const r = await saveProduct(supabase(), uid, { name: form.name, description: form.description, price: parsePrice(form.price) ?? NaN, stock: Number(form.stock),
-        categoryId: form.categoryId, municipalityId: form.municipalityId, marketId: form.marketId, videoUrl: form.videoUrl, media, active: form.active }, editing ?? undefined);
+        categoryId: form.categoryId, municipalityId: form.municipalityId, marketId: form.marketId, videoUrl: form.videoUrl, media, active: form.active, conformity: conform }, editing ?? undefined);
       if (r.error) throw r.error;
       if (removed.length) await removeClassifiedMedia(supabase(), removed);
       setNotice(editing ? "Produto atualizado." : "Produto publicado na loja."); reset(); await load(uid);
@@ -93,6 +96,7 @@ export default function MeusProdutos() {
       <VideoField value={form.videoUrl} onChange={v => setForm({ ...form, videoUrl: v })} />
       <div className="row">{photos.map((p, i) => <div key={p.key} style={{ display: "grid", gap: 6, width: 110 }}><img src={p.src} alt="" style={{ width: 110, height: 110, objectFit: "cover", borderRadius: 8 }} /><button type="button" className="secondary" onClick={() => { if (!p.file) setRemoved(r => [...r, p.src]); setPhotos(x => x.filter((_, j) => j !== i)); }}>Remover</button></div>)}</div>
       <label style={{ display: "flex", gap: 10, alignItems: "center" }}><input type="checkbox" checked={form.active} onChange={e => setForm({ ...form, active: e.target.checked })} style={{ width: 24, height: 24 }} /> Visível na loja</label>
+      <ConformityCheck checked={conform} onChange={setConform} />
       <div className="row"><button disabled={busy}>{busy ? "A guardar…" : editing ? "Guardar" : "Publicar produto"}</button>{editing && <button type="button" className="secondary" onClick={reset}>Cancelar</button>}</div>
     </form>
   </main>;

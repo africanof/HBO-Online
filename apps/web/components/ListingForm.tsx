@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { MarketPicker } from "./MarketPicker";
 import { PlaceFields } from "./Place";
+import { ConformityCheck } from "./Conformity";
 import { VideoField } from "./Video";
 import { AgentCodeField, agentCodeFromUrl } from "./Agents";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
@@ -50,6 +51,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
   const [videoUrl, setVideoUrl] = useState<string>(listing?.video_url ?? "");
   const [agentCode, setAgentCode] = useState("");
   const [directions, setDirections] = useState<string>(listing?.directions ?? "");
+  const [conform, setConform] = useState<boolean>(!!listing?.conformity_accepted_at);
   const [point, setPoint] = useState<GeoPoint | null>(pointFrom(listing?.geo_lat, listing?.geo_lng));
   useEffect(() => { if (!listing) { const c = agentCodeFromUrl(); if (c) setAgentCode(c); } }, []);
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, src: u })));
@@ -109,6 +111,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
     const budgetError = wanted ? validateBudget(minValue, maxValue) : null;
     if (budgetError) { setError(budgetError); return; }
     const priceValue = wanted ? budgetPrice(minValue, maxValue) : parsePrice(price);
+    if (purpose !== "wanted" && !conform) { setError("Para publicar, confirme que o anúncio descreve o artigo com verdade (incluindo defeitos)."); return; }
     const invalid = validateClassifiedDraft({ listingType, purpose, title, description, price: priceValue, provinceId, municipalityId, photoCount: photos.length })
       ?? (lockedAuction ? null : validateSaleMode({ purpose, listingType, saleMode, price: priceValue, auctionDays: Number(auctionDays), tradeWants, acceptsTrade }));
     if (invalid) { setError(invalid); return; }
@@ -134,7 +137,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
       // Mantém outros atributos já guardados; os do campo só ficam se «Produto do campo» estiver ligado.
       const keep = Object.fromEntries(Object.entries((listing?.attributes ?? {}) as Record<string, unknown>).filter(([k]) => !["agro", "agroCategory", "unit", "quantity", "availableFrom", "provinceId", "municipalityId"].includes(k)));
       const attributes = { ...keep, ...(useAgro ? agroAttributes({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom }) : {}) };
-      const input = { attributes, listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale, directions, point };
+      const input = { attributes, listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale, directions, point, conformity: purpose !== "wanted" && conform };
       // O leilão começa logo depois de publicar (ou de guardar, ao mudar para leilão).
       const startAuction = async (id: string) => {
         if (mode !== "auction" || lockedAuction) return null;
@@ -242,6 +245,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
       </fieldset>
       <VideoField value={videoUrl} onChange={setVideoUrl} />
       {purpose !== "wanted" && <AgentCodeField value={agentCode} onChange={setAgentCode} />}
+      {purpose !== "wanted" && <ConformityCheck checked={conform} onChange={setConform} />}
       {error && <p className="error" role="alert">{error}</p>}
       {status && <p role="status">{status}</p>}
       <button type="submit" disabled={busy}>{busy ? (status || "Aguarde…") : editing ? "Guardar alterações" : "Publicar anúncio"}</button>

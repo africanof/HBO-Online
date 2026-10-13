@@ -3,7 +3,7 @@ import { isInAngola, type GeoPoint } from "./places";
 
 /** Marketplace: produtos, carrinho e encomendas — mesma lógica no Site e na APP. */
 
-export type ProductInput = { name: string; description?: string; price: number; stock: number; categoryId?: string; municipalityId?: string; businessId?: string; marketId?: string; videoUrl?: string; media?: string[]; active?: boolean };
+export type ProductInput = { name: string; description?: string; price: number; stock: number; categoryId?: string; municipalityId?: string; businessId?: string; marketId?: string; videoUrl?: string; media?: string[]; active?: boolean; /** Declaração de conformidade (obrigatória para pôr à venda). */ conformity?: boolean };
 export type Fulfillment = "delivery" | "pickup";
 export type PaymentMethod = "cash_on_delivery" | "bank_transfer" | "mobile_money" | "reference";
 export type OrderStatus = "pending" | "confirmed" | "processing" | "ready" | "completed" | "cancelled";
@@ -57,14 +57,14 @@ export async function getProduct(client: SupabaseClient, id: string) {
   return client.from("products").select("id,ref_no,seller_id,business_id,name,description,category_id,price,currency,stock,media,municipality_id,market_id,video_url,active,created_at,categories(name),municipalities(name),markets(id,name)").eq("id", id).maybeSingle();
 }
 export async function listMyProducts(client: SupabaseClient, sellerId: string) {
-  return client.from("products").select("id,ref_no,name,price,currency,stock,media,active,category_id,municipality_id,description,business_id,market_id,video_url").eq("seller_id", sellerId).order("created_at", { ascending: false });
+  return client.from("products").select("id,ref_no,name,price,currency,stock,media,active,category_id,municipality_id,description,business_id,market_id,video_url,conformity_accepted_at").eq("seller_id", sellerId).order("created_at", { ascending: false });
 }
 export async function saveProduct(client: SupabaseClient, sellerId: string, input: ProductInput, id?: string) {
   const invalid = validateProductInput(input);
   if (invalid) return { data: null, error: new Error(invalid) };
   const row = { seller_id: sellerId, name: input.name.trim(), description: input.description?.trim() || null, price: input.price, stock: input.stock,
     category_id: input.categoryId, municipality_id: input.municipalityId, business_id: input.businessId || null, market_id: input.marketId || null, video_url: input.videoUrl || null, media: input.media ?? [],
-    active: input.active ?? true, updated_at: new Date().toISOString() };
+    active: input.active ?? true, ...(input.conformity ? { conformity_accepted_at: new Date().toISOString() } : {}), updated_at: new Date().toISOString() };
   return id ? client.from("products").update(row).eq("id", id).select().single() : client.from("products").insert(row).select().single();
 }
 export async function deleteProduct(client: SupabaseClient, id: string) { return client.from("products").delete().eq("id", id); }

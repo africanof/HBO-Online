@@ -34,6 +34,8 @@ export interface ClassifiedDraftInput {
   agentCode?: string;
   /** «Como chegar» e ponto no mapa (o Supabase arredonda o ponto dos anúncios a ~100 m). */
   directions?: string; point?: GeoPoint | null;
+  /** Declaração de conformidade (obrigatória para publicar, exceto «Procura-se»). */
+  conformity?: boolean;
   /** Como vende: preço fixo, negociável, aberto a propostas, leilão ou só troca. */
   saleMode?: "fixed" | "negotiable" | "offers" | "auction" | "trade"; acceptsTrade?: boolean; tradeWants?: string;
 }
@@ -106,6 +108,11 @@ const errorMessages: [RegExp, string][] = [
   [/AGENT_SUSPENDED/, "A sua conta de agente está suspensa. Fale com a administração."],
   [/MARKET_REQUIRED/, "Escolha a praça onde trabalha."],
   [/INVALID_LOCATION/, "O ponto tem de ser em Angola."],
+  [/CONFORMITY_REQUIRED/, "Para publicar, confirme que o anúncio descreve o artigo com verdade (incluindo defeitos)."],
+  [/CLAIM_NOT_ALLOWED/, "Só quem comprou ou arrendou pode reclamar, até 7 dias depois do negócio."],
+  [/CLAIM_ALREADY_OPEN/, "Já tem uma reclamação aberta sobre este anúncio."],
+  [/CLAIM_DESCRIPTION_REQUIRED/, "Explique o problema (pelo menos 10 letras)."],
+  [/CLAIM_NOT_FOUND/, "Reclamação não encontrada."],
   [/REFERRAL_NOT_FOUND/, "Código de convite não encontrado. Confirme as 6 letras e números."],
   [/REFERRAL_SELF/, "Não pode usar o seu próprio convite."],
   [/REFERRAL_ALREADY/, "Já entrou com um convite."],
@@ -250,7 +257,8 @@ export async function createClassifiedListing(client: SupabaseClient, input: Cla
     description: input.description?.trim() || null, price: input.price ?? null,
     attributes: buildAttributes(input), media: input.media || [], market_id: input.marketId || null, video_url: input.videoUrl || null,
     budget_min: input.purpose === "wanted" ? input.budgetMin ?? null : null, budget_max: input.purpose === "wanted" ? input.budgetMax ?? null : null,
-    ...saleColumns(input), ...placeColumns(input.directions, input.point)
+    ...saleColumns(input), ...placeColumns(input.directions, input.point),
+    conformity_accepted_at: input.conformity ? new Date().toISOString() : null
   }).select().single();
 }
 
@@ -274,7 +282,7 @@ export async function updateClassifiedListing(client: SupabaseClient, id: string
     title: input.title.trim(), description: input.description?.trim() || null, price: input.price ?? null,
     attributes: buildAttributes(input), media: input.media || [], market_id: input.marketId || null, video_url: input.videoUrl || null,
     budget_min: input.purpose === "wanted" ? input.budgetMin ?? null : null, budget_max: input.purpose === "wanted" ? input.budgetMax ?? null : null,
-    ...saleColumns(input), ...placeColumns(input.directions, input.point), updated_at: new Date().toISOString()
+    ...saleColumns(input), ...placeColumns(input.directions, input.point), ...(input.conformity ? { conformity_accepted_at: new Date().toISOString() } : {}), updated_at: new Date().toISOString()
   }).eq("id", id).select().single();
 }
 
@@ -286,7 +294,7 @@ export async function listMyClassifiedListings(client: SupabaseClient, ownerId: 
   return client.from("classified_listings").select(LISTING_COLUMNS + ",deal_with,deal_at").eq("owner_id", ownerId).order("created_at", { ascending: false });
 }
 
-const LISTING_COLUMNS = "id,ref_no,owner_id,category_id,address_id,listing_type,purpose,title,description,price,currency,attributes,media,status,featured,featured_until,created_at,updated_at,market_id,video_url,budget_min,budget_max,sale_mode,accepts_trade,trade_wants,directions,geo_lat,geo_lng";
+const LISTING_COLUMNS = "id,ref_no,owner_id,category_id,address_id,listing_type,purpose,title,description,price,currency,attributes,media,status,featured,featured_until,created_at,updated_at,market_id,video_url,budget_min,budget_max,sale_mode,accepts_trade,trade_wants,directions,geo_lat,geo_lng,conformity_accepted_at";
 
 export async function listClassifiedListings(client: SupabaseClient, filters: {
   listingType?: ClassifiedListingType; purpose?: ClassifiedPurpose; categoryId?: string; limit?: number;
