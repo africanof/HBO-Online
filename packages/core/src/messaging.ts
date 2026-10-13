@@ -25,7 +25,7 @@ export function conversationFromParticipantRow(row:any){return row?.conversation
 export function isConversationUnread(row:any,lastMessage:any,userId:string){return !!lastMessage&&lastMessage.sender_id!==userId&&(!row.last_read_at||new Date(lastMessage.created_at)>new Date(row.last_read_at));}
 
 export async function listMessages(client:SupabaseClient,conversationId:string){
-  return client.from("messages").select("id,conversation_id,sender_id,body,created_at,edited_at").eq("conversation_id",conversationId).order("created_at");
+  return client.from("messages").select("id,conversation_id,sender_id,body,created_at,edited_at,attachment_kind,attachment_path,attachment_seconds").eq("conversation_id",conversationId).order("created_at");
 }
 
 export async function sendMessage(client:SupabaseClient,conversationId:string,senderId:string,body:string){
