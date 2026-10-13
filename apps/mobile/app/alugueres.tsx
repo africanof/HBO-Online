@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams } from "expo-router";
 import { Alert, ScrollView, Text, View } from "react-native";
-import { listMyRentalRequests, respondRentalRequest, cancelRentalRequest, formatPrice, friendlyError, RENTAL_STATUS_LABELS, type RentalStatus } from "@huambo-online/core";
+import { listMyRentalRequests, respondRentalRequest, cancelRentalRequest, getPlatformSettings, commissionFor, formatPrice, friendlyError, RENTAL_STATUS_LABELS, type RentalStatus } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
@@ -10,6 +10,8 @@ const d = (s: string) => new Date(s).toLocaleDateString("pt-AO");
 
 export default function Alugueres() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
+  const [pct, setPct] = useState(5);
+  useEffect(() => { void getPlatformSettings(supabase()).then(r => { if (r.data?.listing_commission_pct != null) setPct(Number(r.data.listing_commission_pct)); }); }, []);
   const params = useLocalSearchParams<{ recebidos?: string }>();
   const [role, setRole] = useState<"renter" | "owner">(params.recebidos ? "owner" : "renter");
   const [items, setItems] = useState<any[]>([]); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
@@ -31,7 +33,8 @@ export default function Alugueres() {
       <Text style={ui.muted}>{role === "owner" ? "Pedido de" : "Dono"}: {r.other_name}</Text>
       {!!r.message && <Text style={ui.text}>«{r.message}»</Text>}
       {role === "owner" && r.status === "pending" && <>
-        <Button title="Aceitar" onPress={() => void act(() => respondRentalRequest(supabase(), r.id, true), "Pedido aceite.")} />
+        <Text style={ui.muted}>Ao aceitar, paga {pct}% de comissão sobre o valor ({formatPrice(commissionFor(r.proposed_price, pct))}) em «Comissões».</Text>
+        <Button title="Aceitar" onPress={() => void act(() => respondRentalRequest(supabase(), r.id, true), "Pedido aceite. A comissão está em «Comissões».")} />
         <Button title="Recusar" variant="danger" onPress={() => void act(() => respondRentalRequest(supabase(), r.id, false), "Pedido recusado.")} />
       </>}
       {role === "renter" && ["pending", "accepted"].includes(r.status) && <Button title="Cancelar" variant="secondary" onPress={() => Alert.alert("Cancelar este pedido?", "", [{ text: "Não" }, { text: "Sim", onPress: () => void act(() => cancelRentalRequest(supabase(), r.id), "Pedido cancelado.") }])} />}

@@ -1,12 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
-import { listMyRentalRequests, respondRentalRequest, cancelRentalRequest, formatPrice, friendlyError, RENTAL_STATUS_LABELS, type RentalStatus } from "@huambo-online/core";
+import { listMyRentalRequests, respondRentalRequest, cancelRentalRequest, getPlatformSettings, commissionFor, formatPrice, friendlyError, RENTAL_STATUS_LABELS, type RentalStatus } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 
 const d = (s: string) => new Date(s).toLocaleDateString("pt-AO");
 
 export default function Alugueres() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
+  const [pct, setPct] = useState(5);
+  useEffect(() => { void getPlatformSettings(supabase()).then(r => { if (r.data?.listing_commission_pct != null) setPct(Number(r.data.listing_commission_pct)); }); }, []);
   const [role, setRole] = useState<"renter" | "owner">(typeof window !== "undefined" && new URLSearchParams(window.location.search).get("recebidos") ? "owner" : "renter");
   const [items, setItems] = useState<any[]>([]); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
   async function load(r = role) { const res = await listMyRentalRequests(supabase(), r); if (res.error) setError(friendlyError(res.error)); else setItems((res.data as any[]) ?? []); }
@@ -30,7 +32,7 @@ export default function Alugueres() {
       <span>{role === "owner" ? "Pedido de" : "Dono"}: {r.other_name}</span>
       {r.message && <span>«{r.message}»</span>}
       <div className="row">
-        {role === "owner" && r.status === "pending" && <><button onClick={() => act(() => respondRentalRequest(supabase(), r.id, true), "Pedido aceite.")}>Aceitar</button><button className="danger" onClick={() => act(() => respondRentalRequest(supabase(), r.id, false), "Pedido recusado.")}>Recusar</button></>}
+        {role === "owner" && r.status === "pending" && <><small style={{ flexBasis: "100%" }}>Ao aceitar, paga {pct}% de comissão sobre o valor ({formatPrice(commissionFor(r.proposed_price, pct))}) em «Comissões».</small><button onClick={() => act(() => respondRentalRequest(supabase(), r.id, true), "Pedido aceite. A comissão está em «Comissões».")}>Aceitar</button><button className="danger" onClick={() => act(() => respondRentalRequest(supabase(), r.id, false), "Pedido recusado.")}>Recusar</button></>}
         {role === "renter" && ["pending", "accepted"].includes(r.status) && <button className="secondary" onClick={() => { if (confirm("Cancelar este pedido?")) void act(() => cancelRentalRequest(supabase(), r.id), "Pedido cancelado."); }}>Cancelar</button>}
       </div>
     </article>)}
