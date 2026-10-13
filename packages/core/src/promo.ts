@@ -63,6 +63,35 @@ export function youtubeId(url: string | null | undefined): string | null {
     return /^[\w-]{6,20}$/.test(id) ? id : null;
   } catch { return null; }
 }
+/**
+ * Endereço para ver o vídeo ou a live DENTRO do Site e da APP (só YouTube e Facebook deixam).
+ * TikTok e Instagram (ou ligações de canal sem identificador) devolvem null: abre-se a rede social.
+ */
+export function embedUrl(url: string | null | undefined): string | null {
+  const platform = videoPlatform(url);
+  if (platform === "YouTube") {
+    const id = youtubeId(url);
+    if (id) return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&rel=0`;
+    const channel = /\/channel\/(UC[\w-]{10,40})(\/live)?\/?$/.exec(new URL(url!.trim()).pathname)?.[1];
+    return channel ? `https://www.youtube-nocookie.com/embed/live_stream?channel=${channel}&autoplay=1&playsinline=1` : null;
+  }
+  if (platform === "Facebook") {
+    const u = new URL(url!.trim());
+    const isVideo = u.hostname.endsWith("fb.watch") || /\/(videos|watch|live|reel)(\/|$)/.test(u.pathname) || u.searchParams.has("v");
+    return isVideo ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(u.toString())}&show_text=false&autoplay=true&allowfullscreen=true` : null;
+  }
+  return null;
+}
+/** Aviso no formulário: se a ligação vai poder ser vista dentro do Huambo Online. */
+export function embedHint(url: string | null | undefined): { ok: boolean; text: string } | null {
+  if (!url?.trim()) return null;
+  const platform = videoPlatform(url);
+  if (!platform) return null;
+  if (embedUrl(url)) return { ok: true, text: "✔ Vai poder ser vista dentro do Huambo Online (Site e APP)." };
+  if (platform === "YouTube") return { ok: false, text: "Esta ligação abre no YouTube. Para ser vista aqui dentro, cole a ligação da própria live ou vídeo (ex.: youtube.com/live/…, youtu.be/…)." };
+  if (platform === "Facebook") return { ok: false, text: "Esta ligação abre no Facebook. Para ser vista aqui dentro, cole a ligação do próprio vídeo ou live (ex.: facebook.com/…/videos/…)." };
+  return { ok: false, text: `O ${platform} não deixa ver dentro de outros sites: as pessoas vão abrir o ${platform}.` };
+}
 export function youtubeThumb(url: string | null | undefined): string | null {
   const id = youtubeId(url); return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : null;
 }

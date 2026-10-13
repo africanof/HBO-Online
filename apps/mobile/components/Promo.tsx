@@ -3,7 +3,7 @@ import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-rout
 import * as ImagePicker from "expo-image-picker";
 import { Alert, Image, Linking, Pressable, ScrollView, Share, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { promoFeed, getPromoPost, recordPromoView, savePromoPost, deletePromoPost, myPromoPosts, listMyPromoSubjects, submitPromoBoost, listPromoBoostsForAdmin,
-  decidePromoBoost, listPromoPostsForAdmin, setPromoHidden, videoPlatform, youtubeThumb, liveStateAt, liveStateText, viewsText, promoShareMessage, promoRef,
+  decidePromoBoost, listPromoPostsForAdmin, setPromoHidden, videoPlatform, embedUrl, embedHint, youtubeThumb, liveStateAt, liveStateText, viewsText, promoShareMessage, promoRef,
   promoSubjectHref, validatePromo, isoToLocalInput, partsToLocalInput, localInputToParts, formatDate, formatPrice, friendlyError, whatsappShareUrl, uploadClassifiedMedia,
   uploadPaymentProof, base64ToArrayBuffer, paymentProofUrl, getPlatformSettings, updatePlatformSettings, PROMO_KIND_LABELS, PROMO_SUBJECT_LABELS, LIVE_DURATIONS, PLAN_METHOD_LABELS,
   type PromoPost, type PromoKind, type PromoSubject, type PromoSubjectKind, type MyPromoPost, type AdminPromoBoost, type AdminPromoPost, type PaymentMethodPlan,
@@ -17,6 +17,8 @@ import { LiteImage } from "./LiteImage";
 import { VideoField, VideoPlayer } from "./Video";
 import { PaymentDetails } from "./Plans";
 import { ReportButton } from "./Trust";
+import { EmbedPlayer } from "./EmbedPlayer";
+import { useDataSaver } from "../lib/dataSaver";
 
 const ph = { placeholderTextColor: C.muted };
 type Picked = { uri: string; base64?: string | null; mimeType: string };
@@ -66,13 +68,14 @@ export function PromoListScreen() {
 export function PromoDetailScreen({ id }: { id: string }) {
   const router = useRouter(); const { width } = useWindowDimensions();
   const [p, setP] = useState<PromoPost | null | undefined>(undefined); const [uid, setUid] = useState<string | null>(null); const [error, setError] = useState("");
+  const [embed, setEmbed] = useState(false); const { on: lite } = useDataSaver();
   useEffect(() => {
     void getPromoPost(supabase(), id).then(r => { if (r.error) setError(friendlyError(r.error)); setP(r.data); });
     void currentUserId().then(setUid); void recordPromoView(supabase(), id);
   }, [id]);
   if (p === undefined) return <View style={ui.screen}><Text style={ui.text}>A carregar…</Text></View>;
   if (!p) return <ScrollView contentContainerStyle={ui.screen}><Text style={ui.h1}>Vídeo não encontrado</Text><Message error={error} /><Link href="/videos" style={ui.link}>← Vídeos e lives</Link></ScrollView>;
-  const mine = uid === p.owner_id; const state = liveStateAt(p); const platform = videoPlatform(p.external_url); const t = thumb(p);
+  const mine = uid === p.owner_id; const state = liveStateAt(p); const platform = videoPlatform(p.external_url); const t = thumb(p); const src = embedUrl(p.external_url);
   const share = promoShareMessage(siteUrl, p);
   return <ScrollView contentContainerStyle={ui.screen}>
     <Link href="/videos" style={ui.link}>← Vídeos e lives</Link>
@@ -80,9 +83,11 @@ export function PromoDetailScreen({ id }: { id: string }) {
     <Text style={ui.muted}>{PROMO_KIND_LABELS[p.kind]}{p.featured ? " · ⭐ Destaque" : ""} · {promoRef(p.ref_no)} · {viewsText(p.views)}</Text>
     <Text style={ui.h1}>{p.title}</Text>
     {p.kind === "live" && <Text style={[ui.h2, state === "live" && { color: C.red }]}>{liveStateText(p)}</Text>}
-    {p.video_url ? <VideoPlayer url={p.video_url} /> : t ? <LiteImage placeholder={p.kind === "live" ? "🔴" : "🎬"} source={{ uri: t }} style={{ width: width - 32, height: (width - 32) * 0.5625, borderRadius: 12 }} resizeMode="cover" /> : null}
-    {!!p.external_url && <Button variant={state === "live" ? "danger" : "primary"} onPress={() => void Linking.openURL(p.external_url!)}
-      title={`${p.kind === "live" ? (state === "live" ? "🔴 Entrar na live" : state === "ended" ? "▶ Ver a gravação" : "📅 Abrir a página da live") : "▶ Ver"} no ${platform ?? "site"}`} />}
+    {p.video_url ? <VideoPlayer url={p.video_url} /> : embed && src ? <EmbedPlayer src={src} title={p.title} width={width - 32} /> : t ? <LiteImage placeholder={p.kind === "live" ? "🔴" : "🎬"} source={{ uri: t }} style={{ width: width - 32, height: (width - 32) * 0.5625, borderRadius: 12 }} resizeMode="cover" /> : null}
+    {!!src && !embed && <Button variant={state === "live" ? "danger" : "primary"} onPress={() => setEmbed(true)}
+      title={(p.kind === "live" ? (state === "live" ? "🔴 Ver a live aqui" : state === "ended" ? "▶ Ver a gravação aqui" : "📅 Abrir a live aqui") : "▶ Ver aqui") + (lite ? " (gasta dados)" : "")} />}
+    {!!p.external_url && <Button variant={src ? "secondary" : state === "live" ? "danger" : "primary"} onPress={() => void Linking.openURL(p.external_url!)}
+      title={src ? `Abrir no ${platform}` : `${p.kind === "live" ? (state === "live" ? "🔴 Entrar na live" : state === "ended" ? "▶ Ver a gravação" : "📅 Abrir a página da live") : "▶ Ver"} no ${platform ?? "site"}`} />}
     <Pressable accessibilityRole="link" onPress={() => router.push(promoSubjectHref(p.subject_kind, p.subject_id) as any)} style={[ui.card, { flexDirection: "row", alignItems: "center", gap: 12 }]}>
       {p.subject_picture ? <LiteImage placeholder="👤" source={{ uri: p.subject_picture }} style={{ width: 52, height: 52, borderRadius: 26 }} /> : <Text style={{ fontSize: 34 }}>👤</Text>}
       <View style={{ flex: 1 }}><Text style={ui.label}>{p.subject_name}</Text><Text style={ui.muted}>{PROMO_SUBJECT_LABELS[p.subject_kind]} · Ver perfil e contactos →</Text></View>
@@ -94,6 +99,11 @@ export function PromoDetailScreen({ id }: { id: string }) {
     {mine && <Button title="⭐ Destacar / os meus vídeos" variant="secondary" onPress={() => router.push("/videos/meus" as any)} />}
     {!mine && <ReportButton type="promo_post" id={p.id} label="Denunciar este vídeo" />}
   </ScrollView>;
+}
+
+function EmbedHintText({ url }: { url: string }) {
+  const h = embedHint(url);
+  return h ? <Text accessibilityLiveRegion="polite" style={h.ok ? ui.ok : ui.muted}>{h.text}</Text> : null;
 }
 
 export function PromoFormScreen() {
@@ -150,9 +160,11 @@ export function PromoFormScreen() {
     {kind === "video" ? <>
       <VideoField value={videoUrl} onChange={setVideoUrl} />
       <Field label="…ou cole a ligação (YouTube, Facebook, TikTok ou Instagram)" value={externalUrl} onChangeText={setExternalUrl} keyboardType="url" autoCapitalize="none" placeholder="https://youtu.be/…" />
+      <EmbedHintText url={externalUrl} />
     </> : <>
-      <View style={ui.card}><Text style={ui.text}>A live faz-se no YouTube, Facebook, TikTok ou Instagram. Aqui anuncia a hora: os seus seguidores recebem um aviso quando publicar e quando a live começar.</Text></View>
-      <Field label="Ligação da live" value={externalUrl} onChangeText={setExternalUrl} keyboardType="url" autoCapitalize="none" placeholder="https://www.facebook.com/…/live" />
+      <View style={ui.card}><Text style={ui.text}>Faça a live no YouTube ou no Facebook e as pessoas veem-na aqui dentro do Huambo Online (no TikTok e no Instagram abrem a rede social). Os seus seguidores recebem um aviso quando publicar e quando a live começar.</Text></View>
+      <Field label="Ligação da live" value={externalUrl} onChangeText={setExternalUrl} keyboardType="url" autoCapitalize="none" placeholder="https://www.youtube.com/live/…" />
+      <EmbedHintText url={externalUrl} />
       <View style={ui.row}>
         <View style={{ flex: 1, minWidth: 150 }}><Field label="Dia" value={date} onChangeText={setDate} placeholder="18/10/2026" keyboardType="numbers-and-punctuation" maxLength={10} /></View>
         <View style={{ flex: 1, minWidth: 110 }}><Field label="Hora" value={time} onChangeText={setTime} placeholder="20:00" keyboardType="numbers-and-punctuation" maxLength={5} /></View>

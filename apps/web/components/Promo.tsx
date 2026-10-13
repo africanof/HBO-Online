@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { promoFeed, getPromoPost, recordPromoView, savePromoPost, deletePromoPost, myPromoPosts, listMyPromoSubjects, submitPromoBoost, listPromoBoostsForAdmin,
-  decidePromoBoost, listPromoPostsForAdmin, setPromoHidden, videoPlatform, youtubeId, youtubeThumb, liveStateAt, liveStateText, viewsText, promoShareMessage, promoRef,
+  decidePromoBoost, listPromoPostsForAdmin, setPromoHidden, videoPlatform, embedUrl, embedHint, youtubeThumb, liveStateAt, liveStateText, viewsText, promoShareMessage, promoRef,
   promoSubjectHref, validatePromo, isoToLocalInput, formatDate, formatPrice, friendlyError, whatsappShareUrl, uploadClassifiedMedia, uploadPaymentProof, validateDocument,
   paymentProofUrl, getPlatformSettings, updatePlatformSettings, PROMO_KIND_LABELS, PROMO_SUBJECT_LABELS, LIVE_DURATIONS, PLAN_METHOD_LABELS,
   type PromoPost, type PromoKind, type PromoSubject, type PromoSubjectKind, type MyPromoPost, type AdminPromoBoost, type AdminPromoPost, type PaymentMethodPlan,
@@ -62,18 +62,19 @@ export function PromoSection({ kind, id }: { kind: PromoSubjectKind; id: string 
 /** Leitor: vídeo enviado (só descarrega ao carregar ▶), YouTube embutido a pedido, ou ligação para a rede social. */
 function PromoPlayer({ p }: { p: PromoPost }) {
   const lite = useDataSaver(); const [embed, setEmbed] = useState(false);
-  const platform = videoPlatform(p.external_url); const yt = youtubeId(p.external_url); const state = liveStateAt(p);
+  const platform = videoPlatform(p.external_url); const src = embedUrl(p.external_url); const state = liveStateAt(p);
   if (p.video_url) return <video src={p.video_url} poster={p.cover_url ?? undefined} controls preload="none" playsInline aria-label={"Vídeo: " + p.title}
     style={{ width: "100%", maxHeight: 520, background: "#000", borderRadius: 16 }} />;
   const t = thumb(p);
+  const watchLabel = p.kind === "live" ? (state === "live" ? "🔴 Ver a live aqui" : state === "ended" ? "▶ Ver a gravação aqui" : "📅 Abrir a live aqui") : "▶ Ver aqui";
   return <div className="stack" style={{ gap: 10 }}>
-    {embed && yt ? <iframe title={"Vídeo: " + p.title} src={`https://www.youtube-nocookie.com/embed/${yt}?autoplay=1`} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen
-      style={{ width: "100%", aspectRatio: "16/9", border: 0, borderRadius: 16 }} />
+    {embed && src ? <iframe title={(p.kind === "live" ? "Live: " : "Vídeo: ") + p.title} src={src} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen
+      style={{ width: "100%", aspectRatio: "16/9", border: 0, borderRadius: 16, background: "#000" }} />
       : t ? <LiteImg src={t} alt="" style={{ width: "100%", maxHeight: 420, objectFit: "cover", borderRadius: 16 }} placeholder={p.kind === "live" ? "🔴" : "🎬"} /> : null}
     <div className="row">
-      {p.external_url && <a className={"btn" + (state === "live" ? " danger" : "")} href={p.external_url} target="_blank" rel="noopener nofollow">
-        {p.kind === "live" ? (state === "live" ? "🔴 Entrar na live" : state === "ended" ? "▶ Ver a gravação" : "📅 Abrir a página da live") : "▶ Ver"} no {platform ?? "site"}</a>}
-      {yt && !embed && p.kind === "video" && <button type="button" className="secondary" onClick={() => setEmbed(true)}>▶ Ver aqui{lite ? " (gasta dados)" : ""}</button>}
+      {src && !embed && <button type="button" className={state === "live" ? "danger" : ""} onClick={() => setEmbed(true)}>{watchLabel}{lite ? " (gasta dados)" : ""}</button>}
+      {p.external_url && <a className={"btn" + (src ? " secondary" : state === "live" ? " danger" : "")} href={p.external_url} target="_blank" rel="noopener nofollow">
+        {src ? `Abrir no ${platform}` : `${p.kind === "live" ? (state === "live" ? "🔴 Entrar na live" : state === "ended" ? "▶ Ver a gravação" : "📅 Abrir a página da live") : "▶ Ver"} no ${platform ?? "site"}`}</a>}
     </div>
   </div>;
 }
@@ -114,6 +115,11 @@ export function PromoDetail({ id }: { id: string }) {
     </div>
     {!mine && <ReportButton type="promo_post" id={p.id} label="Denunciar este vídeo" />}
   </main>;
+}
+
+function EmbedHint({ url }: { url: string }) {
+  const h = embedHint(url);
+  return h ? <small role="status" className={h.ok ? "ok" : ""} style={{ marginTop: -6 }}>{h.text}</small> : null;
 }
 
 /** Formulário: publicar ou editar vídeo/live. */
@@ -174,9 +180,11 @@ export function PromoForm() {
       {kind === "video" ? <>
         <VideoField value={videoUrl} onChange={setVideoUrl} />
         <label>…ou cole a ligação do vídeo (YouTube, Facebook, TikTok ou Instagram)<input value={externalUrl} onChange={e => setExternalUrl(e.target.value)} inputMode="url" placeholder="https://youtu.be/…" /></label>
+        <EmbedHint url={externalUrl} />
       </> : <>
-        <p className="card" style={{ margin: 0 }}>A live faz-se no YouTube, Facebook, TikTok ou Instagram. Aqui anuncia a hora: os seus seguidores recebem um aviso quando publicar e quando a live começar.</p>
-        <label>Ligação da live<input value={externalUrl} onChange={e => setExternalUrl(e.target.value)} inputMode="url" placeholder="https://www.facebook.com/…/live" /></label>
+        <p className="card" style={{ margin: 0 }}>Faça a live no YouTube ou no Facebook e as pessoas veem-na aqui dentro do Huambo Online (no TikTok e no Instagram abrem a rede social). Os seus seguidores recebem um aviso quando publicar e quando a live começar.</p>
+        <label>Ligação da live<input value={externalUrl} onChange={e => setExternalUrl(e.target.value)} inputMode="url" placeholder="https://www.youtube.com/live/…" /></label>
+        <EmbedHint url={externalUrl} />
         <div className="row">
           <label style={{ flex: 1, minWidth: 220 }}>Começa (dia e hora)<input type="datetime-local" value={startsAt} onChange={e => setStartsAt(e.target.value)} /></label>
           <label style={{ flex: 1, minWidth: 180 }}>Dura<select value={minutes} onChange={e => setMinutes(Number(e.target.value))}>
