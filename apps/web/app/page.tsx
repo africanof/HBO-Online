@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, listWanted, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listTrades, cardSaleTag, loadWithCache, isOfflineError, isFeatured } from "@huambo-online/core";
+import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, listWanted, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listTrades, cardSaleTag, loadWithCache, isOfflineError, isFeatured, listEvents, priceFromText, formatEventDate } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../components/ItemCard";
 import { OfflineBanner } from "../components/Offline";
 import { browserStore } from "../components/Engage";
 import { LiteImg } from "../components/LiteImg";
 
-type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[] };
+type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[]; events?: any[] };
 
 function ShelfHead({ title, href }: { title: string; href: string }) {
   return <div className="shelf-head"><h2>{title}</h2><a href={href}>Ver tudo →</a></div>;
@@ -23,14 +23,14 @@ export default function Home() {
     void loadWithCache<Shelf>(browserStore, "inicio", async () => {
       const all = await Promise.all([
         searchClassifiedListings(c, { limit: 12 }), searchClassifiedListings(c, { purpose: "auction", limit: 12 }),
-        searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c), listWanted(c, "", 12), listTrades(c, "", false, 12)
+        searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c), listWanted(c, "", 12), listTrades(c, "", false, 12), listEvents(c, { limit: 12 })
       ]);
       const netError = all.map(r => r.error).find(e => isOfflineError(e));
       if (netError) return { data: null, error: netError };
-      const [l, a, r, p, v, mk, w, t] = all;
+      const [l, a, r, p, v, mk, w, t, ev] = all;
       return { data: {
         listings: (l.data as any[]) ?? [], auctions: (a.data as any[]) ?? [], rentals: (r.data as any[]) ?? [],
-        products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? [], wanted: (w.data as any[]) ?? [], trades: (t.data as any[]) ?? []
+        products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? [], wanted: (w.data as any[]) ?? [], trades: (t.data as any[]) ?? [], events: ((ev.data as any[]) ?? []).filter(e => e.status === "published")
       } };
     }).then(res => {
       setOffline({ on: res.fromCache || isOfflineError(res.error), at: res.savedAt });
@@ -57,6 +57,11 @@ export default function Home() {
     </nav>
 
     {s === null && <p className="muted" style={{ marginTop: 28 }}>A carregar novidades…</p>}
+
+    {!!s?.events?.length && <><ShelfHead title="🎟️ Próximos eventos" href="/eventos" /><div className="shelf">
+      {s.events.map(e => <ItemCard key={e.id} href={"/eventos/" + e.id} media={e.cover_url ? [e.cover_url] : null} icon="🎟️" title={e.title} price={priceFromText(e.price_from)}
+        featured={e.featured} meta={`📅 ${formatEventDate(e.starts_at)} · 📍 ${e.venue}`} />)}
+    </div></>}
 
     {!!s?.auctions.length && <><ShelfHead title="🔨 Leilões a decorrer" href="/explorar?finalidade=auction" /><div className="shelf">{s.auctions.map(listingCard)}</div></>}
 

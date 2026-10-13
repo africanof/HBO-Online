@@ -18,8 +18,8 @@ export function Logo({ size }: { size?: number }) {
 
 const SCOPE_BY_PATH: [string, SearchScope][] = [["/loja", "loja"], ["/pracas", "pracas"], ["/profissionais", "profissionais"], ["/empresas", "empresas"]];
 const CATEGORY_LINKS: [string, string][] = [
-  ["Início", "/"], ["Classificados", "/explorar"], ["Imóveis", "/explorar?tipo=real_estate"], ["Viaturas", "/explorar?tipo=vehicle"], ["🌾 Campo", "/agricultura"],
-  ["Arrendar", "/explorar?finalidade=rent"], ["Leilões", "/explorar?finalidade=auction"], ["Procura-se", "/procura-se"], ["Trocas", "/trocas"], ["Praças", "/pracas"], ["Loja", "/loja"],
+  ["Início", "/"], ["Classificados", "/explorar"], ["Imóveis", "/explorar?tipo=real_estate"], ["Viaturas", "/explorar?tipo=vehicle"], ["🌾 Campo", "/agricultura"], ["🎟️ Eventos", "/eventos"],
+  ["Arrendar", "/explorar?finalidade=rent"], ["Leilões", "/explorar?finalidade=auction"], ["Procura-se", "/procura-se"], ["Trocas", "/trocas"], ["Praças", "/pracas"], ["Eventos e bilhetes", "/eventos"], ["Loja", "/loja"],
   ["Profissionais", "/profissionais"], ["Empresas", "/empresas"], ["Vistos recentemente", "/historico"]
 ];
 
@@ -93,7 +93,7 @@ export function SiteFooter() {
   const cols: [string, [string, string][]][] = [
     ["Comprar", [["Classificados", "/explorar"], ["Procura-se (pedidos)", "/procura-se"], ["Publicar o que procuro", "/classificados/publicar?finalidade=wanted"], ["Trocas", "/trocas"], ["Agricultura e campo", "/agricultura"], ["Praças", "/pracas"], ["Loja", "/loja"], ["Leilões", "/explorar?finalidade=auction"], ["Carrinho", "/carrinho"], ["Encomendas", "/encomendas"]]],
     ["Vender", [["Publicar anúncio", "/classificados/publicar"], ["Os meus anúncios", "/meus-anuncios"], ["Vender produtos", "/conta/produtos"], ["Alugueres", "/alugueres"]]],
-    ["Serviços", [["Profissionais", "/profissionais"], ["Empresas", "/empresas"], ["Ser profissional", "/conta/profissional"], ["Ser estafeta", "/entregas"], ["Ser agente nas praças", "/agente"], ["Convide um amigo", "/convidar"]]],
+    ["Serviços", [["Profissionais", "/profissionais"], ["Empresas", "/empresas"], ["Ser profissional", "/conta/profissional"], ["Ser estafeta", "/entregas"], ["Ser agente nas praças", "/agente"], ["Organizar um evento", "/eventos/meus"], ["Convide um amigo", "/convidar"]]],
     ["A minha conta", [["Conta", "/conta"], ["Mensagens", "/mensagens"], ["Notificações", "/notificacoes"], ["Guardados", "/guardados"], ["As minhas licitações", "/licitacoes"], ["Pesquisas guardadas", "/pesquisas-guardadas"]]],
     ["Ajuda e informação", INFO_LINKS.map(l => [l.label, l.href] as [string, string])]
   ];
