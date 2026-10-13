@@ -60,6 +60,7 @@ export const HOME_CATEGORIES: { label: string; icon: string; href: string }[] = 
   { label: "Viaturas", icon: "🚗", href: "/explorar?tipo=vehicle" },
   { label: "Campo", icon: "🌾", href: "/agricultura" },
   { label: "Fábricas", icon: "🏭", href: "/empresas?categoria=fabricas" },
+  { label: "Eventos", icon: "🎟️", href: "/eventos" },
   { label: "Praças", icon: "🧺", href: "/pracas" },
   { label: "Loja", icon: "🛍️", href: "/loja" },
   { label: "Arrendar", icon: "🔑", href: "/explorar?finalidade=rent" },
@@ -67,7 +68,7 @@ export const HOME_CATEGORIES: { label: string; icon: string; href: string }[] = 
   { label: "Procura-se", icon: "🔎", href: "/procura-se" },
   { label: "Trocas", icon: "🔁", href: "/trocas" },
   { label: "Produtos", icon: "📦", href: "/explorar?tipo=product" },
-  { label: "Profissionais", icon: "🛠️", href: "/profissionais" },
+  { label: "Profissionais", icon: "👷", href: "/profissionais" },
   { label: "Empresas", icon: "🏢", href: "/empresas" }
 ];
 

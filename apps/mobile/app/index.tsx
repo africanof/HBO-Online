@@ -116,7 +116,7 @@ export default function Home() {
       price={formatPrice(p.price, p.currency)} tag={p.stock > 0 ? undefined : "Esgotado"} meta={[p.seller_name, p.municipality_name].filter(Boolean).join(" · ")} />)}</Shelf>}
     {!!s?.rentals.length && <Shelf title="🔑 Para arrendar" href="/explorar?finalidade=rent">{s.rentals.map(listing)}</Shelf>}
     {!!s?.trades?.length && <Shelf title="🔁 Trocas" href="/trocas">{s.trades.map(listing)}</Shelf>}
-    {!!s?.providers.length && <Shelf title="🛠️ Profissionais" href="/profissionais">{s.providers.map(p => <Link key={p.user_id} href={("/profissionais/" + p.user_id) as any} asChild>
+    {!!s?.providers.length && <Shelf title="👷 Profissionais" href="/profissionais">{s.providers.map(p => <Link key={p.user_id} href={("/profissionais/" + p.user_id) as any} asChild>
       <Pressable accessibilityRole="link" style={[ui.card, { width: 180 }]}>
         {p.avatar_url ? <LiteImage placeholder="👤" source={{ uri: p.avatar_url }} style={{ width: 56, height: 56, borderRadius: 28 }} /> : <Text style={{ fontSize: 36 }}>👷</Text>}
         <Text style={ui.label} numberOfLines={2}>{p.display_name}{p.verified ? " ✔️" : ""}</Text>

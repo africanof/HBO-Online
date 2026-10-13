@@ -99,7 +99,7 @@ export default function Home() {
     {!!s?.rentals.length && <><ShelfHead title="🔑 Para arrendar" href="/explorar?finalidade=rent" /><div className="shelf">{s.rentals.map(listingCard)}</div></>}
     {!!s?.trades?.length && <><ShelfHead title="🔁 Trocas" href="/trocas" /><div className="shelf">{s.trades.map(listingCard)}</div></>}
 
-    {!!s?.providers.length && <><ShelfHead title="🛠️ Profissionais de confiança" href="/profissionais" /><div className="shelf">
+    {!!s?.providers.length && <><ShelfHead title="👷 Profissionais de confiança" href="/profissionais" /><div className="shelf">
       {s.providers.map(p => <a key={p.user_id} href={"/profissionais/" + p.user_id} className="card" style={{ color: "inherit", textDecoration: "none", fontWeight: 400 }}>
         {p.avatar_url ? <LiteImg placeholder="👤" src={p.avatar_url} alt="" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ fontSize: 40 }} aria-hidden>👷</span>}
         <strong>{p.display_name}{p.verified ? " ✔️" : ""}</strong>

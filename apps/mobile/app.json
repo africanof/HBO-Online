@@ -13,10 +13,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#3665F3"
-      },
-      "blockedPermissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      }
     },
     "ios": {
       "bundleIdentifier": "ao.huamboonline.app",
@@ -38,13 +35,20 @@
         {
           "photosPermission": "O Huambo Online usa a galeria para escolher fotografias e vídeos dos seus anúncios e para pesquisar por fotografia.",
           "cameraPermission": "O Huambo Online usa a câmara para fotografar artigos, pesquisar por fotografia e fotografar documentos para verificar o perfil.",
-          "microphonePermission": false
+          "microphonePermission": "O Huambo Online usa o microfone para gravar o som dos vídeos que envia no chat e nos anúncios."
         }
       ],
       [
         "expo-location",
         {
           "locationWhenInUsePermission": "O Huambo Online usa a localização só quando carrega em «Usar a minha localização», para marcar no mapa onde fica o anúncio, a empresa ou a entrega."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "O Huambo Online usa o microfone só quando carrega em «🎤 Mensagem de voz» no chat.",
+          "enableBackgroundPlayback": false
         }
       ]
     ],
