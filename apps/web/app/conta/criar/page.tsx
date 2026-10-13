@@ -1,12 +1,15 @@
 "use client";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { signUp } from "@huambo-online/supabase";
-import { authErrorMessage, validateNewPassword, validateProfileInput } from "@huambo-online/core";
+import { authErrorMessage, validateNewPassword, validateProfileInput, isReferralCodeShape, storeReferralCode, pendingReferralCode, claimPendingReferral } from "@huambo-online/core";
+import { browserStore } from "../../../components/Engage";
 import { supabase, supabaseConfigured } from "../../../lib/supabase";
 
 export default function CriarContaPage() {
   const [form, setForm] = useState({ fullName: "", email: "", phone: "", municipality: "", password: "", confirm: "" });
   const [message, setMessage] = useState(""); const [ok, setOk] = useState(""); const [busy, setBusy] = useState(false);
+  const [invite, setInvite] = useState("");
+  useEffect(() => { void pendingReferralCode(browserStore).then(setInvite); }, []);
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });
 
   async function submit(event: FormEvent) {
@@ -14,12 +17,14 @@ export default function CriarContaPage() {
     if (!supabaseConfigured) { setMessage("Serviço de autenticação não configurado. Tente mais tarde."); return; }
     const invalid = validateProfileInput(form) ?? (!/^\S+@\S+\.\S+$/.test(form.email.trim()) ? "Email inválido." : null) ?? validateNewPassword(form.password, form.confirm);
     if (invalid) { setMessage(invalid); return; }
+    if (invite.trim() && !isReferralCodeShape(invite)) { setMessage("O código de convite tem 6 letras e números (ex.: K7M2QX)."); return; }
+    await storeReferralCode(browserStore, invite);
     setBusy(true);
     try {
       const { data, error } = await signUp(supabase(), { ...form, emailRedirectTo: `${window.location.origin}/conta/login` });
       if (error) throw error;
       if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) { setMessage("Já existe uma conta com este email. Use «Entrar»."); return; }
-      if (data.session) { setOk("Conta criada com sucesso. A entrar…"); window.location.href = "/conta"; }
+      if (data.session) { setOk("Conta criada com sucesso. A entrar…"); await claimPendingReferral(supabase(), browserStore); window.location.href = "/conta"; }
       else setOk("Conta criada. Abra o email que enviámos e clique no link para confirmar a conta. Depois pode entrar.");
     } catch (error) { setMessage(authErrorMessage(error)); } finally { setBusy(false); }
   }
@@ -33,6 +38,7 @@ export default function CriarContaPage() {
       <label>Município (opcional)<input value={form.municipality} onChange={set("municipality")} placeholder="Ex.: Huambo, Caála…" /></label>
       <label>Palavra-passe (mínimo 8 caracteres)<input type="password" autoComplete="new-password" value={form.password} onChange={set("password")} /></label>
       <label>Confirmar palavra-passe<input type="password" autoComplete="new-password" value={form.confirm} onChange={set("confirm")} /></label>
+      <label>Código de convite (opcional)<input value={invite} onChange={e => setInvite(e.target.value)} maxLength={8} placeholder="Ex.: K7M2QX" autoCapitalize="characters" /></label>
       <button type="submit" disabled={busy}>{busy ? "A criar conta..." : "Criar conta"}</button>
       {message && <p className="error" role="alert">{message}</p>}
       {ok && <p className="ok" role="status">{ok}</p>}

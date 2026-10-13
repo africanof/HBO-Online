@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SiteHeader, SiteFooter } from "../components/SiteHeader";
+import { ReferralCapture } from "../components/Referral";
 import { ConnectionWatcher } from "../components/Offline";
 import { SITE_URL } from "../lib/site";
 import { THEME_STORAGE_KEY } from "@huambo-online/core";
@@ -23,6 +24,6 @@ const THEME_SCRIPT = `(function(){try{var p=localStorage.getItem(${JSON.stringif
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return <html lang="pt-AO" suppressHydrationWarning>
     <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
-    <body><ConnectionWatcher /><SiteHeader />{children}<SiteFooter /></body>
+    <body><ConnectionWatcher /><ReferralCapture /><SiteHeader />{children}<SiteFooter /></body>
   </html>;
 }

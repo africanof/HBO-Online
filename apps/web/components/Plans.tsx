@@ -41,12 +41,12 @@ export function AdminPlans() {
   async function saveSettings(e: React.FormEvent) {
     e.preventDefault(); if (!s) return;
     const num = (v: unknown) => Number(String(v ?? "").replace(/\s/g, "").replace(",", "."));
-    const provider = num(s.provider_monthly_kz), business = num(s.business_monthly_kz), store = num(s.store_monthly_kz), days = Number(s.trial_days), pct = num(s.listing_commission_pct), due = Number(s.commission_due_days), boostPrice = num(s.boost_price_kz ?? 500), boostDays = Number(s.boost_days ?? 7);
-    if (!(provider >= 0) || !(business >= 0) || !(store >= 0) || !Number.isInteger(days) || days < 0 || days > 365 || !(pct >= 0 && pct <= 50) || !Number.isInteger(due) || due < 1 || due > 90 || !(boostPrice >= 0) || !Number.isInteger(boostDays) || boostDays < 1 || boostDays > 60) { setError("Verifique os preços, a percentagem e os dias."); return; }
+    const provider = num(s.provider_monthly_kz), business = num(s.business_monthly_kz), store = num(s.store_monthly_kz), days = Number(s.trial_days), pct = num(s.listing_commission_pct), due = Number(s.commission_due_days), boostPrice = num(s.boost_price_kz ?? 500), boostDays = Number(s.boost_days ?? 7), refDays = Number(s.referral_reward_days ?? 30);
+    if (!(provider >= 0) || !(business >= 0) || !(store >= 0) || !Number.isInteger(days) || days < 0 || days > 365 || !(pct >= 0 && pct <= 50) || !Number.isInteger(due) || due < 1 || due > 90 || !(boostPrice >= 0) || !Number.isInteger(boostDays) || boostDays < 1 || boostDays > 60 || !Number.isInteger(refDays) || refDays < 0 || refDays > 365) { setError("Verifique os preços, a percentagem e os dias."); return; }
     const bad = validatePaymentAccounts(accounts); if (bad) { setError(bad); return; }
     setBusy(true); setError(""); setNotice("");
     const clean = accounts.map(a => ({ bank: a.bank.trim(), iban: a.iban.trim(), holder: a.holder.trim() }));
-    const r = await updatePlatformSettings(supabase(), { provider_monthly_kz: provider, business_monthly_kz: business, store_monthly_kz: store, trial_days: days, listing_commission_pct: pct, commission_due_days: due, boost_price_kz: boostPrice, boost_days: boostDays,
+    const r = await updatePlatformSettings(supabase(), { provider_monthly_kz: provider, business_monthly_kz: business, store_monthly_kz: store, trial_days: days, listing_commission_pct: pct, commission_due_days: due, boost_price_kz: boostPrice, boost_days: boostDays, referral_reward_days: refDays,
       payment_accounts: clean, bank_name: clean[0]?.bank ?? null, iban: clean[0]?.iban ?? null, account_holder: clean[0]?.holder ?? null,
       express_number: s.express_number?.trim() || null, payment_note: s.payment_note?.trim() || null });
     setBusy(false); if (r.error) setError(friendlyError(r.error)); else setNotice("Dados guardados.");
@@ -89,6 +89,7 @@ export function AdminPlans() {
       <label>Dias para pagar a comissão<input inputMode="numeric" value={String(s.commission_due_days ?? "")} onChange={set("commission_due_days")} /></label>
       <label>Preço do destaque de anúncio (Kz)<input inputMode="numeric" value={String(s.boost_price_kz ?? "")} onChange={set("boost_price_kz")} /></label>
       <label>Dias de cada destaque<input inputMode="numeric" value={String(s.boost_days ?? "")} onChange={set("boost_days")} /></label>
+      <label>Dias grátis por amigo convidado (quando paga a 1.ª mensalidade)<input inputMode="numeric" value={String(s.referral_reward_days ?? "")} onChange={set("referral_reward_days")} /></label>
       <label>Dias grátis para perfis novos<input inputMode="numeric" value={String(s.trial_days)} onChange={set("trial_days")} /></label>
       <strong>Contas para receber ({accounts.length}/{MAX_PAYMENT_ACCOUNTS})</strong>
       {accounts.map((a, i) => <fieldset key={i} className="card stack" style={{ margin: 0 }}>
