@@ -89,7 +89,7 @@ export function DealCloser({ listing, onDone }: { listing: { id: string; purpose
   const [open, setOpen] = useState(false); const [people, setPeople] = useState<DealCandidate[] | null>(null); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
   const [amount, setAmount] = useState(listing.price != null ? String(Number(listing.price)) : ""); const [pct, setPct] = useState(5);
   const final = finalDealStatus(listing.purpose);
-  const charged = final === "sold" && listing.status === "published" && listing.purpose !== "auction";
+  const charged = (final === "sold" || final === "rented") && listing.status === "published" && listing.purpose !== "auction";
   async function show() {
     setOpen(true); setError("");
     const [r, s] = await Promise.all([listDealCandidates(supabase(), listing.id), getPlatformSettings(supabase())]);
@@ -97,7 +97,7 @@ export function DealCloser({ listing, onDone }: { listing: { id: string; purpose
   }
   async function pick(userId: string | null) {
     const sale = charged ? parsePrice(amount) ?? null : null;
-    if (charged && (sale == null || sale <= 0)) { setError("Indique por quanto vendeu."); return; }
+    if (charged && (sale == null || sale <= 0)) { setError(final === "rented" ? "Indique o valor do arrendamento." : "Indique por quanto vendeu."); return; }
     setBusy(true); setError("");
     const r = userId ? await setListingDeal(supabase(), listing.id, final, userId, sale) : await closeListing(supabase(), listing.id, final, sale);
     setBusy(false);
@@ -109,7 +109,7 @@ export function DealCloser({ listing, onDone }: { listing: { id: string; purpose
   if (!open) return <Button title={listing.status === "published" ? DEAL_BUTTON[final] : "⭐ Com quem fez negócio?"} variant="secondary" onPress={() => void show()} />;
   return <View style={[ui.card, { backgroundColor: C.surface }]}>
     {charged && <View style={{ gap: 6 }}>
-      <Text style={ui.label}>Por quanto vendeu? (Kz)</Text>
+      <Text style={ui.label}>{final === "rented" ? "Valor total do arrendamento acordado (Kz)" : "Por quanto vendeu? (Kz)"}</Text>
       <TextInput style={ui.input} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} accessibilityLabel="Valor da venda em Kz" />
       <Text style={ui.text}>Comissão da plataforma ({pct}%): {formatPrice(commissionFor(parsePrice(amount), pct))} — paga em 7 dias em «Comissões».</Text>
     </View>}

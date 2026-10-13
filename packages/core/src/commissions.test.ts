@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { commissionFor, commissionTotals, submitCommissionPayment, updateCommissionAsAdmin, closeListing, listMyCommissions, COMMISSION_STATUS_LABELS } from "./commissions";
+import { commissionFor, commissionTotals, submitCommissionPayment, updateCommissionAsAdmin, closeListing, listMyCommissions, COMMISSION_STATUS_LABELS, COMMISSION_SOURCE_LABELS } from "./commissions";
 import { setListingDeal } from "./deal-reviews";
 import { PLAN_KIND_LABELS } from "./plans";
 import { getNotificationLink } from "./notifications";
@@ -28,13 +28,19 @@ describe("comissão dos anúncios", () => {
     await setListingDeal(c, "l1", "sold", "u2", 90000);
     expect(rpc).toHaveBeenLastCalledWith("set_listing_deal_v2", { p_listing_id: "l1", p_status: "sold", p_counterpart: "u2", p_sale_amount: 90000 });
     await setListingDeal(c, "l1", "rented", "u2", 90000);
-    expect(rpc).toHaveBeenLastCalledWith("set_listing_deal_v2", { p_listing_id: "l1", p_status: "rented", p_counterpart: "u2", p_sale_amount: null });
+    expect(rpc).toHaveBeenLastCalledWith("set_listing_deal_v2", { p_listing_id: "l1", p_status: "rented", p_counterpart: "u2", p_sale_amount: 90000 });
+    await setListingDeal(c, "l1", "closed", "u2", 90000);
+    expect(rpc).toHaveBeenLastCalledWith("set_listing_deal_v2", { p_listing_id: "l1", p_status: "closed", p_counterpart: "u2", p_sale_amount: null });
     rpc.mockResolvedValue({ data: null, error: null }); expect((await listMyCommissions(c)).data).toEqual([]);
   });
   it("fechar com o valor da venda", async () => {
     const single = vi.fn().mockResolvedValue({ data: {}, error: null }); const update = vi.fn(() => ({ eq: () => ({ select: () => ({ single }) }) }));
     await closeListing({ from: () => ({ update }) } as any, "l1", "sold", 50000);
     expect(update).toHaveBeenCalledWith(expect.objectContaining({ status: "sold", sale_amount: 50000 }));
+    await closeListing({ from: () => ({ update }) } as any, "l1", "rented", 150000);
+    expect(update).toHaveBeenLastCalledWith(expect.objectContaining({ status: "rented", sale_amount: 150000 }));
+    expect(COMMISSION_SOURCE_LABELS.rental).toBe("Pedido de aluguer aceite");
+    expect(COMMISSION_SOURCE_LABELS.rented).toBe("Valor indicado no arrendamento");
     await closeListing({ from: () => ({ update }) } as any, "l1", "closed", 50000);
     expect(update).toHaveBeenLastCalledWith(expect.not.objectContaining({ sale_amount: 50000 }));
   });

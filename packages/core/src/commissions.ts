@@ -2,19 +2,20 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PaymentMethodPlan } from "./plans";
 
 /**
- * Comissão dos anúncios (igual no Site e na APP): depois de vendido, o vendedor paga à plataforma
- * uma percentagem do valor da venda (5%, a administração pode mudar) no prazo de 7 dias.
+ * Comissão dos anúncios (igual no Site e na APP): depois de vendido ou arrendado/alugado, o dono paga à plataforma
+ * uma percentagem do valor (5%, a administração pode mudar) no prazo de 7 dias.
+ * Arrendamentos: sobre o valor indicado ao marcar «Arrendado», ou sobre o valor total de um pedido de aluguer aceite.
  * Com comissões em atraso não se publicam anúncios novos.
  */
 export type CommissionStatus = "due" | "submitted" | "paid" | "waived" | "cancelled";
 export type MyCommission = { id: string; listing_id: string; listing_title: string; listed_price: number | string | null; sale_amount: number | string; rate_pct: number | string;
-  amount: number | string; source: "sold" | "auction" | "offer"; status: CommissionStatus; due_at: string; overdue: boolean; reference: string | null; admin_note: string | null; created_at: string };
+  amount: number | string; source: "sold" | "auction" | "offer" | "rental" | "rented"; status: CommissionStatus; due_at: string; overdue: boolean; reference: string | null; admin_note: string | null; created_at: string };
 export type AdminCommission = Omit<MyCommission, "overdue"> & { owner_id: string; owner_name: string; phone: string | null; method: PaymentMethodPlan | null; proof_path: string | null; submitted_at: string | null };
 
 export const COMMISSION_STATUS_LABELS: Record<CommissionStatus, string> = {
   due: "Por pagar", submitted: "Paga — à espera de confirmação", paid: "Paga ✔", waived: "Anulada pela administração", cancelled: "Anulada"
 };
-export const COMMISSION_SOURCE_LABELS: Record<MyCommission["source"], string> = { sold: "Valor indicado na venda", auction: "Preço final do leilão", offer: "Proposta aceite" };
+export const COMMISSION_SOURCE_LABELS: Record<MyCommission["source"], string> = { sold: "Valor indicado na venda", auction: "Preço final do leilão", offer: "Proposta aceite", rental: "Pedido de aluguer aceite", rented: "Valor indicado no arrendamento" };
 
 /** Comissão arredondada ao kwanza. */
 export function commissionFor(amount: number | string | null | undefined, pct: number | string = 5): number {
@@ -46,5 +47,5 @@ export function updateCommissionAsAdmin(client: SupabaseClient, id: string, acti
 }
 /** Fechar o anúncio sem indicar o comprador (com o valor da venda, para a comissão). */
 export function closeListing(client: SupabaseClient, listingId: string, status: "sold" | "rented" | "closed", saleAmount?: number | null) {
-  return client.from("classified_listings").update({ status, ...(status === "sold" ? { sale_amount: saleAmount ?? null } : {}), updated_at: new Date().toISOString() }).eq("id", listingId).select().single();
+  return client.from("classified_listings").update({ status, ...(status === "sold" || status === "rented" ? { sale_amount: saleAmount ?? null } : {}), updated_at: new Date().toISOString() }).eq("id", listingId).select().single();
 }

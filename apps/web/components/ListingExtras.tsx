@@ -25,7 +25,7 @@ export function RentalRequestForm({ listingId, uid, defaultPrice }: { listingId:
     <h2 style={{ margin: 0 }}>Pedir aluguer</h2>
     <label>De<input type="date" min={today()} value={start} onChange={e => setStart(e.target.value)} /></label>
     <label>Até<input type="date" min={start || today()} value={end} onChange={e => setEnd(e.target.value)} /></label>
-    <label>Valor proposto (Kz)<input inputMode="decimal" value={price} onChange={e => setPrice(e.target.value)} /></label>
+    <label>Valor total proposto para todo o período (Kz)<input inputMode="decimal" value={price} onChange={e => setPrice(e.target.value)} /></label>
     <label>Mensagem (opcional)<textarea rows={3} value={message} onChange={e => setMessage(e.target.value)} /></label>
     {error && <p className="error" role="alert">{error}</p>}
     <div className="row"><button disabled={busy}>{busy ? "A enviar…" : "Enviar pedido"}</button><button type="button" className="secondary" onClick={() => setOpen(false)}>Cancelar</button></div>

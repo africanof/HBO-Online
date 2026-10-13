@@ -28,7 +28,7 @@ export function RentalRequestForm({ listingId, uid, defaultPrice }: { listingId:
     <TextInput style={ui.input} value={start} onChangeText={setStart} placeholder="2026-11-01" keyboardType="numbers-and-punctuation" accessibilityLabel="Data de início" />
     <Text style={ui.label}>Até (AAAA-MM-DD)</Text>
     <TextInput style={ui.input} value={end} onChangeText={setEnd} placeholder="2026-11-30" keyboardType="numbers-and-punctuation" accessibilityLabel="Data de fim" />
-    <Text style={ui.label}>Valor proposto (Kz)</Text>
+    <Text style={ui.label}>Valor total proposto para todo o período (Kz)</Text>
     <TextInput style={ui.input} value={price} onChangeText={setPrice} keyboardType="decimal-pad" />
     <Text style={ui.label}>Mensagem (opcional)</Text>
     <TextInput style={[ui.input, ui.area]} multiline value={message} onChangeText={setMessage} />
