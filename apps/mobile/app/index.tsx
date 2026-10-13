@@ -10,6 +10,7 @@ import { ThemeToggle } from "../components/ThemePicker";
 import { DataSaverToggle } from "../components/DataSaver";
 import { Logo, SearchBar } from "../components/Brand";
 import { ItemCard, Shelf, LISTING_ICON } from "../components/ItemCard";
+import { PromoShelf } from "../components/Promo";
 import { OfflineBanner } from "../components/Offline";
 import { deviceStore } from "../components/Engage";
 import { LiteImage } from "../components/LiteImage";
@@ -17,7 +18,7 @@ import { LiteImage } from "../components/LiteImage";
 type Shelves = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[]; events?: any[] };
 
 const MORE: [string, string, string][] = [
-  ["🌾", "Agricultura e campo", "/agricultura"], ["🎟️", "Eventos", "/eventos"], ["👥", "A seguir", "/seguindo"], ["🛡️", "Segurança", "/seguranca"], ["🤝", "Ser agente", "/agente"], ["🎁", "Convidar amigos", "/convidar"], ["📋", "Os meus anúncios", "/meus-anuncios"], ["📦", "Encomendas", "/encomendas"], ["♥", "Guardados", "/guardados"],
+  ["🌾", "Agricultura e campo", "/agricultura"], ["🎟️", "Eventos", "/eventos"], ["🎬", "Vídeos e lives", "/videos"], ["👥", "A seguir", "/seguindo"], ["🛡️", "Segurança", "/seguranca"], ["🤝", "Ser agente", "/agente"], ["🎁", "Convidar amigos", "/convidar"], ["📋", "Os meus anúncios", "/meus-anuncios"], ["📦", "Encomendas", "/encomendas"], ["♥", "Guardados", "/guardados"],
   ["🕘", "Vistos recentemente", "/historico"], ["⭐", "Pesquisas guardadas", "/pesquisas-guardadas"], ["🔔", "Notificações", "/notificacoes"]
 ];
 
@@ -83,6 +84,7 @@ export default function Home() {
     </ScrollView>
 
     {s === null && <Text style={ui.muted}>A carregar novidades…</Text>}
+    <PromoShelf />
     {!!s?.events?.length && <Shelf title="🎟️ Próximos eventos" href="/eventos">{s.events.map(e => <ItemCard key={e.id} href={"/eventos/" + e.id} media={e.cover_url ? [e.cover_url] : null} icon="🎟️"
       title={e.title} price={priceFromText(e.price_from)} featured={e.featured} meta={`📅 ${formatEventDate(e.starts_at)}`} />)}</Shelf>}
     {!!s?.auctions.length && <Shelf title="🔨 Leilões a decorrer" href="/explorar?finalidade=auction">{s.auctions.map(listing)}</Shelf>}

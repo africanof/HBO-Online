@@ -5,9 +5,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * com documento privado, respostas às avaliações e o painel da administração (verificações e registo).
  */
 
-export type ReportTargetType = "user" | "provider" | "business" | "product" | "classified_listing";
+export type ReportTargetType = "user" | "provider" | "business" | "product" | "classified_listing" | "promo_post";
 export const REPORT_TARGET_LABELS: Record<ReportTargetType, string> = {
-  user: "Pessoa", provider: "Profissional", business: "Empresa", product: "Produto", classified_listing: "Anúncio"
+  user: "Pessoa", provider: "Profissional", business: "Empresa", product: "Produto", classified_listing: "Anúncio", promo_post: "Vídeo ou live"
 };
 export const REPORT_REASONS = ["Burla ou fraude", "Informação falsa", "Produto ou serviço proibido", "Conteúdo ofensivo", "Perfil falso", "Outro motivo"];
 
@@ -25,6 +25,7 @@ export function reportTargetHref(type: string, id: string, ownerId?: string | nu
     case "product": return "/loja/" + id;
     case "business": return "/empresas/" + id;
     case "provider": return "/profissionais/" + id;
+    case "promo_post": return "/videos/" + id;
     default: return "/vendedor/" + (ownerId || id);
   }
 }

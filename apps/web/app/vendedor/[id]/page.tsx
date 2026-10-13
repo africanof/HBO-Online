@@ -9,6 +9,7 @@ import { StatsBlock, stars } from "../../../components/Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "../../../components/Trust";
 import { currentUserId } from "../../../lib/supabase";
 import { FollowButton } from "../../../components/Engage";
+import { PromoSection } from "../../../components/Promo";
 
 export default function Vendedor() {
   const { id } = useParams<{ id: string }>();
@@ -36,6 +37,7 @@ export default function Vendedor() {
     <div className="row"><FollowButton kind="seller" id={s.id} mine={me === s.id} /></div>
     <TrustBadges userId={s.id} />
     <StatsBlock rows={userStatsRows(stats)} />
+    <PromoSection kind="store" id={s.id} />
     <h2>Anúncios ({listings.length})</h2>
     {listings.length === 0 && <p>Sem anúncios publicados.</p>}
     <div className="results-grid">{listings.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}

@@ -10,6 +10,7 @@ import { ReportButton, TrustBadges, ReviewReply } from "../../components/Trust";
 import { currentUserId } from "../../lib/supabase";
 import { LiteImage } from "../../components/LiteImage";
 import { FollowButton } from "../../components/Engage";
+import { PromoShelf } from "../../components/Promo";
 
 export default function Vendedor() {
   const router = useRouter();
@@ -39,6 +40,7 @@ export default function Vendedor() {
     <FollowButton kind="seller" id={s.id} mine={me === s.id} />
     <TrustBadges userId={s.id} />
     <StatsBlock rows={userStatsRows(stats)} />
+    <PromoShelf kind="store" id={s.id} />
     <Text style={ui.h2}>Anúncios ({listings.length})</Text>
     {listings.length === 0 && <Text style={ui.text}>Sem anúncios publicados.</Text>}
     {listings.map(x => <Pressable key={x.id} style={ui.card} accessibilityRole="link" onPress={() => router.push(("/classificados/" + x.id) as any)}>

@@ -8,6 +8,7 @@ import { SaveButton, ShareButton, FollowButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, stars } from "./Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "./Trust";
 import { PortfolioGallery } from "./Portfolio";
+import { PromoSection } from "./Promo";
 import { LiteImg } from "./LiteImg";
 import { PlaceView } from "./Place";
 
@@ -166,6 +167,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     {kind === "providers" && services.length > 0 && <section className="stack"><h2>Serviços</h2>
       {services.map(s => <div key={s.id} className="card"><strong>{s.title}</strong>{s.description && <span>{s.description}</span>}<span>{s.price_from != null ? "Desde " + formatPrice(s.price_from, s.currency) : "Preço sob consulta"}</span></div>)}
     </section>}
+    <PromoSection kind={kind === "providers" ? "provider" : "business"} id={id} />
     <PortfolioGallery target={kind === "providers" ? { providerId: id } : { businessId: id }} />
     {kind === "businesses" && <BusinessProducts ownerId={item.owner_id} businessId={id} />}
     {error && <p className="error" role="alert">{error}</p>}

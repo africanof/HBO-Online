@@ -12,7 +12,7 @@ export type MyPlan = { id: string; kind: PlanKind; subject_id: string; name: str
   state: PlanState; monthly_price: number | string; pending_payment_id: string | null; pending_amount: number | string | null; last_rejected_note: string | null };
 export type PlatformSettings = { provider_monthly_kz: number | string; business_monthly_kz: number | string; store_monthly_kz?: number | string; trial_days: number;
   listing_commission_pct?: number | string; commission_due_days?: number; boost_price_kz?: number | string; boost_days?: number; agent_sale_pct?: number | string; referral_reward_days?: number;
-  event_ticket_fee_pct?: number | string; event_boost_price_kz?: number | string; event_boost_days?: number; event_payment_hours?: number;
+  event_ticket_fee_pct?: number | string; event_boost_price_kz?: number | string; event_boost_days?: number; event_payment_hours?: number; promo_boost_price_kz?: number | string; promo_boost_days?: number;
   bank_name: string | null; iban: string | null; account_holder: string | null; express_number: string | null; payment_note: string | null;
   payment_accounts?: PaymentAccount[] };
 export type PaymentAccount = { bank: string; iban: string; holder: string };
@@ -64,7 +64,7 @@ export async function listMyPlans(client: SupabaseClient) {
   return { data: (r.data ?? []) as MyPlan[], error: r.error };
 }
 export async function getPlatformSettings(client: SupabaseClient) {
-  const r = await client.from("platform_settings").select("provider_monthly_kz,business_monthly_kz,store_monthly_kz,trial_days,listing_commission_pct,commission_due_days,boost_price_kz,boost_days,agent_sale_pct,referral_reward_days,event_ticket_fee_pct,event_boost_price_kz,event_boost_days,event_payment_hours,bank_name,iban,account_holder,express_number,payment_note,payment_accounts").eq("id", 1).maybeSingle();
+  const r = await client.from("platform_settings").select("provider_monthly_kz,business_monthly_kz,store_monthly_kz,trial_days,listing_commission_pct,commission_due_days,boost_price_kz,boost_days,agent_sale_pct,referral_reward_days,event_ticket_fee_pct,event_boost_price_kz,event_boost_days,event_payment_hours,promo_boost_price_kz,promo_boost_days,bank_name,iban,account_holder,express_number,payment_note,payment_accounts").eq("id", 1).maybeSingle();
   return { data: (r.data ?? null) as PlatformSettings | null, error: r.error };
 }
 export function updatePlatformSettings(client: SupabaseClient, s: Partial<PlatformSettings>) {

@@ -20,6 +20,8 @@ describe("SEO e partilhas", () => {
     expect(buildSeo("product", { name: "Fuba", price: 1000, currency: "AOA", description: "x".repeat(400), media: ["http://inseguro"], active: true }).description.length).toBe(160);
     expect(buildSeo("provider", { display_name: "Zé", categories: { name: "Eletricista" }, active: true }).title).toBe("Zé — Eletricista");
     expect(buildSeo("business", { name: "Farmácia", custom_category: "Saúde", active: false }).noindex).toBe(true);
+    expect(buildSeo("video", { title: "Promoção de pneus", subject_name: "Oficina Zé", kind: "video", status: "published", description: "Até sábado." }))
+      .toMatchObject({ title: "Promoção de pneus — Oficina Zé", description: "Vídeo de Oficina Zé no Huambo Online. Até sábado.", noindex: false });
     expect(buildSeo("event", { title: "Festa", venue: "Cine Ruacaná", starts_at: "2026-10-18T19:00:00Z", status: "published", cover_url: "https://x/a.jpg" }))
       .toMatchObject({ title: "Festa — 18/10/2026", image: "https://x/a.jpg", noindex: false });
     expect(buildSeo("event", { title: "Festa", venue: "X", starts_at: "2026-10-18T23:30:00Z", status: "draft" })).toMatchObject({ title: "Festa — 19/10/2026", noindex: true });

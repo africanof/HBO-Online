@@ -4,7 +4,7 @@ import { listingPriceLabel } from "./wanted";
 
 /** Título, descrição e fotografia de cada página pública (Google e pré-visualização no WhatsApp/Facebook). */
 export type PageSeo = { title: string; description: string; image?: string; noindex?: boolean };
-export type SeoKind = "listing" | "product" | "provider" | "business" | "market" | "seller" | "event";
+export type SeoKind = "listing" | "product" | "provider" | "business" | "market" | "seller" | "event" | "video";
 
 const clip = (s: string, n: number) => { const t = s.replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t; };
 const first = (media: unknown): string | undefined => Array.isArray(media) ? media.find((m): m is string => typeof m === "string" && /^https:\/\//.test(m)) : undefined;
@@ -35,6 +35,9 @@ export function buildSeo(kind: SeoKind, row: any): PageSeo {
       return { title: clip(`${row.title} — ${when}`, 70), description: clip(`Evento em ${row.venue}, ${when}. Compre o bilhete no Huambo Online. ${row.description ?? ""}`, 160),
         image: https(row.cover_url), noindex: row.status !== "published" };
     }
+    case "video":
+      return { title: clip(`${row.title} — ${row.subject_name}`, 70), description: clip(`${row.kind === "live" ? "Live" : "Vídeo"} de ${row.subject_name} no Huambo Online. ${row.description ?? ""}`, 160),
+        image: https(row.cover_url), noindex: row.status !== "published" };
     case "seller":
       return { title: clip(`${row.full_name || "Vendedor"} — anúncios e avaliações`, 70), description: clip(`Anúncios, produtos e avaliações de ${row.full_name || "este vendedor"} no Huambo Online.`, 160), image: https(row.avatar_url) };
   }
@@ -48,6 +51,7 @@ export async function fetchSeo(client: SupabaseClient, kind: SeoKind, id: string
     : kind === "provider" ? client.from("provider_profiles").select("display_name,headline,bio,avatar_url,active,custom_category,categories(name)").eq("user_id", id).maybeSingle()
     : kind === "business" ? client.from("businesses").select("name,description,logo_url,active,custom_category,categories(name)").eq("id", id).maybeSingle()
     : kind === "market" ? client.from("markets").select("name,description,photo_url,status").eq("id", id).maybeSingle()
+    : kind === "video" ? client.rpc("get_promo_post", { p_id: id }).maybeSingle()
     : kind === "event" ? client.from("events").select("title,description,venue,starts_at,cover_url,status").eq("id", id).maybeSingle()
     : client.rpc("public_seller", { p_user_id: id }).maybeSingle();
   const { data } = await q;
