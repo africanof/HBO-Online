@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { Alert, ScrollView, Switch, Text, TextInput, View } from "react-native";
-import { listMyBusinesses, saveBusiness, setBusinessLogo, deleteBusiness, listDirectoryCategories, friendlyError, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
+import { listMyBusinesses, saveBusiness, setBusinessLogo, deleteBusiness, listDirectoryCategories, friendlyError, OTHER_CATEGORY, categoryFormValues, pointFrom, type GeoPoint } from "@huambo-online/core";
+import { PlaceFields } from "../../components/Place";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { MarketPicker } from "../../components/MarketPicker";
@@ -11,7 +12,7 @@ import { PhotoPicker, PortfolioManager } from "../../components/Portfolio";
 import { PlanBanner } from "../../components/Plans";
 
 type Option = { id: string; name: string };
-const empty = { name: "", description: "", categoryId: "", customCategory: "", municipalityId: "", marketId: "", phone: "", whatsapp: "", addressText: "", active: true };
+const empty = { name: "", description: "", categoryId: "", customCategory: "", municipalityId: "", marketId: "", phone: "", whatsapp: "", addressText: "", active: true, directions: "", point: null as GeoPoint | null };
 
 export default function MinhasEmpresas() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function MinhasEmpresas() {
         <PhotoPicker uid={uid} current={b.logo_url ?? null} label="Logótipo" onSave={url => setBusinessLogo(supabase(), b.id, url)} />
         <PortfolioManager uid={uid} target={{ businessId: b.id }} />
       </View>}
-      <Button title="Editar" variant="secondary" onPress={() => { setEditing(b.id); setForm({ name: b.name ?? "", description: b.description ?? "", ...categoryFormValues(b), municipalityId: b.municipality_id ?? "", marketId: b.market_id ?? "", phone: b.phone ?? "", whatsapp: b.whatsapp ?? "", addressText: b.address_text ?? "", active: b.active }); scroll.current?.scrollToEnd(); }} />
+      <Button title="Editar" variant="secondary" onPress={() => { setEditing(b.id); setForm({ name: b.name ?? "", description: b.description ?? "", ...categoryFormValues(b), municipalityId: b.municipality_id ?? "", marketId: b.market_id ?? "", phone: b.phone ?? "", whatsapp: b.whatsapp ?? "", addressText: b.address_text ?? "", active: b.active, directions: b.directions ?? "", point: pointFrom(b.geo_lat, b.geo_lng) }); scroll.current?.scrollToEnd(); }} />
       <Button title="Apagar" variant="danger" onPress={() => Alert.alert("Apagar empresa", "Tem a certeza?", [{ text: "Cancelar", style: "cancel" }, { text: "Apagar", style: "destructive", onPress: async () => { const r = await deleteBusiness(supabase(), b.id); if (r.error) setError(friendlyError(r.error)); else await load(uid); } }])} />
     </View>)}
     <View style={ui.card}>
@@ -64,6 +65,7 @@ export default function MinhasEmpresas() {
       <Text style={ui.label}>Município</Text><Chips options={municipalities.map(m => ({ value: m.id, label: m.name }))} value={form.municipalityId} onChange={set("municipalityId")} />
       <MarketPicker value={form.marketId} onChange={v => setForm({ ...form, marketId: v })} />
       <Text style={ui.label}>Morada / referência</Text><TextInput style={ui.input} value={form.addressText} onChangeText={set("addressText")} />
+      <PlaceFields directions={form.directions} point={form.point} onDirections={v => setForm({ ...form, directions: v })} onPoint={p => setForm({ ...form, point: p })} />
       <Text style={ui.label}>Telefone</Text><TextInput style={ui.input} keyboardType="phone-pad" value={form.phone} onChangeText={set("phone")} />
       <Text style={ui.label}>WhatsApp</Text><TextInput style={ui.input} keyboardType="phone-pad" value={form.whatsapp} onChangeText={set("whatsapp")} />
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}><Text style={ui.label}>Visível ao público</Text><Switch value={form.active} onValueChange={v => setForm(f => ({ ...f, active: v }))} /></View>

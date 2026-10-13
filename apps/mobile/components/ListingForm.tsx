@@ -3,13 +3,14 @@ import { useRouter } from "expo-router";
 import { Image, Pressable, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
-  createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, normalizeAgentCode, friendlyError, listingTerritory, base64ToArrayBuffer,
+  createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, normalizeAgentCode, pointFrom, type GeoPoint, friendlyError, listingTerritory, base64ToArrayBuffer,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice,
   saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
 import { MarketPicker } from "./MarketPicker";
+import { PlaceFields } from "./Place";
 import { VideoField } from "./Video";
 import { AgentCodeField } from "./Agents";
 import { Button, Chips, Message } from "./Ui";
@@ -55,6 +56,8 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
   const [marketId, setMarketId] = useState<string>(listing?.market_id ?? "");
   const [videoUrl, setVideoUrl] = useState<string>(listing?.video_url ?? "");
   const [agentCode, setAgentCode] = useState(listing ? "" : normalizeAgentCode(initialAgent));
+  const [directions, setDirections] = useState<string>(listing?.directions ?? "");
+  const [point, setPoint] = useState<GeoPoint | null>(pointFrom(listing?.geo_lat, listing?.geo_lng));
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, uri: u, remote: true })));
   const [removed, setRemoved] = useState<string[]>([]);
   const [categories, setCategories] = useState<Option[]>([]);
@@ -133,7 +136,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
       setStatus(editing ? "A guardar…" : "A publicar…");
       const keep = Object.fromEntries(Object.entries((listing?.attributes ?? {}) as Record<string, unknown>).filter(([k]) => !["agro", "agroCategory", "unit", "quantity", "availableFrom", "provinceId", "municipalityId"].includes(k)));
       const attributes = { ...keep, ...(useAgro ? agroAttributes({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom.trim() || null }) : {}) };
-      const input = { attributes, listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale };
+      const input = { attributes, listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale, directions, point };
       // O leilão começa logo depois de publicar (ou de guardar, ao mudar para leilão).
       const startAuction = async (id: string) => {
         if (mode !== "auction" || lockedAuction) return null;
@@ -218,6 +221,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
     <Text style={ui.label}>Município</Text>
     {provinceId ? <Chips options={municipalities.map(m => ({ value: m.id, label: m.name }))} value={municipalityId} onChange={setMunicipalityId} /> : <Text style={ui.muted}>Escolha primeiro a província.</Text>}
     <MarketPicker value={marketId} onChange={setMarketId} />
+    {purpose !== "wanted" && <PlaceFields directions={directions} point={point} onDirections={setDirections} onPoint={setPoint} approximate />}
     <VideoField value={videoUrl} onChange={setVideoUrl} />
     {purpose !== "wanted" && <AgentCodeField value={agentCode} onChange={setAgentCode} />}
     <Text style={ui.label}>Fotografias ({photos.length}/{CLASSIFIED_MAX_PHOTOS})</Text>

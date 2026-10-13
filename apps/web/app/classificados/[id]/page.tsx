@@ -7,6 +7,7 @@ import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleM
   reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { SafetyTipsBox } from "../../../components/Safety";
+import { PlaceView } from "../../../components/Place";
 import { ShareButton, SellerWhatsApp, useRecordView, browserStore } from "../../../components/Engage";
 import { OfflineBanner } from "../../../components/Offline";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
@@ -154,6 +155,7 @@ export default function ClassifiedDetail() {
     </div>
     {item.purpose === "wanted" && item.status === "published" && <WantedHelpers title={item.title} mine={mine} />}
     {item.description && <section className="card"><h2 style={{ margin: 0 }}>Descrição</h2><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{item.description}</p></section>}
+    <PlaceView directions={item.directions} lat={item.geo_lat} lng={item.geo_lng} approximate />
     {mine && item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} />}
     {!mine && <>
       {(can.offerMoney || can.offerTrade) && <OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} />}

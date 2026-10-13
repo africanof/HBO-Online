@@ -1,4 +1,5 @@
 "use client";
+import { OrderPoint } from "../../components/Place";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { listOrders, changeOrderStatus, formatPrice, friendlyError, ORDER_STATUS_LABELS, PAYMENT_LABELS, FULFILLMENT_LABELS, NEXT_SELLER_STATUS,
@@ -66,6 +67,7 @@ function Encomendas() {
           onChanged={(m, bad) => { if (bad) { setError(m); setNotice(""); } else { setError(""); setNotice(m); void load(); } }} />
         <ul style={{ margin: 0 }}>{(o.items ?? []).map((it: any, i: number) => <li key={i}>{it.quantity} × {it.name} — {formatPrice(it.line_total)}</li>)}</ul>
         {o.delivery_text && <span>Entrega: {o.delivery_text}</span>}
+        {o.fulfillment_type === "delivery" && <OrderPoint orderId={o.id} canEdit={role === "buyer" && o.status !== "completed" && o.status !== "cancelled"} />}
         {role === "seller" && o.contact_phone && <span>Telefone: <a href={"tel:" + o.contact_phone.replace(/\s/g, "")}>{o.contact_phone}</a></span>}
         {o.buyer_note && <span>Nota: {o.buyer_note}</span>}
         {deliveries[o.id] && <span>🛵 Entrega: <strong>{DELIVERY_STATUS_LABELS[deliveries[o.id].status as DeliveryStatus]}</strong>{deliveries[o.id].courier_name ? " · Estafeta: " + deliveries[o.id].courier_name : ""}{deliveries[o.id].courier_phone && isActiveDelivery(deliveries[o.id].status) ? <> · <a href={"tel:" + deliveries[o.id].courier_phone.replace(/\s/g, "")}>{deliveries[o.id].courier_phone}</a></> : null}</span>}

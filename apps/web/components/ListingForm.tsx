@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { MarketPicker } from "./MarketPicker";
+import { PlaceFields } from "./Place";
 import { VideoField } from "./Video";
 import { AgentCodeField, agentCodeFromUrl } from "./Agents";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
-  createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, friendlyError, listingTerritory,
+  createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, pointFrom, type GeoPoint, friendlyError, listingTerritory,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES, validateBudget, budgetPrice,
   saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
@@ -48,6 +49,8 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
   const [marketId, setMarketId] = useState<string>(listing?.market_id ?? "");
   const [videoUrl, setVideoUrl] = useState<string>(listing?.video_url ?? "");
   const [agentCode, setAgentCode] = useState("");
+  const [directions, setDirections] = useState<string>(listing?.directions ?? "");
+  const [point, setPoint] = useState<GeoPoint | null>(pointFrom(listing?.geo_lat, listing?.geo_lng));
   useEffect(() => { if (!listing) { const c = agentCodeFromUrl(); if (c) setAgentCode(c); } }, []);
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, src: u })));
   const [removed, setRemoved] = useState<string[]>([]);
@@ -131,7 +134,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
       // Mantém outros atributos já guardados; os do campo só ficam se «Produto do campo» estiver ligado.
       const keep = Object.fromEntries(Object.entries((listing?.attributes ?? {}) as Record<string, unknown>).filter(([k]) => !["agro", "agroCategory", "unit", "quantity", "availableFrom", "provinceId", "municipalityId"].includes(k)));
       const attributes = { ...keep, ...(useAgro ? agroAttributes({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom }) : {}) };
-      const input = { attributes, listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale };
+      const input = { attributes, listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale, directions, point };
       // O leilão começa logo depois de publicar (ou de guardar, ao mudar para leilão).
       const startAuction = async (id: string) => {
         if (mode !== "auction" || lockedAuction) return null;
@@ -224,6 +227,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
         </select>
       </label>
       <MarketPicker value={marketId} onChange={setMarketId} />
+      {purpose !== "wanted" && <PlaceFields directions={directions} point={point} onDirections={setDirections} onPoint={setPoint} approximate />}
       <fieldset className="stack" style={{ border: "2px solid #ddd", borderRadius: 12, padding: 14 }}>
         <legend style={{ fontWeight: 700 }}>Fotografias ({photos.length}/{CLASSIFIED_MAX_PHOTOS})</legend>
         <input type="file" accept="image/*" multiple disabled={photos.length >= CLASSIFIED_MAX_PHOTOS} onChange={e => { addFiles(e.target.files); e.target.value = ""; }} aria-label="Selecionar fotografias" />

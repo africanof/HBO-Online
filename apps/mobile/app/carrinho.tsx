@@ -1,3 +1,5 @@
+import { PointPicker } from "../components/Place";
+import type { GeoPoint } from "@huambo-online/core";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { ScrollView, Text, TextInput, View } from "react-native";
@@ -11,7 +13,7 @@ export default function Carrinho() {
   const router = useRouter();
   const [uid, setUid] = useState<string | null | undefined>(undefined);
   const [items, setItems] = useState<any[]>([]); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
-  const [fulfillment, setFulfillment] = useState<Fulfillment>("delivery"); const [payment, setPayment] = useState<PaymentMethod>("cash_on_delivery");
+  const [point, setPoint] = useState<GeoPoint | null>(null); const [fulfillment, setFulfillment] = useState<Fulfillment>("delivery"); const [payment, setPayment] = useState<PaymentMethod>("cash_on_delivery");
   const [phone, setPhone] = useState(""); const [address, setAddress] = useState(""); const [note, setNote] = useState("");
   const [protectedOn, setProtectedOn] = useState(false); const [useProtected, setUseProtected] = useState<"yes" | "no">("yes");
   useEffect(() => { void getProtectedSettings(supabase()).then(r => setProtectedOn(!!r.data?.protected_enabled)); }, []);
@@ -21,7 +23,7 @@ export default function Carrinho() {
   async function qty(productId: string, q: number) { const r = await setCartQuantity(supabase(), productId, q); if (r.error) setError(friendlyError(r.error)); else await load(); }
   async function checkout() {
     if (busy) return; setError(""); setBusy(true);
-    const r = await placeOrders(supabase(), { fulfillment, paymentMethod: payment, phone, deliveryText: address, note, protected: isProtected }); setBusy(false);
+    const r = await placeOrders(supabase(), { fulfillment, paymentMethod: payment, phone, deliveryText: address, note, protected: isProtected, point }); setBusy(false);
     if (r.error) { setError(friendlyError(r.error)); await load(); return; }
     router.replace((isProtected ? "/encomendas?novas=1&pagar=1" : "/encomendas?novas=1") as any);
   }
@@ -53,7 +55,8 @@ export default function Carrinho() {
       {groups.length > 1 && <Text style={ui.text}>Vai criar {groups.length} encomendas, uma por vendedor.</Text>}
       <Text style={ui.label}>Receber</Text>
       <Chips options={Object.entries(FULFILLMENT_LABELS).map(([value, label]) => ({ value: value as Fulfillment, label }))} value={fulfillment} onChange={setFulfillment} />
-      {fulfillment === "delivery" && <><Text style={ui.label}>Morada / referência</Text><TextInput style={ui.input} value={address} onChangeText={setAddress} placeholder="Bairro, rua, referência" /></>}
+      {fulfillment === "delivery" && <><Text style={ui.label}>Morada / referência</Text><TextInput style={ui.input} value={address} onChangeText={setAddress} placeholder="Bairro, rua, referência (ex.: atrás da igreja, portão azul)" />
+        <PointPicker point={point} onChange={setPoint} label="Ponto da entrega no mapa (opcional)" hint="Ajuda o vendedor e o estafeta a encontrar a sua casa. Só eles o veem." /></>}
       {protectedOn && <>
         <Text style={ui.label}>Como quer pagar?</Text>
         <Chips options={[{ value: "yes" as const, label: "🛡️ Pagamento protegido (recomendado)" }, { value: "no" as const, label: "🤝 Combinar com o vendedor" }]} value={useProtected} onChange={setUseProtected} />

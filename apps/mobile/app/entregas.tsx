@@ -1,3 +1,4 @@
+import { OrderPoint } from "../components/Place";
 import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { Alert, Linking, ScrollView, Text, TextInput, View } from "react-native";
@@ -79,6 +80,7 @@ export default function Entregas() {
           <Text style={ui.text}>Recolher em: {d.seller_name}</Text>
           <Text style={ui.text}>Entregar a: {d.buyer_name}{d.delivery_text ? " — " + d.delivery_text : ""}</Text>
           {!!d.notes && <Text style={ui.text}>Nota: {d.notes}</Text>}
+          <OrderPoint orderId={d.order_id} canEdit={false} />
           {!!d.contact_phone && <Button title={"📞 Cliente " + d.contact_phone} variant="secondary" onPress={() => void Linking.openURL("tel:" + d.contact_phone.replace(/\s/g, ""))} />}
           {nextCourierSteps(d.status).map((s: CourierStep) => <Button key={s} title={STEP_LABELS[s]} variant={s === "released" ? "secondary" : "primary"} disabled={busy}
             onPress={() => s === "released" ? Alert.alert("Desistir desta entrega?", "", [{ text: "Não", style: "cancel" }, { text: "Desistir", onPress: () => void act(() => updateDeliveryStatus(supabase(), d.id, s), "Entrega devolvida.") }]) : void act(() => updateDeliveryStatus(supabase(), d.id, s), "Entrega atualizada.")} />)}

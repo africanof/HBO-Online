@@ -9,6 +9,7 @@ import { StatsBlock, StarPicker, RequestServiceBox, stars } from "./Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "./Trust";
 import { PortfolioGallery } from "./Portfolio";
 import { LiteImg } from "./LiteImg";
+import { PlaceView } from "./Place";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string };
@@ -153,6 +154,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <TrustBadges userId={kind === "providers" ? id : item.owner_id} />
     <StatsBlock rows={stats.rows} footer={stats.since} />
     {(item.bio || item.description) && <p style={{ whiteSpace: "pre-wrap" }}>{item.bio || item.description}</p>}
+    <PlaceView directions={item.directions} lat={item.geo_lat} lng={item.geo_lng} />
     <div className="row">
       <FollowButton kind={kind === "providers" ? "provider" : "business"} id={id} mine={mine} />
       {item.phone && <a className="btn secondary" href={"tel:" + item.phone.replace(/\s/g, "")} onClick={() => void recordItemEvent(supabase(), viewKind, id, "call")}>📞 Ligar</a>}

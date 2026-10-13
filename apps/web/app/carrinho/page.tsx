@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getMyCart, setCartQuantity, placeOrders, groupCartBySeller, formatPrice, friendlyError, PAYMENT_LABELS, FULFILLMENT_LABELS,
+import { PointPicker } from "../../components/Place";
+import { type GeoPoint, getMyCart, setCartQuantity, placeOrders, groupCartBySeller, formatPrice, friendlyError, PAYMENT_LABELS, FULFILLMENT_LABELS,
   getProtectedSettings, PROTECTED_STEPS, type Fulfillment, type PaymentMethod } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 
 export default function Carrinho() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
   const [items, setItems] = useState<any[]>([]); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
-  const [fulfillment, setFulfillment] = useState<Fulfillment>("delivery"); const [payment, setPayment] = useState<PaymentMethod>("cash_on_delivery");
+  const [point, setPoint] = useState<GeoPoint | null>(null); const [fulfillment, setFulfillment] = useState<Fulfillment>("delivery"); const [payment, setPayment] = useState<PaymentMethod>("cash_on_delivery");
   const [phone, setPhone] = useState(""); const [address, setAddress] = useState(""); const [note, setNote] = useState("");
   const [protectedOn, setProtectedOn] = useState(false); const [useProtected, setUseProtected] = useState(true);
   useEffect(() => { void getProtectedSettings(supabase()).then(r => setProtectedOn(!!r.data?.protected_enabled)); }, []);
@@ -17,7 +18,7 @@ export default function Carrinho() {
   async function qty(productId: string, q: number) { const r = await setCartQuantity(supabase(), productId, q); if (r.error) setError(friendlyError(r.error)); else await load(); }
   async function checkout(e: React.FormEvent) {
     e.preventDefault(); if (busy) return; setError(""); setBusy(true);
-    const r = await placeOrders(supabase(), { fulfillment, paymentMethod: payment, phone, deliveryText: address, note, protected: isProtected }); setBusy(false);
+    const r = await placeOrders(supabase(), { fulfillment, paymentMethod: payment, phone, deliveryText: address, note, protected: isProtected, point }); setBusy(false);
     if (r.error) { setError(friendlyError(r.error)); await load(); return; }
     window.location.href = "/encomendas?novas=" + ((r.data as any[]) ?? []).length + (isProtected ? "&pagar=1" : "");
   }
@@ -47,7 +48,8 @@ export default function Carrinho() {
       <h2 style={{ margin: 0 }}>Finalizar compra — {formatPrice(total)}</h2>
       {groups.length > 1 && <p>Vai criar {groups.length} encomendas, uma por vendedor.</p>}
       <label>Receber<select value={fulfillment} onChange={e => setFulfillment(e.target.value as Fulfillment)}>{Object.entries(FULFILLMENT_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></label>
-      {fulfillment === "delivery" && <label>Morada / ponto de referência<input value={address} onChange={e => setAddress(e.target.value)} placeholder="Bairro, rua, referência" /></label>}
+      {fulfillment === "delivery" && <label>Morada / ponto de referência<input value={address} onChange={e => setAddress(e.target.value)} placeholder="Bairro, rua, referência (ex.: atrás da igreja, portão azul)" /></label>}
+      {fulfillment === "delivery" && <PointPicker point={point} onChange={setPoint} label="Ponto da entrega no mapa (opcional)" hint="Ajuda o vendedor e o estafeta a encontrar a sua casa. Só eles o veem." />}
       {protectedOn && <fieldset className="stack" style={{ gap: 8, border: 0, padding: 0, margin: 0 }}>
         <legend><strong>Como quer pagar?</strong></legend>
         <button type="button" role="radio" aria-checked={useProtected} className={useProtected ? "" : "secondary"} style={{ textAlign: "left" }} onClick={() => setUseProtected(true)}>🛡️ Pagamento protegido (recomendado)</button>

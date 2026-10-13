@@ -1,14 +1,15 @@
 "use client";
 import { MarketPicker } from "../../../components/MarketPicker";
 import { useEffect, useState } from "react";
-import { listMyBusinesses, saveBusiness, setBusinessLogo, deleteBusiness, listDirectoryCategories, friendlyError, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
+import { listMyBusinesses, saveBusiness, setBusinessLogo, deleteBusiness, listDirectoryCategories, friendlyError, OTHER_CATEGORY, categoryFormValues, pointFrom, type GeoPoint } from "@huambo-online/core";
+import { PlaceFields } from "../../../components/Place";
 import { supabase, currentUserId } from "../../../lib/supabase";
 import { useTerritory } from "../../../components/Directory";
 import { PlanBanner } from "../../../components/Plans";
 import { PhotoPicker, PortfolioManager } from "../../../components/Portfolio";
 
 type Option = { id: string; name: string };
-const empty = { name: "", description: "", categoryId: "", customCategory: "", municipalityId: "", marketId: "", phone: "", whatsapp: "", addressText: "", active: true };
+const empty = { name: "", description: "", categoryId: "", customCategory: "", municipalityId: "", marketId: "", phone: "", whatsapp: "", addressText: "", active: true, directions: "", point: null as GeoPoint | null };
 
 export default function MinhasEmpresas() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
@@ -43,7 +44,7 @@ export default function MinhasEmpresas() {
       <div className="row">
         <a className="btn secondary" href={"/empresas/" + b.id}>Ver</a>
         <button className={showcase === b.id ? "" : "secondary"} aria-expanded={showcase === b.id} onClick={() => setShowcase(showcase === b.id ? null : b.id)}>📸 Logótipo e portfólio</button>
-        <button className="secondary" onClick={() => { setEditing(b.id); setForm({ name: b.name ?? "", description: b.description ?? "", ...categoryFormValues(b), municipalityId: b.municipality_id ?? "", marketId: b.market_id ?? "", phone: b.phone ?? "", whatsapp: b.whatsapp ?? "", addressText: b.address_text ?? "", active: b.active }); window.scrollTo(0, document.body.scrollHeight); }}>Editar</button>
+        <button className="secondary" onClick={() => { setEditing(b.id); setForm({ name: b.name ?? "", description: b.description ?? "", ...categoryFormValues(b), municipalityId: b.municipality_id ?? "", marketId: b.market_id ?? "", phone: b.phone ?? "", whatsapp: b.whatsapp ?? "", addressText: b.address_text ?? "", active: b.active, directions: b.directions ?? "", point: pointFrom(b.geo_lat, b.geo_lng) }); window.scrollTo(0, document.body.scrollHeight); }}>Editar</button>
         <button className="danger" onClick={async () => { if (!confirm("Apagar esta empresa?")) return; const r = await deleteBusiness(supabase(), b.id); if (r.error) setError(friendlyError(r.error)); else await load(uid); }}>Apagar</button>
       </div>
       {showcase === b.id && <div className="stack" style={{ marginTop: 8 }}>
@@ -62,6 +63,7 @@ export default function MinhasEmpresas() {
       <label>Município<select value={form.municipalityId} onChange={set("municipalityId")}><option value="">Escolha</option>{municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
       <MarketPicker value={form.marketId} onChange={v => setForm({ ...form, marketId: v })} />
       <label>Morada / referência<input value={form.addressText} onChange={set("addressText")} placeholder="Ex.: Rua X, perto do mercado" /></label>
+      <PlaceFields directions={form.directions} point={form.point} onDirections={v => setForm({ ...form, directions: v })} onPoint={p => setForm({ ...form, point: p })} />
       <label>Telefone<input type="tel" value={form.phone} onChange={set("phone")} /></label>
       <label>WhatsApp<input type="tel" value={form.whatsapp} onChange={set("whatsapp")} /></label>
       <label style={{ display: "flex", gap: 10, alignItems: "center" }}><input type="checkbox" checked={form.active} onChange={e => setForm({ ...form, active: e.target.checked })} style={{ width: 24, height: 24 }} /> Visível ao público</label>

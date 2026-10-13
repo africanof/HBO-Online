@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getProvider, saveMyProviderProfile, setProviderPhoto, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice, OTHER_CATEGORY, categoryFormValues } from "@huambo-online/core";
+import { getProvider, saveMyProviderProfile, setProviderPhoto, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice, OTHER_CATEGORY, categoryFormValues, pointFrom, type GeoPoint } from "@huambo-online/core";
+import { PlaceFields } from "../../../components/Place";
 import { supabase, currentUserId } from "../../../lib/supabase";
 import { useTerritory } from "../../../components/Directory";
 import { PlanBanner } from "../../../components/Plans";
 import { PhotoPicker, PortfolioManager } from "../../../components/Portfolio";
 
 type Option = { id: string; name: string };
-const empty = { displayName: "", headline: "", bio: "", categoryId: "", customCategory: "", municipalityId: "", phone: "", whatsapp: "", active: true };
+const empty = { displayName: "", headline: "", bio: "", categoryId: "", customCategory: "", municipalityId: "", phone: "", whatsapp: "", active: true, directions: "", point: null as GeoPoint | null };
 
 export default function PerfilProfissional() {
   const [uid, setUid] = useState<string | null | undefined>(undefined);
@@ -19,7 +20,7 @@ export default function PerfilProfissional() {
   async function load(id: string) {
     const c = supabase();
     const p = await getProvider(c, id);
-    if (p.data) { setExists(true); setAvatar(p.data.avatar_url ?? null); setForm({ displayName: p.data.display_name ?? "", headline: p.data.headline ?? "", bio: p.data.bio ?? "", ...categoryFormValues(p.data), municipalityId: p.data.municipality_id ?? "", phone: p.data.phone ?? "", whatsapp: p.data.whatsapp ?? "", active: p.data.active }); }
+    if (p.data) { setExists(true); setAvatar(p.data.avatar_url ?? null); setForm({ displayName: p.data.display_name ?? "", headline: p.data.headline ?? "", bio: p.data.bio ?? "", ...categoryFormValues(p.data), municipalityId: p.data.municipality_id ?? "", phone: p.data.phone ?? "", whatsapp: p.data.whatsapp ?? "", active: p.data.active, directions: p.data.directions ?? "", point: pointFrom(p.data.geo_lat, p.data.geo_lng) }); }
     const s = await listProviderServices(c, id, true); setServices(s.data ?? []);
   }
   useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) void load(id); }); void listDirectoryCategories(supabase(), "providers").then(({ data }) => setCategories(data ?? [])); }, []);
@@ -54,6 +55,7 @@ export default function PerfilProfissional() {
       <label>Município<select value={form.municipalityId} onChange={set("municipalityId")}><option value="">Escolha</option>{municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
       <label>Telefone<input type="tel" value={form.phone} onChange={set("phone")} placeholder="923 000 000" /></label>
       <label>WhatsApp<input type="tel" value={form.whatsapp} onChange={set("whatsapp")} placeholder="923 000 000" /></label>
+      <PlaceFields directions={form.directions} point={form.point} onDirections={v => setForm({ ...form, directions: v })} onPoint={p => setForm({ ...form, point: p })} hint="Marque a sua oficina ou loja. Se trabalha em casa dos clientes, deixe vazio." />
       <label style={{ display: "flex", gap: 10, alignItems: "center" }}><input type="checkbox" checked={form.active} onChange={e => setForm({ ...form, active: e.target.checked })} style={{ width: 24, height: 24 }} /> Perfil visível ao público</label>
       <button disabled={busy}>{exists ? "Guardar perfil" : "Criar perfil"}</button>
     </form>
