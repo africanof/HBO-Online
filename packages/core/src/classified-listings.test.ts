@@ -81,6 +81,19 @@ describe("createAndPublishClassifiedListing", () => {
     expect(r.draftId).toBe("L2");
     expect(r.error).toEqual({ message: "LOCATION_REQUIRED" });
   });
+  it("registers the field agent before publishing", async () => {
+    const { client } = fakeClient({ data: { id: "L3" }, error: null }, { data: { id: "L3", status: "published" }, error: null });
+    await createAndPublishClassifiedListing(client, { ownerId: "u1", ...base, agentCode: " ag-1001 " });
+    expect((client.rpc as any).mock.calls.map((c: any[]) => c[0])).toEqual(["set_listing_agent", "publish_classified_listing"]);
+    expect(client.rpc).toHaveBeenCalledWith("set_listing_agent", { p_listing_id: "L3", p_code: "AG1001" });
+  });
+  it("keeps the draft when the agent code is wrong", async () => {
+    const { client } = fakeClient({ data: { id: "L4" }, error: null }, { data: null, error: { message: "AGENT_NOT_FOUND" } });
+    const r = await createAndPublishClassifiedListing(client, { ownerId: "u1", ...base, agentCode: "AG9999" });
+    expect(r.draftId).toBe("L4");
+    expect(friendlyError(r.error)).toContain("Código de agente não encontrado");
+    expect((client.rpc as any).mock.calls.length).toBe(1);
+  });
   it("does not publish when insert fails", async () => {
     const { client } = fakeClient({ data: null, error: { message: "row-level security" } }, null);
     const r = await createAndPublishClassifiedListing(client, { ownerId: "u1", ...base });

@@ -41,6 +41,7 @@ export default function Praca() {
       <Button title="Publicar anúncio" onPress={() => router.push("/classificados/publicar" as any)} />
       <Button title="Vender produtos" variant="secondary" onPress={() => router.push("/conta/produtos" as any)} />
     </View>
+    <Link href={"/agente" as any} style={ui.link}>🤝 Conhece os vendedores daqui? Seja agente e ganhe por cada anúncio →</Link>
     <Chips options={[{ value: "products" as Tab, label: `Produtos (${c?.products.length ?? 0})` }, { value: "listings" as Tab, label: `Anúncios (${c?.listings.length ?? 0})` }, { value: "businesses" as Tab, label: `Lojas (${c?.businesses.length ?? 0})` }]} value={tab} onChange={setTab} />
     {c === null && <Text style={ui.muted}>A carregar…</Text>}
     {c && tab === "products" && (c.products.length ? <Grid>{c.products.map(p => <ItemCard key={p.id} video={!!p.video_url} width={cardW} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)} meta={p.stock > 0 ? `${p.stock} em stock` : "Esgotado"} />)}</Grid> : <Text style={ui.text}>Ainda não há produtos desta praça.</Text>)}

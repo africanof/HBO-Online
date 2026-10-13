@@ -29,6 +29,8 @@ export interface ClassifiedDraftInput {
   purpose: ClassifiedPurpose; title: string; description?: string; price?: number;
   provinceId?: string; municipalityId?: string; marketId?: string; videoUrl?: string; budgetMin?: number; budgetMax?: number;
   attributes?: Record<string, unknown>; media?: string[];
+  /** Código do agente no terreno que ajudou a pôr o anúncio (opcional, ex.: AG1001). */
+  agentCode?: string;
   /** Como vende: preço fixo, negociável, aberto a propostas, leilão ou só troca. */
   saleMode?: "fixed" | "negotiable" | "offers" | "auction" | "trade"; acceptsTrade?: boolean; tradeWants?: string;
 }
@@ -95,6 +97,12 @@ const errorMessages: [RegExp, string][] = [
   [/BOOST_NOT_FOUND/, "Destaque não encontrado."],
   [/CANNOT_BLOCK_SELF/, "Não se pode bloquear a si próprio."],
   [/\bBLOCKED\b/, "Não pode enviar mensagens nesta conversa: uma das pessoas bloqueou a outra."],
+  [/AGENT_NOT_FOUND/, "Código de agente não encontrado. Confirme o código (ex.: AG1001) com o agente."],
+  [/CANNOT_BE_OWN_AGENT/, "Não pode usar o seu próprio código de agente nos seus anúncios."],
+  [/AGENT_LOCKED/, "Este anúncio já tem a comissão do agente registada: o agente já não pode ser mudado."],
+  [/AGENT_SUSPENDED/, "A sua conta de agente está suspensa. Fale com a administração."],
+  [/MARKET_REQUIRED/, "Escolha a praça onde trabalha."],
+  [/\bNAME_REQUIRED\b/, "Escreva o nome completo."],
   [/CANNOT_FOLLOW_SELF/, "Não pode seguir o seu próprio perfil."],
   [/INVALID_FOLLOW/, "Não é possível seguir este perfil."],
   [/INVALID_WHATSAPP/, "Escreva um número de WhatsApp válido (ex.: 923 000 000)."],
@@ -242,6 +250,11 @@ export async function createClassifiedListing(client: SupabaseClient, input: Cla
 export async function createAndPublishClassifiedListing(client: SupabaseClient, input: ClassifiedDraftInput) {
   const created = await createClassifiedListing(client, input);
   if (created.error || !created.data) return { data: null, draftId: null as string | null, error: created.error };
+  const agent = (input.agentCode ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (agent) {
+    const a = await client.rpc("set_listing_agent", { p_listing_id: created.data.id, p_code: agent });
+    if (a.error) return { data: created.data, draftId: created.data.id as string, error: a.error };
+  }
   const published = await client.rpc("publish_classified_listing", { p_listing_id: created.data.id });
   if (published.error) return { data: created.data, draftId: created.data.id as string, error: published.error };
   return { data: published.data ?? created.data, draftId: null, error: null };

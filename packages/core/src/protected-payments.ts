@@ -23,7 +23,7 @@ export type ProtectedSettings = {
   protected_enabled?: boolean; payment_provider?: "manual" | "proxypay"; proxypay_entity?: string | null; protected_fee_pct?: number | string;
   auto_release_days?: number; payment_window_hours?: number; payout_min_kz?: number | string; payout_weekdays?: number[];
 };
-export type WalletEntryKind = "sale" | "release" | "fee" | "refund" | "payout" | "payout_returned" | "adjustment";
+export type WalletEntryKind = "sale" | "release" | "fee" | "refund" | "payout" | "payout_returned" | "adjustment" | "agent";
 export type WalletEntry = { id: number; bucket: "pending" | "available"; kind: WalletEntryKind; amount: number | string; note: string | null; created_at: string; order_id: string | null };
 export type PayoutStatus = "requested" | "processing" | "paid" | "rejected" | "cancelled";
 export type PayoutMethod = "iban" | "express";
@@ -55,7 +55,7 @@ export const ESCROW_STATUS_LABELS: Record<EscrowStatus, string> = {
 export const ORDER_PAY_METHOD_LABELS: Record<OrderPayMethod, string> = { multicaixa_express: "Multicaixa Express", bank_transfer: "Transferência bancária" };
 export const WALLET_KIND_LABELS: Record<WalletEntryKind, string> = {
   sale: "Venda paga (guardada)", release: "Libertado", fee: "Comissão", refund: "Reembolso ao cliente", payout: "Levantamento",
-  payout_returned: "Levantamento devolvido ao saldo", adjustment: "Acerto"
+  payout_returned: "Levantamento devolvido ao saldo", adjustment: "Acerto", agent: "Comissão de agente"
 };
 export const PAYOUT_STATUS_LABELS: Record<PayoutStatus, string> = {
   requested: "Pedido — à espera do dia de pagamentos", processing: "A ser pago pelo banco", paid: "Pago ✔", rejected: "Não feito", cancelled: "Cancelado"
