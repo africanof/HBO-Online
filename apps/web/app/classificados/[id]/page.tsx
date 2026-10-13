@@ -4,7 +4,7 @@ import { Gallery } from "../../../components/Video";
 import { WantedHelpers } from "../../../components/WantedHelpers";
 import { useParams } from "next/navigation";
 import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
-  reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured } from "@huambo-online/core";
+  reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ShareButton, SellerWhatsApp, useRecordView, browserStore } from "../../../components/Engage";
 import { OfflineBanner } from "../../../components/Offline";
@@ -125,6 +125,7 @@ export default function ClassifiedDetail() {
         <dl className="facts">
           {item.ref_no && <><dt>N.º do anúncio</dt><dd><strong>{formatRef("listing", item.ref_no)}</strong></dd></>}
           <dt>Tipo</dt><dd>{typeLabel}</dd>
+          {readAgro(item.attributes) && <><dt>Do campo</dt><dd><a href="/agricultura">{agroSummary(readAgro(item.attributes)!)}</a></dd></>}
           <dt>Finalidade</dt><dd>{purposeLabel}</dd>
           {mode && SALE_MODE_INFO[mode] && <><dt>Como vende</dt><dd>{SALE_MODE_INFO[mode].icon} {SALE_MODE_INFO[mode].label}</dd></>}
           {place && <><dt>Local</dt><dd>📍 {place}</dd></>}
