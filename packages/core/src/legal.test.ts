@@ -13,7 +13,7 @@ describe("páginas de informação", () => {
     expect(pages.map(p => p.slug)).toEqual(["termos", "privacidade", "apagar-conta"]);
     for (const p of pages) { expect(p.sections.length).toBeGreaterThan(1); expect(p.updated).toMatch(/^\d{4}-\d{2}-\d{2}$/); }
     expect(deleteAccountPage().sections[0].paragraphs.join(" ")).toMatch(/ELIMINAR/);
-    expect(INFO_LINKS.map(l => l.href)).toEqual(["/ajuda", "/termos", "/privacidade", "/devolucoes", "/apagar-conta"]);
+    expect(INFO_LINKS.map(l => l.href)).toEqual(["/ajuda", "/seguranca", "/termos", "/privacidade", "/devolucoes", "/apagar-conta"]);
   });
   it("a privacidade descreve o que a APP faz de verdade", () => {
     const txt = privacyPage().sections.flatMap(s => s.paragraphs).join(" ");

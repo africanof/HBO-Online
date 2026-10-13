@@ -8,6 +8,7 @@ import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleM
 import { supabase } from "../../../lib/supabase";
 import { ui, C } from "../../../lib/ui";
 import { Button, Message } from "../../../components/Ui";
+import { SafetyTipsBox } from "../../../components/Safety";
 import { ShareButton, SellerWhatsApp, useRecordView, deviceStore } from "../../../components/Engage";
 import { OfflineBanner } from "../../../components/Offline";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
@@ -143,6 +144,7 @@ export default function ClassifiedDetail() {
       {can.buyNow && <Button title={"🛒 Quero comprar" + (item.price != null ? " por " + formatPrice(item.price, item.currency) : "")} disabled={busy} onPress={() => void buyNow()} />}
       {(can.offerMoney || can.offerTrade) && <OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} />}
       <Button title={savedId ? "★ Guardado" : "☆ Guardar anúncio"} variant="secondary" onPress={() => void toggleSaved()} disabled={busy} />
+      <SafetyTipsBox />
       <View style={ui.card}>
         <Text style={ui.h2}>{item.purpose === "wanted" ? "Responder ao comprador" : "Contactar anunciante"}</Text>
         {item.purpose === "wanted" && !message && <Button title={item.listing_type === "service" ? "🛠️ Posso fazer este serviço" : "✋ Tenho o que procura"} onPress={() => setMessage(wantedReplyMessage(item.title, item.listing_type === "service"))} />}

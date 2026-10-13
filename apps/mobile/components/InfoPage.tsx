@@ -8,7 +8,7 @@ import { C, ui } from "../lib/ui";
 export const CONTACT_EMAIL = (process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? "").trim();
 
 const Links = () => <View style={[ui.row, { marginTop: 8 }]}>
-  {[["/ajuda", "Ajuda"], ["/termos", "Termos"], ["/privacidade", "Privacidade"], ["/devolucoes", "Devoluções"], ["/apagar-conta", "Apagar conta"]].map(([h, l]) => <Link key={h} href={h as any} style={ui.link}>{l}</Link>)}
+  {[["/ajuda", "Ajuda"], ["/seguranca", "Segurança"], ["/termos", "Termos"], ["/privacidade", "Privacidade"], ["/devolucoes", "Devoluções"], ["/apagar-conta", "Apagar conta"]].map(([h, l]) => <Link key={h} href={h as any} style={ui.link}>{l}</Link>)}
 </View>;
 
 /** Página de informação (Termos, Privacidade, Apagar conta) — texto vindo do código partilhado. */
