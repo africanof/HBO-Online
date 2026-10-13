@@ -4,7 +4,7 @@ import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
   listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, recordItemEvent, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
-  listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince } from "@huambo-online/core";
+  listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince , categoryIdFromSlug, directoryHeading } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
@@ -16,7 +16,7 @@ import { PromoShelf } from "./Promo";
 import { LiteImage } from "./LiteImage";
 
 type Kind = "providers" | "businesses";
-type Option = { id: string; name: string };
+type Option = { id: string; name: string; slug?: string | null };
 const TEXT = {
   providers: { title: "Profissionais e serviços", search: "Ex.: eletricista, advogado…", empty: "Ainda não há profissionais registados nesta pesquisa.", base: "/profissionais", cta: "Sou profissional — criar perfil", ctaHref: "/conta/profissional" },
   businesses: { title: "Empresas e lojas", search: "Ex.: farmácia, oficina…", empty: "Ainda não há empresas registadas nesta pesquisa.", base: "/empresas", cta: "Registar a minha empresa", ctaHref: "/conta/empresas" }
@@ -32,17 +32,23 @@ export function useTerritory() {
 }
 
 export function DirectoryList({ kind }: { kind: Kind }) {
-  const t = TEXT[kind];
+  const params = useLocalSearchParams<{ q?: string; categoria?: string }>();
+  const t = { ...TEXT[kind], ...(kind === "businesses" ? directoryHeading(params.categoria) ?? {} : {}) };
   const router = useRouter();
-  const params = useLocalSearchParams<{ q?: string }>();
   const [q, setQ] = useState(params.q ?? ""); const [categoryId, setCategoryId] = useState(""); const [municipalityId, setMunicipalityId] = useState(""); const [showFilters, setShowFilters] = useState(false);
   const [categories, setCategories] = useState<Option[]>([]); const { municipalities } = useTerritory();
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState("");
 
-  useEffect(() => { void listDirectoryCategories(supabase(), kind).then(({ data }) => setCategories(data ?? [])); void search(); }, []);
-  async function search() {
+  useEffect(() => {
+    void listDirectoryCategories(supabase(), kind).then(({ data }) => {
+      const list = (data ?? []) as Option[]; setCategories(list);
+      const cat = categoryIdFromSlug(list, params.categoria); setCategoryId(cat);
+      void search(cat);
+    });
+  }, []);
+  async function search(category = categoryId) {
     setError("");
-    const f = { query: q, categoryId, municipalityId };
+    const f = { query: q, categoryId: category, municipalityId };
     const r: any = kind === "providers" ? await listProviders(supabase(), f) : await listBusinesses(supabase(), f);
     if (r.error) setError(friendlyError(r.error)); else setItems(r.data ?? []);
   }
