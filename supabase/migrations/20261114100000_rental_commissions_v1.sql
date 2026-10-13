@@ -9,7 +9,7 @@ alter table public.listing_commissions add column if not exists rental_request_i
 create unique index if not exists listing_commissions_one_per_rental on public.listing_commissions(rental_request_id) where rental_request_id is not null and status <> 'cancelled';
 alter table public.listing_commissions drop constraint if exists listing_commissions_source_check;
 alter table public.listing_commissions add constraint listing_commissions_source_check check (source in ('sold', 'auction', 'offer', 'rental', 'rented'));
--- PENDENTE (precisa de autorização do dono, o Supabase recusou apagar o índice): trocar
+-- PENDENTE (ver 20261118100000_commissions_sales_only_index.sql; o índice novo já existe): trocar
 -- listing_commissions_one_open (uma comissão por anúncio) por uma só para vendas, para o mesmo anúncio
 -- poder ter várias comissões de aluguer:
 --   create unique index listing_commissions_one_sale on public.listing_commissions(listing_id)
