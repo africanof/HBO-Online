@@ -93,6 +93,8 @@ const errorMessages: [RegExp, string][] = [
   [/PHONE_REQUIRED/, "Indique um telefone."],
   [/LISTING_NOT_PUBLISHED/, "Só pode destacar anúncios publicados."],
   [/BOOST_NOT_FOUND/, "Destaque não encontrado."],
+  [/CANNOT_FOLLOW_SELF/, "Não pode seguir o seu próprio perfil."],
+  [/INVALID_FOLLOW/, "Não é possível seguir este perfil."],
   [/INVALID_WHATSAPP/, "Escreva um número de WhatsApp válido (ex.: 923 000 000)."],
   [/PROTECTED_DISABLED/, "O pagamento protegido ainda não está disponível. Escolha outra forma de pagamento."],
   [/PROTECTED_PAID_BY_PLATFORM/, "Nesta encomenda o pagamento é confirmado pelo Huambo Online, não pelo vendedor."],

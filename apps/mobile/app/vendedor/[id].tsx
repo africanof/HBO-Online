@@ -9,6 +9,7 @@ import { StatsBlock, VerifiedTag, stars } from "../../components/Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "../../components/Trust";
 import { currentUserId } from "../../lib/supabase";
 import { LiteImage } from "../../components/LiteImage";
+import { FollowButton } from "../../components/Engage";
 
 export default function Vendedor() {
   const router = useRouter();
@@ -35,6 +36,7 @@ export default function Vendedor() {
         <Text style={ui.muted}>{[s.municipality, "membro desde " + new Date(s.member_since).toLocaleDateString("pt-AO")].filter(Boolean).join(" · ")}</Text></View>
     </View>
     {s.is_provider && <><Text style={ui.text}>{ratingLabel(s.rating, s.review_count)}</Text><Link href={("/profissionais/" + s.id) as any} style={ui.link}>Ver perfil profissional →</Link></>}
+    <FollowButton kind="seller" id={s.id} mine={me === s.id} />
     <TrustBadges userId={s.id} />
     <StatsBlock rows={userStatsRows(stats)} />
     <Text style={ui.h2}>Anúncios ({listings.length})</Text>

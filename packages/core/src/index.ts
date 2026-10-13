@@ -71,3 +71,4 @@ export * from "./commissions";
 export * from "./protected-payments";
 export * from "./data-saver";
 export * from "./boosts";
+export * from "./follows";

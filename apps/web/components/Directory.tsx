@@ -4,7 +4,7 @@ import { listBusinessProducts, listProviders, listBusinesses, getProvider, getBu
   listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
   listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
-import { SaveButton, ShareButton, useRecordView } from "./Engage";
+import { SaveButton, ShareButton, FollowButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, stars } from "./Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "./Trust";
 import { PortfolioGallery } from "./Portfolio";
@@ -154,6 +154,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <StatsBlock rows={stats.rows} footer={stats.since} />
     {(item.bio || item.description) && <p style={{ whiteSpace: "pre-wrap" }}>{item.bio || item.description}</p>}
     <div className="row">
+      <FollowButton kind={kind === "providers" ? "provider" : "business"} id={id} mine={mine} />
       {item.phone && <a className="btn secondary" href={"tel:" + item.phone.replace(/\s/g, "")}>📞 Ligar</a>}
       {wa && <a className="btn secondary" href={wa} target="_blank" rel="noopener">WhatsApp</a>}
       {mine && <a className="btn" href={kind === "providers" ? "/conta/profissional" : "/conta/empresas"}>Editar</a>}

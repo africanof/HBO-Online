@@ -78,6 +78,7 @@ export default function Conta() {
       <Button title="📅 Alugueres" variant="secondary" onPress={() => router.push("/alugueres" as any)} />
       <Button title="🛵 Ser estafeta / Entregas" variant="secondary" onPress={() => router.push("/entregas" as any)} />
       <Button title="⭐ Guardados" variant="secondary" onPress={() => router.push("/guardados")} />
+      <Button title="👥 A seguir" variant="secondary" onPress={() => router.push("/seguindo" as any)} />
       <Button title="🕘 Vistos recentemente" variant="secondary" onPress={() => router.push("/historico" as any)} />
       <Button title="💬 Mensagens" variant="secondary" onPress={() => router.push("/mensagens")} />
       <Button title="🔔 Notificações" variant="secondary" onPress={() => router.push("/notificacoes")} />
