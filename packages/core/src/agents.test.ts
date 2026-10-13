@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { normalizeAgentCode, isAgentCodeShape, validateAgentApplication, agentOfferText, agentInviteMessage, agentTotals, sumCommissions,
+import { agentCommissionLine, normalizeAgentCode, isAgentCodeShape, validateAgentApplication, agentOfferText, agentInviteMessage, agentTotals, sumCommissions,
   applyAsAgent, checkAgentCode, setListingAgent, decideAgent, decideAgentCommissions, listAgentsForAdmin, getMyAgentPanel } from "./agents";
 import { friendlyError } from "./classified-listings";
 import { WALLET_KIND_LABELS } from "./protected-payments";
@@ -23,17 +23,20 @@ describe("agentes no terreno", () => {
     expect(validateAgentApplication({ marketId: "m", fullName: "Maria", phone: "+244 923 000 000" })).toBeNull();
   });
   it("textos", () => {
-    expect(agentOfferText(100, 20)).toBe("Ganhe 100 Kz por cada anúncio publicado com o seu código (até 20 por dia).");
+    expect(agentOfferText(2)).toBe("Ganhe 2% do valor de cada venda dos anúncios que ajudou a pôr.");
+    expect(agentOfferText("1.5")).toBe("Ganhe 1,5% do valor de cada venda dos anúncios que ajudou a pôr.");
+    expect(agentCommissionLine({ amount: 5000, sale_amount: 250000, rate_pct: 2 })).toBe("Vendido por 250 000 Kz · 2% = 5 000 Kz");
+    expect(agentCommissionLine({ amount: 100 })).toBe("100 Kz");
     expect(agentOfferText(0)).toBe("Ajude os vendedores da sua praça a pôr anúncios no Huambo Online.");
     expect(agentInviteMessage("AG1001", "Maria", "https://huambo.ao/")).toBe("Olá! Sou Maria, agente do Huambo Online. Ajudo a pôr o seu anúncio na internet, de graça para si.\nAo publicar, escreva o meu código: AG1001\n👉 https://huambo.ao/classificados/publicar?agente=AG1001");
     expect(WALLET_KIND_LABELS.agent).toBe("Comissão de agente");
     expect(HELP_FAQ.some(f => f.q === "O que é um agente no terreno?")).toBe(true);
   });
   it("totais", () => {
-    expect(agentTotals(null)).toEqual({ pending: 0, approved: 0, listings: 0, rejected: 0, count: 0 });
-    const p = { agent: null, fee_kz: 100, daily_cap: 20, pending_kz: 200, approved_kz: 500, listings: 8,
+    expect(agentTotals(null)).toEqual({ pending: 0, approved: 0, listings: 0, sold: 0, rejected: 0, count: 0 });
+    const p = { agent: null, sale_pct: 2, pending_kz: 200, approved_kz: 500, listings: 8, sold: 3,
       commissions: [{ status: "rejected" }, { status: "pending" }] as any };
-    expect(agentTotals(p)).toEqual({ pending: 200, approved: 500, listings: 8, rejected: 1, count: 2 });
+    expect(agentTotals(p)).toEqual({ pending: 200, approved: 500, listings: 8, sold: 3, rejected: 1, count: 2 });
     expect(sumCommissions([{ id: "a", amount: 100 }, { id: "b", amount: 150 }, { id: "c", amount: 1 }], ["a", "b"])).toBe(250);
   });
   it("erros em português", () => {
@@ -69,7 +72,7 @@ describe("agentes no terreno", () => {
     await decideAgentCommissions(e, ["a", "b"], true);
     expect(e.rpc).toHaveBeenCalledWith("admin_decide_agent_commissions", { p_ids: ["a", "b"], p_approve: true, p_note: null });
     const l = rpcClient(null); expect((await listAgentsForAdmin(l, "")).data).toEqual([]);
-    expect(l.rpc).toHaveBeenCalledWith("admin_list_agents", { p_status: null });
-    expect((await getMyAgentPanel(rpcClient({ agent: null, fee_kz: 100, daily_cap: 20 }))).data?.fee_kz).toBe(100);
+    expect(l.rpc).toHaveBeenCalledWith("admin_list_agents_v2", { p_status: null });
+    expect((await getMyAgentPanel(rpcClient({ agent: null, sale_pct: 2 }))).data?.sale_pct).toBe(2);
   });
 });

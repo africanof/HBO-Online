@@ -3,30 +3,33 @@ import { formatPrice } from "./classified-listings";
 
 /**
  * Agentes no terreno (igual no Site e na APP): pessoas nas praças (ex.: Kapango) que ajudam os vendedores a pôr
- * anúncios. O vendedor escreve o código do agente ao publicar; por cada anúncio publicado o agente ganha uma pequena
- * comissão, que a administração confirma e que entra no «O meu saldo» do agente.
+ * anúncios. O vendedor escreve o código do agente ao publicar; quando esse anúncio é VENDIDO, o agente ganha uma
+ * percentagem do valor da venda, que a administração confirma e que entra no «O meu saldo» do agente.
  */
 export type AgentStatus = "pending" | "active" | "suspended" | "rejected";
-export type AgentCommissionStatus = "pending" | "approved" | "rejected";
+export type AgentCommissionStatus = "pending" | "approved" | "rejected" | "cancelled";
 export type FieldAgent = {
   code: string; status: AgentStatus; full_name: string; phone: string; note: string | null; admin_note: string | null;
   market_id: string | null; market_name: string | null; created_at: string;
 };
 export type AgentCommission = {
-  id: string; listing_id: string | null; listing_title: string; amount: number; status: AgentCommissionStatus;
+  id: string; listing_id: string | null; listing_title: string; amount: number; sale_amount: number | null; rate_pct: number | null; status: AgentCommissionStatus;
   admin_note: string | null; created_at: string; decided_at: string | null; listing_status: string | null;
 };
+export type AgentHelpedListing = { id: string; title: string; status: string; price: number | null; currency: string | null; created_at: string };
 export type AgentPanel = {
-  agent: FieldAgent | null; fee_kz: number; daily_cap: number;
-  pending_kz?: number; approved_kz?: number; listings?: number; commissions?: AgentCommission[];
+  agent: FieldAgent | null; sale_pct: number;
+  pending_kz?: number; approved_kz?: number; listings?: number; sold?: number; helped?: AgentHelpedListing[]; commissions?: AgentCommission[];
 };
 export type AdminAgent = {
   user_id: string; code: string; full_name: string; phone: string; note: string | null; status: AgentStatus; admin_note: string | null;
-  market_name: string | null; created_at: string; listings: number; pending_count: number; pending_kz: number; approved_kz: number;
+  market_name: string | null; created_at: string; listings: number; sold: number; pending_count: number; pending_kz: number; approved_kz: number;
 };
 export type AdminAgentCommission = {
   id: string; agent_id: string; agent_code: string; agent_name: string; listing_id: string | null; listing_title: string;
-  listing_status: string | null; listing_ref: number | null; owner_name: string; amount: number; status: AgentCommissionStatus;
+  listing_status: string | null; listing_ref: number | null; owner_name: string; amount: number; sale_amount: number | null; rate_pct: number | null;
+  /** Estado da comissão de venda que o VENDEDOR paga ao Huambo Online (due, submitted, paid, waived) — ajuda a ver se a venda é real. */
+  seller_commission_status: string | null; status: AgentCommissionStatus;
   admin_note: string | null; created_at: string;
 };
 export type AgentCodeInfo = { code: string; first_name: string; market_name: string | null };
@@ -35,7 +38,11 @@ export const AGENT_STATUS_LABELS: Record<AgentStatus, string> = {
   pending: "⏳ À espera de aprovação", active: "✅ Agente ativo", suspended: "⛔ Suspenso", rejected: "Pedido não aceite"
 };
 export const AGENT_COMMISSION_STATUS_LABELS: Record<AgentCommissionStatus, string> = {
-  pending: "⏳ À espera de confirmação", approved: "✅ Confirmada (no saldo)", rejected: "Recusada"
+  pending: "⏳ À espera de confirmação", approved: "✅ Confirmada (no saldo)", rejected: "Recusada", cancelled: "Anulada (o anúncio deixou de estar vendido)"
+};
+export const SELLER_COMMISSION_LABELS: Record<string, string> = {
+  due: "o vendedor ainda não pagou a comissão da venda", submitted: "o vendedor enviou o comprovativo da comissão",
+  paid: "o vendedor já pagou a comissão da venda", waived: "a comissão do vendedor foi perdoada"
 };
 
 /** «ag-1001», «AG 1001» → «AG1001». */
@@ -51,10 +58,15 @@ export function validateAgentApplication(i: { marketId?: string | null; fullName
   if (i.phone.replace(/[^0-9]/g, "").length < 9) return "Escreva um telefone com 9 algarismos.";
   return null;
 }
-export function agentOfferText(feeKz: number | null | undefined, dailyCap?: number | null): string {
-  const fee = Number(feeKz ?? 0);
-  if (!fee) return "Ajude os vendedores da sua praça a pôr anúncios no Huambo Online.";
-  return `Ganhe ${formatPrice(fee)} por cada anúncio publicado com o seu código${dailyCap ? ` (até ${dailyCap} por dia)` : ""}.`;
+export function agentOfferText(salePct: number | string | null | undefined): string {
+  const pct = Number(salePct ?? 0);
+  if (!pct) return "Ajude os vendedores da sua praça a pôr anúncios no Huambo Online.";
+  return `Ganhe ${String(pct).replace(".", ",")}% do valor de cada venda dos anúncios que ajudou a pôr.`;
+}
+/** «Vendido por 250 000 Kz · 2% = 5 000 Kz». */
+export function agentCommissionLine(c: { amount: number; sale_amount?: number | null; rate_pct?: number | null }): string {
+  if (c.sale_amount == null || c.rate_pct == null) return formatPrice(c.amount);
+  return `Vendido por ${formatPrice(c.sale_amount)} · ${String(Number(c.rate_pct)).replace(".", ",")}% = ${formatPrice(c.amount)}`;
 }
 /** Mensagem que o agente envia no WhatsApp aos vendedores. */
 export function agentInviteMessage(code: string, firstName: string, siteUrl: string): string {
@@ -64,7 +76,7 @@ export function agentInviteMessage(code: string, firstName: string, siteUrl: str
 export function agentTotals(p: AgentPanel | null) {
   const list = p?.commissions ?? [];
   return {
-    pending: Number(p?.pending_kz ?? 0), approved: Number(p?.approved_kz ?? 0), listings: Number(p?.listings ?? 0),
+    pending: Number(p?.pending_kz ?? 0), approved: Number(p?.approved_kz ?? 0), listings: Number(p?.listings ?? 0), sold: Number(p?.sold ?? 0),
     rejected: list.filter(c => c.status === "rejected").length, count: list.length
   };
 }
@@ -95,7 +107,7 @@ export function setListingAgent(client: SupabaseClient, listingId: string, code:
   return client.rpc("set_listing_agent", { p_listing_id: listingId, p_code: normalizeAgentCode(code) });
 }
 export async function listAgentsForAdmin(client: SupabaseClient, status?: AgentStatus | "") {
-  const r = await client.rpc("admin_list_agents", { p_status: status || null });
+  const r = await client.rpc("admin_list_agents_v2", { p_status: status || null });
   return { data: (r.data ?? []) as AdminAgent[], error: r.error };
 }
 export function decideAgent(client: SupabaseClient, userId: string, status: Exclude<AgentStatus, "pending">, note?: string) {
@@ -103,7 +115,7 @@ export function decideAgent(client: SupabaseClient, userId: string, status: Excl
   return client.rpc("admin_decide_agent", { p_user_id: userId, p_status: status, p_note: note?.trim() || null });
 }
 export async function listAgentCommissionsForAdmin(client: SupabaseClient, status: AgentCommissionStatus | "" = "pending") {
-  const r = await client.rpc("admin_list_agent_commissions", { p_status: status || null });
+  const r = await client.rpc("admin_list_agent_commissions_v2", { p_status: status || null });
   return { data: (r.data ?? []) as AdminAgentCommission[], error: r.error };
 }
 export function decideAgentCommissions(client: SupabaseClient, ids: string[], approve: boolean, note?: string) {
