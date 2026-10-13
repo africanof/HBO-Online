@@ -93,6 +93,8 @@ const errorMessages: [RegExp, string][] = [
   [/PHONE_REQUIRED/, "Indique um telefone."],
   [/LISTING_NOT_PUBLISHED/, "Só pode destacar anúncios publicados."],
   [/BOOST_NOT_FOUND/, "Destaque não encontrado."],
+  [/CANNOT_BLOCK_SELF/, "Não se pode bloquear a si próprio."],
+  [/\bBLOCKED\b/, "Não pode enviar mensagens nesta conversa: uma das pessoas bloqueou a outra."],
   [/CANNOT_FOLLOW_SELF/, "Não pode seguir o seu próprio perfil."],
   [/INVALID_FOLLOW/, "Não é possível seguir este perfil."],
   [/INVALID_WHATSAPP/, "Escreva um número de WhatsApp válido (ex.: 923 000 000)."],

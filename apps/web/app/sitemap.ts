@@ -4,7 +4,7 @@ import { SITE_URL } from "../lib/site";
 
 export const revalidate = 3600; // atualiza o mapa do site de hora a hora
 
-const STATIC = ["/", "/explorar", "/loja", "/profissionais", "/empresas", "/pracas", "/procura-se", "/trocas", "/classificados/publicar", "/ajuda", "/termos", "/privacidade", "/devolucoes", "/apagar-conta"];
+const STATIC = ["/", "/explorar", "/loja", "/profissionais", "/empresas", "/pracas", "/procura-se", "/trocas", "/classificados/publicar", "/ajuda", "/seguranca", "/agricultura", "/termos", "/privacidade", "/devolucoes", "/apagar-conta"];
 
 /** Mapa do site para o Google: páginas principais + anúncios, produtos, profissionais, empresas e praças públicos. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

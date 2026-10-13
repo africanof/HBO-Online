@@ -9,6 +9,7 @@ export default function Ajuda() {
     <Link href="/" style={ui.link}>← Início</Link>
     <Text style={ui.h1}>❓ Ajuda</Text>
     <Text style={ui.text}>Respostas às perguntas mais comuns. Toque numa pergunta para ver a resposta.</Text>
+    <Link href={"/seguranca" as any} style={ui.link}>🛡️ Segurança: pontos de encontro e sinais de burla</Link>
     <FaqList items={HELP_FAQ} />
     <View style={ui.card}><Text style={ui.h2}>Precisa de mais ajuda?</Text><Text style={ui.text}>{contactLine(CONTACT_EMAIL)}</Text></View>
     <InfoLinks />

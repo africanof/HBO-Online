@@ -242,3 +242,6 @@ details.faq[open] summary { margin-bottom: 6px; }
 /* Destaques pagos */
 .item-feat { position: absolute; bottom: 10px; left: 10px; padding: 2px 8px; border-radius: 999px; font-size: 13px; font-weight: 800; background: var(--yellow-soft); color: var(--yellow-text); border: 1px solid var(--yellow-line); }
 .item.featured .item-img { outline: 3px solid var(--yellow-line); outline-offset: -3px; }
+/* Segurança: avisos de burla nas mensagens */
+.scam-warn { background: var(--yellow-soft); color: var(--yellow-text); border: 2px solid var(--yellow-line); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 6px; }
+.scam-warn strong { color: var(--yellow-text); }

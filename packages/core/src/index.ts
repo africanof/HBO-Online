@@ -73,3 +73,4 @@ export * from "./data-saver";
 export * from "./boosts";
 export * from "./follows";
 export * from "./agro";
+export * from "./safety";

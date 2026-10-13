@@ -15,10 +15,11 @@ import { AdminVerifications, AdminAudit } from "../components/AdminTrust";
 import { AdminDisputes } from "../components/Disputes";
 import { AdminPlans, AdminRevenue } from "../components/Plans";
 import { AdminProtected } from "../components/ProtectedPayment";
+import { AdminSafeSpots } from "../components/Safety";
 
-type Tab = "stats" | "reports" | "revenue" | "protected" | "plans" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+type Tab = "stats" | "reports" | "revenue" | "protected" | "plans" | "safety" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
 const tabOptions: { value: Tab; label: string }[] = [
-  { value: "stats", label: "Estatísticas" }, { value: "reports", label: "Denúncias" }, { value: "revenue", label: "Receitas" }, { value: "protected", label: "Pagamento protegido" }, { value: "plans", label: "Mensalidades e comissões" }, { value: "disputes", label: "Disputas" }, { value: "verifications", label: "Verificações" }, { value: "listings", label: "Anúncios" },
+  { value: "stats", label: "Estatísticas" }, { value: "reports", label: "Denúncias" }, { value: "revenue", label: "Receitas" }, { value: "protected", label: "Pagamento protegido" }, { value: "plans", label: "Mensalidades e comissões" }, { value: "safety", label: "Segurança" }, { value: "disputes", label: "Disputas" }, { value: "verifications", label: "Verificações" }, { value: "listings", label: "Anúncios" },
   { value: "users", label: "Utilizadores" }, { value: "categories", label: "Categorias" }, { value: "couriers", label: "Estafetas" }, { value: "markets", label: "Praças" }, { value: "audit", label: "Registo" }
 ];
 
@@ -38,7 +39,7 @@ export default function Admin() {
 
   async function load(t: Tab) {
     setError("");
-    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "disputes" || t === "plans" || t === "revenue" || t === "protected") return;
+    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "disputes" || t === "plans" || t === "safety" || t === "revenue" || t === "protected") return;
     const c = supabase();
     const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReportsV2(c, reportFilter || undefined)
       : t === "listings" ? await listListingsForModeration(c, "", listingQuery) : t === "users" ? await listUsersForAdmin(c, userQuery) : await listAllCategories(c);
@@ -69,6 +70,7 @@ export default function Admin() {
     {tab === "plans" && <AdminPlans />}
     {tab === "revenue" && <AdminRevenue />}
     {tab === "protected" && <AdminProtected />}
+    {tab === "safety" && <AdminSafeSpots />}
     {tab === "audit" && <AdminAudit />}
     {tab === "stats" && stats && ADMIN_STAT_LABELS.map(([k, l]) => <View key={k} style={ui.card}><Text style={ui.text}>{l}</Text><Text style={ui.h1}>{stats[k]}</Text></View>)}
 

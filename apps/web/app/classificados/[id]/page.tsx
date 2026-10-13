@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
   reportClassifiedListing, getPublicProfile, formatPrice, friendlyError, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
+import { SafetyTipsBox } from "../../../components/Safety";
 import { ShareButton, SellerWhatsApp, useRecordView, browserStore } from "../../../components/Engage";
 import { OfflineBanner } from "../../../components/Offline";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
@@ -156,6 +157,7 @@ export default function ClassifiedDetail() {
     {mine && item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} />}
     {!mine && <>
       {(can.offerMoney || can.offerTrade) && <OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} />}
+      <SafetyTipsBox />
       <section className="card" id="contactar">
         <h2 style={{ margin: 0 }}>{item.purpose === "wanted" ? "Responder ao comprador" : "Contactar anunciante"}</h2>
         <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Olá, o anúncio ainda está disponível?" rows={4} />
