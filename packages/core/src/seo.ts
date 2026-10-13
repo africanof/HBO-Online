@@ -4,7 +4,7 @@ import { listingPriceLabel } from "./wanted";
 
 /** Título, descrição e fotografia de cada página pública (Google e pré-visualização no WhatsApp/Facebook). */
 export type PageSeo = { title: string; description: string; image?: string; noindex?: boolean };
-export type SeoKind = "listing" | "product" | "provider" | "business" | "market" | "seller";
+export type SeoKind = "listing" | "product" | "provider" | "business" | "market" | "seller" | "event";
 
 const clip = (s: string, n: number) => { const t = s.replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t; };
 const first = (media: unknown): string | undefined => Array.isArray(media) ? media.find((m): m is string => typeof m === "string" && /^https:\/\//.test(m)) : undefined;
@@ -30,6 +30,11 @@ export function buildSeo(kind: SeoKind, row: any): PageSeo {
         description: clip(row.description || "Empresa no Huambo. Contactos, avaliações e serviços no Huambo Online.", 160), image: https(row.logo_url), noindex: !row.active };
     case "market":
       return { title: clip(`${row.name} — praça do Huambo`, 70), description: clip(row.description || `Vendedores e produtos da ${row.name}.`, 160), image: https(row.photo_url), noindex: row.status !== "active" };
+    case "event": {
+      const d = new Date(Date.parse(row.starts_at) + 3600_000); const when = `${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}/${d.getUTCFullYear()}`;
+      return { title: clip(`${row.title} — ${when}`, 70), description: clip(`Evento em ${row.venue}, ${when}. Compre o bilhete no Huambo Online. ${row.description ?? ""}`, 160),
+        image: https(row.cover_url), noindex: row.status !== "published" };
+    }
     case "seller":
       return { title: clip(`${row.full_name || "Vendedor"} — anúncios e avaliações`, 70), description: clip(`Anúncios, produtos e avaliações de ${row.full_name || "este vendedor"} no Huambo Online.`, 160), image: https(row.avatar_url) };
   }
@@ -43,6 +48,7 @@ export async function fetchSeo(client: SupabaseClient, kind: SeoKind, id: string
     : kind === "provider" ? client.from("provider_profiles").select("display_name,headline,bio,avatar_url,active,custom_category,categories(name)").eq("user_id", id).maybeSingle()
     : kind === "business" ? client.from("businesses").select("name,description,logo_url,active,custom_category,categories(name)").eq("id", id).maybeSingle()
     : kind === "market" ? client.from("markets").select("name,description,photo_url,status").eq("id", id).maybeSingle()
+    : kind === "event" ? client.from("events").select("title,description,venue,starts_at,cover_url,status").eq("id", id).maybeSingle()
     : client.rpc("public_seller", { p_user_id: id }).maybeSingle();
   const { data } = await q;
   return buildSeo(kind, data);

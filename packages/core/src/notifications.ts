@@ -29,6 +29,8 @@ export function getNotificationLink(n: Pick<AppNotification, "data" | "type" | "
   if (d.for === "follow" && isUuid(d.business_id)) return { href: "/empresas/" + d.business_id, label: "🏪 Ver empresa →" };
   if (d.for === "new_follower") return { href: "/seguindo", label: "👥 Ver quem eu sigo →" };
   if (d.for === "boost") return { href: "/meus-anuncios", label: "⭐ Ver os meus anúncios →" };
+  if (d.for === "tickets") return { href: "/bilhetes", label: "🎟️ Ver os meus bilhetes →" };
+  if (d.for === "event_orders" && isUuid(d.event_id)) return { href: "/eventos/" + d.event_id + "/gerir", label: "🎟️ Gerir o evento →" };
   if (d.for === "claim") return { href: "/disputas", label: "↩️ Ver reclamações →" };
   if (d.for === "referral") return { href: "/convidar", label: "🎁 Ver os meus convites →" };
   if (d.for === "agent") return { href: "/agente", label: "🤝 Ver o meu painel de agente →" };

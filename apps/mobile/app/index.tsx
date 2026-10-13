@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted, listTrades, cardSaleTag, loadWithCache, isOfflineError, isFeatured } from "@huambo-online/core";
+import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted, listTrades, cardSaleTag, loadWithCache, isOfflineError, isFeatured, listEvents, priceFromText, formatEventDate } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ui, C, themed } from "../lib/ui";
 import { Button } from "../components/Ui";
@@ -14,10 +14,10 @@ import { OfflineBanner } from "../components/Offline";
 import { deviceStore } from "../components/Engage";
 import { LiteImage } from "../components/LiteImage";
 
-type Shelves = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[] };
+type Shelves = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[]; events?: any[] };
 
 const MORE: [string, string, string][] = [
-  ["🌾", "Agricultura e campo", "/agricultura"], ["👥", "A seguir", "/seguindo"], ["🛡️", "Segurança", "/seguranca"], ["🤝", "Ser agente", "/agente"], ["🎁", "Convidar amigos", "/convidar"], ["📋", "Os meus anúncios", "/meus-anuncios"], ["📦", "Encomendas", "/encomendas"], ["♥", "Guardados", "/guardados"],
+  ["🌾", "Agricultura e campo", "/agricultura"], ["🎟️", "Eventos", "/eventos"], ["👥", "A seguir", "/seguindo"], ["🛡️", "Segurança", "/seguranca"], ["🤝", "Ser agente", "/agente"], ["🎁", "Convidar amigos", "/convidar"], ["📋", "Os meus anúncios", "/meus-anuncios"], ["📦", "Encomendas", "/encomendas"], ["♥", "Guardados", "/guardados"],
   ["🕘", "Vistos recentemente", "/historico"], ["⭐", "Pesquisas guardadas", "/pesquisas-guardadas"], ["🔔", "Notificações", "/notificacoes"]
 ];
 
@@ -34,14 +34,14 @@ export default function Home() {
     void loadWithCache<Shelves>(deviceStore, "inicio", async () => {
       const all = await Promise.all([
         searchClassifiedListings(c, { limit: 12 }), searchClassifiedListings(c, { purpose: "auction", limit: 12 }),
-        searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c), listWanted(c, "", 12), listTrades(c, "", false, 12)
+        searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c), listWanted(c, "", 12), listTrades(c, "", false, 12), listEvents(c, { limit: 12 })
       ]);
       const netError = all.map(r => r.error).find(e => isOfflineError(e));
       if (netError) return { data: null, error: netError };
-      const [l, a, r, p, v, mk, w, t] = all;
+      const [l, a, r, p, v, mk, w, t, ev] = all;
       return { data: {
         listings: (l.data as any[]) ?? [], auctions: (a.data as any[]) ?? [], rentals: (r.data as any[]) ?? [],
-        products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? [], wanted: (w.data as any[]) ?? [], trades: (t.data as any[]) ?? []
+        products: (p.data as any[]) ?? [], providers: (v.data as any[]) ?? [], markets: (mk.data as any[]) ?? [], wanted: (w.data as any[]) ?? [], trades: (t.data as any[]) ?? [], events: (ev.data as any[]) ?? []
       } };
     }).then(res => {
       setOffline({ on: res.fromCache || isOfflineError(res.error), at: res.savedAt });
@@ -83,6 +83,8 @@ export default function Home() {
     </ScrollView>
 
     {s === null && <Text style={ui.muted}>A carregar novidades…</Text>}
+    {!!s?.events?.length && <Shelf title="🎟️ Próximos eventos" href="/eventos">{s.events.map(e => <ItemCard key={e.id} href={"/eventos/" + e.id} media={e.cover_url ? [e.cover_url] : null} icon="🎟️"
+      title={e.title} price={priceFromText(e.price_from)} featured={e.featured} meta={`📅 ${formatEventDate(e.starts_at)}`} />)}</Shelf>}
     {!!s?.auctions.length && <Shelf title="🔨 Leilões a decorrer" href="/explorar?finalidade=auction">{s.auctions.map(listing)}</Shelf>}
     {!!s?.markets.length && <Shelf title="🧺 Praças do Huambo" href="/pracas">{s.markets.map(m => <Link key={m.id} href={("/pracas/" + m.id) as any} asChild>
       <Pressable accessibilityRole="link" accessibilityLabel={m.name} style={{ width: 160, gap: 4 }}>
