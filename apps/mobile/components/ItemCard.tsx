@@ -7,16 +7,17 @@ import { LiteImage } from "./LiteImage";
 export const LISTING_ICON: Record<string, string> = { real_estate: "🏠", vehicle: "🚗", product: "📦", service: "🛠️", classified: "🏷️" };
 
 /** Cartão de artigo ao estilo eBay: fotografia quadrada, título em duas linhas, preço forte. */
-export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = "📦", width, video }: {
-  href: string; media?: unknown; title: string; price: string; meta?: string; tag?: string; tagRed?: boolean; icon?: string; width?: number | `${number}%`; video?: boolean;
+export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = "📦", width, video, featured }: {
+  href: string; media?: unknown; title: string; price: string; meta?: string; tag?: string; tagRed?: boolean; icon?: string; width?: number | `${number}%`; video?: boolean; featured?: boolean;
 }) {
   const photo = firstPhoto(media);
   return <Link href={href as any} asChild>
-    <Pressable accessibilityRole="link" accessibilityLabel={`${title}, ${price}`} style={({ pressed }) => [s.card, width !== undefined && { width }, pressed && { opacity: 0.85 }]}>
+    <Pressable accessibilityRole="link" accessibilityLabel={`${featured ? "Destaque: " : ""}${title}, ${price}`} style={({ pressed }) => [s.card, width !== undefined && { width }, pressed && { opacity: 0.85 }]}>
       <View style={s.img}>
         {photo ? <LiteImage placeholder={icon} source={{ uri: photo }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : <Text style={{ fontSize: 44 }}>{icon}</Text>}
         {!!tag && <View style={[s.tag, tagRed && { backgroundColor: C.red }]}><Text style={[s.tagText, tagRed && { color: C.onAccent }]}>{tag}</Text></View>}
         {!!video && <View style={s.video}><Text style={s.videoText}>▶ Vídeo</Text></View>}
+        {!!featured && <View style={s.feat}><Text style={s.featText}>⭐ Destaque</Text></View>}
       </View>
       <Text style={s.title} numberOfLines={2}>{title}</Text>
       <Text style={s.price}>{price}</Text>
@@ -44,6 +45,8 @@ const s = themed(C => StyleSheet.create({
   tag: { position: "absolute", left: 8, top: 8, backgroundColor: C.card, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
   video: { position: "absolute", right: 8, bottom: 8, backgroundColor: "rgba(0,0,0,0.75)", borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
   videoText: { fontSize: 12, fontWeight: "800", color: "#FFFFFF" },
+  feat: { position: "absolute", left: 8, bottom: 8, backgroundColor: "#FFF4D6", borderColor: "#E0B100", borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
+  featText: { fontSize: 12, fontWeight: "800", color: "#4A3700" },
   tagText: { fontSize: 12, fontWeight: "800", color: C.ink },
   title: { fontSize: 15, color: C.ink, lineHeight: 20 },
   price: { fontSize: 19, fontWeight: "800", color: C.ink },

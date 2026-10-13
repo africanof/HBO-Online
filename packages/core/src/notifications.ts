@@ -24,6 +24,7 @@ export function getNotificationLink(n: Pick<AppNotification, "data" | "type" | "
   if (d.for === "commission") return { href: "/conta/comissoes", label: "💸 Ver as minhas comissões →" };
   if (d.for === "plan") return { href: "/conta/plano", label: "💳 Ver o meu plano →" };
   if (d.for === "dispute" && isUuid(d.dispute_id)) return { href: "/disputas", label: "⚖️ Ver devolução / reembolso →" };
+  if (d.for === "boost") return { href: "/meus-anuncios", label: "⭐ Ver os meus anúncios →" };
   if (d.for === "wallet") return { href: "/conta/saldo", label: "💰 Ver o meu saldo →" };
   if (d.for === "sale" && isUuid(d.order_id)) return { href: "/encomendas?vendas=1", label: "📦 Ver venda →" };
   if (d.for === "purchase" && isUuid(d.order_id)) return { href: "/encomendas", label: "📦 Ver encomenda →" };
@@ -31,7 +32,7 @@ export function getNotificationLink(n: Pick<AppNotification, "data" | "type" | "
   if (n.type === "delivery") return d.for === "courier" ? { href: "/entregas", label: "🛵 Ver entregas →" } : isUuid(d.order_id) ? { href: "/encomendas", label: "📦 Ver encomenda →" } : null;
   if (isUuid(d.market_id)) return d.for === "admin" ? { href: "/admin", label: "🧺 Ver na administração →" } : { href: "/pracas/" + d.market_id, label: "🧺 Ver praça →" };
   if (isUuid(d.rental_id)) return { href: /^Novo pedido/.test(n.title) ? "/alugueres?recebidos=1" : "/alugueres", label: "📅 Ver alugueres →" };
-  if (d.for === "admin" && (isUuid(d.report_id) || isUuid(d.verification_id) || isUuid(d.dispute_id) || isUuid(d.payment_id) || isUuid(d.payout_id) || typeof d.reference === "string")) return { href: "/admin", label: "🛡️ Ver na administração →" };
+  if (d.for === "admin" && (isUuid(d.report_id) || isUuid(d.verification_id) || isUuid(d.dispute_id) || isUuid(d.payment_id) || isUuid(d.payout_id) || isUuid(d.boost_id) || typeof d.reference === "string")) return { href: "/admin", label: "🛡️ Ver na administração →" };
   if (d.for === "offer" && isUuid(d.listing_id)) return { href: "/classificados/" + d.listing_id + "#propostas", label: "💬 Ver propostas →" };
   if (d.for === "my_offer") return { href: "/propostas", label: "💬 As minhas propostas →" };
   if (d.for === "verification") return { href: "/conta/verificacao", label: "✔ Ver verificação →" };

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { listTrades, listingPriceLabel, friendlyError, timeAgo, PUBLISH_TRADE_HREF } from "@huambo-online/core";
+import { listTrades, listingPriceLabel, friendlyError, timeAgo, PUBLISH_TRADE_HREF, isFeatured } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../../components/ItemCard";
 
@@ -31,7 +31,7 @@ export default function Trocas() {
     {error && <p className="error" role="alert">{error}</p>}
     {items === null && !error && <p>A carregar…</p>}
     {items?.length === 0 && <div className="card"><strong>Ainda não há trocas{q ? ` com «${q}»` : ""}.</strong><a href={PUBLISH_TRADE_HREF}>Seja o primeiro a publicar uma troca →</a></div>}
-    <div className="results-grid">{items?.map(x => <ItemCard key={x.id} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
+    <div className="results-grid">{items?.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
       price={listingPriceLabel(x)} icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.sale_mode === "trade" ? "Troca" : "Aceita troca"}
       meta={[x.trade_wants ? "Quer: " + x.trade_wants : "", timeAgo(x.published_at ?? x.created_at)].filter(Boolean).join(" · ")} />)}</div>
   </main>;

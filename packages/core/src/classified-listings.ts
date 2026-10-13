@@ -91,6 +91,8 @@ const errorMessages: [RegExp, string][] = [
   [/CANNOT_BUY_OWN_PRODUCT/, "Não pode comprar o seu próprio produto."],
   [/DELIVERY_ADDRESS_REQUIRED/, "Indique a morada para a entrega."],
   [/PHONE_REQUIRED/, "Indique um telefone."],
+  [/LISTING_NOT_PUBLISHED/, "Só pode destacar anúncios publicados."],
+  [/BOOST_NOT_FOUND/, "Destaque não encontrado."],
   [/INVALID_WHATSAPP/, "Escreva um número de WhatsApp válido (ex.: 923 000 000)."],
   [/PROTECTED_DISABLED/, "O pagamento protegido ainda não está disponível. Escolha outra forma de pagamento."],
   [/PROTECTED_PAID_BY_PLATFORM/, "Nesta encomenda o pagamento é confirmado pelo Huambo Online, não pelo vendedor."],
@@ -259,7 +261,7 @@ export async function listMyClassifiedListings(client: SupabaseClient, ownerId: 
   return client.from("classified_listings").select(LISTING_COLUMNS + ",deal_with,deal_at").eq("owner_id", ownerId).order("created_at", { ascending: false });
 }
 
-const LISTING_COLUMNS = "id,ref_no,owner_id,category_id,address_id,listing_type,purpose,title,description,price,currency,attributes,media,status,featured,created_at,updated_at,market_id,video_url,budget_min,budget_max,sale_mode,accepts_trade,trade_wants";
+const LISTING_COLUMNS = "id,ref_no,owner_id,category_id,address_id,listing_type,purpose,title,description,price,currency,attributes,media,status,featured,featured_until,created_at,updated_at,market_id,video_url,budget_min,budget_max,sale_mode,accepts_trade,trade_wants";
 
 export async function listClassifiedListings(client: SupabaseClient, filters: {
   listingType?: ClassifiedListingType; purpose?: ClassifiedPurpose; categoryId?: string; limit?: number;
