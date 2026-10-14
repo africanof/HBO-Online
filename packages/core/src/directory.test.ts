@@ -80,5 +80,6 @@ describe("categoria pela ligação", () => {
     expect(categoryIdFromSlug(cats, null)).toBe("");
     expect(directoryHeading("fabricas")).toEqual({ title: "🏭 Fábricas do Huambo", cta: "Registar a minha fábrica" });
     expect(directoryHeading("lojas")).toBeNull();
+    expect(directoryHeading("combustivel-gas")?.title).toContain("combustível");
   });
 });
