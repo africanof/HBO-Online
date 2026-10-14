@@ -6,10 +6,10 @@ import { formatEventDate } from "./events";
  * a empresa ou a fábrica existe mesmo. É diferente do ✔ (documento verificado). Vale um tempo e pode ser retirado.
  */
 export type InspectionKind = "provider" | "business" | "store";
-export type InspectionStatus = "requested" | "scheduled" | "approved" | "rejected" | "cancelled" | "revoked";
+export type InspectionStatus = "awaiting_payment" | "payment_submitted" | "requested" | "scheduled" | "approved" | "rejected" | "cancelled" | "revoked";
 export const INSPECTION_KIND_LABELS: Record<InspectionKind, string> = { provider: "👷 Profissional", business: "🏢 Empresa ou fábrica", store: "🛍️ Loja" };
 export const INSPECTION_STATUS_LABELS: Record<InspectionStatus, string> = {
-  requested: "⏳ Pedido enviado", scheduled: "📅 Visita marcada", approved: "🏅 Inspecionado", rejected: "❌ Não aprovado", cancelled: "Cancelado", revoked: "⛔ Selo retirado"
+  awaiting_payment: "💳 Falta pagar a taxa", payment_submitted: "⏳ Pagamento enviado — a confirmar", requested: "✅ Pago — vamos marcar a visita", scheduled: "📅 Visita marcada", approved: "🏅 Inspecionado", rejected: "❌ Não aprovado", cancelled: "Cancelado", revoked: "⛔ Selo retirado"
 };
 export const INSPECTION_CHECKLIST: { key: string; label: string; required?: boolean }[] = [
   { key: "exists", label: "Existe mesmo no local indicado", required: true },
@@ -23,10 +23,16 @@ export const INSPECTION_EXPLAINED = "A equipa do Huambo Online visitou o local e
 
 export type MyInspection = { id: string; ref_no: number; kind: InspectionKind; target_id: string; target_name: string | null; status: InspectionStatus; address: string | null;
   phone: string | null; preferred_time: string | null; note: string | null; scheduled_for: string | null; admin_note: string | null; inspected_at: string | null;
-  valid_until: string | null; created_at: string };
-export type AdminInspection = MyInspection & { owner_id: string; owner_name: string; category_slug: string | null; inspector_name: string | null; checklist: Record<string, boolean> };
+  valid_until: string | null; created_at: string; fee_amount: number; pay_method: string | null; pay_reference: string | null; paid_at: string | null };
+export type AdminInspection = MyInspection & { pay_proof_path: string | null; pay_submitted_at: string | null; owner_id: string; owner_name: string; category_slug: string | null; inspector_name: string | null; checklist: Record<string, boolean> };
 export type InspectedInfo = { inspected_at: string | null; valid_until: string };
 
+/** Taxa da marcação: profissionais pagam menos do que lojas, empresas e fábricas. */
+export function inspectionFee(kind: InspectionKind, s: { inspection_fee_kz?: number | string | null; inspection_fee_provider_kz?: number | string | null } | null | undefined): number {
+  const v = kind === "provider" ? s?.inspection_fee_provider_kz ?? 2000 : s?.inspection_fee_kz ?? 5000;
+  return Number(v) || 0;
+}
+export const INSPECTION_FEE_NOTE = "A taxa paga a deslocação e a visita. Não é devolvida se a inspeção não for aprovada.";
 export function inspectionRef(n: number | null | undefined) { return n ? `I-${n}` : ""; }
 export function isInspected(info: InspectedInfo | null | undefined, now = Date.now()): boolean { return !!info && Date.parse(info.valid_until) > now; }
 /** «Visitado pela administração em 12/10/2026 · válido até 12/10/2027» */
@@ -61,11 +67,19 @@ export function requestInspection(client: SupabaseClient, kind: InspectionKind, 
 export function cancelInspection(client: SupabaseClient, id: string) { return client.rpc("cancel_inspection", { p_id: id }); }
 export async function myInspections(client: SupabaseClient) {
   const r = await client.rpc("my_inspections");
-  return { data: (r.data ?? []) as MyInspection[], error: r.error };
+  return { data: ((r.data ?? []) as MyInspection[]).map(i => ({ ...i, fee_amount: Number(i.fee_amount) || 0 })), error: r.error };
+}
+export function submitInspectionPayment(client: SupabaseClient, id: string, i: { method: "bank_transfer" | "multicaixa_express" | "cash"; reference?: string; proofPath?: string | null }) {
+  if (!i.reference?.trim() && !i.proofPath) return Promise.resolve({ data: null, error: new Error("Escreva a referência do pagamento ou junte o comprovativo.") });
+  return client.rpc("submit_inspection_payment", { p_id: id, p_method: i.method, p_reference: i.reference?.trim() || null, p_proof_path: i.proofPath || null });
+}
+export function decideInspectionPayment(client: SupabaseClient, id: string, confirm: boolean, note?: string) {
+  if (!confirm && !note?.trim()) return Promise.resolve({ data: null, error: new Error("Escreva o motivo (o dono vai ler).") });
+  return client.rpc("admin_decide_inspection_payment", { p_id: id, p_confirm: confirm, p_note: note?.trim() || null });
 }
 export async function listInspectionsForAdmin(client: SupabaseClient, status: InspectionStatus | "" = "requested") {
   const r = await client.rpc("admin_list_inspections", { p_status: status || null });
-  return { data: (r.data ?? []) as AdminInspection[], error: r.error };
+  return { data: ((r.data ?? []) as AdminInspection[]).map(i => ({ ...i, fee_amount: Number(i.fee_amount) || 0 })), error: r.error };
 }
 export function scheduleInspection(client: SupabaseClient, id: string, when: string, inspector?: string, note?: string) {
   const t = Date.parse(when);
