@@ -6,6 +6,8 @@ import { supabase } from "../../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../../components/ItemCard";
 import { OfflineBanner } from "../../components/Offline";
 import { browserStore } from "../../components/Engage";
+import { getPublic } from "../../lib/public-api";
+import { classifiedsCached } from "@huambo-online/core";
 
 type Option = { id: string; name: string };
 type F = { q: string; purpose: string; type: string; categoryId: string; provinceId: string; municipalityId: string; min: string; max: string; mode: string };
@@ -40,7 +42,7 @@ export default function ExplorarPage() {
     setError(""); setNotice(""); setBusy(true);
     const fl = toFilters(v); const key = JSON.stringify(fl);
     // Guarda a última pesquisa para a mostrar quando a rede falhar.
-    const r = await loadWithCache<{ key: string; items: any[] }>(browserStore, "explorar", async () => { const x = await searchClassifiedListings(supabase(), fl); return { data: x.data ? { key, items: x.data as any[] } : null, error: x.error }; });
+    const r = await loadWithCache<{ key: string; items: any[] }>(browserStore, "explorar", async () => { const x = await classifiedsCached(getPublic, () => searchClassifiedListings(supabase(), fl), fl as Record<string, unknown>); return { data: x.data ? { key, items: x.data as any[] } : null, error: x.error }; });
     const usable = r.data && r.data.key === key ? r.data.items : null;
     setOffline({ on: r.fromCache || isOfflineError(r.error), at: usable ? r.savedAt : null });
     setBusy(false);
