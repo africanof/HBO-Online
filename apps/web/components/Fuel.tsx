@@ -274,7 +274,7 @@ export function StationForm({ id }: { id?: string }) {
   return <main className="stack" style={{ maxWidth: 820 }}>
     <a href={id ? `/combustivel/${id}/gerir` : "/combustivel/meus"}>← Voltar</a>
     <h1 style={{ margin: 0 }}>{id ? "✏️ Editar posto" : "⛽ Registar posto"}</h1>
-    {!id && <p className="muted" style={{ margin: 0 }}>A administração confirma o posto antes de aparecer ao público (para evitar postos falsos).</p>}
+    <p className="muted" style={{ margin: 0 }}>{id ? "⚠️ Se mudar o nome, o local ou a conta para pagamentos, o posto volta a ficar à espera de aprovação da administração (para evitar burlas)." : "A administração confirma o posto antes de aparecer ao público (para evitar postos falsos)."}</p>
     <form className="stack" onSubmit={save}>
       <label>Nome<input value={name} onChange={e => setName(e.target.value)} maxLength={100} placeholder="Ex.: Posto Sonangol do Kapango" /></label>
       <div className="row" role="radiogroup" aria-label="O que vende">{(Object.keys(FUEL_KIND_LABELS) as FuelKind[]).map(k =>

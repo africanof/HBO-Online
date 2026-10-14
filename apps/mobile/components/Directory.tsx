@@ -14,6 +14,8 @@ import { ReportButton, TrustBadges, ReviewReply } from "./Trust";
 import { PortfolioGallery, BusinessProducts } from "./Portfolio";
 import { PromoShelf } from "./Promo";
 import { LiteImage } from "./LiteImage";
+import { InspectedBadge, useInspected } from "./Inspection";
+import { inspectionKindFor } from "@huambo-online/core";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string; slug?: string | null };
@@ -38,6 +40,7 @@ export function DirectoryList({ kind }: { kind: Kind }) {
   const [q, setQ] = useState(params.q ?? ""); const [categoryId, setCategoryId] = useState(""); const [municipalityId, setMunicipalityId] = useState(""); const [showFilters, setShowFilters] = useState(false);
   const [categories, setCategories] = useState<Option[]>([]); const { municipalities } = useTerritory();
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState("");
+  const badges = useInspected(inspectionKindFor(kind), (items ?? []).map(x => kind === "providers" ? x.user_id : x.id));
 
   useEffect(() => {
     void listDirectoryCategories(supabase(), kind).then(({ data }) => {
@@ -79,6 +82,7 @@ export function DirectoryList({ kind }: { kind: Kind }) {
       return <Pressable key={id} style={ui.card} accessibilityRole="link" onPress={() => router.push(`${t.base}/${id}` as any)}>
         {pic ? <LiteImage placeholder={kind === "providers" ? "👤" : "🏪"} source={{ uri: pic }} style={{ width: 56, height: 56, borderRadius: kind === "providers" ? 28 : 12 }} /> : <Text style={{ fontSize: 36 }}>{kind === "providers" ? "👷" : "🏢"}</Text>}
         <Text style={ui.h2}>{kind === "providers" ? x.display_name : x.name}{x.verified ? " ✔️" : ""}</Text>
+        <InspectedBadge info={badges[id]} />
         {!!(kind === "providers" ? x.headline : x.description) && <Text style={ui.text}>{String(kind === "providers" ? x.headline : x.description).slice(0, 120)}</Text>}
         <Text style={ui.muted}>{[x.category_name, x.municipality_name].filter(Boolean).join(" · ")}</Text>
         <Text style={ui.text}>{ratingLabel(x.rating, x.review_count)}</Text>
@@ -91,6 +95,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
   const router = useRouter();
   const target: ReviewTarget = kind === "providers" ? { providerId: id } : { businessId: id };
   const [item, setItem] = useState<any>(null); const [services, setServices] = useState<any[]>([]); const [reviews, setReviews] = useState<any[]>([]);
+  const badge = useInspected(inspectionKindFor(kind), [id]);
   const [uid, setUid] = useState<string | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
   const [stats, setStats] = useState<{ rows: { label: string; value: string }[]; since: string }>({ rows: [], since: "" });
   const [message, setMessage] = useState(""); const [rating, setRating] = useState(0); const [comment, setComment] = useState(""); const [busy, setBusy] = useState(false);
@@ -137,6 +142,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <Link href={TEXT[kind].base as any} style={ui.link}>← Voltar</Link>
     {!!(item.avatar_url || item.logo_url) && <Image source={{ uri: item.avatar_url || item.logo_url }} style={{ width: 96, height: 96, borderRadius: 20 }} accessibilityLabel={kind === "providers" ? "Fotografia" : "Logótipo"} />}
     <Text style={ui.h1}>{kind === "providers" ? item.display_name : item.name}{item.verified ? " ✔️" : ""}</Text>
+    <InspectedBadge info={badge[id]} big />
     {kind === "providers" && !!item.headline && <Text style={ui.text}>{item.headline}</Text>}
     <Text style={ui.muted}>{[categoryLabel(item), item.municipalities?.name, item.address_text].filter(Boolean).join(" · ")}</Text>
     {!!item.markets?.name && <Link href={("/pracas/" + item.markets.id) as any} style={ui.link}>🧺 Na {item.markets.name} →</Link>}

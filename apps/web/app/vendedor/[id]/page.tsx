@@ -10,10 +10,12 @@ import { ReportButton, TrustBadges, ReviewReply } from "../../../components/Trus
 import { currentUserId } from "../../../lib/supabase";
 import { FollowButton } from "../../../components/Engage";
 import { PromoSection } from "../../../components/Promo";
+import { InspectedBadge, useInspected } from "../../../components/Inspection";
 
 export default function Vendedor() {
   const { id } = useParams<{ id: string }>();
   const [s, setS] = useState<PublicSeller | null>(null); const [listings, setListings] = useState<any[]>([]); const [products, setProducts] = useState<any[]>([]); const [error, setError] = useState("");
+  const store = useInspected("store", [id]);
   const [stats, setStats] = useState<UserStats | null>(null); const [reviews, setReviews] = useState<UserReview[]>([]); const [me, setMe] = useState<string | null>(null);
   useEffect(() => { if (!id) return; void (async () => {
     const c = supabase();
@@ -36,6 +38,7 @@ export default function Vendedor() {
     {s.is_provider && <p>{ratingLabel(s.rating, s.review_count)} · <a href={"/profissionais/" + s.id}>Ver perfil profissional →</a></p>}
     <div className="row"><FollowButton kind="seller" id={s.id} mine={me === s.id} /></div>
     <TrustBadges userId={s.id} />
+    <InspectedBadge info={store[s.id]} big />
     <StatsBlock rows={userStatsRows(stats)} />
     <PromoSection kind="store" id={s.id} />
     <h2>Anúncios ({listings.length})</h2>

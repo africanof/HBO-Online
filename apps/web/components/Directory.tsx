@@ -11,6 +11,8 @@ import { PortfolioGallery } from "./Portfolio";
 import { PromoSection } from "./Promo";
 import { LiteImg } from "./LiteImg";
 import { PlaceView } from "./Place";
+import { InspectedBadge, useInspected } from "./Inspection";
+import { inspectionKindFor } from "@huambo-online/core";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string; slug?: string | null };
@@ -34,6 +36,7 @@ export function DirectoryList({ kind }: { kind: Kind }) {
   const [q, setQ] = useState(""); const [categoryId, setCategoryId] = useState(""); const [municipalityId, setMunicipalityId] = useState("");
   const [categories, setCategories] = useState<Option[]>([]); const { municipalities } = useTerritory();
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState("");
+  const badges = useInspected(inspectionKindFor(kind), (items ?? []).map(x => kind === "providers" ? x.user_id : x.id));
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -79,6 +82,7 @@ export function DirectoryList({ kind }: { kind: Kind }) {
             {pic ? <LiteImg placeholder={kind === "providers" ? "👤" : "🏪"} src={pic} alt="" style={{ width: 56, height: 56, borderRadius: kind === "providers" ? "50%" : 12, objectFit: "cover" }} /> : <span aria-hidden style={{ width: 56, height: 56, borderRadius: kind === "providers" ? "50%" : 12, background: "var(--surface)", display: "grid", placeItems: "center", fontSize: 28 }}>{kind === "providers" ? "👷" : "🏢"}</span>}
             <strong style={{ fontSize: 19 }}>{name}{x.verified ? " ✔️" : ""}</strong>
           </div>
+          <InspectedBadge info={badges[id]} />
           {kind === "providers" ? x.headline && <span>{x.headline}</span> : x.description && <span>{String(x.description).slice(0, 120)}</span>}
           <span className="item-meta">{[x.category_name, x.municipality_name].filter(Boolean).join(" · ")}</span>
           <span><strong>{ratingLabel(x.rating, x.review_count)}</strong></span>
@@ -104,6 +108,7 @@ function BusinessProducts({ ownerId, businessId }: { ownerId: string; businessId
 export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
   const target: ReviewTarget = kind === "providers" ? { providerId: id } : { businessId: id };
   const [item, setItem] = useState<any>(null); const [services, setServices] = useState<any[]>([]); const [reviews, setReviews] = useState<any[]>([]);
+  const badge = useInspected(inspectionKindFor(kind), [id]);
   const [uid, setUid] = useState<string | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
   const [stats, setStats] = useState<{ rows: { label: string; value: string }[]; since: string }>({ rows: [], since: "" });
   const [message, setMessage] = useState(""); const [rating, setRating] = useState(0); const [comment, setComment] = useState(""); const [busy, setBusy] = useState(false);
@@ -155,6 +160,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
       {(item.avatar_url || item.logo_url) && <img className="profile-pic" src={item.avatar_url || item.logo_url} alt={kind === "providers" ? "Fotografia de " + name : "Logótipo de " + name} />}
       <h1 style={{ margin: 0, overflowWrap: "anywhere" }}>{name}{item.verified ? " ✔️" : ""}</h1>
     </div>
+    <InspectedBadge info={badge[id]} big />
     {kind === "providers" && item.headline && <p style={{ fontSize: 19 }}>{item.headline}</p>}
     <p>{[categoryLabel(item), item.municipalities?.name, item.address_text].filter(Boolean).join(" · ")}</p>
     {item.markets?.name && <p>🧺 Na <a href={"/pracas/" + item.markets.id}>{item.markets.name}</a></p>}
