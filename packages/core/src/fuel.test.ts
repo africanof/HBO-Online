@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { fuelQuantityText, fuelPriceText, minutesAgoText, fuelIsStale, fuelStatusLine, fuelReportsText, normalizeFuelCode, fuelShareMessage, validateStation,
-  validateFuelReserve, stationRef, fuelOrderRef, fuelFeed, reserveFuel, submitFuelPayment, decideFuelPayment, collectFuel, setStationStatus, submitFuelFee,
+  validateFuelReserve, stationRef, fuelOrderRef, fuelFeed, reserveFuel, submitFuelPayment, decideFuelPayment, fuelOrderByToken, fuelFeeBreakdown, fuelFeeNotice, fuelVerifyUrl, fuelTokenFromText, fuelTransferNote, collectFuel, setStationStatus, submitFuelFee,
   updateFuelProduct, saveStation, FUEL_STATUS_LABELS, FUEL_COLLECT_LABELS, type StationInput } from "./fuel";
 import { friendlyError } from "./classified-listings";
 import { getNotificationLink } from "./notifications";
@@ -61,7 +61,13 @@ describe("combustível e gás", () => {
     const c = rpc();
     await reserveFuel(c, "p", 20, "at_station", " Ana ", " 923 ", " ld-12 ");
     expect(c.rpc).toHaveBeenLastCalledWith("reserve_fuel", { p_product_id: "p", p_quantity: 20, p_method: "at_station", p_name: "Ana", p_phone: "923", p_plate: "ld-12" });
-    expect((await submitFuelPayment(c, "o", "multicaixa_express", "1")).error?.message).toContain("referência");
+    expect((await submitFuelPayment(c, "o", { method: "multicaixa_express", reference: "1", proofPath: "u/p.jpg" })).error?.message).toContain("referência");
+    expect((await submitFuelPayment(c, "o", { method: "multicaixa_express", reference: "TX-9988", proofPath: null })).error?.message).toContain("comprovativo");
+    await submitFuelPayment(c, "o", { method: "bank_transfer", reference: " TX-9988 ", proofPath: "u/p.jpg", proofHash: "ab" });
+    expect(c.rpc).toHaveBeenLastCalledWith("submit_fuel_payment_v2", { p_order_id: "o", p_method: "bank_transfer", p_reference: "TX-9988", p_proof_path: "u/p.jpg", p_proof_hash: "ab" });
+    const v = rpc({ result: "ok", role: "station", quantity: "20", total: "6600", fee_amount: "600", subtotal: "6000" });
+    expect((await fuelOrderByToken(v, "abc")).data).toMatchObject({ quantity: 20, total: 6600, fee_amount: 600, subtotal: 6000 });
+    expect(v.rpc).toHaveBeenCalledWith("fuel_order_by_token", { p_token: "abc" });
     expect((await decideFuelPayment(c, "o", false)).error?.message).toContain("motivo");
     expect((await setStationStatus(c, "s", "suspended")).error?.message).toContain("motivo");
     expect((await submitFuelFee(c, "s", { method: "cash" })).error?.message).toContain("referência");
@@ -69,6 +75,17 @@ describe("combustível e gás", () => {
     expect((await collectFuel(k, "s", "abc234")).data?.result).toBe("ok");
     expect(k.rpc).toHaveBeenCalledWith("collect_fuel", { p_station_id: "s", p_code: "CB-ABC234" });
     expect((await updateFuelProduct(c, "p", { price: -1 })).error?.message).toContain("Preço");
+  });
+  it("taxa do APP e QR", () => {
+    expect(fuelFeeBreakdown(300, 20, 10)).toEqual({ subtotal: 6000, fee: 600, total: 6600 });
+    expect(fuelFeeBreakdown(333, 1.5, 10)).toEqual({ subtotal: 500, fee: 50, total: 550 });
+    expect(fuelFeeNotice(10)).toContain("10% de taxa");
+    const t = "0123456789abcdef0123456789abcdef";
+    expect(fuelVerifyUrl("https://huambo.online/", t)).toBe("https://huambo.online/combustivel/v/" + t);
+    expect(fuelTokenFromText("https://huambo.online/combustivel/v/" + t.toUpperCase())).toBe(t);
+    expect(fuelTokenFromText(t)).toBe(t);
+    expect(fuelTokenFromText("CB-ABC234")).toBeNull();
+    expect(fuelTransferNote(1234)).toContain("C-1234");
   });
   it("gravar o posto: produtos novos e tirados (sem perder pedidos)", async () => {
     const calls: [string, string, any][] = [];
