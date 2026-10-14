@@ -60,6 +60,7 @@ export const HOME_CATEGORIES: { label: string; icon: string; href: string }[] = 
   { label: "Viaturas", icon: "🚗", href: "/explorar?tipo=vehicle" },
   { label: "Campo", icon: "🌾", href: "/agricultura" },
   { label: "Fábricas", icon: "🏭", href: "/empresas?categoria=fabricas" },
+  { label: "Combustível e gás", icon: "⛽", href: "/combustivel" },
   { label: "Eventos", icon: "🎟️", href: "/eventos" },
   { label: "Praças", icon: "🧺", href: "/pracas" },
   { label: "Loja", icon: "🛍️", href: "/loja" },

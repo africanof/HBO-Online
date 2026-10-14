@@ -82,3 +82,4 @@ export * from "./conformity";
 export * from "./events";
 export * from "./promo";
 export * from "./chat-media";
+export * from "./fuel";
