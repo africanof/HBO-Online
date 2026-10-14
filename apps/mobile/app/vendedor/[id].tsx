@@ -12,6 +12,8 @@ import { currentUserId } from "../../lib/supabase";
 import { LiteImage } from "../../components/LiteImage";
 import { FollowButton } from "../../components/Engage";
 import { PromoShelf } from "../../components/Promo";
+import { getPublic } from "../../lib/public-api";
+import { sellerPageCached } from "@huambo-online/core";
 
 export default function Vendedor() {
   const router = useRouter();
@@ -21,13 +23,17 @@ export default function Vendedor() {
   const [stats, setStats] = useState<UserStats | null>(null); const [reviews, setReviews] = useState<UserReview[]>([]); const [me, setMe] = useState<string | null>(null);
   useEffect(() => { if (!id) return; void (async () => {
     const c = supabase();
-    const r = await getPublicSeller(c, id);
-    if (r.error) { setError(friendlyError(r.error)); return; }
-    if (!r.data) { setError("Perfil não encontrado."); return; }
-    setS(r.data);
-    const [l, p, st, rv] = await Promise.all([listSellerListings(c, id), listProducts(c, { sellerId: id }), getUserStats(c, id), listUserReviews(c, id)]);
+    // Perfil, anúncios e produtos: pela cache do Site (ou direto ao Supabase se não responder).
+    const b = await sellerPageCached(getPublic, id, async () => {
+      const [r, l, p] = await Promise.all([getPublicSeller(c, id), listSellerListings(c, id), listProducts(c, { sellerId: id })]);
+      return { seller: r.data ?? null, listings: l.data ?? [], products: (p.data as any[]) ?? [], error: r.error ?? l.error ?? p.error };
+    });
+    if (b.error && !b.seller) { setError(friendlyError(b.error)); return; }
+    if (!b.seller) { setError("Perfil não encontrado."); return; }
+    setS(b.seller);
+    const [st, rv] = await Promise.all([getUserStats(c, id), listUserReviews(c, id)]);
     setStats(st.data); setReviews(rv.data); setMe(await currentUserId());
-    setListings(l.data ?? []); setProducts((p.data as any[]) ?? []);
+    setListings(b.listings); setProducts(b.products);
   })(); }, [id]);
   if (error) return <View style={ui.screen}><Link href="/" style={ui.link}>← Huambo Online</Link><Text style={ui.error}>{error}</Text></View>;
   if (!s) return <View style={ui.screen}><Text style={ui.text}>A carregar…</Text></View>;

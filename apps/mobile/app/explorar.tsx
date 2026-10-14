@@ -10,6 +10,8 @@ import { SearchBar } from "../components/Brand";
 import { ItemCard, Grid, LISTING_ICON } from "../components/ItemCard";
 import { OfflineBanner } from "../components/Offline";
 import { deviceStore } from "../components/Engage";
+import { getPublic } from "../lib/public-api";
+import { classifiedsCached } from "@huambo-online/core";
 
 type Option = { id: string; name: string };
 
@@ -44,7 +46,7 @@ export default function Explorar() {
     const f = filters(o);
     // Guarda a última pesquisa de cada filtro para a mostrar sem internet.
     const key = JSON.stringify(f);
-    const r = await loadWithCache<{ key: string; items: any[] }>(deviceStore, "explorar", async () => { const x = await searchClassifiedListings(supabase(), f); return { data: x.data ? { key, items: x.data as any[] } : null, error: x.error }; });
+    const r = await loadWithCache<{ key: string; items: any[] }>(deviceStore, "explorar", async () => { const x = await classifiedsCached(getPublic, () => searchClassifiedListings(supabase(), f), f as Record<string, unknown>); return { data: x.data ? { key, items: x.data as any[] } : null, error: x.error }; });
     setBusy(false);
     const usable = r.data && r.data.key === key ? r.data.items : null; // só a mesma pesquisa
     setOffline({ on: r.fromCache || isOfflineError(r.error), at: usable ? r.savedAt : null });

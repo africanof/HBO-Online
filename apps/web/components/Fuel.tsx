@@ -13,6 +13,8 @@ import { SITE_URL } from "../lib/site";
 import { PlaceFields, PlaceView } from "./Place";
 import { PaymentDetails } from "./Plans";
 import { useTerritory } from "./Directory";
+import { getPublic } from "../lib/public-api";
+import { fuelFeedCached } from "@huambo-online/core";
 
 const STATUS_COLORS: Record<FuelStatus, string> = { available: "var(--ok)", low: "var(--gold-text)", out: "var(--danger)", unknown: "var(--muted)" };
 function StatusBadge({ s }: { s: FuelStatus }) {
@@ -38,7 +40,7 @@ export function FuelList() {
   const [rows, setRows] = useState<FuelRow[] | null>(null); const [uid, setUid] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<{ id: string; product: FuelProduct; municipality_id: string | null }[]>([]);
   const [error, setError] = useState(""); const [notice, setNotice] = useState("");
-  async function load() { const r = await fuelFeed(supabase(), { product, municipalityId }); if (r.error) setError(friendlyError(r.error)); else { setError(""); setRows(r.data); } }
+  async function load() { const r = await fuelFeedCached(getPublic, () => fuelFeed(supabase(), { product, municipalityId }), { product, municipalityId }); if (r.error) setError(friendlyError(r.error)); else { setError(""); setRows(r.data); } }
   useEffect(() => { void load(); }, [product, municipalityId]);
   useEffect(() => { void currentUserId().then(async u => { setUid(u); if (u) setAlerts((await listMyFuelAlerts(supabase())).data); }); }, []);
   const alert = product ? alerts.find(a => a.product === product && (a.municipality_id ?? "") === municipalityId) : undefined;

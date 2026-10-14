@@ -18,6 +18,8 @@ import { PlaceFields, PlaceView } from "./Place";
 import { PaymentDetails } from "./Plans";
 import { useTerritory } from "./Directory";
 import { QrScanButton } from "./QrScanner";
+import { getPublic } from "../lib/public-api";
+import { fuelFeedCached } from "@huambo-online/core";
 
 const ph = { placeholderTextColor: C.muted };
 const Field = ({ label, ...p }: { label: string } & React.ComponentProps<typeof TextInput>) =>
@@ -58,7 +60,7 @@ export function FuelListScreen() {
   const [rows, setRows] = useState<FuelRow[] | null>(null); const [uid, setUid] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<{ id: string; product: FuelProduct; municipality_id: string | null }[]>([]);
   const [error, setError] = useState(""); const [notice, setNotice] = useState("");
-  useEffect(() => { void fuelFeed(supabase(), { product, municipalityId }).then(r => { if (r.error) setError(friendlyError(r.error)); else { setError(""); setRows(r.data); } }); }, [product, municipalityId]);
+  useEffect(() => { void fuelFeedCached(getPublic, () => fuelFeed(supabase(), { product, municipalityId }), { product, municipalityId }).then(r => { if (r.error) setError(friendlyError(r.error)); else { setError(""); setRows(r.data); } }); }, [product, municipalityId]);
   useFocusEffect(useCallback(() => { void currentUserId().then(async u => { setUid(u); if (u) setAlerts((await listMyFuelAlerts(supabase())).data); }); }, []));
   const alert = product ? alerts.find(a => a.product === product && (a.municipality_id ?? "") === municipalityId) : undefined;
   async function toggleAlert() {
