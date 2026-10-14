@@ -4,7 +4,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Alert, Image, Linking, Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
 import { fuelFeed, getStation, listMyStations, listStationProducts, getStationPay, saveStation, updateFuelProduct, reportFuel, listMyFuelAlerts, addFuelAlert,
   removeFuelAlert, reserveFuel, submitFuelPayment, decideFuelPayment, collectFuel, cancelFuelOrder, myFuelOrders, stationPanel, submitFuelFee, listStationsForAdmin,
-  setStationStatus, listFuelPaymentsForAdmin, fuelOrderByToken, listFuelOrdersForAdmin, fuelFeeBreakdown, fuelFeeNotice, fuelVerifyUrl, fuelTransferNote, sha256Hex, decideFuelFee, getPlatformSettings, updatePlatformSettings, paymentProofUrl, uploadPaymentProof, base64ToArrayBuffer,
+  setStationStatus, listFuelPaymentsForAdmin, fuelOrderByToken, listFuelOrdersForAdmin, fuelFeeBreakdown, fuelFeeNotice, fuelVerifyUrl, fuelTransferNote, fuelTokenFromText, sha256Hex, decideFuelFee, getPlatformSettings, updatePlatformSettings, paymentProofUrl, uploadPaymentProof, base64ToArrayBuffer,
   fuelQuantityText, fuelPriceText, minutesAgoText, fuelIsStale, fuelStatusLine, fuelReportsText, fuelShareMessage, validateStation, validateFuelReserve, stationRef,
   fuelOrderRef, holdText, qrMatrix, formatPrice, friendlyError, whatsappShareUrl, whatsappLink, pointFrom, FUEL_PRODUCTS, FUEL_PRODUCT_LIST, FUEL_KIND_LABELS,
   FUEL_STATUS_LABELS, FUEL_QUEUE_LABELS, FUEL_METHOD_LABELS, FUEL_ORDER_STATUS_LABELS, FUEL_COLLECT_LABELS, PLAN_METHOD_LABELS,
@@ -17,6 +17,7 @@ import { Button, Chips, Message } from "./Ui";
 import { PlaceFields, PlaceView } from "./Place";
 import { PaymentDetails } from "./Plans";
 import { useTerritory } from "./Directory";
+import { QrScanButton } from "./QrScanner";
 
 const ph = { placeholderTextColor: C.muted };
 const Field = ({ label, ...p }: { label: string } & React.ComponentProps<typeof TextInput>) =>
@@ -382,7 +383,8 @@ export function StationManageScreen({ id }: { id: string }) {
     <Message error={error} ok={notice} />
     {(st.accepts_reservations || active.length > 0) && <View style={ui.card}>
       <Text style={ui.h2}>🧾 Cliente com QR ou código</Text>
-      <Text style={ui.muted}>Leia o QR do cliente com a câmara do telemóvel: abre a página que confirma se é verdadeiro e mostra o comprovativo. Ou escreva o código.</Text>
+      <Text style={ui.muted}>Leia o QR do cliente: a APP confirma se é verdadeiro e mostra o comprovativo. Ou escreva o código.</Text>
+      <QrScanButton onCode={text => { const t = fuelTokenFromText(text); if (t) router.push(("/combustivel/v/" + t) as any); else setError("Este QR não é de uma reserva do Huambo Online. Não entregue."); }} />
       <TextInput style={[ui.input, { fontSize: 22, letterSpacing: 2 }]} value={code} onChangeText={setCode} onSubmitEditing={() => void doCheck()} placeholder="CB-XXXXXX" autoCapitalize="characters" accessibilityLabel="Código da reserva" {...ph} />
       <Button title="Validar" onPress={() => void doCheck()} />
       {!!check && <Text accessibilityLiveRegion="polite" style={[check.result === "ok" ? ui.ok : ui.error, { fontSize: 19 }]}>{FUEL_COLLECT_LABELS[check.result] ?? check.result}

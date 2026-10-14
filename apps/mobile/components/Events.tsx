@@ -18,6 +18,7 @@ import { LiteImage } from "./LiteImage";
 import { PlaceFields, PlaceView } from "./Place";
 import { PaymentDetails } from "./Plans";
 import { useTerritory } from "./Directory";
+import { QrScanButton } from "./QrScanner";
 
 const CATS = Object.keys(EVENT_CATEGORY_LABELS) as EventCategory[];
 const METHODS = Object.keys(TICKET_METHOD_LABELS) as PaymentMethodPlan[];
@@ -291,9 +292,9 @@ export function EventManageScreen({ id }: { id: string }) {
     const r = await decideTicketOrder(supabase(), o.id, ok, note);
     if (r.error) setError(friendlyError(r.error)); else done(ok ? `Pagamento confirmado: ${o.quantity} bilhete(s) enviados a ${o.buyer_name}.` : "Pagamento recusado.");
   }
-  async function doCheck() {
-    if (!code.trim()) return; setBusy(true); setCheck(null);
-    const r = await checkInTicket(supabase(), id, normalizeTicketCode(code)); setBusy(false);
+  async function doCheck(scanned?: string) {
+    const c = scanned ?? code; if (!c.trim()) return; setBusy(true); setCheck(null);
+    const r = await checkInTicket(supabase(), id, normalizeTicketCode(c)); setBusy(false);
     if (r.error) setError(friendlyError(r.error)); else { setCheck(r.data); setCode(""); if (r.data?.result === "ok") void load(); }
   }
   async function publish(on: boolean) { const r = await setEventPublished(supabase(), id, on); if (r.error) setError(friendlyError(r.error)); else done(on ? "Evento publicado. Já aparece em «Eventos»." : "O evento voltou a rascunho."); }
@@ -314,6 +315,7 @@ export function EventManageScreen({ id }: { id: string }) {
     </View>
     {active && <View style={ui.card}>
       <Text style={ui.h2}>🚪 Entrada: validar bilhete</Text>
+      <QrScanButton title="📷 Ler QR do bilhete" onCode={text => void doCheck(text)} />
       <TextInput style={[ui.input, { fontSize: 22, letterSpacing: 2 }]} value={code} onChangeText={setCode} onSubmitEditing={() => void doCheck()} placeholder="HO-XXXX-XXXX" autoCapitalize="characters" accessibilityLabel="Código do bilhete" {...ph} />
       <Button title={busy ? "A validar…" : "Validar"} disabled={busy} onPress={() => void doCheck()} />
       {!!check && <Text accessibilityLiveRegion="polite" style={[check.result === "ok" ? ui.ok : ui.error, { fontSize: 22 }]}>{CHECKIN_LABELS[check.result]}{check.type ? ` · ${check.type}` : ""}{check.holder ? ` · ${check.holder}` : ""}</Text>}
