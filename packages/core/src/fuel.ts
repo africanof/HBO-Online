@@ -28,7 +28,7 @@ export const FUEL_STATUS_LABELS: Record<FuelStatus, string> = { available: "🟢
 export const FUEL_QUEUE_LABELS: Record<FuelQueue, string> = { none: "Sem fila", short: "Fila pequena", medium: "Fila média", long: "Fila grande" };
 export const FUEL_METHOD_LABELS: Record<FuelMethod, string> = { at_station: "Reservar e pagar no posto", prepaid: "Pagar já (adiantado)" };
 export const FUEL_ORDER_STATUS_LABELS: Record<FuelOrderStatus, string> = {
-  reserved: "✅ Reservado — mostre o código no posto", awaiting_payment: "⏳ Falta pagar", submitted: "⏳ Pago — à espera do posto",
+  reserved: "✅ Reservado — mostre o código no posto", awaiting_payment: "⏳ Falta pagar", submitted: "⏳ Pago — o posto está a confirmar",
   paid: "✅ Pago — mostre o código no posto", collected: "✔ Levantado", cancelled: "Cancelado", expired: "Caducou", rejected: "❌ Pagamento não confirmado"
 };
 export const FUEL_COLLECT_LABELS: Record<string, string> = {
@@ -53,6 +53,7 @@ export type FuelProductRow = { id: string; station_id: string; product: FuelProd
   reservable_qty: number; max_per_order: number; note: string | null; status_at: string };
 export type MyFuelOrder = {
   id: string; ref_no: number; status: FuelOrderStatus; method: FuelMethod; product: FuelProduct; quantity: number; unit_price: number; total: number;
+  subtotal: number; fee_pct: number | null; fee_amount: number; qr_token: string | null; proof_path: string | null;
   code: string | null; hold_until: string | null; pay_by: string | null; pay_method: string | null; reference: string | null; note: string | null; plate: string | null;
   created_at: string; station_id: string; station_name: string; address: string | null; directions: string | null; geo_lat: number | null; geo_lng: number | null;
   phone: string | null; pay_holder: string | null; pay_iban: string | null; pay_express: string | null; pay_note: string | null;
@@ -61,6 +62,7 @@ export type StationOrder = {
   id: string; ref_no: number; status: FuelOrderStatus; method: FuelMethod; product: FuelProduct; quantity: number; total: number; buyer_name: string;
   buyer_phone: string | null; plate: string | null; code: string | null; hold_until: string | null; pay_by: string | null; pay_method: string | null;
   reference: string | null; note: string | null; created_at: string; collected_at: string | null;
+  subtotal: number; fee_amount: number; qr_token: string; proof_path: string | null;
 };
 export type StationPanel = {
   fee_pct: number; collected_today: number; collected_total: number; fee_total: number; fee_due: number; fee_overdue: boolean; fee_pending: boolean;
@@ -68,7 +70,19 @@ export type StationPanel = {
 };
 export type AdminFuelPayment = { id: string; ref_no: number; station_id: string; station_ref: number; station_name: string; owner_name: string; amount: number;
   method: string; reference: string | null; proof_path: string | null; status: string; admin_note: string | null; created_at: string };
-export type FuelCollectResult = { result: string; code?: string; buyer?: string; plate?: string | null; product?: FuelProduct; quantity?: number; total?: number; method?: FuelMethod };
+export type FuelCollectResult = { result: string; code?: string; buyer?: string; plate?: string | null; product?: FuelProduct; quantity?: number; total?: number; fee?: number; method?: FuelMethod };
+/** O que se vê ao ler o QR: o posto/administração/comprador vê tudo; outra pessoa só sabe se é verdadeiro. */
+export type FuelOrderView = {
+  result: "ok" | "invalid"; role?: "station" | "admin" | "buyer" | "other"; id?: string; ref_no?: number; status?: FuelOrderStatus; method?: FuelMethod;
+  product?: FuelProduct; quantity?: number; unit_price?: number; subtotal?: number; fee_pct?: number | null; fee_amount?: number; total?: number;
+  buyer_name?: string; buyer_phone?: string | null; plate?: string | null; code?: string | null; hold_until?: string | null; pay_method?: string | null;
+  reference?: string | null; proof_path?: string | null; note?: string | null; created_at?: string; collected_at?: string | null; station_id?: string; station_name?: string;
+};
+export type AdminFuelOrder = {
+  id: string; ref_no: number; status: FuelOrderStatus; method: FuelMethod; product: FuelProduct; quantity: number; subtotal: number; fee_amount: number; total: number;
+  buyer_name: string; buyer_phone: string | null; reference: string | null; proof_path: string | null; qr_token: string; note: string | null; created_at: string;
+  station_id: string; station_ref: number; station_name: string;
+};
 
 // --- Textos -----------------------------------------------------------------------------------
 export function stationRef(n: number | null | undefined) { return n ? `S-${n}` : ""; }
@@ -117,6 +131,23 @@ export function fuelShareMessage(siteUrl: string, r: Pick<FuelRow, "station_id" 
   return `${FUEL_PRODUCTS[r.product].icon} ${FUEL_STATUS_LABELS[r.status]} ${FUEL_PRODUCTS[r.product].label.toLowerCase()} — ${r.station_name}${r.municipality_name ? ", " + r.municipality_name : ""}` +
     `${r.price != null ? `\n💰 ${fuelPriceText(r.product, r.price)}` : ""}\n👉 ${siteUrl.replace(/\/$/, "")}/combustivel/${r.station_id}`;
 }
+/** Conta igual à da base de dados: combustível + taxa do APP = total a pagar ao posto. */
+export function fuelFeeBreakdown(price: number, quantity: number, feePct: number) {
+  const subtotal = Math.round(price * quantity), fee = Math.round(subtotal * (Number(feePct) || 0) / 100);
+  return { subtotal, fee, total: subtotal + fee };
+}
+export function fuelFeeNotice(feePct: number | null | undefined): string {
+  return `O total inclui ${Number(feePct) || 0}% de taxa de serviço do Huambo Online. Paga tudo ao posto (no posto ou para a conta do posto).`;
+}
+/** Endereço que vai dentro do QR: o posto lê com a câmara e o site confirma se o pedido é verdadeiro. */
+export function fuelVerifyUrl(siteUrl: string, token: string): string { return `${siteUrl.replace(/\/+$/, "")}/combustivel/v/${token}`; }
+/** Tira o código do QR de um endereço lido (ou do próprio código). */
+export function fuelTokenFromText(text: string | null | undefined): string | null {
+  const m = /(?:^|\/v\/|[^0-9a-f])([0-9a-f]{32})(?:$|[^0-9a-f])/i.exec((text ?? "").trim());
+  return m ? m[1].toLowerCase() : null;
+}
+/** Instrução para o descritivo da transferência (o posto encontra o pagamento no extrato). */
+export function fuelTransferNote(refNo: number): string { return `Escreva no descritivo da transferência: ${fuelOrderRef(refNo)}`; }
 export function holdText(iso: string | null | undefined): string { return iso ? `até ${formatEventDate(iso)}` : ""; }
 
 // --- Validação --------------------------------------------------------------------------------
@@ -216,9 +247,20 @@ export async function removeFuelAlert(client: SupabaseClient, id: string) { retu
 export function reserveFuel(client: SupabaseClient, productId: string, quantity: number, method: FuelMethod, name: string, phone?: string, plate?: string) {
   return client.rpc("reserve_fuel", { p_product_id: productId, p_quantity: quantity, p_method: method, p_name: name.trim(), p_phone: phone?.trim() || null, p_plate: plate?.trim() || null });
 }
-export function submitFuelPayment(client: SupabaseClient, orderId: string, method: "bank_transfer" | "multicaixa_express", reference: string) {
-  if (reference.trim().length < 3) return Promise.resolve({ data: null, error: new Error("Escreva a referência ou o número da operação.") });
-  return client.rpc("submit_fuel_payment", { p_order_id: orderId, p_method: method, p_reference: reference.trim() });
+export function submitFuelPayment(client: SupabaseClient, orderId: string, i: { method: "bank_transfer" | "multicaixa_express"; reference: string; proofPath: string | null; proofHash?: string | null }) {
+  if (i.reference.replace(/[^A-Za-z0-9]/g, "").length < 4) return Promise.resolve({ data: null, error: new Error("Escreva a referência ou o número da operação (como está no comprovativo).") });
+  if (!i.proofPath) return Promise.resolve({ data: null, error: new Error("Junte a fotografia do comprovativo de pagamento.") });
+  return client.rpc("submit_fuel_payment_v2", { p_order_id: orderId, p_method: i.method, p_reference: i.reference.trim(), p_proof_path: i.proofPath, p_proof_hash: i.proofHash || null });
+}
+export async function fuelOrderByToken(client: SupabaseClient, token: string) {
+  const r = await client.rpc("fuel_order_by_token", { p_token: token });
+  const d = r.data as FuelOrderView | null;
+  return { data: d ? { ...d, quantity: d.quantity == null ? undefined : num(d.quantity), subtotal: d.subtotal == null ? undefined : num(d.subtotal),
+    fee_amount: d.fee_amount == null ? undefined : num(d.fee_amount), total: d.total == null ? undefined : num(d.total) } : null, error: r.error };
+}
+export async function listFuelOrdersForAdmin(client: SupabaseClient, status: FuelOrderStatus | "" = "submitted") {
+  const r = await client.rpc("admin_list_fuel_orders", { p_status: status || null });
+  return { data: ((r.data ?? []) as AdminFuelOrder[]).map(o => ({ ...o, quantity: num(o.quantity), subtotal: num(o.subtotal), fee_amount: num(o.fee_amount), total: num(o.total) })), error: r.error };
 }
 export function decideFuelPayment(client: SupabaseClient, orderId: string, confirm: boolean, note?: string) {
   if (!confirm && !note?.trim()) return Promise.resolve({ data: null, error: new Error("Escreva o motivo (ex.: não recebi o dinheiro).") });
@@ -233,13 +275,14 @@ export function cancelFuelOrder(client: SupabaseClient, orderId: string, reason?
 }
 export async function myFuelOrders(client: SupabaseClient) {
   const r = await client.rpc("my_fuel_orders");
-  return { data: ((r.data ?? []) as MyFuelOrder[]).map(o => ({ ...o, quantity: num(o.quantity), total: num(o.total), unit_price: num(o.unit_price) })), error: r.error };
+  return { data: ((r.data ?? []) as MyFuelOrder[]).map(o => ({ ...o, quantity: num(o.quantity), total: num(o.total), unit_price: num(o.unit_price),
+    subtotal: num(o.subtotal), fee_amount: num(o.fee_amount) })), error: r.error };
 }
 export async function stationPanel(client: SupabaseClient, stationId: string) {
   const r = await client.rpc("fuel_station_panel", { p_station_id: stationId });
   const d = r.data as StationPanel | null;
   return { data: d ? { ...d, fee_due: num(d.fee_due), fee_total: num(d.fee_total), collected_today: num(d.collected_today), collected_total: num(d.collected_total),
-    orders: d.orders.map(o => ({ ...o, quantity: num(o.quantity), total: num(o.total) })) } : null, error: r.error };
+    orders: d.orders.map(o => ({ ...o, quantity: num(o.quantity), total: num(o.total), subtotal: num(o.subtotal), fee_amount: num(o.fee_amount) })) } : null, error: r.error };
 }
 export function submitFuelFee(client: SupabaseClient, stationId: string, i: { method: "bank_transfer" | "multicaixa_express" | "cash"; reference?: string; proofPath?: string | null }) {
   if (!i.reference?.trim() && !i.proofPath) return Promise.resolve({ data: null, error: new Error("Escreva a referência do pagamento ou junte o comprovativo.") });

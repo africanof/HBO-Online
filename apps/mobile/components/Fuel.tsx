@@ -4,12 +4,12 @@ import * as ImagePicker from "expo-image-picker";
 import { Alert, Image, Linking, Pressable, ScrollView, Share, Text, TextInput, View } from "react-native";
 import { fuelFeed, getStation, listMyStations, listStationProducts, getStationPay, saveStation, updateFuelProduct, reportFuel, listMyFuelAlerts, addFuelAlert,
   removeFuelAlert, reserveFuel, submitFuelPayment, decideFuelPayment, collectFuel, cancelFuelOrder, myFuelOrders, stationPanel, submitFuelFee, listStationsForAdmin,
-  setStationStatus, listFuelPaymentsForAdmin, decideFuelFee, getPlatformSettings, updatePlatformSettings, paymentProofUrl, uploadPaymentProof, base64ToArrayBuffer,
+  setStationStatus, listFuelPaymentsForAdmin, fuelOrderByToken, listFuelOrdersForAdmin, fuelFeeBreakdown, fuelFeeNotice, fuelVerifyUrl, fuelTransferNote, sha256Hex, decideFuelFee, getPlatformSettings, updatePlatformSettings, paymentProofUrl, uploadPaymentProof, base64ToArrayBuffer,
   fuelQuantityText, fuelPriceText, minutesAgoText, fuelIsStale, fuelStatusLine, fuelReportsText, fuelShareMessage, validateStation, validateFuelReserve, stationRef,
   fuelOrderRef, holdText, qrMatrix, formatPrice, friendlyError, whatsappShareUrl, whatsappLink, pointFrom, FUEL_PRODUCTS, FUEL_PRODUCT_LIST, FUEL_KIND_LABELS,
   FUEL_STATUS_LABELS, FUEL_QUEUE_LABELS, FUEL_METHOD_LABELS, FUEL_ORDER_STATUS_LABELS, FUEL_COLLECT_LABELS, PLAN_METHOD_LABELS,
   type FuelProduct, type FuelRow, type FuelStation, type FuelProductRow, type FuelKind, type FuelMethod, type FuelStatus, type FuelQueue, type MyFuelOrder,
-  type StationPanel, type StationOrder, type AdminFuelPayment, type FuelCollectResult, type PlatformSettings, type PaymentMethodPlan, type GeoPoint } from "@huambo-online/core";
+  type StationPanel, type StationOrder, type FuelOrderView, type AdminFuelOrder, type FuelOrderStatus, type AdminFuelPayment, type FuelCollectResult, type PlatformSettings, type PaymentMethodPlan, type GeoPoint } from "@huambo-online/core";
 import { supabase, currentUserId, siteUrl } from "../lib/supabase";
 import { shrinkAsset } from "../lib/image";
 import { C, ui } from "../lib/ui";
@@ -27,16 +27,29 @@ function LoginNeeded({ title }: { title: string }) {
   const router = useRouter();
   return <ScrollView contentContainerStyle={ui.screen}><Text style={ui.h1}>{title}</Text><Button title="Entrar" onPress={() => router.push("/login")} /></ScrollView>;
 }
-function CodeBox({ code }: { code: string }) {
-  const m = qrMatrix(code); const cell = Math.floor(190 / (m.length + 4));
+/** QR único do pedido: leva ao site, que confirma se é verdadeiro. */
+function CodeBox({ code, token }: { code: string; token?: string | null }) {
+  const m = qrMatrix(token ? fuelVerifyUrl(siteUrl, token) : code); const cell = Math.floor(190 / (m.length + 4));
   return <View style={[ui.card, { alignItems: "center" }]}>
     <View accessible accessibilityLabel={"Código QR " + code} style={{ backgroundColor: "#fff", padding: cell * 2, borderRadius: 8 }}>
       {m.map((row, y) => <View key={y} style={{ flexDirection: "row" }}>{row.map((on, x) => <View key={x} style={{ width: cell, height: cell, backgroundColor: on ? "#000" : "#fff" }} />)}</View>)}
     </View>
     <Text selectable style={[ui.h2, { letterSpacing: 3 }]}>{code}</Text>
-    <Text style={ui.muted}>Mostre este código no posto</Text>
+    <Text style={ui.muted}>Mostre este QR no posto. O posto lê com a câmara e o site confirma que é verdadeiro.</Text>
   </View>;
 }
+async function openProof(path: string, onError: (m: string) => void) {
+  const r = await paymentProofUrl(supabase(), path);
+  if (r.data) void Linking.openURL(r.data); else onError("Não foi possível abrir o comprovativo.");
+}
+type Proof = { uri: string; base64?: string | null; mimeType: string };
+async function pickProof(camera: boolean, onError: (m: string) => void): Promise<Proof | null> {
+  const perm = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!perm.granted) { onError(camera ? "Autorize a câmara." : "Autorize o acesso à galeria."); return null; }
+  const r = camera ? await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.8 }) : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8 });
+  return !r.canceled && r.assets?.[0] ? await shrinkAsset(r.assets[0]) : null;
+}
+async function proofBytes(p: Proof) { return p.base64 ? base64ToArrayBuffer(p.base64) : await (await fetch(p.uri)).arrayBuffer(); }
 
 export function FuelListScreen() {
   const router = useRouter(); const { municipalities } = useTerritory();
@@ -125,10 +138,14 @@ function ReserveForm({ r, uid, onClose }: { r: FuelRow; uid: string | null; onCl
   const router = useRouter(); const gas = FUEL_PRODUCTS[r.product].gas;
   const [method, setMethod] = useState<FuelMethod>("at_station"); const [qty, setQty] = useState(gas ? "1" : "20"); const [name, setName] = useState(""); const [phone, setPhone] = useState("");
   const [plate, setPlate] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
+  const [feePct, setFeePct] = useState<number | null>(null); const [agree, setAgree] = useState(false);
+  useEffect(() => { void getPlatformSettings(supabase()).then(s => setFeePct(Number(s.data?.fuel_fee_pct ?? 10))); }, []);
   if (!uid) return <Button title="Entrar para reservar" onPress={() => router.push("/login")} />;
   const q = Number(qty.replace(",", "."));
+  const sum = q > 0 && r.price != null && feePct != null ? fuelFeeBreakdown(r.price, q, feePct) : null;
   async function send() {
     const bad = validateFuelReserve(r, q, name); if (bad) { setError(bad); return; }
+    if (!agree) { setError("Confirme que percebeu a taxa de serviço do APP."); return; }
     setBusy(true); setError("");
     const x = await reserveFuel(supabase(), r.product_id, q, method, name, phone, plate); setBusy(false);
     if (x.error) setError(friendlyError(x.error)); else router.push("/combustivel/pedidos" as any);
@@ -140,8 +157,15 @@ function ReserveForm({ r, uid, onClose }: { r: FuelRow; uid: string | null; onCl
     <Field label="O seu nome" value={name} onChangeText={setName} maxLength={80} autoComplete="name" />
     <Field label="Telefone (opcional)" value={phone} onChangeText={setPhone} keyboardType="phone-pad" maxLength={20} />
     {!gas && <Field label="Matrícula (opcional)" value={plate} onChangeText={setPlate} maxLength={20} autoCapitalize="characters" placeholder="LD-12-34-AB" />}
-    {q > 0 && r.price != null && <Text style={ui.label}>Total: {formatPrice(Math.round(q * r.price))}</Text>}
-    <Text style={ui.muted}>{method === "at_station" ? `Recebe um código. Vá ao posto em até ${Math.round(r.hold_minutes / 60 * 10) / 10} h, mostre o código e pague lá.` : "Depois de reservar, paga ao posto e envia a referência. Quando o posto confirmar, recebe o código."}</Text>
+    {!!sum && <View style={ui.card}>
+      <Text style={ui.text}>{FUEL_PRODUCTS[r.product].label}: {formatPrice(sum.subtotal)}</Text>
+      <Text style={ui.text}>Taxa de serviço do APP ({feePct}%): {formatPrice(sum.fee)}</Text>
+      <Text style={ui.label}>Total a pagar ao posto: {formatPrice(sum.total)}</Text>
+    </View>}
+    <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: agree }} onPress={() => setAgree(!agree)} style={{ flexDirection: "row", gap: 10, alignItems: "flex-start", minHeight: 48 }}>
+      <Text style={{ fontSize: 24, color: C.ink }}>{agree ? "☑" : "☐"}</Text><Text style={[ui.text, { flex: 1 }]}>{fuelFeeNotice(feePct)} Percebi e aceito.</Text>
+    </Pressable>
+    <Text style={ui.muted}>{method === "at_station" ? `Recebe já um QR único. Vá ao posto em até ${Math.round(r.hold_minutes / 60 * 10) / 10} h, mostre o QR e pague lá.` : "Depois de reservar, paga para a conta do posto e envia a fotografia do comprovativo. Recebe logo um QR único; o posto confirma o pagamento."}</Text>
     <Message error={error} />
     <Button title={busy ? "A reservar…" : "✅ Reservar"} disabled={busy} onPress={() => void send()} />
     <Button title="Cancelar" variant="secondary" onPress={onClose} />
@@ -166,15 +190,29 @@ export function MyFuelOrdersScreen() {
 function OrderCard({ o, onDone, onError }: { o: MyFuelOrder; onDone: (m: string) => void; onError: (m: string) => void }) {
   const router = useRouter();
   const [method, setMethod] = useState<"multicaixa_express" | "bank_transfer">(o.pay_express ? "multicaixa_express" : "bank_transfer"); const [reference, setReference] = useState(""); const [busy, setBusy] = useState(false);
-  async function pay() { setBusy(true); const r = await submitFuelPayment(supabase(), o.id, method, reference); setBusy(false); if (r.error) onError(friendlyError(r.error)); else onDone("Referência enviada. O posto vai confirmar e o código aparece aqui."); }
+  const [proof, setProof] = useState<Proof | null>(null);
+  async function pay() {
+    if (!proof) { onError("Junte a fotografia do comprovativo de pagamento."); return; }
+    if (reference.replace(/[^A-Za-z0-9]/g, "").length < 4) { onError("Escreva a referência ou o número da operação (como está no comprovativo)."); return; }
+    setBusy(true);
+    try {
+      const uid = await currentUserId(); if (!uid) throw new Error("Entre na sua conta.");
+      const body = await proofBytes(proof); const hash = sha256Hex(body);
+      const up = await uploadPaymentProof(supabase(), uid, body, "comprovativo.jpg", proof.mimeType || "image/jpeg"); if (up.error || !up.data) throw up.error ?? new Error("Não foi possível enviar o comprovativo.");
+      const r = await submitFuelPayment(supabase(), o.id, { method, reference, proofPath: up.data, proofHash: hash }); if (r.error) throw r.error;
+      onDone("Comprovativo enviado. O seu QR já está pronto; o posto vai confirmar o pagamento.");
+    } catch (e) { onError(friendlyError(e)); } finally { setBusy(false); }
+  }
   async function cancel() { const r = await cancelFuelOrder(supabase(), o.id); if (r.error) onError(friendlyError(r.error)); else onDone("Reserva cancelada."); }
   return <View style={ui.card}>
     <Pressable accessibilityRole="link" onPress={() => router.push(("/combustivel/" + o.station_id) as any)}><Text style={[ui.link, { fontSize: 19 }]}>{FUEL_PRODUCTS[o.product].icon} {o.station_name}</Text></Pressable>
     <Text style={ui.muted}>{fuelOrderRef(o.ref_no)} · {FUEL_PRODUCTS[o.product].label} · {fuelQuantityText(o.product, o.quantity)}{o.plate ? " · " + o.plate : ""}</Text>
     <Text style={ui.label}>{formatPrice(o.total)}</Text>
+    {o.fee_amount > 0 && <Text style={ui.muted}>{formatPrice(o.subtotal)} + {formatPrice(o.fee_amount)} de taxa do APP</Text>}
     <Text style={ui.text}>{FUEL_ORDER_STATUS_LABELS[o.status]}{o.hold_until && (o.status === "reserved" || o.status === "paid") ? " · levantar " + holdText(o.hold_until) : ""}</Text>
     {!!o.note && (o.status === "rejected" || o.status === "cancelled") && <Text style={ui.error}>Motivo: {o.note}</Text>}
-    {!!o.code && (o.status === "reserved" || o.status === "paid") && <CodeBox code={o.code} />}
+    {!!o.code && (o.status === "reserved" || o.status === "paid" || o.status === "submitted") && <CodeBox code={o.code} token={o.qr_token} />}
+    {o.status === "submitted" && <Text style={ui.muted}>O posto está a confirmar o pagamento na conta dele. Pode ir ao posto: lá verificam o QR e o comprovativo.</Text>}
     {o.status === "awaiting_payment" && <>
       <Text style={ui.label}>1. Pague {formatPrice(o.total)} ao posto{o.pay_by ? " " + holdText(o.pay_by) : ""}</Text>
       <View style={ui.card}>
@@ -183,10 +221,16 @@ function OrderCard({ o, onDone, onError }: { o: MyFuelOrder; onDone: (m: string)
         {!!o.pay_express && <Text selectable style={ui.text}>Multicaixa Express: <Text style={ui.label}>{o.pay_express}</Text></Text>}
         {!!o.pay_note && <Text style={ui.muted}>{o.pay_note}</Text>}
       </View>
-      <Text style={ui.label}>2. Diga como pagou</Text>
+      <View style={{ backgroundColor: C.yellowSoft, borderRadius: 14, padding: 12, gap: 4 }}>
+        <Text style={ui.label}>✍️ {fuelTransferNote(o.ref_no)}</Text>
+        <Text style={ui.text}>⚠️ Pague só para a conta do posto mostrada aqui. Nunca pague a quem lhe ligar a pedir outra conta.</Text>
+      </View>
+      <Text style={ui.label}>2. Envie o comprovativo</Text>
       <Chips options={(["multicaixa_express", "bank_transfer"] as const).map(m => ({ value: m, label: PLAN_METHOD_LABELS[m] }))} value={method} onChange={setMethod} />
       <TextInput style={ui.input} value={reference} onChangeText={setReference} maxLength={120} placeholder="Referência ou número da operação" accessibilityLabel="Referência do pagamento" {...ph} />
-      <Button title={busy ? "A enviar…" : "Já paguei"} disabled={busy} onPress={() => void pay()} />
+      {proof ? <View style={{ gap: 6 }}><Image source={{ uri: proof.uri }} style={{ width: 110, height: 110, borderRadius: 10 }} accessibilityLabel="Comprovativo" /><Button title="Trocar comprovativo" variant="secondary" onPress={() => setProof(null)} /></View>
+        : <View style={ui.row}><Button title="📷 Fotografar comprovativo" variant="secondary" onPress={() => void pickProof(true, onError).then(setProof)} /><Button title="🖼️ Galeria" variant="secondary" onPress={() => void pickProof(false, onError).then(setProof)} /></View>}
+      <Button title={busy ? "A enviar…" : "✅ Já paguei — enviar comprovativo"} disabled={busy} onPress={() => void pay()} />
     </>}
     {(o.status === "reserved" || o.status === "awaiting_payment") && <Button title="Cancelar reserva" variant="secondary" onPress={() => Alert.alert("Cancelar esta reserva?", "", [{ text: "Não", style: "cancel" }, { text: "Cancelar", onPress: () => void cancel() }])} />}
   </View>;
@@ -202,7 +246,7 @@ export function MyStationsScreen() {
     <Link href={"/combustivel" as any} style={ui.link}>← Combustível e gás</Link>
     <Text style={ui.h1}>⛽ Os meus postos</Text>
     <Button title="➕ Registar posto" onPress={() => router.push("/combustivel/registar" as any)} />
-    <Text style={ui.muted}>Registar e marcar quando há é grátis. Só paga uma pequena comissão sobre as reservas levantadas.</Text>
+    <Text style={ui.muted}>Registar e marcar quando há é grátis. Nas reservas, o cliente paga ao posto o combustível mais a taxa do APP; o posto entrega essa taxa ao Huambo Online.</Text>
     {items === null ? <Text style={ui.text}>A carregar…</Text> : items.length === 0 ? <Text style={ui.text}>Ainda não registou nenhum posto.</Text> :
       items.map(s => <Pressable key={s.id} accessibilityRole="link" onPress={() => router.push(`/combustivel/${s.id}/gerir` as any)} style={ui.card}>
         <Text style={ui.label}>{s.name}</Text>
@@ -337,11 +381,12 @@ export function StationManageScreen({ id }: { id: string }) {
     <Button title="✏️ Editar" variant="secondary" onPress={() => router.push(`/combustivel/${id}/editar` as any)} />
     <Message error={error} ok={notice} />
     {(st.accepts_reservations || active.length > 0) && <View style={ui.card}>
-      <Text style={ui.h2}>🧾 Cliente com código</Text>
+      <Text style={ui.h2}>🧾 Cliente com QR ou código</Text>
+      <Text style={ui.muted}>Leia o QR do cliente com a câmara do telemóvel: abre a página que confirma se é verdadeiro e mostra o comprovativo. Ou escreva o código.</Text>
       <TextInput style={[ui.input, { fontSize: 22, letterSpacing: 2 }]} value={code} onChangeText={setCode} onSubmitEditing={() => void doCheck()} placeholder="CB-XXXXXX" autoCapitalize="characters" accessibilityLabel="Código da reserva" {...ph} />
       <Button title="Validar" onPress={() => void doCheck()} />
       {!!check && <Text accessibilityLiveRegion="polite" style={[check.result === "ok" ? ui.ok : ui.error, { fontSize: 19 }]}>{FUEL_COLLECT_LABELS[check.result] ?? check.result}
-        {check.result === "ok" && check.product ? ` · ${fuelQuantityText(check.product, Number(check.quantity))} · ${check.buyer}${check.plate ? " · " + check.plate : ""} · ${check.method === "prepaid" ? "JÁ PAGO" : "cobrar " + formatPrice(Number(check.total))}` : check.buyer ? " · " + check.buyer : ""}</Text>}
+        {check.result === "ok" && check.product ? ` · ${fuelQuantityText(check.product, Number(check.quantity))} · ${check.buyer}${check.plate ? " · " + check.plate : ""} · ${check.method === "prepaid" ? "JÁ PAGO" : "cobrar " + formatPrice(Number(check.total)) + " (inclui taxa do APP " + formatPrice(Number(check.fee ?? 0)) + ")"}` : check.buyer ? " · " + check.buyer : ""}</Text>}
     </View>}
     <Text style={ui.h2}>Há ou não há?</Text>
     <Text style={ui.muted}>Carregue num botão sempre que mudar. Quem pediu aviso recebe logo uma notificação quando marcar «Há».</Text>
@@ -350,6 +395,8 @@ export function StationManageScreen({ id }: { id: string }) {
     {waiting.map(o => <View key={o.id} style={ui.card}>
       <Text style={ui.label}>{o.buyer_name} — {fuelQuantityText(o.product, o.quantity)} = {formatPrice(o.total)}</Text>
       <Text style={ui.muted}>{fuelOrderRef(o.ref_no)} · Ref.: {o.reference}{o.buyer_phone ? " · 📞 " + o.buyer_phone : ""}</Text>
+      <Text style={ui.text}>Veja na conta do posto se entrou {formatPrice(o.total)} com o descritivo {fuelOrderRef(o.ref_no)}. Inclui {formatPrice(o.fee_amount)} de taxa do APP.</Text>
+      {!!o.proof_path && <Button title="📄 Ver comprovativo" variant="secondary" onPress={() => void openProof(o.proof_path!, setError)} />}
       {reject === o.id ? <>{reasonBox}<Button title="❌ Não recebi" variant="danger" onPress={() => void decide(o, false)} /><Button title="Voltar" variant="secondary" onPress={() => setReject(null)} /></>
         : <><Button title="✅ Recebi o dinheiro" onPress={() => Alert.alert("Confirmar pagamento", `Recebeu ${formatPrice(o.total)} de ${o.buyer_name}?`, [{ text: "Não", style: "cancel" }, { text: "Sim", onPress: () => void decide(o, true) }])} />
           <Button title="❌ Não recebi" variant="secondary" onPress={() => { setReject(o.id); setReason(""); }} /></>}
@@ -363,12 +410,13 @@ export function StationManageScreen({ id }: { id: string }) {
       <Text style={ui.text}>Levantado hoje: <Text style={ui.label}>{formatPrice(panel.collected_today)}</Text> · Total: <Text style={ui.label}>{formatPrice(panel.collected_total)}</Text></Text>
     </View>
     <View style={ui.card}>
-      <Text style={ui.h2}>🧾 Comissão ({panel.fee_pct}% das reservas levantadas)</Text>
+      <Text style={ui.h2}>🧾 Taxa do Huambo Online ({panel.fee_pct}%, já paga pelos clientes)</Text>
+      <Text style={ui.muted}>Os clientes pagam ao posto o combustível mais a taxa do APP. Depois de levantarem, o posto entrega a taxa ao Huambo Online.</Text>
       <Text style={ui.text}>Total: {formatPrice(panel.fee_total)} · Por pagar: <Text style={ui.label}>{formatPrice(panel.fee_due)}</Text></Text>
-      {panel.fee_overdue && <Text style={ui.error}>Comissão em atraso: as reservas estão paradas até pagar.</Text>}
+      {panel.fee_overdue && <Text style={ui.error}>Taxa do APP em atraso: as reservas estão paradas até entregar.</Text>}
       {panel.fee_pending && <Text style={ui.text}>⏳ Pagamento enviado, à espera de confirmação.</Text>}
       {panel.fee_due > 0 && !panel.fee_pending && (payOpen ? <FeePayBox stationId={id} uid={uid} amount={panel.fee_due} settings={settings} onDone={m => { setPayOpen(false); done(m); }} onClose={() => setPayOpen(false)} />
-        : <Button title="Pagar a comissão" onPress={() => setPayOpen(true)} />)}
+        : <Button title="Entregar a taxa do APP" onPress={() => setPayOpen(true)} />)}
       <Text style={ui.muted}>Pague até 7 dias depois do levantamento. Marcar «Há» e registar o posto é sempre grátis.</Text>
     </View>
   </ScrollView>;
@@ -377,20 +425,15 @@ export function StationManageScreen({ id }: { id: string }) {
 function FeePayBox({ stationId, uid, amount, settings, onDone, onClose }: { stationId: string; uid: string; amount: number; settings: PlatformSettings | null; onDone: (m: string) => void; onClose: () => void }) {
   const [method, setMethod] = useState<PaymentMethodPlan>("multicaixa_express"); const [reference, setReference] = useState("");
   const [proof, setProof] = useState<{ uri: string; base64?: string | null; mimeType: string } | null>(null); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
-  async function pick(camera: boolean) {
-    const perm = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { setError(camera ? "Autorize a câmara." : "Autorize o acesso à galeria."); return; }
-    const r = camera ? await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.8 }) : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.8 });
-    if (!r.canceled && r.assets?.[0]) setProof(await shrinkAsset(r.assets[0]));
-  }
+  async function pick(camera: boolean) { const p = await pickProof(camera, setError); if (p) setProof(p); }
   async function send() {
     if (!reference.trim() && !proof) { setError("Escreva a referência do pagamento ou junte o comprovativo."); return; }
     setBusy(true); setError("");
     try {
       let path: string | null = null;
-      if (proof) { const body = proof.base64 ? base64ToArrayBuffer(proof.base64) : await (await fetch(proof.uri)).arrayBuffer(); const up = await uploadPaymentProof(supabase(), uid, body, "comprovativo.jpg", proof.mimeType || "image/jpeg"); if (up.error || !up.data) throw up.error ?? new Error("Não foi possível enviar o comprovativo."); path = up.data; }
+      if (proof) { const body = await proofBytes(proof); const up = await uploadPaymentProof(supabase(), uid, body, "comprovativo.jpg", proof.mimeType || "image/jpeg"); if (up.error || !up.data) throw up.error ?? new Error("Não foi possível enviar o comprovativo."); path = up.data; }
       const r = await submitFuelFee(supabase(), stationId, { method, reference, proofPath: path }); if (r.error) throw r.error;
-      onDone("Pagamento da comissão enviado. A administração vai confirmar.");
+      onDone("Pagamento da taxa enviado. A administração vai confirmar.");
     } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
   }
   return <View style={[ui.card, { gap: 10 }]}>
@@ -409,14 +452,17 @@ function FeePayBox({ stationId, uid, amount, settings, onDone, onClose }: { stat
 }
 
 export function AdminFuel() {
+  const router = useRouter();
   const [stations, setStations] = useState<(FuelStation & { municipalities?: { name: string } | null })[]>([]); const [status, setStatus] = useState<"pending" | "approved" | "suspended">("pending");
   const [payments, setPayments] = useState<AdminFuelPayment[]>([]); const [s, setS] = useState<PlatformSettings | null>(null);
   const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [reason, setReason] = useState(""); const [open, setOpen] = useState<string | null>(null);
+  const [orderStatus, setOrderStatus] = useState<FuelOrderStatus | "all">("submitted"); const [orders, setOrders] = useState<AdminFuelOrder[]>([]);
   async function load() {
-    const [a, b, c] = await Promise.all([listStationsForAdmin(supabase(), status), listFuelPaymentsForAdmin(supabase(), "pending"), getPlatformSettings(supabase())]);
-    setStations(a.data); setPayments(b.data); setS(c.data); if (a.error || b.error) setError(friendlyError(a.error ?? b.error));
+    const [a, b, c, d] = await Promise.all([listStationsForAdmin(supabase(), status), listFuelPaymentsForAdmin(supabase(), "pending"), getPlatformSettings(supabase()),
+      listFuelOrdersForAdmin(supabase(), orderStatus === "all" ? "" : orderStatus)]);
+    setStations(a.data); setPayments(b.data); setS(c.data); setOrders(d.data); if (a.error || b.error || d.error) setError(friendlyError(a.error ?? b.error ?? d.error));
   }
-  useEffect(() => { void load(); }, [status]);
+  useEffect(() => { void load(); }, [status, orderStatus]);
   async function setSt(x: FuelStation, to: "approved" | "suspended") {
     if (to === "suspended" && !reason.trim()) { setError("Escreva porque suspende."); return; }
     const r = await setStationStatus(supabase(), x.id, to, reason); if (r.error) setError(friendlyError(r.error)); else { setNotice(to === "approved" ? "Posto aprovado." : "Posto suspenso."); setOpen(null); setReason(""); await load(); }
@@ -435,7 +481,7 @@ export function AdminFuel() {
     <Text style={ui.h2}>⛽ Combustível e gás</Text>
     <Message error={error} ok={notice} />
     {!!s && <View style={ui.card}>
-      <Field label="Comissão sobre levantamentos (%)" value={String(s.fuel_fee_pct ?? "")} onChangeText={v => setS({ ...s, fuel_fee_pct: v })} keyboardType="decimal-pad" />
+      <Field label="Taxa do APP paga pelo comprador (%)" value={String(s.fuel_fee_pct ?? "")} onChangeText={v => setS({ ...s, fuel_fee_pct: v })} keyboardType="decimal-pad" />
       <Field label="Minutos para pagar adiantado" value={String(s.fuel_pay_minutes ?? "")} onChangeText={v => setS({ ...s, fuel_pay_minutes: Number(v) || 0 })} keyboardType="numeric" />
       <Button title="Guardar" onPress={() => void save()} />
     </View>}
@@ -455,5 +501,69 @@ export function AdminFuel() {
       <Button title="✔ Confirmar" onPress={() => void decide(p, true)} />
       {open === p.id ? <>{reasonBox}<Button title="✖ Recusar" variant="danger" onPress={() => void decide(p, false)} /></> : <Button title="✖ Recusar" variant="secondary" onPress={() => { setOpen(p.id); setReason(""); }} />}
     </View>)}
+    <Text style={ui.label}>🔎 Pagamentos adiantados de clientes (comprovativos)</Text>
+    <Text style={ui.muted}>Para vigiar burlas: cada comprovativo e cada referência só podem ser usados uma vez.</Text>
+    <Chips options={[{ value: "submitted" as const, label: "⏳ Por confirmar" }, { value: "paid" as const, label: "✅ Confirmados" }, { value: "rejected" as const, label: "❌ Recusados" }, { value: "all" as const, label: "Todos" }]}
+      value={orderStatus} onChange={v => setOrderStatus(v as FuelOrderStatus | "all")} />
+    {orders.length === 0 && <Text style={ui.text}>Nenhum pagamento nesta lista.</Text>}
+    {orders.map(o => <View key={o.id} style={ui.card}>
+      <Text style={ui.label}>{formatPrice(o.total)} · {o.station_name} · {o.buyer_name}</Text>
+      <Text style={ui.muted}>{fuelOrderRef(o.ref_no)} · {fuelQuantityText(o.product, o.quantity)} · taxa {formatPrice(o.fee_amount)}{o.reference ? " · Ref.: " + o.reference : ""} · {FUEL_ORDER_STATUS_LABELS[o.status]}</Text>
+      {!!o.proof_path && <Button title="📄 Comprovativo" variant="secondary" onPress={() => void openProof(o.proof_path!, setError)} />}
+      <Button title="🔳 Ver pelo QR" variant="secondary" onPress={() => router.push(("/combustivel/v/" + o.qr_token) as any)} />
+    </View>)}
   </View>;
+}
+
+/** Ecrã aberto pelo QR: confirma se o pedido é verdadeiro; o posto confirma o pagamento e entrega aqui. */
+export function FuelVerifyScreen({ token }: { token: string }) {
+  const router = useRouter();
+  const [v, setV] = useState<FuelOrderView | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
+  const [reason, setReason] = useState(""); const [rejecting, setRejecting] = useState(false);
+  async function load() { const r = await fuelOrderByToken(supabase(), token); if (r.error) setError(friendlyError(r.error)); setV(r.data ?? { result: "invalid" }); }
+  useFocusEffect(useCallback(() => { void load(); }, [token]));
+  if (!v) return <View style={ui.screen}><Text style={ui.text}>A verificar…</Text></View>;
+  if (v.result !== "ok") return <ScrollView contentContainerStyle={ui.screen}>
+    <Text style={ui.h1}>❌ QR não reconhecido</Text>
+    <Text style={[ui.error, { fontSize: 19 }]}>Este QR não é de nenhum pedido do Huambo Online. Não entregue combustível nem gás.</Text>
+  </ScrollView>;
+  const live = v.status === "reserved" || v.status === "paid" || v.status === "submitted";
+  async function deliver() {
+    if (!v?.code || !v.station_id) return;
+    setBusy(true); const r = await collectFuel(supabase(), v.station_id, v.code); setBusy(false);
+    if (r.error) setError(friendlyError(r.error)); else { setNotice(FUEL_COLLECT_LABELS[r.data?.result ?? ""] ?? String(r.data?.result)); await load(); }
+  }
+  async function decide(ok: boolean) {
+    if (!v?.id) return;
+    if (!ok && !reason.trim()) { setError("Escreva porque não confirma."); return; }
+    setBusy(true); const r = await decideFuelPayment(supabase(), v.id, ok, reason); setBusy(false);
+    if (r.error) setError(friendlyError(r.error)); else { setNotice(ok ? "Pagamento confirmado. Já pode entregar." : "Pagamento recusado."); setRejecting(false); await load(); }
+  }
+  return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
+    <Text style={ui.h1}>{v.status === "collected" ? "⚠️ QR JÁ USADO" : live ? "✅ QR verdadeiro" : "❌ Pedido sem efeito"}</Text>
+    <Text style={[live ? ui.ok : ui.error, { fontSize: 19 }]}>{fuelOrderRef(v.ref_no)} · {v.station_name} · {v.product ? FUEL_PRODUCTS[v.product].label + " · " + fuelQuantityText(v.product, v.quantity ?? 0) : ""}{"\n"}{v.status ? FUEL_ORDER_STATUS_LABELS[v.status] : ""}</Text>
+    <Message error={error} ok={notice} />
+    {v.role === "other" && <View style={ui.card}><Text style={ui.text}>Este pedido existe no Huambo Online. Só o posto {v.station_name}, com a sua conta, vê os dados e pode entregar.</Text>
+      <Button title="Entrar" onPress={() => router.push("/login")} /></View>}
+    {v.role !== "other" && <>
+      <View style={ui.card}>
+        <Text style={ui.text}>Cliente: <Text style={ui.label}>{v.buyer_name}</Text>{v.buyer_phone ? " · 📞 " + v.buyer_phone : ""}{v.plate ? " · " + v.plate : ""}</Text>
+        <Text style={ui.text}>Combustível/gás: {formatPrice(v.subtotal ?? 0)}</Text>
+        <Text style={ui.text}>Taxa do APP{v.fee_pct ? ` (${v.fee_pct}%)` : ""}: {formatPrice(v.fee_amount ?? 0)}</Text>
+        <Text style={ui.label}>Total: {formatPrice(v.total ?? 0)} · {v.method === "prepaid" ? "pago adiantado" : "paga no posto"}</Text>
+        {!!v.reference && <Text style={ui.text}>Referência do pagamento: <Text style={ui.label}>{v.reference}</Text></Text>}
+        {!!v.code && <Text style={ui.text}>Código: <Text style={ui.label}>{v.code}</Text></Text>}
+      </View>
+      {!!v.proof_path && <Button title="📄 Ver comprovativo" variant="secondary" onPress={() => void openProof(v.proof_path!, setError)} />}
+      {v.role === "station" && v.status === "submitted" && <View style={ui.card}>
+        <Text style={ui.label}>Veja na conta do posto se entrou {formatPrice(v.total ?? 0)} com o descritivo {fuelOrderRef(v.ref_no)}.</Text>
+        {rejecting ? <><TextInput style={[ui.input, ui.area]} multiline value={reason} onChangeText={setReason} placeholder="Motivo (o cliente vai ler)" accessibilityLabel="Motivo" {...ph} />
+          <Button title="❌ Não recebi" variant="danger" disabled={busy} onPress={() => void decide(false)} /><Button title="Voltar" variant="secondary" onPress={() => setRejecting(false)} /></>
+          : <><Button title="✅ Recebi o dinheiro" disabled={busy} onPress={() => Alert.alert("Confirmar pagamento", `Recebeu ${formatPrice(v.total ?? 0)} na conta do posto?`, [{ text: "Não", style: "cancel" }, { text: "Sim", onPress: () => void decide(true) }])} />
+            <Button title="❌ Não recebi" variant="secondary" onPress={() => setRejecting(true)} /></>}
+      </View>}
+      {v.role === "station" && (v.status === "reserved" || v.status === "paid") && <Button title={v.status === "reserved" ? `⛽ Cobrar ${formatPrice(v.total ?? 0)} e entregar` : "⛽ Já pago — entregar"} disabled={busy}
+        onPress={() => Alert.alert("Entregar", `Entregar ${fuelQuantityText(v.product!, v.quantity ?? 0)} a ${v.buyer_name}?`, [{ text: "Não", style: "cancel" }, { text: "Sim", onPress: () => void deliver() }])} />}
+    </>}
+  </ScrollView>;
 }
