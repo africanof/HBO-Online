@@ -285,7 +285,7 @@ export function StationFormScreen({ id }: { id?: string }) {
   const toggle = (p: FuelProduct) => setProducts(ps => ps.includes(p) ? ps.filter(x => x !== p) : [...ps, p]);
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Text style={ui.h1}>{id ? "✏️ Editar posto" : "⛽ Registar posto"}</Text>
-    {!id && <Text style={ui.muted}>A administração confirma o posto antes de aparecer ao público (para evitar postos falsos).</Text>}
+    <Text style={ui.muted}>{id ? "⚠️ Se mudar o nome, o local ou a conta para pagamentos, o posto volta a ficar à espera de aprovação da administração (para evitar burlas)." : "A administração confirma o posto antes de aparecer ao público (para evitar postos falsos)."}</Text>
     <Field label="Nome" value={name} onChangeText={setName} maxLength={100} placeholder="Ex.: Posto Sonangol do Kapango" />
     <Text style={ui.label}>O que vende</Text>
     <Chips options={(Object.keys(FUEL_KIND_LABELS) as FuelKind[]).map(k => ({ value: k, label: FUEL_KIND_LABELS[k] }))} value={kind}

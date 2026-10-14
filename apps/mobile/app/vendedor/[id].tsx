@@ -7,6 +7,7 @@ import { supabase } from "../../lib/supabase";
 import { ui, C } from "../../lib/ui";
 import { StatsBlock, VerifiedTag, stars } from "../../components/Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "../../components/Trust";
+import { InspectedBadge, useInspected } from "../../components/Inspection";
 import { currentUserId } from "../../lib/supabase";
 import { LiteImage } from "../../components/LiteImage";
 import { FollowButton } from "../../components/Engage";
@@ -16,6 +17,7 @@ export default function Vendedor() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [s, setS] = useState<PublicSeller | null>(null); const [listings, setListings] = useState<any[]>([]); const [products, setProducts] = useState<any[]>([]); const [error, setError] = useState("");
+  const store = useInspected("store", [id]);
   const [stats, setStats] = useState<UserStats | null>(null); const [reviews, setReviews] = useState<UserReview[]>([]); const [me, setMe] = useState<string | null>(null);
   useEffect(() => { if (!id) return; void (async () => {
     const c = supabase();
@@ -39,6 +41,7 @@ export default function Vendedor() {
     {s.is_provider && <><Text style={ui.text}>{ratingLabel(s.rating, s.review_count)}</Text><Link href={("/profissionais/" + s.id) as any} style={ui.link}>Ver perfil profissional →</Link></>}
     <FollowButton kind="seller" id={s.id} mine={me === s.id} />
     <TrustBadges userId={s.id} />
+    <InspectedBadge info={store[s.id]} big />
     <StatsBlock rows={userStatsRows(stats)} />
     <PromoShelf kind="store" id={s.id} />
     <Text style={ui.h2}>Anúncios ({listings.length})</Text>

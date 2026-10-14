@@ -28,6 +28,8 @@ export function getNotificationLink(n: Pick<AppNotification, "data" | "type" | "
   if (d.for === "fuel" && isUuid(d.station_id)) return { href: "/combustivel/" + d.station_id, label: "⛽ Ver o posto →" };
   if (d.for === "fuel_orders") return { href: "/combustivel/pedidos", label: "⛽ Ver as minhas reservas →" };
   if (d.for === "fuel_station" && isUuid(d.station_id)) return { href: "/combustivel/" + d.station_id + "/gerir", label: "⛽ Gerir o posto →" };
+  if (d.for === "inspection") return { href: "/inspecao", label: "🏅 Ver a inspeção →" };
+  if (isUuid(d.inspection_id)) return { href: "/admin", label: "🛡️ Ver na administração →" };
   if (isUuid(d.fuel_station_id) || isUuid(d.fuel_payment_id)) return { href: "/admin", label: "🛡️ Ver na administração →" };
   if (d.for === "admin_promo") return { href: "/admin", label: "🛡️ Ver na administração →" };
   if (d.for === "follow" && isUuid(d.product_id)) return { href: "/loja/" + d.product_id, label: "🛍️ Ver produto →" };
