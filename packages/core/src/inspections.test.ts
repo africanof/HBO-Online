@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { inspectedMap, inspectionBadgeText, isInspected, requestInspection, decideInspection, revokeInspection, scheduleInspection, validateInspectionRequest, inspectionRef } from "./inspections";
+import { inspectionFee, submitInspectionPayment, decideInspectionPayment, inspectedMap, inspectionBadgeText, isInspected, requestInspection, decideInspection, revokeInspection, scheduleInspection, validateInspectionRequest, inspectionRef } from "./inspections";
 
 const rpc = (data: unknown = null) => ({ rpc: vi.fn(async () => ({ data, error: null })) }) as any;
 
@@ -11,6 +11,21 @@ describe("inspeções", () => {
     expect(isInspected(null, now)).toBe(false);
     expect(inspectionBadgeText({ inspected_at: "2026-10-14T10:00:00Z", valid_until: "2027-10-14T10:00:00Z" })).toBe("Visitado pela administração em 14/10/2026 · válido até 14/10/2027");
     expect(inspectionRef(1001)).toBe("I-1001");
+  });
+  it("taxa: profissionais 2 000 Kz, os outros 5 000 Kz", () => {
+    expect(inspectionFee("provider", null)).toBe(2000);
+    expect(inspectionFee("business", null)).toBe(5000);
+    expect(inspectionFee("store", { inspection_fee_kz: "7000", inspection_fee_provider_kz: 2500 })).toBe(7000);
+    expect(inspectionFee("provider", { inspection_fee_kz: 7000, inspection_fee_provider_kz: "2500" })).toBe(2500);
+  });
+  it("pagamento da taxa", async () => {
+    const k = rpc();
+    expect((await submitInspectionPayment(k, "i", { method: "bank_transfer" })).error?.message).toContain("referência");
+    await submitInspectionPayment(k, "i", { method: "multicaixa_express", reference: " TX1 ", proofPath: "u/p.jpg" });
+    expect(k.rpc).toHaveBeenLastCalledWith("submit_inspection_payment", { p_id: "i", p_method: "multicaixa_express", p_reference: "TX1", p_proof_path: "u/p.jpg" });
+    expect((await decideInspectionPayment(k, "i", false)).error?.message).toContain("motivo");
+    await decideInspectionPayment(k, "i", true);
+    expect(k.rpc).toHaveBeenLastCalledWith("admin_decide_inspection_payment", { p_id: "i", p_confirm: true, p_note: null });
   });
   it("valida o pedido", () => {
     expect(validateInspectionRequest({ address: "Rua", phone: "923000000" })).toContain("morada");
