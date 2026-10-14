@@ -125,3 +125,17 @@ export async function sellerPageCached(getPublic: GetPublic, id: string, direct:
   const r = await getPublic<SellerBundle>("vendedor/" + encodeURIComponent(id));
   return r && r.seller ? { ...r, error: null, cached: true } : { ...(await direct()), cached: false };
 }
+
+// --- Fila de tarefas (avisos em massa feitos fora da publicação) ------------------------------
+export type JobQueueStats = { pending: number; oldest_pending_seconds: number | null; done_last_hour: number; failed: number };
+export async function jobQueueStats(client: { rpc: (fn: string) => PromiseLike<{ data: unknown; error: unknown }> }) {
+  const r = await client.rpc("admin_job_queue_stats");
+  return { data: (r.data ?? null) as JobQueueStats | null, error: r.error };
+}
+/** «A fila está em dia» ou o atraso, em palavras simples. */
+export function jobQueueText(s: JobQueueStats | null): string {
+  if (!s) return "";
+  const late = s.oldest_pending_seconds ?? 0;
+  const head = Number(s.pending) === 0 ? "✅ Fila de avisos em dia" : late > 300 ? `⚠️ Fila atrasada: ${s.pending} por enviar (há ${Math.round(late / 60)} min)` : `⏳ ${s.pending} avisos a sair`;
+  return `${head} · ${s.done_last_hour} tratadas na última hora${Number(s.failed) ? ` · ❌ ${s.failed} falharam` : ""}`;
+}

@@ -19,6 +19,9 @@ import { PaymentDetails } from "./Plans";
 import { useTerritory } from "./Directory";
 import { QrScanButton } from "./QrScanner";
 import { getPublic } from "../lib/public-api";
+import { OfflineBanner } from "./Offline";
+import { deviceStore } from "./Engage";
+import { loadWithCache, isOfflineError } from "@huambo-online/core";
 import { fuelFeedCached } from "@huambo-online/core";
 
 const ph = { placeholderTextColor: C.muted };
@@ -60,7 +63,13 @@ export function FuelListScreen() {
   const [rows, setRows] = useState<FuelRow[] | null>(null); const [uid, setUid] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<{ id: string; product: FuelProduct; municipality_id: string | null }[]>([]);
   const [error, setError] = useState(""); const [notice, setNotice] = useState("");
-  useEffect(() => { void fuelFeedCached(getPublic, () => fuelFeed(supabase(), { product, municipalityId }), { product, municipalityId }).then(r => { if (r.error) setError(friendlyError(r.error)); else { setError(""); setRows(r.data); } }); }, [product, municipalityId]);
+  const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
+  useEffect(() => { void (async () => {
+    // Guarda a última lista para a mostrar sem rede (com o aviso de que pode ter mudado).
+    const r = await loadWithCache<FuelRow[]>(deviceStore, `combustivel:${product}:${municipalityId}`, () => fuelFeedCached(getPublic, () => fuelFeed(supabase(), { product, municipalityId }), { product, municipalityId }));
+    setOffline({ on: r.fromCache || isOfflineError(r.error), at: r.fromCache ? r.savedAt : null });
+    if (r.error && !r.data) { if (!isOfflineError(r.error)) setError(friendlyError(r.error)); } else { setError(""); setRows(r.data); }
+  })(); }, [product, municipalityId]);
   useFocusEffect(useCallback(() => { void currentUserId().then(async u => { setUid(u); if (u) setAlerts((await listMyFuelAlerts(supabase())).data); }); }, []));
   const alert = product ? alerts.find(a => a.product === product && (a.municipality_id ?? "") === municipalityId) : undefined;
   async function toggleAlert() {
@@ -79,6 +88,7 @@ export function FuelListScreen() {
     <Chips options={[{ value: "all", label: "Todos" }, ...FUEL_PRODUCT_LIST.map(p => ({ value: p, label: `${FUEL_PRODUCTS[p].icon} ${FUEL_PRODUCTS[p].short}` }))]} value={product || "all"} onChange={v => setProduct(v === "all" ? "" : v as FuelProduct)} />
     {municipalities.length > 0 && <Chips options={[{ value: "all", label: "Todos os municípios" }, ...municipalities.map(m => ({ value: m.id, label: m.name }))]} value={municipalityId || "all"} onChange={v => setMunicipalityId(v === "all" ? "" : v)} />}
     {!!product && <Button title={alert ? "🔕 Desligar aviso" : `🔔 Avisar-me quando houver ${FUEL_PRODUCTS[product].short.toLowerCase()}`} variant={alert ? "secondary" : "primary"} onPress={() => void toggleAlert()} />}
+    <OfflineBanner show={offline.on} savedAt={offline.at} />
     <Message error={error} ok={notice} />
     {rows !== null && <Text style={ui.label}>{has ? `🟢 ${has} ${has === 1 ? "sítio com" : "sítios com"} ${product ? FUEL_PRODUCTS[product].label.toLowerCase() : "combustível ou gás"} agora` : "🔴 Neste momento ninguém marcou que há. Peça um aviso!"}</Text>}
     {rows === null ? <Text style={ui.text}>A carregar…</Text> : rows.length === 0 ? <Text style={ui.text}>Ainda não há postos registados aqui.</Text> :

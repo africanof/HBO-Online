@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import * as FileSystem from "expo-file-system/legacy";
 import { useRouter } from "expo-router";
 import { Image, Pressable, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
   createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, normalizeAgentCode, pointFrom, type GeoPoint, friendlyError, listingTerritory, base64ToArrayBuffer,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice,
-  saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS } from "@huambo-online/core";
+  saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS,
+  loadListingDraft, saveListingDraft, clearListingDraft, draftAgeText, isOfflineError, OFFLINE_PUBLISH_MESSAGE, type ListingDraftFields, type ListingDraftPhoto } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
@@ -16,6 +18,11 @@ import { VideoField } from "./Video";
 import { AgentCodeField } from "./Agents";
 import { Button, Chips, Message } from "./Ui";
 import { shrinkAsset } from "../lib/image";
+import { deviceStore } from "./Engage";
+
+/** Pasta da APP onde ficam as fotografias do rascunho (não é apagada pelo telemóvel como a cache). */
+const DRAFT_DIR = (FileSystem.documentDirectory ?? "") + "rascunho-anuncio/";
+async function dropDraftFiles() { try { await FileSystem.deleteAsync(DRAFT_DIR, { idempotent: true }); } catch { /* nada */ } }
 
 type Option = { id: string; name: string };
 type Photo = { key: string; uri: string; base64?: string | null; mimeType?: string; remote?: boolean };
@@ -68,6 +75,53 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  // Rascunho guardado no telemóvel (só ao criar um anúncio novo).
+  const [draftNote, setDraftNote] = useState("");
+  const [draftReady, setDraftReady] = useState(editing);
+  const copied = useRef(new Map<string, string>());
+  useEffect(() => { if (editing) return; void (async () => {
+    const d = await loadListingDraft(deviceStore).catch(() => null);
+    if (d) {
+      const f = d.fields;
+      setListingType(f.listingType as ClassifiedListingType); setIsAgro(f.isAgro); setAgroCat(f.agroCat); setAgroUnit(f.agroUnit); setAgroQty(f.agroQty); setAgroFrom(f.agroFrom);
+      setPurpose(f.purpose as ClassifiedPurpose); setTitle(f.title); setDescription(f.description); setPrice(f.price); setBudgetMin(f.budgetMin); setBudgetMax(f.budgetMax);
+      setSaleMode(f.saleMode as SaleMode | ""); setAcceptsTrade(f.acceptsTrade); setTradeWants(f.tradeWants); setAuctionDays(f.auctionDays); setCategoryId(f.categoryId);
+      if (f.provinceId) setProvinceId(f.provinceId); if (f.municipalityId) setMunicipalityId(f.municipalityId); setMarketId(f.marketId); setVideoUrl(f.videoUrl);
+      if (f.agentCode) setAgentCode(f.agentCode); setDirections(f.directions); setPoint(f.point);
+      const ok: Photo[] = [];
+      for (const ph of d.photos) { try { if ((await FileSystem.getInfoAsync(ph.uri)).exists) { ok.push({ key: ph.key, uri: ph.uri, mimeType: ph.mimeType }); copied.current.set(ph.uri, ph.uri); } } catch { /* fotografia perdida */ } }
+      setPhotos(ok);
+      setDraftNote(`📝 Rascunho recuperado (${draftAgeText(d.savedAt)}).` + (ok.length < d.photos.length ? " Algumas fotografias perderam-se: volte a juntá-las." : ""));
+    }
+    setDraftReady(true);
+  })(); }, []);
+  const draftFields: ListingDraftFields = { listingType, isAgro, agroCat, agroUnit, agroQty, agroFrom, purpose, title, description, price, budgetMin, budgetMax, saleMode,
+    acceptsTrade, tradeWants, auctionDays, categoryId, provinceId, municipalityId, marketId, videoUrl, agentCode, directions, point };
+  const draftSnapshot = JSON.stringify([draftFields, photos.map(p => p.uri)]);
+  async function persistDraft() {
+    const out: ListingDraftPhoto[] = [];
+    for (const ph of photos) {
+      if (ph.remote) continue;
+      let u = copied.current.get(ph.uri);
+      if (!u) {
+        try {
+          await FileSystem.makeDirectoryAsync(DRAFT_DIR, { intermediates: true }).catch(() => {});
+          u = DRAFT_DIR + Date.now() + "-" + out.length + ".jpg";
+          await FileSystem.copyAsync({ from: ph.uri, to: u });
+          copied.current.set(ph.uri, u); copied.current.set(u, u);
+        } catch { continue; }
+      }
+      out.push({ key: ph.key, uri: u, mimeType: ph.mimeType });
+    }
+    await saveListingDraft(deviceStore, draftFields, out).catch(() => {});
+  }
+  useEffect(() => { if (editing || !draftReady) return; const t = setTimeout(() => void persistDraft(), 700); return () => clearTimeout(t); }, [draftSnapshot, draftReady]);
+  async function discardDraft() {
+    await clearListingDraft(deviceStore).catch(() => {}); await dropDraftFiles(); copied.current.clear();
+    setTitle(""); setDescription(""); setPrice(""); setBudgetMin(""); setBudgetMax(""); setTradeWants(""); setDirections(""); setVideoUrl(""); setPoint(null); setPhotos([]);
+    setDraftNote("");
+  }
+  async function draftDone() { await clearListingDraft(deviceStore).catch(() => {}); await dropDraftFiles(); }
 
   useEffect(() => {
     const c = supabase();
@@ -157,19 +211,23 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
       } else {
         const r = await createAndPublishClassifiedListing(c, { ownerId: user.id, ...input, agentCode });
         if (r.error) {
-          if (r.draftId) { router.replace(("/meus-anuncios?erro=" + encodeURIComponent(friendlyError(r.error))) as any); return; }
+          if (r.draftId) { await draftDone(); router.replace(("/meus-anuncios?erro=" + encodeURIComponent(friendlyError(r.error))) as any); return; }
           throw r.error;
         }
+        await draftDone();
         const ae = await startAuction((r.data as any).id);
         if (ae) { router.replace(("/meus-anuncios?erro=" + encodeURIComponent("o anúncio foi publicado, mas o leilão não abriu: " + friendlyError(ae))) as any); return; }
         router.replace(("/classificados/" + (r.data as any).id) as any);
       }
     } catch (err) {
-      setError(friendlyError(err, "Não foi possível publicar o anúncio."));
+      if (!editing && isOfflineError(err)) { await persistDraft(); setError(OFFLINE_PUBLISH_MESSAGE); }
+      else setError(friendlyError(err, "Não foi possível publicar o anúncio."));
     } finally { setBusy(false); setStatus(""); }
   }
 
   return <View style={{ gap: 14 }}>
+    {!!draftNote && <View style={[ui.card, { gap: 8 }]}><Text style={ui.text}>{draftNote}</Text><Button title="🗑️ Apagar rascunho e começar de novo" variant="secondary" onPress={() => void discardDraft()} /></View>}
+    {!editing && <Text style={ui.muted}>💾 O que escreve fica guardado neste telemóvel, mesmo sem internet.</Text>}
     <Text style={ui.label}>Tipo</Text>
     <Chips options={typeOptions} value={listingType} onChange={setListingType} />
     <Text style={ui.label}>Finalidade</Text>

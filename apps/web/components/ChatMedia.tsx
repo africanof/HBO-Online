@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { uploadChatFile, sendAttachmentMessage, validateChatFile, chatAttachmentKind, formatSeconds, friendlyError, CHAT_LIMITS, CHAT_KIND_LABELS,
+import { PHOTO_MAX_SIDE, PHOTO_QUALITY, uploadChatFile, sendAttachmentMessage, validateChatFile, chatAttachmentKind, formatSeconds, friendlyError, CHAT_LIMITS, CHAT_KIND_LABELS,
   type ChatAttachmentKind, type ChatMessage } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { useDataSaver } from "../lib/dataSaver";
@@ -15,13 +15,13 @@ function readDuration(file: Blob, kind: "video" | "audio"): Promise<number | nul
     el.src = url;
   });
 }
-/** Reduz a fotografia (lado maior 1600 px, JPEG) para gastar menos dados. */
+/** Reduz a fotografia (lado maior 1280 px, JPEG 70%) para gastar menos dados. */
 async function shrinkImage(file: File): Promise<Blob> {
   try {
-    const bmp = await createImageBitmap(file); const max = 1600; const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const bmp = await createImageBitmap(file); const max = PHOTO_MAX_SIDE; const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
     const canvas = document.createElement("canvas"); canvas.width = Math.round(bmp.width * k); canvas.height = Math.round(bmp.height * k);
     canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
-    const out = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/jpeg", 0.82));
+    const out = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/jpeg", PHOTO_QUALITY));
     return out && out.size < file.size ? out : file;
   } catch { return file; }
 }

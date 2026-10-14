@@ -14,6 +14,9 @@ import { PlaceFields, PlaceView } from "./Place";
 import { PaymentDetails } from "./Plans";
 import { useTerritory } from "./Directory";
 import { getPublic } from "../lib/public-api";
+import { OfflineBanner } from "./Offline";
+import { browserStore } from "./Engage";
+import { loadWithCache, isOfflineError } from "@huambo-online/core";
 import { fuelFeedCached } from "@huambo-online/core";
 
 const STATUS_COLORS: Record<FuelStatus, string> = { available: "var(--ok)", low: "var(--gold-text)", out: "var(--danger)", unknown: "var(--muted)" };
@@ -40,7 +43,13 @@ export function FuelList() {
   const [rows, setRows] = useState<FuelRow[] | null>(null); const [uid, setUid] = useState<string | null>(null);
   const [alerts, setAlerts] = useState<{ id: string; product: FuelProduct; municipality_id: string | null }[]>([]);
   const [error, setError] = useState(""); const [notice, setNotice] = useState("");
-  async function load() { const r = await fuelFeedCached(getPublic, () => fuelFeed(supabase(), { product, municipalityId }), { product, municipalityId }); if (r.error) setError(friendlyError(r.error)); else { setError(""); setRows(r.data); } }
+  const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
+  async function load() {
+    // Guarda a última lista para a mostrar sem rede (com o aviso de que pode ter mudado).
+    const r = await loadWithCache<FuelRow[]>(browserStore, `combustivel:${product}:${municipalityId}`, () => fuelFeedCached(getPublic, () => fuelFeed(supabase(), { product, municipalityId }), { product, municipalityId }));
+    setOffline({ on: r.fromCache || isOfflineError(r.error), at: r.fromCache ? r.savedAt : null });
+    if (r.error && !r.data) { if (!isOfflineError(r.error)) setError(friendlyError(r.error)); } else { setError(""); setRows(r.data); }
+  }
   useEffect(() => { void load(); }, [product, municipalityId]);
   useEffect(() => { void currentUserId().then(async u => { setUid(u); if (u) setAlerts((await listMyFuelAlerts(supabase())).data); }); }, []);
   const alert = product ? alerts.find(a => a.product === product && (a.municipality_id ?? "") === municipalityId) : undefined;
@@ -67,6 +76,7 @@ export function FuelList() {
       <label style={{ flex: 1, minWidth: 200 }}>Município<select value={municipalityId} onChange={e => setMunicipalityId(e.target.value)}><option value="">Todos</option>{municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
       {product && <button type="button" className={alert ? "secondary" : ""} aria-pressed={!!alert} onClick={() => void toggleAlert()}>{alert ? "🔕 Desligar aviso" : `🔔 Avisar-me quando houver ${FUEL_PRODUCTS[product].short.toLowerCase()}`}</button>}
     </div>
+    <OfflineBanner show={offline.on} savedAt={offline.at} />
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
     {rows !== null && <p role="status" style={{ margin: 0, fontWeight: 700 }}>{has ? `🟢 ${has} ${has === 1 ? "sítio com" : "sítios com"} ${product ? FUEL_PRODUCTS[product].label.toLowerCase() : "combustível ou gás"} agora` : "🔴 Neste momento ninguém marcou que há. Peça um aviso!"}</p>}

@@ -27,7 +27,9 @@ export function ChatAttachButtons({ conversationId, uid, caption, onSent }: { co
     setError("");
     const perm = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) { setError(camera ? "Autorize a câmara." : "Autorize o acesso à galeria."); return; }
-    const opts: ImagePicker.ImagePickerOptions = { mediaTypes: [kind === "image" ? "images" : "videos"], quality: 0.8, videoMaxDuration: CHAT_LIMITS.video.seconds };
+    // Vídeos: no iPhone o próprio telemóvel comprime para qualidade média antes de enviar.
+    const opts: ImagePicker.ImagePickerOptions = { mediaTypes: [kind === "image" ? "images" : "videos"], quality: 0.8, videoMaxDuration: CHAT_LIMITS.video.seconds,
+      videoQuality: ImagePicker.UIImagePickerControllerQualityType.Medium, videoExportPreset: ImagePicker.VideoExportPreset.MediumQuality };
     const r = camera ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
     if (r.canceled || !r.assets?.[0]) return;
     const a = r.assets[0];

@@ -4,7 +4,7 @@ import { shrinkPlan, PHOTO_MAX_SIDE, PHOTO_QUALITY } from "@huambo-online/core";
 type Asset = { uri: string; width?: number; height?: number; fileSize?: number | null; base64?: string | null; mimeType?: string | null };
 
 /**
- * Reduz a fotografia no telemóvel antes de enviar (lado maior 1600 px, JPEG) para poupar dados.
+ * Reduz a fotografia no telemóvel antes de enviar (lado maior 1280 px, JPEG 70%) para poupar dados.
  * Se não for preciso, ou se falhar, devolve a fotografia original.
  */
 export async function shrinkAsset(a: Asset, maxSide = PHOTO_MAX_SIDE): Promise<{ uri: string; base64?: string | null; mimeType: string }> {
