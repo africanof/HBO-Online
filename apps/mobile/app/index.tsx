@@ -138,11 +138,12 @@ export default function Home() {
     </View>
 
     <View style={[st.banner, { backgroundColor: C.greenSoft }]}>
-      <Text style={ui.h2}>Profissional, empresa ou estafeta?</Text>
-      <Text style={ui.text}>Crie o seu perfil e receba clientes de todo o Huambo.</Text>
+      <Text style={ui.h2}>Profissional, empresa, estafeta ou agente?</Text>
+      <Text style={ui.text}>Crie o seu perfil e receba clientes de todo o Huambo. Agentes ajudam quem não tem telemóvel ou não sabe usar a internet a vender, trocar ou leiloar — e ganham comissão em cada venda.</Text>
       <Button title="Sou profissional" variant="secondary" onPress={() => router.push("/conta/profissional" as any)} />
       <Button title="Tenho uma empresa" variant="secondary" onPress={() => router.push("/conta/empresas" as any)} />
       <Button title="Quero ser estafeta" variant="secondary" onPress={() => router.push("/entregas" as any)} />
+      <Button title="Quero ser um agente" variant="secondary" onPress={() => router.push("/agente" as any)} />
     </View>
   </ScrollView>;
 }

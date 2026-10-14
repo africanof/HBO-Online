@@ -34,7 +34,7 @@ export default function Agente() {
   }
   const intro = <>
     <Text style={ui.h1}>🤝 Agentes no terreno</Text>
-    <Text style={ui.text}>Trabalha numa praça (por exemplo, o Kapango)? Ajude os vendedores a pôr os anúncios no Huambo Online e ganhe uma comissão sempre que um desses anúncios for vendido.</Text>
+    <Text style={ui.text}>Trabalha numa praça (por exemplo, o Kapango) ou conhece pessoas sem telemóvel ou que não sabem usar a internet? Ajude-as a pôr anúncios de venda, troca ou leilão no Huambo Online e ganhe uma comissão sempre que um desses anúncios for vendido.</Text>
     {!!p && <Text style={ui.ok}>{agentOfferText(p.sale_pct)}</Text>}
     <Text style={ui.text}>1. Peça para ser agente (escolha a sua praça). A administração confirma.</Text>
     <Text style={ui.text}>2. Recebe um código, por exemplo AG1001.</Text>

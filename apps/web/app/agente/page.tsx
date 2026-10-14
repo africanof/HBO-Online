@@ -31,7 +31,7 @@ export default function Agente() {
   if (uid === undefined) return <main><p>A carregar…</p></main>;
   const intro = <>
     <h1>🤝 Agentes no terreno</h1>
-    <p style={{ margin: 0, fontSize: 19 }}>Trabalha numa praça (por exemplo, o Kapango)? Ajude os vendedores a pôr os anúncios no Huambo Online e ganhe uma comissão sempre que um desses anúncios for vendido.</p>
+    <p style={{ margin: 0, fontSize: 19 }}>Trabalha numa praça (por exemplo, o Kapango) ou conhece pessoas sem telemóvel ou que não sabem usar a internet? Ajude-as a pôr anúncios de venda, troca ou leilão no Huambo Online e ganhe uma comissão sempre que um desses anúncios for vendido.</p>
     {p && <p className="ok" style={{ margin: 0 }}>{agentOfferText(p.sale_pct)}</p>}
     <ol style={{ margin: 0, paddingLeft: 22, display: "grid", gap: 4 }}>
       <li>Peça para ser agente (escolha a sua praça). A administração confirma.</li>

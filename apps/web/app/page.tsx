@@ -115,8 +115,8 @@ export default function Home() {
     </section>}
 
     <section className="banner green" style={{ marginTop: 32 }}>
-      <div><h2>Profissional, empresa ou estafeta?</h2><p>Crie o seu perfil e receba clientes de todo o Huambo.</p></div>
-      <div className="row"><a className="btn secondary" href="/conta/profissional">Sou profissional</a><a className="btn secondary" href="/conta/empresas">Tenho uma empresa</a><a className="btn secondary" href="/entregas">Quero ser estafeta</a></div>
+      <div><h2>Profissional, empresa, estafeta ou agente?</h2><p>Crie o seu perfil e receba clientes de todo o Huambo. Agentes ajudam quem não tem telemóvel ou não sabe usar a internet a vender, trocar ou leiloar — e ganham comissão em cada venda.</p></div>
+      <div className="row"><a className="btn secondary" href="/conta/profissional">Sou profissional</a><a className="btn secondary" href="/conta/empresas">Tenho uma empresa</a><a className="btn secondary" href="/entregas">Quero ser estafeta</a><a className="btn secondary" href="/agente">Quero ser um agente</a></div>
     </section>
   </main>;
 }
