@@ -4,7 +4,7 @@ import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
   listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, recordItemEvent, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
-  listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince , categoryIdFromSlug, directoryHeading } from "@huambo-online/core";
+  listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince , categoryIdFromSlug, directoryHeading, FUEL_CATEGORY_SLUG } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
@@ -66,6 +66,8 @@ export function DirectoryList({ kind }: { kind: Kind }) {
     </View>}
     <Button title="Pesquisar" onPress={() => void search()} />
     <Message error={error} />
+    {kind === "businesses" && categories.find(c => c.id === categoryId)?.slug === FUEL_CATEGORY_SLUG &&
+      <Button title="⛽ Onde há combustível e gás agora?" onPress={() => router.push("/combustivel" as any)} />}
     {items?.length === 0 && <Text style={ui.text}>{t.empty}</Text>}
     <View style={{ backgroundColor: C.yellowSoft, borderRadius: 16, padding: 14, gap: 8 }}>
       <Text style={ui.text}><Text style={{ fontWeight: "800" }}>Não encontrou quem procura?</Text> Publique «Procuro um eletricista, canalizador, doméstica…» e os profissionais da área são avisados.</Text>

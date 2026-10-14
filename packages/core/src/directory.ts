@@ -152,8 +152,12 @@ export function categoryIdFromSlug(categories: { id: string; slug?: string | nul
   return categories.find(c => c.slug === slug.trim().toLowerCase())?.id ?? "";
 }
 /** Textos especiais quando a lista de empresas está filtrada por «Fábricas». */
+/** Categoria de empresas que leva à área «Combustível e gás». */
+export const FUEL_CATEGORY_SLUG = "combustivel-gas";
 export function directoryHeading(slug: string | null | undefined): { title: string; cta: string } | null {
-  return slug === "fabricas" ? { title: "🏭 Fábricas do Huambo", cta: "Registar a minha fábrica" } : null;
+  if (slug === "fabricas") return { title: "🏭 Fábricas do Huambo", cta: "Registar a minha fábrica" };
+  if (slug === FUEL_CATEGORY_SLUG) return { title: "⛽ Postos de combustível e gás", cta: "Registar a minha empresa" };
+  return null;
 }
 export async function listDirectoryCategories(client: SupabaseClient, kind: "providers" | "businesses") {
   const types = kind === "providers" ? ["professional", "service"] : ["business", "product"];

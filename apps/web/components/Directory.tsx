@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { listBusinessProducts, listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
   listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, recordItemEvent, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
-  listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince , categoryIdFromSlug, directoryHeading } from "@huambo-online/core";
+  listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince , categoryIdFromSlug, directoryHeading, FUEL_CATEGORY_SLUG } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { SaveButton, ShareButton, FollowButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, stars } from "./Reputation";
@@ -62,6 +62,8 @@ export function DirectoryList({ kind }: { kind: Kind }) {
       <button type="submit" style={{ alignSelf: "end" }}>Pesquisar</button>
     </form>
     {error && <p className="error" role="alert">{error}</p>}
+    {kind === "businesses" && categories.find(c => c.id === categoryId)?.slug === FUEL_CATEGORY_SLUG && <a href="/combustivel" className="banner yellow" style={{ color: "inherit", textDecoration: "none", fontWeight: 400, padding: 18 }}>
+      <strong>⛽ Onde há combustível e gás agora?</strong> Veja os postos que marcaram «Há», peça um aviso ou reserve.</a>}
     {items?.length === 0 && <p>{t.empty}</p>}
     <a href="/classificados/publicar?finalidade=wanted" className="banner yellow" style={{ color: "inherit", textDecoration: "none", fontWeight: 400, padding: 18 }}>
       <span><strong>Não encontrou quem procura?</strong> Publique «Procuro um eletricista, canalizador, doméstica…» e os profissionais da área são avisados.</span>
