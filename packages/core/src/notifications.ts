@@ -25,6 +25,10 @@ export function getNotificationLink(n: Pick<AppNotification, "data" | "type" | "
   if (d.for === "plan") return { href: "/conta/plano", label: "💳 Ver o meu plano →" };
   if (d.for === "dispute" && isUuid(d.dispute_id)) return { href: "/disputas", label: "⚖️ Ver devolução / reembolso →" };
   if ((d.for === "follow" || d.for === "promo") && isUuid(d.post_id)) return { href: "/videos/" + d.post_id, label: "🎬 Ver vídeo / live →" };
+  if (d.for === "fuel" && isUuid(d.station_id)) return { href: "/combustivel/" + d.station_id, label: "⛽ Ver o posto →" };
+  if (d.for === "fuel_orders") return { href: "/combustivel/pedidos", label: "⛽ Ver as minhas reservas →" };
+  if (d.for === "fuel_station" && isUuid(d.station_id)) return { href: "/combustivel/" + d.station_id + "/gerir", label: "⛽ Gerir o posto →" };
+  if (isUuid(d.fuel_station_id) || isUuid(d.fuel_payment_id)) return { href: "/admin", label: "🛡️ Ver na administração →" };
   if (d.for === "admin_promo") return { href: "/admin", label: "🛡️ Ver na administração →" };
   if (d.for === "follow" && isUuid(d.product_id)) return { href: "/loja/" + d.product_id, label: "🛍️ Ver produto →" };
   if (d.for === "follow" && isUuid(d.provider_id)) return { href: "/profissionais/" + d.provider_id, label: "🧰 Ver perfil →" };
