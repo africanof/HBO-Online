@@ -1,7 +1,7 @@
 import { shrinkPlan, jpegName, PHOTO_MAX_SIDE, PHOTO_QUALITY } from "@huambo-online/core";
 
 /**
- * Reduz a fotografia no navegador antes de enviar (lado maior 1600 px, JPEG).
+ * Reduz a fotografia no navegador antes de enviar (lado maior 1280 px, JPEG 70%).
  * Se algo falhar, ou se a fotografia já for pequena, devolve o ficheiro original.
  */
 export async function compressPhoto(file: File, maxSide = PHOTO_MAX_SIDE, quality = PHOTO_QUALITY): Promise<File> {

@@ -3,8 +3,8 @@ import { shrinkPlan, jpegName, formatBytes, PHOTO_MAX_SIDE, AVATAR_MAX_SIDE } fr
 
 describe("fotografias leves", () => {
   it("reduz fotografias grandes mantendo a proporção", () => {
-    expect(shrinkPlan(4000, 3000, 3_500_000)).toEqual({ width: PHOTO_MAX_SIDE, height: 1200 });
-    expect(shrinkPlan(3000, 4000, 3_500_000)).toEqual({ width: 1200, height: PHOTO_MAX_SIDE });
+    expect(shrinkPlan(4000, 3000, 3_500_000)).toEqual({ width: PHOTO_MAX_SIDE, height: 960 });
+    expect(shrinkPlan(3000, 4000, 3_500_000)).toEqual({ width: 960, height: PHOTO_MAX_SIDE });
     expect(shrinkPlan(1200, 1200, 2_000_000, AVATAR_MAX_SIDE)).toEqual({ width: 512, height: 512 });
   });
   it("não mexe em fotografias já pequenas, mas recomprime as pesadas", () => {

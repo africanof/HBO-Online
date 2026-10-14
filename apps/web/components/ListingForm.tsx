@@ -8,7 +8,9 @@ import { AgentCodeField, agentCodeFromUrl } from "./Agents";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
   createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, pointFrom, type GeoPoint, friendlyError, listingTerritory,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES, validateBudget, budgetPrice,
-  saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS } from "@huambo-online/core";
+  saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS,
+  loadListingDraft, saveListingDraft, clearListingDraft, draftAgeText, isOfflineError, OFFLINE_PUBLISH_MESSAGE, type ListingDraftFields } from "@huambo-online/core";
+import { browserStore } from "./Engage";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
 import { compressPhoto } from "../lib/image";
@@ -62,6 +64,29 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  // Rascunho guardado no navegador (só o texto; as fotografias não ficam guardadas aqui).
+  const [draftNote, setDraftNote] = useState(""); const [draftReady, setDraftReady] = useState(editing);
+  useEffect(() => { if (editing) return; void (async () => {
+    const d = await loadListingDraft(browserStore).catch(() => null);
+    if (d) {
+      const f = d.fields;
+      setListingType(f.listingType as ClassifiedListingType); setIsAgro(f.isAgro); setAgroCat(f.agroCat); setAgroUnit(f.agroUnit); setAgroQty(f.agroQty); setAgroFrom(f.agroFrom);
+      setPurpose(f.purpose as ClassifiedPurpose); setTitle(f.title); setDescription(f.description); setPrice(f.price); setBudgetMin(f.budgetMin); setBudgetMax(f.budgetMax);
+      setSaleMode(f.saleMode as SaleMode | ""); setAcceptsTrade(f.acceptsTrade); setTradeWants(f.tradeWants); setAuctionDays(f.auctionDays); setCategoryId(f.categoryId);
+      if (f.provinceId) setProvinceId(f.provinceId); if (f.municipalityId) setMunicipalityId(f.municipalityId); setMarketId(f.marketId); setVideoUrl(f.videoUrl);
+      if (f.agentCode) setAgentCode(f.agentCode); setDirections(f.directions); setPoint(f.point);
+      setDraftNote(`📝 Rascunho recuperado (${draftAgeText(d.savedAt)}). Volte a juntar as fotografias.`);
+    }
+    setDraftReady(true);
+  })(); }, []);
+  const draftFields: ListingDraftFields = { listingType, isAgro, agroCat, agroUnit, agroQty, agroFrom, purpose, title, description, price, budgetMin, budgetMax, saleMode,
+    acceptsTrade, tradeWants, auctionDays, categoryId, provinceId, municipalityId, marketId, videoUrl, agentCode, directions, point };
+  const draftSnapshot = JSON.stringify(draftFields);
+  useEffect(() => { if (editing || !draftReady) return; const t = setTimeout(() => void saveListingDraft(browserStore, draftFields).catch(() => {}), 700); return () => clearTimeout(t); }, [draftSnapshot, draftReady]);
+  async function discardDraft() {
+    await clearListingDraft(browserStore).catch(() => {});
+    setTitle(""); setDescription(""); setPrice(""); setBudgetMin(""); setBudgetMax(""); setTradeWants(""); setDirections(""); setVideoUrl(""); setPoint(null); setDraftNote("");
+  }
 
   useEffect(() => {
     const c = supabase();
@@ -155,20 +180,24 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
       } else {
         const r = await createAndPublishClassifiedListing(c, { ownerId: user.id, ...input, agentCode });
         if (r.error) {
-          if (r.draftId) { window.location.href = "/meus-anuncios?erro=" + encodeURIComponent(friendlyError(r.error)); return; }
+          if (r.draftId) { await clearListingDraft(browserStore).catch(() => {}); window.location.href = "/meus-anuncios?erro=" + encodeURIComponent(friendlyError(r.error)); return; }
           throw r.error;
         }
+        await clearListingDraft(browserStore).catch(() => {});
         const ae = await startAuction((r.data as any).id);
         if (ae) { window.location.href = "/meus-anuncios?erro=" + encodeURIComponent("o anúncio foi publicado, mas o leilão não abriu: " + friendlyError(ae)); return; }
         window.location.href = "/classificados/" + (r.data as any).id;
       }
     } catch (err) {
-      setError(friendlyError(err, "Não foi possível publicar o anúncio."));
+      if (!editing && isOfflineError(err)) { await saveListingDraft(browserStore, draftFields).catch(() => {}); setError(OFFLINE_PUBLISH_MESSAGE); }
+      else setError(friendlyError(err, "Não foi possível publicar o anúncio."));
     } finally { setBusy(false); setStatus(""); }
   }
 
   return (
     <form onSubmit={submit} className="stack" noValidate>
+      {draftNote && <div className="card stack" role="status" style={{ gap: 8 }}><span>{draftNote}</span><button type="button" className="secondary" style={{ justifySelf: "start" }} onClick={() => void discardDraft()}>🗑️ Apagar rascunho e começar de novo</button></div>}
+      {!editing && <small className="muted">💾 O texto que escreve fica guardado neste aparelho, mesmo sem internet (as fotografias não).</small>}
       <label>Tipo
         <select value={listingType} onChange={e => setListingType(e.target.value as ClassifiedListingType)}>
           {Object.entries(LISTING_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { jobQueueStats, jobQueueText } from "@huambo-online/core";
 import { Link, useRouter } from "expo-router";
 import { Alert, ScrollView, Text, TextInput, View } from "react-native";
 import { getMyAdminRole, getAdminStats, listReports, resolveReport, listListingsForModeration, moderateListing, listUsersForAdmin,
@@ -83,6 +84,7 @@ export default function Admin() {
     {tab === "fuel" && <AdminFuel />}
     {tab === "inspections" && <AdminInspections />}
     {tab === "audit" && <AdminAudit />}
+    {tab === "stats" && <JobQueueLine />}
     {tab === "stats" && stats && ADMIN_STAT_LABELS.map(([k, l]) => <View key={k} style={ui.card}><Text style={ui.text}>{l}</Text><Text style={ui.h1}>{stats[k]}</Text></View>)}
 
     {tab === "reports" && <View style={{ gap: 12 }}>
@@ -140,4 +142,11 @@ export default function Admin() {
       </View>)}
     </View>}
   </ScrollView>;
+}
+
+/** Estado da fila de avisos (seguidores, pesquisas guardadas, «Procura-se», combustível). */
+function JobQueueLine() {
+  const [t, setT] = useState("");
+  useEffect(() => { void jobQueueStats(supabase()).then(r => setT(jobQueueText(r.data))); }, []);
+  return t ? <View style={ui.card}><Text style={ui.text}>{t}</Text></View> : null;
 }

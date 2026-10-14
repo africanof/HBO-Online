@@ -68,3 +68,13 @@ describe("listas com cache e plano B", () => {
     expect((await sellerPageCached(async () => ({ seller: { id: "s" }, listings: [1], products: [] }) as any, "s", d2)).listings).toEqual([1]);
   });
 });
+
+import { jobQueueText } from "./cache";
+describe("fila de avisos", () => {
+  it("texto simples", () => {
+    expect(jobQueueText({ pending: 0, oldest_pending_seconds: null, done_last_hour: 12, failed: 0 })).toBe("✅ Fila de avisos em dia · 12 tratadas na última hora");
+    expect(jobQueueText({ pending: 40, oldest_pending_seconds: 600, done_last_hour: 3, failed: 2 })).toContain("⚠️ Fila atrasada: 40 por enviar (há 10 min)");
+    expect(jobQueueText({ pending: 5, oldest_pending_seconds: 20, done_last_hour: 1, failed: 0 })).toContain("⏳ 5 avisos a sair");
+    expect(jobQueueText(null)).toBe("");
+  });
+});

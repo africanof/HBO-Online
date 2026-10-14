@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { jobQueueStats, jobQueueText } from "@huambo-online/core";
 import { getMyAdminRole, getAdminStats, listReports, resolveReport, listListingsForModeration, moderateListing, listUsersForAdmin,
   setUserStatus, setUserRole, listAllCategories, createCategory, setCategoryActive, canModerate, canManageRoles, friendlyError, formatPrice,
   ADMIN_STAT_LABELS, REPORT_STATUS_LABELS, USER_STATUS_LABELS, ROLE_LABELS, STATUS_LABELS, CATEGORY_TYPES, CATEGORY_TYPE_LABELS,
@@ -77,6 +78,7 @@ export default function AdminPage() {
     {tab === "inspections" && <AdminInspections />}
     {tab === "revenue" && <AdminRevenue />}
     {tab === "audit" && <AdminAudit />}
+    {tab === "stats" && <JobQueueLine />}
     {tab === "stats" && stats && <section className="grid">{ADMIN_STAT_LABELS.map(([k, l]) => <div key={k} className="card"><span>{l}</span><strong style={{ fontSize: 32 }}>{stats[k]}</strong></div>)}</section>}
 
     {tab === "reports" && <section className="stack">
@@ -148,4 +150,11 @@ export default function AdminPage() {
       </div>)}
     </section>}
   </main>;
+}
+
+/** Estado da fila de avisos (seguidores, pesquisas guardadas, «Procura-se», combustível). */
+function JobQueueLine() {
+  const [t, setT] = useState("");
+  useEffect(() => { void jobQueueStats(supabase()).then(r => setT(jobQueueText(r.data))); }, []);
+  return t ? <p className="card" role="status" style={{ margin: 0 }}>{t}</p> : null;
 }
