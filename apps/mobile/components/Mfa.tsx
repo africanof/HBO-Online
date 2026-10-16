@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Text, TextInput, View } from "react-native";
-import { mfaRequired, verifyLoginTotp, mfaErrorMessage, qrMatrix } from "@huambo-online/core";
+import { mfaRequired, verifyLoginTotp, mfaErrorIn, qrMatrix } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Message } from "./Ui";
@@ -20,14 +20,14 @@ export function TotpCodeInput({ value, onChangeText, onSubmit }: { value: string
  */
 export function MfaPrompt({ title, text, onDone, onCancel, cancelLabel }: { title?: string; text?: string; onDone: () => void; onCancel?: () => void; cancelLabel?: string }) {
   const [code, setCode] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
-  const { t } = useT();
+  const { t, lang } = useT();
   async function confirm() {
     if (busy) return; setBusy(true); setError("");
     try {
       const r = await verifyLoginTotp(supabase(), code);
-      if (r.error) { setError(mfaErrorMessage(r.error)); setCode(""); return; }
+      if (r.error) { setError(mfaErrorIn(r.error, lang)); setCode(""); return; }
       onDone();
-    } catch (e) { setError(mfaErrorMessage(e)); } finally { setBusy(false); }
+    } catch (e) { setError(mfaErrorIn(e, lang)); } finally { setBusy(false); }
   }
   return <View style={ui.card}>
     <Text style={ui.h2}>{title ?? "🔐 " + t("auth.mfa_title")}</Text>

@@ -3,14 +3,15 @@ import type { GeoPoint } from "@huambo-online/core";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { ScrollView, Text, TextInput, View } from "react-native";
-import { getMyCart, setCartQuantity, placeOrders, groupCartBySeller, formatPrice, friendlyError, PAYMENT_LABELS, FULFILLMENT_LABELS,
+import { getMyCart, setCartQuantity, placeOrders, groupCartBySeller, formatPrice, friendlyErrorIn, PAYMENT_LABELS, FULFILLMENT_LABELS,
   getProtectedSettings, PROTECTED_STEPS, type Fulfillment, type PaymentMethod } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
+import { useT } from "../lib/i18n";
 
 export default function Carrinho() {
-  const router = useRouter();
+  const router = useRouter(); const { t, tc, lang } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined);
   const [items, setItems] = useState<any[]>([]); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
   const [point, setPoint] = useState<GeoPoint | null>(null); const [fulfillment, setFulfillment] = useState<Fulfillment>("delivery"); const [payment, setPayment] = useState<PaymentMethod>("cash_on_delivery");
@@ -18,57 +19,57 @@ export default function Carrinho() {
   const [protectedOn, setProtectedOn] = useState(false); const [useProtected, setUseProtected] = useState<"yes" | "no">("yes");
   useEffect(() => { void getProtectedSettings(supabase()).then(r => setProtectedOn(!!r.data?.protected_enabled)); }, []);
   const isProtected = protectedOn && useProtected === "yes";
-  async function load() { const r = await getMyCart(supabase()); if (r.error) setError(friendlyError(r.error)); else setItems((r.data as any[]) ?? []); }
+  async function load() { const r = await getMyCart(supabase()); if (r.error) setError(friendlyErrorIn(r.error, lang)); else setItems((r.data as any[]) ?? []); }
   useFocusEffect(useCallback(() => { void currentUserId().then(id => { setUid(id); if (id) void load(); }); }, []));
-  async function qty(productId: string, q: number) { const r = await setCartQuantity(supabase(), productId, q); if (r.error) setError(friendlyError(r.error)); else await load(); }
+  async function qty(productId: string, q: number) { const r = await setCartQuantity(supabase(), productId, q); if (r.error) setError(friendlyErrorIn(r.error, lang)); else await load(); }
   async function checkout() {
     if (busy) return; setError(""); setBusy(true);
     const r = await placeOrders(supabase(), { fulfillment, paymentMethod: payment, phone, deliveryText: address, note, protected: isProtected, point }); setBusy(false);
-    if (r.error) { setError(friendlyError(r.error)); await load(); return; }
+    if (r.error) { setError(friendlyErrorIn(r.error, lang)); await load(); return; }
     router.replace((isProtected ? "/encomendas?novas=1&pagar=1" : "/encomendas?novas=1") as any);
   }
-  if (uid === undefined) return <View style={ui.screen}><Text style={ui.text}>A carregar…</Text></View>;
-  if (!uid) return <View style={ui.screen}><Link href={"/loja" as any} style={ui.link}>← Loja</Link><Text style={ui.h1}>Carrinho</Text><Button title="Entrar" onPress={() => router.push("/login")} /></View>;
+  if (uid === undefined) return <View style={ui.screen}><Text style={ui.text}>{t("common.loading")}</Text></View>;
+  if (!uid) return <View style={ui.screen}><Link href={"/loja" as any} style={ui.link}>{"← " + t("nav.shop")}</Link><Text style={ui.h1}>{t("sh.cart")}</Text><Button title={t("auth.login")} onPress={() => router.push("/login")} /></View>;
   const groups = groupCartBySeller(items);
   const total = groups.reduce((s, g) => s + g.total, 0);
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
-    <Link href={"/loja" as any} style={ui.link}>← Loja</Link>
-    <Text style={ui.h1}>Carrinho</Text>
+    <Link href={"/loja" as any} style={ui.link}>{"← " + t("nav.shop")}</Link>
+    <Text style={ui.h1}>{t("sh.cart")}</Text>
     <Message error={error} />
-    {items.length === 0 && <Text style={ui.text}>O carrinho está vazio.</Text>}
+    {items.length === 0 && <Text style={ui.text}>{t("sh.cart_empty")}</Text>}
     {groups.map(g => <View key={g.sellerId} style={ui.card}>
-      <Text style={ui.label}>Vendedor: {g.sellerName}</Text>
+      <Text style={ui.label}>{t("sh.seller", { name: g.sellerName })}</Text>
       {g.items.map((it: any) => <View key={it.product_id} style={{ gap: 6, borderTopWidth: 1, borderColor: C.surface, paddingTop: 8 }}>
         <Text style={ui.text}>{it.name} — {formatPrice(it.price, it.currency)}</Text>
-        {(!it.active || it.stock < it.quantity) && <Text style={ui.error}>Stock insuficiente</Text>}
+        {(!it.active || it.stock < it.quantity) && <Text style={ui.error}>{t("sh.low_stock")}</Text>}
         <View style={ui.row}>
           <Button title="−" variant="secondary" onPress={() => void qty(it.product_id, it.quantity - 1)} />
           <Text style={[ui.h2, { alignSelf: "center" }]}>{it.quantity}</Text>
           <Button title="+" variant="secondary" disabled={it.quantity >= it.stock} onPress={() => void qty(it.product_id, it.quantity + 1)} />
-          <Button title="Remover" variant="danger" onPress={() => void qty(it.product_id, 0)} />
+          <Button title={t("sh.remove")} variant="danger" onPress={() => void qty(it.product_id, 0)} />
         </View>
       </View>)}
-      <Text style={ui.label}>Subtotal: {formatPrice(g.total)}</Text>
+      <Text style={ui.label}>{t("sh.subtotal", { price: formatPrice(g.total) })}</Text>
     </View>)}
     {items.length > 0 && <View style={ui.card}>
-      <Text style={ui.h2}>Finalizar compra — {formatPrice(total)}</Text>
-      {groups.length > 1 && <Text style={ui.text}>Vai criar {groups.length} encomendas, uma por vendedor.</Text>}
-      <Text style={ui.label}>Receber</Text>
-      <Chips options={Object.entries(FULFILLMENT_LABELS).map(([value, label]) => ({ value: value as Fulfillment, label }))} value={fulfillment} onChange={setFulfillment} />
-      {fulfillment === "delivery" && <><Text style={ui.label}>Morada / referência</Text><TextInput style={ui.input} value={address} onChangeText={setAddress} placeholder="Bairro, rua, referência (ex.: atrás da igreja, portão azul)" />
-        <PointPicker point={point} onChange={setPoint} label="Ponto da entrega no mapa (opcional)" hint="Ajuda o vendedor e o estafeta a encontrar a sua casa. Só eles o veem." /></>}
+      <Text style={ui.h2}>{t("sh.checkout", { price: formatPrice(total) })}</Text>
+      {groups.length > 1 && <Text style={ui.text}>{t("sh.many_orders", { n: groups.length })}</Text>}
+      <Text style={ui.label}>{t("sh.receive")}</Text>
+      <Chips options={Object.entries(FULFILLMENT_LABELS).map(([value, label]) => ({ value: value as Fulfillment, label: tc(label) }))} value={fulfillment} onChange={setFulfillment} />
+      {fulfillment === "delivery" && <><Text style={ui.label}>{t("sh.address")}</Text><TextInput style={ui.input} value={address} onChangeText={setAddress} placeholder={t("sh.address_ph")} />
+        <PointPicker point={point} onChange={setPoint} label={t("sh.delivery_point_opt")} hint={t("sh.delivery_point_hint")} /></>}
       {protectedOn && <>
-        <Text style={ui.label}>Como quer pagar?</Text>
-        <Chips options={[{ value: "yes" as const, label: "🛡️ Pagamento protegido (recomendado)" }, { value: "no" as const, label: "🤝 Combinar com o vendedor" }]} value={useProtected} onChange={setUseProtected} />
-        {isProtected && <View style={[ui.card, { gap: 4 }]}>{PROTECTED_STEPS.map((t, i) => <Text key={i} style={ui.text}>{i + 1}. {t}</Text>)}</View>}
+        <Text style={ui.label}>{t("sh.how_pay")}</Text>
+        <Chips options={[{ value: "yes" as const, label: t("sh.protected_rec") }, { value: "no" as const, label: t("sh.arrange_seller") }]} value={useProtected} onChange={setUseProtected} />
+        {isProtected && <View style={[ui.card, { gap: 4 }]}>{PROTECTED_STEPS.map((step, i) => <Text key={i} style={ui.text}>{i + 1}. {tc(step)}</Text>)}</View>}
       </>}
-      {!isProtected && <><Text style={ui.label}>Pagamento</Text>
-      <Chips options={Object.entries(PAYMENT_LABELS).map(([value, label]) => ({ value: value as PaymentMethod, label }))} value={payment} onChange={setPayment} /></>}
-      <Text style={ui.label}>Telefone para contacto</Text><TextInput style={ui.input} keyboardType="phone-pad" value={phone} onChangeText={setPhone} placeholder="923 000 000" />
-      <Text style={ui.label}>Nota (opcional)</Text><TextInput style={ui.input} value={note} onChangeText={setNote} />
-      <Text style={ui.muted}>{isProtected ? "Depois de confirmar, paga ao Huambo Online (Multicaixa Express ou transferência). O vendedor só envia depois de o pagamento ser confirmado."
-        : protectedOn ? "O pagamento é combinado com o vendedor: o Huambo Online não guarda este dinheiro." : "O pagamento é combinado com o vendedor. Ainda não há pagamentos online."}</Text>
-      <Button title={busy ? "A enviar…" : "Confirmar encomenda"} disabled={busy} onPress={() => void checkout()} />
+      {!isProtected && <><Text style={ui.label}>{t("sh.payment")}</Text>
+      <Chips options={Object.entries(PAYMENT_LABELS).map(([value, label]) => ({ value: value as PaymentMethod, label: tc(label) }))} value={payment} onChange={setPayment} /></>}
+      <Text style={ui.label}>{t("sh.contact_phone")}</Text><TextInput style={ui.input} keyboardType="phone-pad" value={phone} onChangeText={setPhone} placeholder="923 000 000" />
+      <Text style={ui.label}>{t("sh.note_opt")}</Text><TextInput style={ui.input} value={note} onChangeText={setNote} />
+      <Text style={ui.muted}>{isProtected ? t("sh.pay_note_protected")
+        : protectedOn ? t("sh.pay_note_arranged") : t("sh.pay_note_none")}</Text>
+      <Button title={busy ? t("sh.sending") : t("sh.confirm_order")} disabled={busy} onPress={() => void checkout()} />
     </View>}
   </ScrollView>;
 }

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { countUnreadNotifications, subscribeToNotifications, countUnreadMessages, getMyCart } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
+import { useT } from "../lib/i18n";
 
 /** Contadores do topo: notificações e mensagens por ler e artigos no carrinho (atualiza em tempo real). */
 export function useUnreadCounts() {
@@ -30,8 +31,9 @@ export function useUnreadCounts() {
 /** Botões soltos de notificações e mensagens (o cabeçalho do Site já os mostra; mantido para páginas sem cabeçalho). */
 export function NotificationBell() {
   const { notifications, messages } = useUnreadCounts();
+  const { t } = useT();
   return <div className="row">
-    <a className="icon-btn" href="/notificacoes" aria-label={`Notificações (${notifications} por ler)`}>🔔{notifications > 0 && <span className="count">{notifications}</span>}</a>
-    <a className="icon-btn" href="/mensagens" aria-label={`Mensagens (${messages} por ler)`}>💬{messages > 0 && <span className="count">{messages}</span>}</a>
+    <a className="icon-btn" href="/notificacoes" aria-label={t("hdr.notif_unread", { n: notifications })}>🔔{notifications > 0 && <span className="count">{notifications}</span>}</a>
+    <a className="icon-btn" href="/mensagens" aria-label={t("hdr.msg_unread", { n: messages })}>💬{messages > 0 && <span className="count">{messages}</span>}</a>
   </div>;
 }
