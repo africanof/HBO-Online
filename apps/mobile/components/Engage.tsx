@@ -8,6 +8,7 @@ import { findSaved, toggleSaved, recordView, shareMessage, whatsappShareUrl, sel
 import { supabase, siteUrl, currentUserId } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
 import { Button, Message } from "./Ui";
+import { useT } from "../lib/i18n";
 
 export const deviceStore: KeyValueStore = { getItem: k => AsyncStorage.getItem(k), setItem: (k, v) => AsyncStorage.setItem(k, v) };
 
@@ -56,25 +57,25 @@ export function SellerWhatsApp({ sellerId, kind, id, title, refCode }: { sellerI
 /** «A sua conta»: número de WhatsApp e se aparece nos anúncios e produtos. */
 export function WhatsAppSettings({ uid }: { uid: string }) {
   const [number, setNumber] = useState(""); const [visible, setVisible] = useState(false);
-  const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
+  const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(""); const [err, setErr] = useState(""); const { t } = useT();
   useEffect(() => { void getMyWhatsapp(supabase(), uid).then(r => { setNumber(formatWhatsapp(r.data?.whatsapp)); setVisible(!!r.data?.whatsapp_public); }); }, [uid]);
   async function save() {
     setBusy(true); setMsg(""); setErr("");
     const r = await setMyWhatsapp(supabase(), number, visible); setBusy(false);
-    if (r.error) setErr(friendlyError(r.error)); else setMsg(!number.trim() ? "Número de WhatsApp apagado." : visible ? "Guardado. O botão «Falar no WhatsApp» aparece nos seus anúncios e produtos." : "Guardado. O número fica escondido.");
+    if (r.error) setErr(friendlyError(r.error)); else setMsg(!number.trim() ? t("wa.deleted") : visible ? t("wa.saved_public") : t("wa.saved_hidden"));
   }
   return <View style={ui.card}>
     <Text style={ui.h2}>💬 WhatsApp</Text>
-    <Text style={ui.text}>Os compradores podem falar consigo pelo WhatsApp, além das mensagens do Huambo Online.</Text>
-    <Text style={ui.label}>Número de WhatsApp</Text>
-    <TextInput style={ui.input} keyboardType="phone-pad" value={number} onChangeText={setNumber} placeholder="923 000 000" placeholderTextColor={C.muted} accessibilityLabel="Número de WhatsApp" />
+    <Text style={ui.text}>{t("wa.text")}</Text>
+    <Text style={ui.label}>{t("wa.number")}</Text>
+    <TextInput style={ui.input} keyboardType="phone-pad" value={number} onChangeText={setNumber} placeholder="923 000 000" placeholderTextColor={C.muted} accessibilityLabel={t("wa.number")} />
     <View style={[ui.row, { alignItems: "center" }]}>
-      <Switch value={visible} onValueChange={setVisible} accessibilityLabel="Mostrar o botão «Falar no WhatsApp» nos meus anúncios e produtos" />
-      <Text style={[ui.text, { flex: 1 }]}>Mostrar o botão «Falar no WhatsApp» nos meus anúncios e produtos</Text>
+      <Switch value={visible} onValueChange={setVisible} accessibilityLabel={t("wa.show")} />
+      <Text style={[ui.text, { flex: 1 }]}>{t("wa.show")}</Text>
     </View>
-    <Text style={ui.muted}>Só quem tem sessão iniciada vê o seu número. Pode esconder ou apagar quando quiser.</Text>
+    <Text style={ui.muted}>{t("wa.privacy")}</Text>
     <Message error={err} ok={msg} />
-    <Button title="Guardar WhatsApp" disabled={busy} onPress={() => void save()} />
+    <Button title={t("wa.save")} disabled={busy} onPress={() => void save()} />
   </View>;
 }
 

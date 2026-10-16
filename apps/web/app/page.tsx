@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { searchClassifiedListings, listProducts, listProviders, listMarkets, marketSummary, listWanted, formatPrice, ratingLabel, timeAgo, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listTrades, cardSaleTag, loadWithCache, isOfflineError, isFeatured, listEvents, priceFromText, formatEventDate, promoFeed } from "@huambo-online/core";
+import { searchClassifiedListings, listProducts, listProviders, listMarkets, listWanted, formatPrice, ratingLabel, HOME_CATEGORIES, listingPriceLabel, listTrades, cardSaleTag, loadWithCache, isOfflineError, isFeatured, listEvents, priceFromText, promoFeed, categoryLabelIn } from "@huambo-online/core";
+import { useT, timeAgoIn, eventDateIn, marketSummaryIn } from "../lib/i18n";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../components/ItemCard";
 import { OfflineBanner } from "../components/Offline";
@@ -11,10 +12,14 @@ import { PromoCard } from "../components/Promo";
 type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[]; events?: any[]; promos?: any[] };
 
 function ShelfHead({ title, href }: { title: string; href: string }) {
-  return <div className="shelf-head"><h2>{title}</h2><a href={href}>Ver tudo →</a></div>;
+  const { t } = useT();
+  return <div className="shelf-head"><h2>{title}</h2><a href={href}>{t("common.see_all")} →</a></div>;
 }
 
 export default function Home() {
+  const { lang, t } = useT();
+  // «Sem avaliações» vem do core em português; as estrelas e números não precisam de tradução.
+  const rating = (r: unknown, n: unknown) => { const l = ratingLabel(r as number, n as number); return l === "Sem avaliações" ? t("rating.none") : l; };
   const [s, setS] = useState<Shelf | null>(null);
   const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
   useEffect(() => {
@@ -40,83 +45,83 @@ export default function Home() {
   }, []);
 
   const listingCard = (x: any) => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
-    icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? "Leilão" : x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : cardSaleTag(x)}
-    tagRed={x.purpose === "auction"} meta={timeAgo(x.published_at ?? x.created_at)} />;
+    icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? t("purpose.auction") : x.purpose !== "sale" ? t("purpose." + x.purpose) : cardSaleTag(x)}
+    tagRed={x.purpose === "auction"} meta={timeAgoIn(x.published_at ?? x.created_at, lang)} />;
 
   return <main>
     <OfflineBanner show={offline.on} savedAt={offline.at} />
     <section className="hero">
       <span className="hero-art" aria-hidden>🛍️</span>
-      <h1>Compre, venda e encontre tudo no Huambo.</h1>
-      <p>Classificados, loja, leilões, profissionais e empresas — num único lugar, com entrega ao domicílio.</p>
-      <div className="row"><a className="btn" href="/explorar">Começar a comprar</a><a className="btn secondary" href="/classificados/publicar">Vender agora</a></div>
+      <h1>{t("home.hero_title")}</h1>
+      <p>{t("home.hero_text")}</p>
+      <div className="row"><a className="btn" href="/explorar">{t("home.start_buying")}</a><a className="btn secondary" href="/classificados/publicar">{t("home.sell_now")}</a></div>
     </section>
 
-    <div className="shelf-head"><h2>Explore as categorias</h2></div>
-    <nav className="cats" aria-label="Categorias populares" style={{ marginTop: 14 }}>
-      {HOME_CATEGORIES.map(c => <a key={c.href} href={c.href} className="cat"><span className="cat-circle" aria-hidden>{c.icon}</span>{c.label}</a>)}
+    <div className="shelf-head"><h2>{t("home.explore_cats")}</h2></div>
+    <nav className="cats" aria-label={t("home.popular_cats")} style={{ marginTop: 14 }}>
+      {HOME_CATEGORIES.map(c => <a key={c.href} href={c.href} className="cat"><span className="cat-circle" aria-hidden>{c.icon}</span>{categoryLabelIn(c.label, lang)}</a>)}
     </nav>
 
-    {s === null && <p className="muted" style={{ marginTop: 28 }}>A carregar novidades…</p>}
+    {s === null && <p className="muted" style={{ marginTop: 28 }}>{t("home.loading")}</p>}
 
-    {!!s?.promos?.length && <><ShelfHead title="🎬 Vídeos e lives" href="/videos" /><div className="shelf">{s.promos.map(x => <PromoCard key={x.id} p={x} />)}</div></>}
+    {!!s?.promos?.length && <><ShelfHead title={"🎬 " + t("home.videos")} href="/videos" /><div className="shelf">{s.promos.map(x => <PromoCard key={x.id} p={x} />)}</div></>}
 
-    {!!s?.events?.length && <><ShelfHead title="🎟️ Próximos eventos" href="/eventos" /><div className="shelf">
+    {!!s?.events?.length && <><ShelfHead title={"🎟️ " + t("home.events")} href="/eventos" /><div className="shelf">
       {s.events.map(e => <ItemCard key={e.id} href={"/eventos/" + e.id} media={e.cover_url ? [e.cover_url] : null} icon="🎟️" title={e.title} price={priceFromText(e.price_from)}
-        featured={e.featured} meta={`📅 ${formatEventDate(e.starts_at)} · 📍 ${e.venue}`} />)}
+        featured={e.featured} meta={`📅 ${eventDateIn(e.starts_at, lang)} · 📍 ${e.venue}`} />)}
     </div></>}
 
-    {!!s?.auctions.length && <><ShelfHead title="🔨 Leilões a decorrer" href="/explorar?finalidade=auction" /><div className="shelf">{s.auctions.map(listingCard)}</div></>}
+    {!!s?.auctions.length && <><ShelfHead title={"🔨 " + t("home.auctions")} href="/explorar?finalidade=auction" /><div className="shelf">{s.auctions.map(listingCard)}</div></>}
 
-    {!!s?.markets.length && <><ShelfHead title="🧺 Praças do Huambo" href="/pracas" /><div className="shelf">
+    {!!s?.markets.length && <><ShelfHead title={"🧺 " + t("home.markets")} href="/pracas" /><div className="shelf">
       {s.markets.map(m => <a key={m.id} href={"/pracas/" + m.id} className="item">
         <div className="item-img">{m.photo_url ? <LiteImg src={m.photo_url} alt="" loading="lazy" placeholder="🧺" /> : <span aria-hidden>🧺</span>}</div>
         <span className="item-title"><strong>{m.name}</strong></span>
-        <span className="item-meta">{marketSummary(m)}</span>
+        <span className="item-meta">{marketSummaryIn(m, t)}</span>
       </a>)}
     </div></>}
 
-    {!!s?.listings.length && <><ShelfHead title="Novidades nos classificados" href="/explorar" /><div className="shelf">{s.listings.map(listingCard)}</div></>}
+    {!!s?.listings.length && <><ShelfHead title={t("home.new_listings")} href="/explorar" /><div className="shelf">{s.listings.map(listingCard)}</div></>}
 
-    {!!s?.wanted.length && <><ShelfHead title="🔎 Procura-se — compradores à procura" href="/procura-se" /><div className="shelf">
+    {!!s?.wanted.length && <><ShelfHead title={"🔎 " + t("home.wanted_title")} href="/procura-se" /><div className="shelf">
       {s.wanted.map(x => <a key={x.id} href={"/classificados/" + x.id} className="card wanted-card">
-        <span className="item-meta">🔎 PROCURA-SE</span>
+        <span className="item-meta">🔎 {t("home.wanted_badge")}</span>
         <strong className="item-title" style={{ fontSize: 17 }}>{x.title}</strong>
-        <span className="muted">Orçamento:</span><strong>{listingPriceLabel(x)}</strong>
+        <span className="muted">{t("home.budget")}</span><strong>{listingPriceLabel(x)}</strong>
       </a>)}
     </div></>}
 
     <section className="banner yellow" style={{ marginTop: 32 }}>
-      <div><h2>Tem algo para vender?</h2><p>Publique grátis com fotografias e receba mensagens de compradores do Huambo.</p></div>
-      <div className="row"><a className="btn" href="/classificados/publicar">+ Publicar anúncio</a><a className="btn secondary" href="/classificados/publicar?finalidade=wanted">🔎 Publicar o que procuro</a></div>
+      <div><h2>{t("home.sell_title")}</h2><p>{t("home.sell_text")}</p></div>
+      <div className="row"><a className="btn" href="/classificados/publicar">+ {t("ft.post_ad")}</a><a className="btn secondary" href="/classificados/publicar?finalidade=wanted">🔎 {t("ft.post_wanted")}</a></div>
     </section>
 
-    {!!s?.products.length && <><ShelfHead title="🛍️ Na loja" href="/loja" /><div className="shelf">
+    {!!s?.products.length && <><ShelfHead title={"🛍️ " + t("home.in_shop")} href="/loja" /><div className="shelf">
       {s.products.map(p => <ItemCard key={p.id} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)}
-        meta={p.stock > 0 ? [p.seller_name, p.municipality_name].filter(Boolean).join(" · ") : "Esgotado"} tag={p.stock > 0 ? undefined : "Esgotado"} />)}
+        meta={p.stock > 0 ? [p.seller_name, p.municipality_name].filter(Boolean).join(" · ") : t("home.sold_out")} tag={p.stock > 0 ? undefined : t("home.sold_out")} />)}
     </div></>}
 
-    {!!s?.rentals.length && <><ShelfHead title="🔑 Para arrendar" href="/explorar?finalidade=rent" /><div className="shelf">{s.rentals.map(listingCard)}</div></>}
-    {!!s?.trades?.length && <><ShelfHead title="🔁 Trocas" href="/trocas" /><div className="shelf">{s.trades.map(listingCard)}</div></>}
+    {!!s?.rentals.length && <><ShelfHead title={"🔑 " + t("home.for_rent")} href="/explorar?finalidade=rent" /><div className="shelf">{s.rentals.map(listingCard)}</div></>}
+    {!!s?.trades?.length && <><ShelfHead title={"🔁 " + t("home.trades")} href="/trocas" /><div className="shelf">{s.trades.map(listingCard)}</div></>}
 
-    {!!s?.providers.length && <><ShelfHead title="👷 Profissionais de confiança" href="/profissionais" /><div className="shelf">
+    {!!s?.providers.length && <><ShelfHead title={"👷 " + t("home.trusted_pros")} href="/profissionais" /><div className="shelf">
       {s.providers.map(p => <a key={p.user_id} href={"/profissionais/" + p.user_id} className="card" style={{ color: "inherit", textDecoration: "none", fontWeight: 400 }}>
         {p.avatar_url ? <LiteImg placeholder="👤" src={p.avatar_url} alt="" style={{ width: 64, height: 64, borderRadius: "50%", objectFit: "cover" }} /> : <span style={{ fontSize: 40 }} aria-hidden>👷</span>}
         <strong>{p.display_name}{p.verified ? " ✔️" : ""}</strong>
         <span className="item-meta">{[p.category_name, p.municipality_name].filter(Boolean).join(" · ")}</span>
-        <span className="item-meta">{ratingLabel(p.rating, p.review_count)}</span>
+        <span className="item-meta">{rating(p.rating, p.review_count)}</span>
       </a>)}
     </div></>}
 
     {s && !s.listings.length && !s.products.length && <section className="card" style={{ marginTop: 28 }}>
-      <h2 style={{ margin: 0 }}>Seja o primeiro a anunciar!</h2>
-      <p style={{ margin: 0 }}>Ainda há poucos artigos. Publique o seu e ajude o Huambo Online a crescer.</p>
-      <a className="btn" href="/classificados/publicar" style={{ justifySelf: "start" }}>Publicar anúncio</a>
+      <h2 style={{ margin: 0 }}>{t("home.first_title")}</h2>
+      <p style={{ margin: 0 }}>{t("home.first_text")}</p>
+      <a className="btn" href="/classificados/publicar" style={{ justifySelf: "start" }}>{t("ft.post_ad")}</a>
     </section>}
 
     <section className="banner green" style={{ marginTop: 32 }}>
-      <div><h2>Profissional, empresa, estafeta ou agente?</h2><p>Crie o seu perfil e receba clientes de todo o Huambo. Agentes ajudam quem não tem telemóvel ou não sabe usar a internet a vender, trocar ou leiloar — e ganham comissão em cada venda.</p></div>
-      <div className="row"><a className="btn secondary" href="/conta/profissional">Sou profissional</a><a className="btn secondary" href="/conta/empresas">Tenho uma empresa</a><a className="btn secondary" href="/entregas">Quero ser estafeta</a><a className="btn secondary" href="/agente">Quero ser um agente</a></div>
+      <div><h2>{t("home.pro_title")}</h2><p>{t("home.pro_text")}</p></div>
+      <div className="row"><a className="btn secondary" href="/conta/profissional">{t("home.i_am_pro")}</a><a className="btn secondary" href="/conta/empresas">{t("home.have_business")}</a><a className="btn secondary" href="/entregas">{t("home.want_courier")}</a><a className="btn secondary" href="/agente">{t("home.want_agent")}</a></div>
     </section>
   </main>;
 }

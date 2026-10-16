@@ -5,7 +5,7 @@ import { promoFeed, getPromoPost, recordPromoView, savePromoPost, deletePromoPos
   promoSubjectHref, validatePromo, isoToLocalInput, formatDate, formatPrice, friendlyError, whatsappShareUrl, uploadClassifiedMedia, uploadPaymentProof, validateDocument,
   paymentProofUrl, getPlatformSettings, updatePlatformSettings, PROMO_KIND_LABELS, PROMO_SUBJECT_LABELS, LIVE_DURATIONS, PLAN_METHOD_LABELS,
   type PromoPost, type PromoKind, type PromoSubject, type PromoSubjectKind, type MyPromoPost, type AdminPromoBoost, type AdminPromoPost, type PaymentMethodPlan,
-  type PlatformSettings } from "@huambo-online/core";
+  type PlatformSettings, LANG_TAGS as LANG_TAG_OF } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
 import { useDataSaver } from "../lib/dataSaver";
 import { ItemCard } from "./ItemCard";
@@ -13,17 +13,21 @@ import { LiteImg } from "./LiteImg";
 import { VideoField } from "./Video";
 import { PaymentDetails } from "./Plans";
 import { ReportButton } from "./Trust";
+import { useT, eventDateIn } from "../lib/i18n";
 
 const thumb = (p: Pick<PromoPost, "cover_url" | "external_url">) => p.cover_url || youtubeThumb(p.external_url);
 
 /** Cartão de vídeo/live (listas, página inicial, perfis). */
 export function PromoCard({ p }: { p: PromoPost }) {
+  const { lang, t } = useT();
   const state = liveStateAt(p);
-  const t = thumb(p);
-  return <ItemCard href={"/videos/" + p.id} media={t ? [t] : null} icon={p.kind === "live" ? "🔴" : "🎬"} title={p.title}
-    price={p.kind === "live" ? liveStateText(p) : "🎬 Vídeo"} featured={p.featured} video={p.kind === "video"}
-    tag={state === "live" ? "🔴 EM DIRETO" : state === "ended" ? "Terminada" : undefined} tagRed={state === "live"}
-    meta={`${p.subject_name} · ${viewsText(p.views)}`} />;
+  const img = thumb(p);
+  const liveText = lang === "pt" ? liveStateText(p) : state === "live" ? "🔴 " + t("promo.live_now") : state === "upcoming" ? "⏰ " + eventDateIn(p.live_starts_at!, lang) : state === "ended" ? t("promo.live_ended") : "";
+  const views = lang === "pt" ? viewsText(p.views) : t(p.views === 1 ? "promo.views_one" : "promo.views_many", { n: (p.views || 0).toLocaleString(LANG_TAG_OF[lang]) });
+  return <ItemCard href={"/videos/" + p.id} media={img ? [img] : null} icon={p.kind === "live" ? "🔴" : "🎬"} title={p.title}
+    price={p.kind === "live" ? liveText : "🎬 " + t("promo.video")} featured={p.featured} video={p.kind === "video"}
+    tag={state === "live" ? "🔴 " + t("promo.live_badge") : state === "ended" ? t("promo.ended") : undefined} tagRed={state === "live"}
+    meta={`${p.subject_name} · ${views}`} />;
 }
 
 /** Lista pública: lives em direto, destaques, próximas lives e vídeos. */

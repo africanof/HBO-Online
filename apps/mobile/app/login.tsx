@@ -7,21 +7,23 @@ import { supabase, siteUrl } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
 import { MfaPrompt } from "../components/Mfa";
+import { useT } from "../lib/i18n";
 
 export default function Login() {
   const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
   const [error, setError] = useState(""); const [ok, setOk] = useState(""); const [busy, setBusy] = useState(false); const [forgot, setForgot] = useState(false);
   const [needCode, setNeedCode] = useState(false);
+  const { t } = useT();
 
   async function submit() {
     if (busy) return; setError(""); setOk("");
-    if (!email.trim()) { setError("Indique o email."); return; }
+    if (!email.trim()) { setError(t("login.need_email")); return; }
     setBusy(true);
     try {
       if (forgot) {
         const r = await requestPasswordReset(supabase(), email, siteUrl ? siteUrl + "/conta/recuperar" : "huamboonline://login");
         if (r.error) throw r.error;
-        setOk("Se o email existir, enviámos um link para definir uma nova palavra-passe.");
+        setOk(t("login.reset_sent"));
       } else {
         const { error } = await signIn(supabase(), email, password);
         if (error) throw error;
@@ -38,20 +40,20 @@ export default function Login() {
   }
 
   if (needCode) return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
-    <Text style={ui.h1}>Entrar — 2.º passo</Text>
-    <Text style={ui.text}>A palavra-passe está certa. Esta conta tem a entrada em dois passos ligada.</Text>
-    <MfaPrompt onDone={() => router.replace("/")} onCancel={() => void cancelCode()} cancelLabel="Cancelar e sair" />
+    <Text style={ui.h1}>{t("login.step2_title")}</Text>
+    <Text style={ui.text}>{t("login.step2_text")}</Text>
+    <MfaPrompt onDone={() => router.replace("/")} onCancel={() => void cancelCode()} cancelLabel={t("login.cancel_exit")} />
   </ScrollView>;
 
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/" style={ui.link}>← Huambo Online</Link>
-    <Text style={ui.h1}>{forgot ? "Recuperar palavra-passe" : "Entrar"}</Text>
-    <Text style={ui.label}>Email</Text>
-    <TextInput autoCapitalize="none" autoComplete="email" keyboardType="email-address" value={email} onChangeText={setEmail} style={ui.input} />
-    {!forgot && <><Text style={ui.label}>Palavra-passe</Text><TextInput secureTextEntry autoComplete="password" value={password} onChangeText={setPassword} style={ui.input} /></>}
-    <Button title={busy ? "Aguarde…" : forgot ? "Enviar link de recuperação" : "Entrar"} onPress={() => void submit()} disabled={busy} />
+    <Text style={ui.h1}>{forgot ? t("login.recover_title") : t("auth.login")}</Text>
+    <Text style={ui.label}>{t("auth.email")}</Text>
+    <TextInput autoCapitalize="none" autoComplete="email" keyboardType="email-address" value={email} onChangeText={setEmail} accessibilityLabel={t("auth.email")} style={ui.input} />
+    {!forgot && <><Text style={ui.label}>{t("auth.password")}</Text><TextInput secureTextEntry autoComplete="password" value={password} onChangeText={setPassword} accessibilityLabel={t("auth.password")} style={ui.input} /></>}
+    <Button title={busy ? t("login.wait") : forgot ? t("login.send_link") : t("auth.login")} onPress={() => void submit()} disabled={busy} />
     <Message error={error} ok={ok} />
-    <Button title={forgot ? "← Voltar a entrar" : "Esqueci-me da palavra-passe"} variant="secondary" onPress={() => { setForgot(!forgot); setError(""); setOk(""); }} />
-    <Link href="/criar-conta" style={ui.link}>Criar uma conta</Link>
+    <Button title={forgot ? t("login.back") : t("auth.forgot")} variant="secondary" onPress={() => { setForgot(!forgot); setError(""); setOk(""); }} />
+    <Link href="/criar-conta" style={ui.link}>{t("login.create")}</Link>
   </ScrollView>;
 }

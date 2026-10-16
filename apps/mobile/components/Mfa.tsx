@@ -4,21 +4,23 @@ import { mfaRequired, verifyLoginTotp, mfaErrorMessage, qrMatrix } from "@huambo
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Message } from "./Ui";
+import { useT } from "../lib/i18n";
 
 /** Campo grande para os 6 algarismos da APP autenticadora. */
 export function TotpCodeInput({ value, onChangeText, onSubmit }: { value: string; onChangeText: (t: string) => void; onSubmit?: () => void }) {
+  const { t: tr } = useT();
   return <TextInput value={value} onChangeText={t => onChangeText(t.replace(/\D/g, "").slice(0, 6))} onSubmitEditing={onSubmit}
     keyboardType="number-pad" textContentType="oneTimeCode" autoComplete="one-time-code" maxLength={6} placeholder="123456"
-    accessibilityLabel="Código de 6 algarismos" style={[ui.input, { fontSize: 30, letterSpacing: 8, textAlign: "center", fontWeight: "800" }]} />;
+    accessibilityLabel={tr("mfa.code")} style={[ui.input, { fontSize: 30, letterSpacing: 8, textAlign: "center", fontWeight: "800" }]} />;
 }
 
 /**
  * Segundo passo: pede o código de 6 algarismos da APP autenticadora e confirma a sessão (aal2).
  * Usado ao entrar, na Administração e no ecrã de segurança da conta.
  */
-export function MfaPrompt({ title = "🔐 Código da APP autenticadora", text = "Abra a APP autenticadora (Google Authenticator, Microsoft Authenticator ou Authy) e escreva os 6 algarismos que aparecem para o Huambo Online.",
-  onDone, onCancel, cancelLabel = "Cancelar" }: { title?: string; text?: string; onDone: () => void; onCancel?: () => void; cancelLabel?: string }) {
+export function MfaPrompt({ title, text, onDone, onCancel, cancelLabel }: { title?: string; text?: string; onDone: () => void; onCancel?: () => void; cancelLabel?: string }) {
   const [code, setCode] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
+  const { t } = useT();
   async function confirm() {
     if (busy) return; setBusy(true); setError("");
     try {
@@ -28,12 +30,12 @@ export function MfaPrompt({ title = "🔐 Código da APP autenticadora", text = 
     } catch (e) { setError(mfaErrorMessage(e)); } finally { setBusy(false); }
   }
   return <View style={ui.card}>
-    <Text style={ui.h2}>{title}</Text>
-    <Text style={ui.text}>{text}</Text>
+    <Text style={ui.h2}>{title ?? "🔐 " + t("auth.mfa_title")}</Text>
+    <Text style={ui.text}>{text ?? t("mfa.text")}</Text>
     <TotpCodeInput value={code} onChangeText={setCode} onSubmit={() => void confirm()} />
     <Message error={error} />
-    <Button title={busy ? "A confirmar…" : "Confirmar"} disabled={busy || code.length !== 6} onPress={() => void confirm()} />
-    {!!onCancel && <Button title={cancelLabel} variant="secondary" disabled={busy} onPress={onCancel} />}
+    <Button title={busy ? t("mfa.confirming") : t("common.confirm")} disabled={busy || code.length !== 6} onPress={() => void confirm()} />
+    {!!onCancel && <Button title={cancelLabel ?? t("common.cancel")} variant="secondary" disabled={busy} onPress={onCancel} />}
   </View>;
 }
 

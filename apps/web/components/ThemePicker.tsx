@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { THEME_OPTIONS, THEME_STORAGE_KEY, readThemePreference, resolveTheme, type ThemePreference } from "@huambo-online/core";
+import { useT } from "../lib/i18n";
 
 const CHANGED = "huambo:tema-mudou";
 function apply(pref: ThemePreference) {
@@ -15,6 +16,7 @@ function save(p: ThemePreference) {
 
 /** Botão rápido no topo: «🌙 Escuro» / «☀️ Claro» (troca e fica guardado). */
 export function ThemeToggle() {
+  const { t } = useT();
   const [dark, setDark] = useState(false);
   useEffect(() => {
     const read = () => setDark(document.documentElement.dataset.theme === "dark");
@@ -24,11 +26,12 @@ export function ThemeToggle() {
     return () => { window.removeEventListener(CHANGED, read); mq.removeEventListener("change", read); };
   }, []);
   return <button type="button" className="theme-toggle" onClick={() => save(dark ? "light" : "dark")}
-    aria-label={dark ? "Mudar para o modo claro" : "Mudar para o modo escuro"} aria-pressed={dark}>{dark ? "☀️" : "🌙"}<span className="theme-label"> {dark ? "Claro" : "Escuro"}</span></button>;
+    aria-label={dark ? t("theme.to_light") : t("theme.to_dark")} aria-pressed={dark}>{dark ? "☀️" : "🌙"}<span className="theme-label"> {dark ? t("theme.light_short") : t("theme.dark_short")}</span></button>;
 }
 
 /** «Aparência: Automático · Claro · Escuro» (fica guardado neste aparelho). */
 export function ThemePicker() {
+  const { t } = useT();
   const [pref, setPref] = useState<ThemePreference>("system");
   useEffect(() => {
     let p: ThemePreference = "system";
@@ -43,7 +46,7 @@ export function ThemePicker() {
     return () => { mq.removeEventListener("change", onChange); window.removeEventListener(CHANGED, onToggle); };
   }, []);
   function choose(p: ThemePreference) { setPref(p); save(p); }
-  return <div className="row" role="radiogroup" aria-label="Aparência">
-    {THEME_OPTIONS.map(o => <button key={o.value} type="button" role="radio" aria-checked={pref === o.value} className={"chip" + (pref === o.value ? " on" : "")} onClick={() => choose(o.value)}>{o.label}</button>)}
+  return <div className="row" role="radiogroup" aria-label={t("nav.appearance")}>
+    {THEME_OPTIONS.map(o => <button key={o.value} type="button" role="radio" aria-checked={pref === o.value} className={"chip" + (pref === o.value ? " on" : "")} onClick={() => choose(o.value)}>{t("theme." + o.value)}</button>)}
   </div>;
 }

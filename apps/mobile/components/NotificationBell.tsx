@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { countUnreadNotifications, subscribeToNotifications, countUnreadMessages, getMyCart } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { C, themed } from "../lib/ui";
+import { useT } from "../lib/i18n";
 
 /** Contadores: notificações e mensagens por ler e artigos no carrinho (atualiza em tempo real). */
 export function useUnreadCounts() {
@@ -37,11 +38,11 @@ function IconLink({ href, icon, count, label }: { href: string; icon: string; co
 
 /** Ícones do topo: notificações, mensagens e carrinho, com contadores. */
 export function NotificationBell() {
-  const { notifications, messages, cart } = useUnreadCounts();
+  const { notifications, messages, cart } = useUnreadCounts(); const { t } = useT();
   return <View style={{ flexDirection: "row" }}>
-    <IconLink href="/notificacoes" icon="🔔" count={notifications} label={`Notificações (${notifications} por ler)`} />
-    <IconLink href="/mensagens" icon="💬" count={messages} label={`Mensagens (${messages} por ler)`} />
-    <IconLink href="/carrinho" icon="🛒" count={cart} label={`Carrinho (${cart} artigos)`} />
+    <IconLink href="/notificacoes" icon="🔔" count={notifications} label={t("bell.notifications", { n: notifications })} />
+    <IconLink href="/mensagens" icon="💬" count={messages} label={t("bell.messages", { n: messages })} />
+    <IconLink href="/carrinho" icon="🛒" count={cart} label={t("bell.cart", { n: cart })} />
   </View>;
 }
 

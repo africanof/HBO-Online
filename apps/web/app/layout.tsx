@@ -5,6 +5,8 @@ import { ReferralCapture } from "../components/Referral";
 import { ConnectionWatcher } from "../components/Offline";
 import { SITE_URL } from "../lib/site";
 import { THEME_STORAGE_KEY } from "@huambo-online/core";
+import { I18nProvider } from "../lib/i18n";
+import { LANG_SCRIPT } from "../lib/lang-script";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -21,9 +23,12 @@ export const viewport: Viewport = {
 // Aplica o tema (Automático / Claro / Escuro) antes de a página aparecer, para não piscar.
 const THEME_SCRIPT = `(function(){try{var p=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});var d=p==="dark"||(p!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.dataset.theme=d?"dark":"light";}catch(e){}})();`;
 
+// Línguas: as páginas continuam estáticas (o servidor não lê o cookie «lang», para não tornar todas as
+// páginas dinâmicas). O LANG_SCRIPT põe <html lang> certo antes de a página aparecer e o I18nProvider
+// troca os textos para a língua guardada logo a seguir.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return <html lang="pt-AO" suppressHydrationWarning>
-    <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
-    <body><ConnectionWatcher /><ReferralCapture /><SiteHeader />{children}<SiteFooter /></body>
+    <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /><script dangerouslySetInnerHTML={{ __html: LANG_SCRIPT }} /></head>
+    <body><I18nProvider><ConnectionWatcher /><ReferralCapture /><SiteHeader />{children}<SiteFooter /></I18nProvider></body>
   </html>;
 }

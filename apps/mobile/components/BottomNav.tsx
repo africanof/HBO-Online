@@ -2,25 +2,26 @@ import { usePathname, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, themed } from "../lib/ui";
+import { useT } from "../lib/i18n";
 
-const TABS: { label: string; icon: string; href: string; match: (p: string) => boolean }[] = [
-  { label: "Início", icon: "🏠", href: "/", match: p => p === "/" },
-  { label: "Pesquisar", icon: "🔍", href: "/explorar", match: p => p.startsWith("/explorar") || p.startsWith("/loja") || p.startsWith("/pracas") },
-  { label: "Vender", icon: "➕", href: "/classificados/publicar", match: p => p.startsWith("/classificados/publicar") },
-  { label: "Mensagens", icon: "💬", href: "/mensagens", match: p => p.startsWith("/mensagens") },
-  { label: "Conta", icon: "👤", href: "/conta", match: p => p.startsWith("/conta") || p === "/login" }
+const TABS: { key: string; icon: string; href: string; match: (p: string) => boolean }[] = [
+  { key: "nav.home", icon: "🏠", href: "/", match: p => p === "/" },
+  { key: "nav.search", icon: "🔍", href: "/explorar", match: p => p.startsWith("/explorar") || p.startsWith("/loja") || p.startsWith("/pracas") },
+  { key: "nav.sell", icon: "➕", href: "/classificados/publicar", match: p => p.startsWith("/classificados/publicar") },
+  { key: "nav.messages", icon: "💬", href: "/mensagens", match: p => p.startsWith("/mensagens") },
+  { key: "nav.account_short", icon: "👤", href: "/conta", match: p => p.startsWith("/conta") || p === "/login" }
 ];
 
 /** Barra de baixo, como na APP do eBay: Início, Pesquisar, Vender, Mensagens, Conta. */
 export function BottomNav() {
-  const path = usePathname(); const router = useRouter(); const insets = useSafeAreaInsets();
+  const path = usePathname(); const router = useRouter(); const insets = useSafeAreaInsets(); const { t: tr } = useT();
   return <View style={[s.bar, { paddingBottom: Math.max(insets.bottom, 6) }]} accessibilityRole="tablist">
     {TABS.map(t => {
       const on = t.match(path);
-      return <Pressable key={t.href} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={t.label}
+      return <Pressable key={t.href} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={tr(t.key)}
         onPress={() => { if (!on) router.navigate(t.href as any); }} style={s.tab}>
         <Text style={[s.icon, !on && { opacity: 0.6 }]}>{t.icon}</Text>
-        <Text style={[s.label, on && s.labelOn]}>{t.label}</Text>
+        <Text style={[s.label, on && s.labelOn]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>{tr(t.key)}</Text>
       </Pressable>;
     })}
   </View>;
@@ -28,8 +29,8 @@ export function BottomNav() {
 
 const s = themed(C => StyleSheet.create({
   bar: { flexDirection: "row", borderTopWidth: 1, borderTopColor: C.line, backgroundColor: C.white, paddingTop: 6 },
-  tab: { flex: 1, alignItems: "center", gap: 2, minHeight: 52, justifyContent: "center" },
+  tab: { flex: 1, minWidth: 0, paddingHorizontal: 2, alignItems: "center", gap: 2, minHeight: 52, justifyContent: "center" },
   icon: { fontSize: 22 },
-  label: { fontSize: 12, color: C.muted, fontWeight: "600" },
+  label: { fontSize: 12, textAlign: "center", maxWidth: "100%", color: C.muted, fontWeight: "600" },
   labelOn: { color: C.blue, fontWeight: "800" }
 }));
