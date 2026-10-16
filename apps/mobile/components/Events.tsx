@@ -10,6 +10,7 @@ import { listEvents, getEvent, getEventTickets, getEventPaymentInfo, saveEvent, 
   type EventCategory, type EventSummary, type EventRow, type TicketTypeAvailability, type TicketTypeDraft, type EventPaymentInfo, type MyTicketOrder,
   type OrganizerPanel, type OrganizerOrder, type AdminEventPayment, type CheckInResult, type PaymentMethodPlan, type PlatformSettings, type GeoPoint } from "@huambo-online/core";
 import { supabase, currentUserId, siteUrl } from "../lib/supabase";
+import { ticketVerifyUrl, ticketByCode, type TicketView } from "@huambo-online/core";
 import { shrinkAsset } from "../lib/image";
 import { C, ui } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
@@ -366,7 +367,7 @@ export function EventManageScreen({ id }: { id: string }) {
 
 /** Código QR desenhado com quadrados (sem bibliotecas nativas). */
 function TicketQr({ code, size = 200 }: { code: string; size?: number }) {
-  const m = qrMatrix(code); const n = m.length + 4; const cell = Math.floor(size / n);
+  const m = qrMatrix(ticketVerifyUrl(siteUrl, code)); const n = m.length + 4; const cell = Math.floor(size / n);
   return <View accessible accessibilityLabel={"Código QR do bilhete " + code} style={{ backgroundColor: "#fff", padding: cell * 2, borderRadius: 8 }}>
     {m.map((row, y) => <View key={y} style={{ flexDirection: "row" }}>{row.map((on, x) => <View key={x} style={{ width: cell, height: cell, backgroundColor: on ? "#000" : "#fff" }} />)}</View>)}
   </View>;
@@ -468,4 +469,38 @@ export function AdminEvents() {
       </>)}
     </View>)}
   </View>;
+}
+
+/** Ecrã aberto pelo QR do bilhete: diz se é verdadeiro; o organizador deixa entrar aqui. */
+export function TicketVerifyScreen({ code }: { code: string }) {
+  const router = useRouter();
+  const [v, setV] = useState<TicketView | null>(null); const [msg, setMsg] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
+  async function load() { const r = await ticketByCode(supabase(), code); if (r.error) setError(friendlyError(r.error)); setV(r.data ?? { result: "invalid" }); }
+  useEffect(() => { void load(); }, [code]);
+  if (!v) return <View style={ui.screen}><Text style={ui.text}>A verificar…</Text></View>;
+  if (v.result !== "ok") return <ScrollView contentContainerStyle={ui.screen}>
+    <Text style={ui.h1}>❌ Bilhete não reconhecido</Text>
+    <Text style={[ui.error, { fontSize: 19 }]}>Este QR não é de nenhum bilhete do Huambo Online. Não deixe entrar.</Text>
+  </ScrollView>;
+  const usable = v.status === "valid" && v.event_status !== "cancelled";
+  async function letIn() {
+    if (!v?.event_id || !v.code) return;
+    setBusy(true); const r = await checkInTicket(supabase(), v.event_id, v.code); setBusy(false);
+    if (r.error) setError(friendlyError(r.error)); else { setMsg(CHECKIN_LABELS[r.data?.result ?? "invalid"]); await load(); }
+  }
+  return <ScrollView contentContainerStyle={ui.screen}>
+    <Text style={ui.h1}>{v.status === "used" ? "⚠️ Bilhete JÁ USADO" : usable ? "✅ Bilhete verdadeiro" : "❌ Bilhete sem efeito"}</Text>
+    <Text style={[usable ? ui.ok : ui.error, { fontSize: 19 }]}>{v.code} · {v.event_title}{v.starts_at ? " · " + formatEventDate(v.starts_at) : ""}</Text>
+    <Message error={error} ok={msg} />
+    {v.role === "other" && <View style={ui.card}><Text style={ui.text}>Este bilhete existe no Huambo Online. Só o organizador, com a sua conta, vê o nome e deixa entrar.</Text>
+      <Button title="Entrar" onPress={() => router.push("/login")} /></View>}
+    {v.role !== "other" && <View style={ui.card}>
+      {!!v.holder && <Text style={ui.text}>Nome: <Text style={ui.label}>{v.holder}</Text></Text>}
+      {!!v.type && <Text style={ui.text}>Bilhete: {v.type}</Text>}
+      {!!v.venue && <Text style={ui.text}>Local: {v.venue}</Text>}
+      {!!v.checked_in_at && <Text style={ui.text}>Entrou: {formatEventDate(v.checked_in_at)}</Text>}
+    </View>}
+    {v.role === "organizer" && usable && <Button title="🚪 Deixar entrar" disabled={busy} onPress={() => void letIn()} />}
+    <Button title="← Ver o evento" variant="secondary" onPress={() => router.push(("/eventos/" + v.event_id) as any)} />
+  </ScrollView>;
 }
