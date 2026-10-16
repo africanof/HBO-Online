@@ -4,7 +4,7 @@ import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
   listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, recordItemEvent, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
-  listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince , categoryIdFromSlug, directoryHeading, FUEL_CATEGORY_SLUG } from "@huambo-online/core";
+  listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince , categoryIdFromSlug, directoryHeading, FUEL_CATEGORY_SLUG, venueKindFromSlug, venueForBusiness, VENUE_KINDS } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
@@ -71,6 +71,7 @@ export function DirectoryList({ kind }: { kind: Kind }) {
     <Message error={error} />
     {kind === "businesses" && categories.find(c => c.id === categoryId)?.slug === FUEL_CATEGORY_SLUG &&
       <Button title="⛽ Onde há combustível e gás agora?" onPress={() => router.push("/combustivel" as any)} />}
+    {kind === "businesses" && (() => { const vk = venueKindFromSlug(categories.find(c => c.id === categoryId)?.slug); return vk ? <Button title={`${VENUE_KINDS[vk].icon} ${VENUE_KINDS[vk].label}: ver o que há e reservar`} onPress={() => router.push(("/reservas?tipo=" + VENUE_KINDS[vk].slug) as any)} /> : null; })()}
     {items?.length === 0 && <Text style={ui.text}>{t.empty}</Text>}
     <View style={{ backgroundColor: C.yellowSoft, borderRadius: 16, padding: 14, gap: 8 }}>
       <Text style={ui.text}><Text style={{ fontWeight: "800" }}>Não encontrou quem procura?</Text> Publique «Procuro um eletricista, canalizador, doméstica…» e os profissionais da área são avisados.</Text>
@@ -98,6 +99,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
   const badge = useInspected(inspectionKindFor(kind), [id]);
   const [uid, setUid] = useState<string | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
   const [stats, setStats] = useState<{ rows: { label: string; value: string }[]; since: string }>({ rows: [], since: "" });
+  const [venue, setVenue] = useState<{ id: string; status: string } | null>(null);
   const [message, setMessage] = useState(""); const [rating, setRating] = useState(0); const [comment, setComment] = useState(""); const [busy, setBusy] = useState(false);
 
   async function load() {
@@ -106,6 +108,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     if (r.error) { setError(friendlyError(r.error)); return; }
     if (!r.data) { setError("Não encontrado."); return; }
     setItem(r.data);
+    if (kind === "businesses") void venueForBusiness(c, id).then(v => setVenue(v.data)).catch(() => setVenue(null));
     if (kind === "providers") { const s = await listProviderServices(c, id); setServices(s.data ?? []); }
     const rv = await listProviderReviews(c, target);
     if (rv.error) { const old = await listReviewsFor(c, target); setReviews((old.data as any[]) ?? []); } else setReviews(rv.data);
@@ -153,6 +156,8 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <PlaceView directions={item.directions} lat={item.geo_lat} lng={item.geo_lng} />
     {!!item.phone && <Button title="📞 Ligar" variant="secondary" onPress={() => { void recordItemEvent(supabase(), viewKind, id, "call"); void Linking.openURL("tel:" + item.phone.replace(/\s/g, "")); }} />}
     {!!wa && <Button title="WhatsApp" variant="secondary" onPress={() => { void recordItemEvent(supabase(), viewKind, id, "whatsapp"); void Linking.openURL(wa); }} />}
+    {kind === "businesses" && venue?.status === "approved" && !mine && <Button title="🛎️ Reservar / ver disponibilidade" onPress={() => router.push(("/reservas/" + venue.id) as any)} />}
+    {kind === "businesses" && mine && <Button title={venue ? "🛎️ Gerir reservas" : "🛎️ Receber reservas (hotel, restaurante, armazém)"} variant="secondary" onPress={() => router.push((venue ? `/reservas/${venue.id}/gerir` : "/reservas/painel") as any)} />}
     {mine && <Button title="Editar" onPress={() => router.push((kind === "providers" ? "/conta/profissional" : "/conta/empresas") as any)} />}
     <FollowButton kind={kind === "providers" ? "provider" : "business"} id={id} mine={mine} />
     {!mine && <SaveButton kind={viewKind} id={id} />}
