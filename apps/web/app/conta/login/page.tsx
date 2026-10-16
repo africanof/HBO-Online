@@ -1,12 +1,19 @@
 "use client";
 import { FormEvent, useState } from "react";
 import { signIn } from "@huambo-online/supabase";
-import { requestPasswordReset, authErrorMessage } from "@huambo-online/core";
+import { requestPasswordReset, authErrorMessage, mfaRequired, signOutCurrentUser } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
+import { MfaPrompt } from "../../../components/Mfa";
+
+function goBack() {
+  const back = new URLSearchParams(window.location.search).get("voltar");
+  window.location.href = back && back.startsWith("/") && !back.startsWith("//") ? back : "/";
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
   const [message, setMessage] = useState(""); const [ok, setOk] = useState(""); const [busy, setBusy] = useState(false); const [forgot, setForgot] = useState(false);
+  const [needCode, setNeedCode] = useState(false);
 
   async function submit(event: FormEvent) {
     event.preventDefault(); if (busy) return; setMessage(""); setOk(""); setBusy(true);
@@ -18,11 +25,19 @@ export default function LoginPage() {
       } else {
         const { error } = await signIn(supabase(), email, password);
         if (error) throw error;
-        const back = new URLSearchParams(window.location.search).get("voltar");
-        window.location.href = back && back.startsWith("/") ? back : "/";
+        // Conta com APP autenticadora: falta o segundo passo (código de 6 algarismos).
+        if (await mfaRequired(supabase())) { setNeedCode(true); return; }
+        goBack();
       }
     } catch (error) { setMessage(authErrorMessage(error)); } finally { setBusy(false); }
   }
+
+  if (needCode) return <main style={{ maxWidth: 480 }}>
+    <a href="/">← Huambo Online</a>
+    <h1>Entrar — segundo passo</h1>
+    <p>A sua conta está protegida com a entrada em dois passos.</p>
+    <MfaPrompt onDone={goBack} onCancel={async () => { await signOutCurrentUser(supabase()); setNeedCode(false); setPassword(""); }} />
+  </main>;
 
   return <main style={{ maxWidth: 480 }}>
     <a href="/">← Huambo Online</a>
