@@ -24,6 +24,7 @@ import { AdminPromos } from "../components/Promo";
 import { AdminFuel } from "../components/Fuel";
 import { AdminVenues } from "../components/Venues";
 import { AdminInspections } from "../components/Inspection";
+import { MfaPrompt, useMfaCheck } from "../components/Mfa";
 
 type Tab = "stats" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
 const tabOptions: { value: Tab; label: string }[] = [
@@ -42,7 +43,9 @@ export default function Admin() {
   const [users, setUsers] = useState<any[]>([]); const [userQuery, setUserQuery] = useState("");
   const [categories, setCategories] = useState<any[]>([]); const [catName, setCatName] = useState(""); const [catType, setCatType] = useState<string>("classified");
 
-  useEffect(() => { void getMyAdminRole(supabase()).then(setRole); }, []);
+  // Com a APP autenticadora ligada, a administração só funciona depois do código (sessão aal2).
+  const [mfa, mfaOk] = useMfaCheck();
+  useEffect(() => { if (mfa === "ok") void getMyAdminRole(supabase()).then(setRole); }, [mfa]);
   useEffect(() => { if (canModerate(role)) void load(tab); }, [role, tab, reportFilter]);
 
   async function load(t: Tab) {
@@ -61,6 +64,12 @@ export default function Admin() {
     if (r.error) setError(friendlyError(r.error)); else { setNotice(ok); await load(tab); }
   }
 
+  if (mfa === "need") return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
+    <Link href="/" style={ui.link}>← Huambo Online</Link>
+    <Text style={ui.h1}>Administração</Text>
+    <Text style={ui.text}>Por segurança, confirme que é mesmo você antes de abrir a administração.</Text>
+    <MfaPrompt onDone={mfaOk} onCancel={() => router.replace("/")} cancelLabel="Voltar ao início" />
+  </ScrollView>;
   if (role === null) return <View style={ui.screen}><Text style={ui.text}>A carregar…</Text></View>;
   if (!canModerate(role)) return <View style={ui.screen}><Link href="/" style={ui.link}>← Huambo Online</Link><Text style={ui.h1}>Administração</Text><Text style={ui.error}>Acesso reservado à administração.</Text></View>;
 

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { jobQueueStats, jobQueueText } from "@huambo-online/core";
+import { jobQueueStats, jobQueueText, listTotpFactors } from "@huambo-online/core";
 import { getMyAdminRole, getAdminStats, listReports, resolveReport, listListingsForModeration, moderateListing, listUsersForAdmin,
   setUserStatus, setUserRole, listAllCategories, createCategory, setCategoryActive, canModerate, canManageRoles, friendlyError, formatPrice,
   ADMIN_STAT_LABELS, REPORT_STATUS_LABELS, USER_STATUS_LABELS, ROLE_LABELS, STATUS_LABELS, CATEGORY_TYPES, CATEGORY_TYPE_LABELS,
@@ -21,11 +21,26 @@ import { AdminPromos } from "../../components/Promo";
 import { AdminFuel } from "../../components/Fuel";
 import { AdminVenues } from "../../components/Venues";
 import { AdminInspections } from "../../components/Inspection";
+import { MfaGate } from "../../components/Mfa";
 
 type Tab = "stats" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
 const tabs: [Tab, string][] = [["stats", "Estatísticas"], ["reports", "Denúncias"], ["revenue", "Receitas"], ["protected", "Pagamento protegido"], ["plans", "Mensalidades e comissões"], ["safety", "Segurança"], ["agents", "Agentes"], ["events", "Eventos"], ["videos", "Vídeos"], ["fuel", "Combustível"], ["venues", "🏨 Reservas"], ["inspections", "Inspeções"], ["disputes", "Disputas"], ["verifications", "Verificações"], ["listings", "Anúncios"], ["users", "Utilizadores"], ["categories", "Categorias"], ["couriers", "Estafetas"], ["markets", "Praças"], ["audit", "Registo"]];
 
+// Com a entrada em dois passos ligada, as funções da administração só respondem depois do código (sessão aal2).
 export default function AdminPage() {
+  return <MfaGate intro="A sua conta tem a entrada em dois passos ligada. Para abrir a administração, escreva o código da APP autenticadora."><AdminContent /></MfaGate>;
+}
+
+/** Aviso no topo da administração: entrada em dois passos ligada ou recomendada. */
+function MfaStatusLine() {
+  const [on, setOn] = useState<boolean | null>(null);
+  useEffect(() => { void listTotpFactors(supabase()).then(r => setOn(r.data.some(f => f.status === "verified"))); }, []);
+  if (on === null) return null;
+  return on ? <p style={{ margin: 0 }}>🔐 Entrada em dois passos: <strong>ligada ✔</strong> · <a href="/conta/seguranca">Gerir</a></p>
+    : <p className="scam-warn" style={{ margin: 0 }}><span>🔐 <strong>Entrar em dois passos</strong> — Recomendado para administradores: proteja esta conta com um código da APP autenticadora.</span> <a href="/conta/seguranca">Ligar agora</a></p>;
+}
+
+function AdminContent() {
   const [role, setRole] = useState<AdminRole | null>(null);
   const [tab, setTab] = useState<Tab>("stats");
   const [error, setError] = useState(""); const [notice, setNotice] = useState("");
@@ -61,6 +76,7 @@ export default function AdminPage() {
     <a href="/">← Huambo Online</a>
     <h1>Administração</h1>
     <p>Papel: <strong>{ROLE_LABELS[role]}</strong></p>
+    <MfaStatusLine />
     <nav className="row" role="tablist">{tabs.map(([t, l]) => <button key={t} role="tab" aria-selected={tab === t} className={tab === t ? "" : "secondary"} onClick={() => setTab(t)}>{l}</button>)}</nav>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}

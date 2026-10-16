@@ -71,6 +71,11 @@ export default function ContaPage() {
       <label>Confirmar palavra-passe<input type="password" autoComplete="new-password" value={pw2} onChange={e => setPw2(e.target.value)} /></label>
       <button disabled={busy}>Alterar palavra-passe</button>
     </form>
+    <section className="card">
+      <h2 style={{ margin: 0 }}>🔐 Entrar em dois passos</h2>
+      <p style={{ margin: 0 }}>Mais proteção: além da palavra-passe, pedimos um código da APP autenticadora do seu telemóvel (Google Authenticator, Microsoft Authenticator ou Authy).{isStaff ? " Recomendado para administradores." : ""}</p>
+      <div className="row"><a className="btn secondary" href="/conta/seguranca">🔐 Entrar em dois passos</a></div>
+    </section>
     <section className="card"><h2 style={{ margin: 0 }}>🌓 Aparência</h2><p style={{ margin: 0 }}>Escolha o modo claro, escuro, ou automático (segue o seu telemóvel ou computador).</p><ThemePicker /></section>
     <section className="card" id="poupar-dados"><h2 style={{ margin: 0 }}>📉 Poupar dados</h2><p style={{ margin: 0 }}>Gaste menos saldo: as fotografias das listas não carregam e, nos anúncios, só carregam quando tocar.</p><DataSaverPicker /></section>
     <form className="stack card" onSubmit={async e => { e.preventDefault(); if (await run(() => deleteCurrentUserAccount(supabase(), del), "Conta eliminada.")) window.location.href = "/"; }}>
