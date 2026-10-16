@@ -22,11 +22,12 @@ import { AdminAgents } from "../components/Agents";
 import { AdminEvents } from "../components/Events";
 import { AdminPromos } from "../components/Promo";
 import { AdminFuel } from "../components/Fuel";
+import { AdminVenues } from "../components/Venues";
 import { AdminInspections } from "../components/Inspection";
 
-type Tab = "stats" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+type Tab = "stats" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
 const tabOptions: { value: Tab; label: string }[] = [
-  { value: "stats", label: "Estatísticas" }, { value: "reports", label: "Denúncias" }, { value: "revenue", label: "Receitas" }, { value: "protected", label: "Pagamento protegido" }, { value: "plans", label: "Mensalidades e comissões" }, { value: "safety", label: "Segurança" }, { value: "agents", label: "Agentes" }, { value: "events", label: "Eventos" }, { value: "videos", label: "Vídeos" }, { value: "fuel", label: "Combustível" }, { value: "inspections", label: "Inspeções" }, { value: "disputes", label: "Disputas" }, { value: "verifications", label: "Verificações" }, { value: "listings", label: "Anúncios" },
+  { value: "stats", label: "Estatísticas" }, { value: "reports", label: "Denúncias" }, { value: "revenue", label: "Receitas" }, { value: "protected", label: "Pagamento protegido" }, { value: "plans", label: "Mensalidades e comissões" }, { value: "safety", label: "Segurança" }, { value: "agents", label: "Agentes" }, { value: "events", label: "Eventos" }, { value: "videos", label: "Vídeos" }, { value: "fuel", label: "Combustível" }, { value: "venues", label: "🏨 Reservas" }, { value: "inspections", label: "Inspeções" }, { value: "disputes", label: "Disputas" }, { value: "verifications", label: "Verificações" }, { value: "listings", label: "Anúncios" },
   { value: "users", label: "Utilizadores" }, { value: "categories", label: "Categorias" }, { value: "couriers", label: "Estafetas" }, { value: "markets", label: "Praças" }, { value: "audit", label: "Registo" }
 ];
 
@@ -46,7 +47,7 @@ export default function Admin() {
 
   async function load(t: Tab) {
     setError("");
-    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "disputes" || t === "plans" || t === "safety" || t === "agents" || t === "events" || t === "videos" || t === "fuel" || t === "inspections" || t === "revenue" || t === "protected") return;
+    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "disputes" || t === "plans" || t === "safety" || t === "agents" || t === "events" || t === "videos" || t === "fuel" || t === "venues" || t === "inspections" || t === "revenue" || t === "protected") return;
     const c = supabase();
     const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReportsV2(c, reportFilter || undefined)
       : t === "listings" ? await listListingsForModeration(c, "", listingQuery) : t === "users" ? await listUsersForAdmin(c, userQuery) : await listAllCategories(c);
@@ -82,6 +83,7 @@ export default function Admin() {
     {tab === "events" && <AdminEvents />}
     {tab === "videos" && <AdminPromos />}
     {tab === "fuel" && <AdminFuel />}
+    {tab === "venues" && <AdminVenues />}
     {tab === "inspections" && <AdminInspections />}
     {tab === "audit" && <AdminAudit />}
     {tab === "stats" && <JobQueueLine />}

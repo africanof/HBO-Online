@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { listBusinessProducts, listProviders, listBusinesses, getProvider, getBusiness, listProviderServices, listReviewsFor, submitReview, contactDirectoryOwner,
   listDirectoryCategories, listProvinces, listMunicipalities, ratingLabel, whatsappLink, recordItemEvent, formatPrice, friendlyError, type ReviewTarget, categoryLabel,
-  listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince , categoryIdFromSlug, directoryHeading, FUEL_CATEGORY_SLUG } from "@huambo-online/core";
+  listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince , categoryIdFromSlug, directoryHeading, FUEL_CATEGORY_SLUG, venueKindFromSlug, venueForBusiness, VENUE_KINDS } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { SaveButton, ShareButton, FollowButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, stars } from "./Reputation";
@@ -67,6 +67,10 @@ export function DirectoryList({ kind }: { kind: Kind }) {
     {error && <p className="error" role="alert">{error}</p>}
     {kind === "businesses" && categories.find(c => c.id === categoryId)?.slug === FUEL_CATEGORY_SLUG && <a href="/combustivel" className="banner yellow" style={{ color: "inherit", textDecoration: "none", fontWeight: 400, padding: 18 }}>
       <strong>⛽ Onde há combustível e gás agora?</strong> Veja os postos que marcaram «Há», peça um aviso ou reserve.</a>}
+    {kind === "businesses" && (() => { const vk = venueKindFromSlug(categories.find(c => c.id === categoryId)?.slug); if (!vk) return null; const V = VENUE_KINDS[vk];
+      return <a href={"/reservas?tipo=" + V.slug} className="banner yellow" style={{ color: "inherit", textDecoration: "none", fontWeight: 400, padding: 18 }}>
+        <span><strong>{V.icon} {vk === "hotel" ? "Ver quartos livres e reservar" : vk === "restaurant" ? "Ver o menu, reservar mesa ou encomendar" : "Ver produtos e preços por grosso e encomendar"}</strong> Veja {vk === "hotel" ? "se há quartos para as suas datas" : "o que há agora"} e pague no local ou adiantado.</span>
+        <span className="btn">🛎️ Reservar</span></a>; })()}
     {items?.length === 0 && <p>{t.empty}</p>}
     <a href="/classificados/publicar?finalidade=wanted" className="banner yellow" style={{ color: "inherit", textDecoration: "none", fontWeight: 400, padding: 18 }}>
       <span><strong>Não encontrou quem procura?</strong> Publique «Procuro um eletricista, canalizador, doméstica…» e os profissionais da área são avisados.</span>
@@ -90,6 +94,14 @@ export function DirectoryList({ kind }: { kind: Kind }) {
       })}
     </section>
   </main>;
+}
+
+/** Se a empresa é um hotel, restaurante ou armazém aprovado: botão grande para reservar. */
+function VenueReserveButton({ businessId }: { businessId: string }) {
+  const [venue, setVenue] = useState<{ id: string; kind: keyof typeof VENUE_KINDS } | null>(null);
+  useEffect(() => { void venueForBusiness(supabase(), businessId).then(r => setVenue(r.data?.status === "approved" ? r.data : null)); }, [businessId]);
+  if (!venue) return null;
+  return <a className="btn" href={"/reservas/" + venue.id} style={{ justifySelf: "start", fontSize: 20, padding: "14px 22px" }}>🛎️ Reservar / ver disponibilidade</a>;
 }
 
 /** Produtos da empresa na Loja. */
@@ -169,6 +181,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <StatsBlock rows={stats.rows} footer={stats.since} />
     {(item.bio || item.description) && <p style={{ whiteSpace: "pre-wrap" }}>{item.bio || item.description}</p>}
     <PlaceView directions={item.directions} lat={item.geo_lat} lng={item.geo_lng} />
+    {kind === "businesses" && <VenueReserveButton businessId={id} />}
     <div className="row">
       <FollowButton kind={kind === "providers" ? "provider" : "business"} id={id} mine={mine} />
       {item.phone && <a className="btn secondary" href={"tel:" + item.phone.replace(/\s/g, "")} onClick={() => void recordItemEvent(supabase(), viewKind, id, "call")}>📞 Ligar</a>}

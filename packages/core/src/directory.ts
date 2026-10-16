@@ -157,6 +157,9 @@ export const FUEL_CATEGORY_SLUG = "combustivel-gas";
 export function directoryHeading(slug: string | null | undefined): { title: string; cta: string } | null {
   if (slug === "fabricas") return { title: "🏭 Fábricas do Huambo", cta: "Registar a minha fábrica" };
   if (slug === FUEL_CATEGORY_SLUG) return { title: "⛽ Postos de combustível e gás", cta: "Registar a minha empresa" };
+  if (slug === "hoteis") return { title: "🏨 Hotéis e hospedagem", cta: "Registar o meu hotel" };
+  if (slug === "restaurantes") return { title: "🍽️ Restaurantes", cta: "Registar o meu restaurante" };
+  if (slug === "armazens") return { title: "🏬 Armazéns (comércio a grosso)", cta: "Registar o meu armazém" };
   return null;
 }
 export async function listDirectoryCategories(client: SupabaseClient, kind: "providers" | "businesses") {

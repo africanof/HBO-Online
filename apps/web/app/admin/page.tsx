@@ -19,10 +19,11 @@ import { AdminAgents } from "../../components/Agents";
 import { AdminEvents } from "../../components/Events";
 import { AdminPromos } from "../../components/Promo";
 import { AdminFuel } from "../../components/Fuel";
+import { AdminVenues } from "../../components/Venues";
 import { AdminInspections } from "../../components/Inspection";
 
-type Tab = "stats" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
-const tabs: [Tab, string][] = [["stats", "Estatísticas"], ["reports", "Denúncias"], ["revenue", "Receitas"], ["protected", "Pagamento protegido"], ["plans", "Mensalidades e comissões"], ["safety", "Segurança"], ["agents", "Agentes"], ["events", "Eventos"], ["videos", "Vídeos"], ["fuel", "Combustível"], ["inspections", "Inspeções"], ["disputes", "Disputas"], ["verifications", "Verificações"], ["listings", "Anúncios"], ["users", "Utilizadores"], ["categories", "Categorias"], ["couriers", "Estafetas"], ["markets", "Praças"], ["audit", "Registo"]];
+type Tab = "stats" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+const tabs: [Tab, string][] = [["stats", "Estatísticas"], ["reports", "Denúncias"], ["revenue", "Receitas"], ["protected", "Pagamento protegido"], ["plans", "Mensalidades e comissões"], ["safety", "Segurança"], ["agents", "Agentes"], ["events", "Eventos"], ["videos", "Vídeos"], ["fuel", "Combustível"], ["venues", "🏨 Reservas"], ["inspections", "Inspeções"], ["disputes", "Disputas"], ["verifications", "Verificações"], ["listings", "Anúncios"], ["users", "Utilizadores"], ["categories", "Categorias"], ["couriers", "Estafetas"], ["markets", "Praças"], ["audit", "Registo"]];
 
 export default function AdminPage() {
   const [role, setRole] = useState<AdminRole | null>(null);
@@ -39,7 +40,7 @@ export default function AdminPage() {
 
   async function load(t: Tab) {
     setError("");
-    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "protected" || t === "plans" || t === "safety" || t === "agents" || t === "events" || t === "videos" || t === "fuel" || t === "inspections" || t === "revenue" || t === "disputes") return;
+    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "protected" || t === "plans" || t === "safety" || t === "agents" || t === "events" || t === "videos" || t === "fuel" || t === "venues" || t === "inspections" || t === "revenue" || t === "disputes") return;
     const c = supabase();
     const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReportsV2(c, reportFilter || undefined)
       : t === "listings" ? await listListingsForModeration(c, listingFilter, listingQuery) : t === "users" ? await listUsersForAdmin(c, userQuery) : await listAllCategories(c);
@@ -75,6 +76,7 @@ export default function AdminPage() {
     {tab === "events" && <AdminEvents />}
     {tab === "videos" && <AdminPromos />}
     {tab === "fuel" && <AdminFuel />}
+    {tab === "venues" && <AdminVenues />}
     {tab === "inspections" && <AdminInspections />}
     {tab === "revenue" && <AdminRevenue />}
     {tab === "audit" && <AdminAudit />}
