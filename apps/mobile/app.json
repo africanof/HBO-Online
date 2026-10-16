@@ -13,7 +13,34 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#3665F3"
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "huambo-na-m-o.onrender.com",
+              "pathPrefix": "/reservas/v/"
+            },
+            {
+              "scheme": "https",
+              "host": "huambo-na-m-o.onrender.com",
+              "pathPrefix": "/combustivel/v/"
+            },
+            {
+              "scheme": "https",
+              "host": "huambo-na-m-o.onrender.com",
+              "pathPrefix": "/eventos/bilhete/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "ios": {
       "bundleIdentifier": "ao.huamboonline.app",
