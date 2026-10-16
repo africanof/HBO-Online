@@ -122,3 +122,60 @@ export function auditLabel(e: Pick<AuditEntry, "action" | "target_type" | "detai
   const det = e.action === "update" ? Object.entries(e.details ?? {}).map(([k, v]) => `${k} → ${typeof v === "string" ? v : JSON.stringify(v)}`).join(", ") : "";
   return det ? `${what}: ${det}` : what;
 }
+
+// --- Identidade v2: BI frente e verso + selfie com o BI, tirados na hora com a câmara --------------
+export type IdentityShot = "front" | "back" | "selfie";
+export const IDENTITY_SHOTS: { key: IdentityShot; title: string; hint: string; camera: "back" | "front" }[] = [
+  { key: "front", title: "1. BI — frente", hint: "Ponha o BI numa mesa, com boa luz. O nome, a fotografia e o número têm de se ler bem.", camera: "back" },
+  { key: "back", title: "2. BI — verso", hint: "Vire o BI e fotografe o lado de trás, inteiro e sem reflexos.", camera: "back" },
+  { key: "selfie", title: "3. Selfie com o BI", hint: "Segure o BI ao lado da cara, com a fotografia virada para a câmara. Sem óculos escuros nem boné.", camera: "front" }
+];
+/** Número do BI angolano: 9 algarismos, 2 letras e 3 algarismos (ex.: 004512345LA042). Devolve normalizado ou null. */
+export function normalizeBiNumber(text: string | null | undefined): string | null {
+  const s = (text ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return /^\d{9}[A-Z]{2}\d{3}$/.test(s) ? s : null;
+}
+export function validateIdentityRequest(i: { front?: unknown; back?: unknown; selfie?: unknown; idNumber: string }): string | null {
+  if (!i.front) return "Tire a fotografia da frente do BI.";
+  if (!i.back) return "Tire a fotografia do verso do BI.";
+  if (!i.selfie) return "Tire a selfie a segurar o BI.";
+  if (!normalizeBiNumber(i.idNumber)) return "Escreva o número do BI como está no documento (9 algarismos, 2 letras e 3 algarismos, ex.: 004512345LA042).";
+  return null;
+}
+export function identityShotPath(userId: string, shot: IdentityShot, now = Date.now()): string { return `${userId}/${now}-bi-${shot}.jpg`; }
+/** Envia as três fotografias (JPEG) e cria o pedido. */
+export async function requestIdentityVerification(client: SupabaseClient, userId: string, shots: Record<IdentityShot, Blob | ArrayBuffer>, idNumber: string, note?: string) {
+  const bad = validateIdentityRequest({ ...shots, idNumber }); if (bad) return { data: null, error: new Error(bad) };
+  const now = Date.now(); const paths = {} as Record<IdentityShot, string>;
+  for (const k of ["front", "back", "selfie"] as IdentityShot[]) {
+    const path = identityShotPath(userId, k, now);
+    const r = await client.storage.from(VERIFICATION_BUCKET).upload(path, shots[k], { contentType: "image/jpeg", upsert: false });
+    if (r.error) return { data: null, error: r.error };
+    paths[k] = path;
+  }
+  return client.rpc("request_identity_verification", { p_front_path: paths.front, p_back_path: paths.back, p_selfie_path: paths.selfie,
+    p_id_number: normalizeBiNumber(idNumber), p_note: note?.trim() || null });
+}
+export type MyVerificationV2 = MyVerification & { id_number_hint: string | null; has_selfie: boolean };
+export async function listMyVerificationsV2(client: SupabaseClient) {
+  const r = await client.rpc("my_verifications_v2");
+  return { data: (r.data ?? []) as MyVerificationV2[], error: r.error };
+}
+export type AdminVerificationV2 = AdminVerification & { back_path: string | null; selfie_path: string | null; id_number: string | null; account_created_at: string | null; previous_rejections: number };
+export async function listVerificationsForAdminV2(client: SupabaseClient, status: VerificationStatus | "" = "pending") {
+  const r = await client.rpc("admin_list_verifications_v2", { p_status: status || null });
+  return { data: ((r.data ?? []) as AdminVerificationV2[]).map(v => ({ ...v, previous_rejections: Number(v.previous_rejections) || 0 })), error: r.error };
+}
+/** «004512345LA042» → «004512345 LA 042» (mais fácil de comparar com o BI). */
+export function biNumberText(n: string | null | undefined): string {
+  const m = /^(\d{9})([A-Z]{2})(\d{3})$/.exec(n ?? ""); return m ? `${m[1]} ${m[2]} ${m[3]}` : (n ?? "");
+}
+/** O que a administração deve confirmar antes de aprovar. */
+export const IDENTITY_ADMIN_CHECKLIST = [
+  "A cara da selfie é a mesma da fotografia do BI.",
+  "O nome do BI é o mesmo nome da conta.",
+  "O número escrito é o mesmo do BI.",
+  "O BI não está fora de validade, rasurado nem é fotocópia ou fotografia de um ecrã."
+];
+export const IDENTITY_REJECT_REASONS = ["Fotografias ilegíveis ou com reflexos", "A cara da selfie não corresponde ao BI", "O nome não corresponde ao da conta",
+  "O número não corresponde ao BI", "BI fora de validade", "Fotografia de um ecrã ou fotocópia"];
