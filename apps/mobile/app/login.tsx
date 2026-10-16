@@ -2,14 +2,16 @@ import { useState } from "react";
 import { Link, router } from "expo-router";
 import { ScrollView, Text, TextInput } from "react-native";
 import { signIn } from "@huambo-online/supabase";
-import { requestPasswordReset, authErrorMessage } from "@huambo-online/core";
+import { requestPasswordReset, authErrorMessage, mfaRequired } from "@huambo-online/core";
 import { supabase, siteUrl } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
+import { MfaPrompt } from "../components/Mfa";
 
 export default function Login() {
   const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
   const [error, setError] = useState(""); const [ok, setOk] = useState(""); const [busy, setBusy] = useState(false); const [forgot, setForgot] = useState(false);
+  const [needCode, setNeedCode] = useState(false);
 
   async function submit() {
     if (busy) return; setError(""); setOk("");
@@ -23,10 +25,23 @@ export default function Login() {
       } else {
         const { error } = await signIn(supabase(), email, password);
         if (error) throw error;
+        // Conta com APP autenticadora: falta o segundo passo (código de 6 algarismos).
+        if (await mfaRequired(supabase())) { setNeedCode(true); return; }
         router.replace("/");
       }
     } catch (e) { setError(authErrorMessage(e)); } finally { setBusy(false); }
   }
+
+  async function cancelCode() {
+    try { await supabase().auth.signOut(); } catch { /* sem rede: a sessão fica em aal1 e volta a pedir o código */ }
+    setNeedCode(false); setPassword("");
+  }
+
+  if (needCode) return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
+    <Text style={ui.h1}>Entrar — 2.º passo</Text>
+    <Text style={ui.text}>A palavra-passe está certa. Esta conta tem a entrada em dois passos ligada.</Text>
+    <MfaPrompt onDone={() => router.replace("/")} onCancel={() => void cancelCode()} cancelLabel="Cancelar e sair" />
+  </ScrollView>;
 
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/" style={ui.link}>← Huambo Online</Link>
