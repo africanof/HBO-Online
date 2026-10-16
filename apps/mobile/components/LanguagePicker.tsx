@@ -30,7 +30,7 @@ export function LanguagePicker({ compact = false }: { compact?: boolean }) {
     })}
   </View>;
   const partial = notice && notice === lang ? <View accessibilityRole="alert" style={s.notice}>
-    <Text style={s.noticeText}>✔ {t("lang.saved")} {t("lang.partial")}</Text>
+    <Text style={s.noticeText}>✔ {t("lang.saved")}</Text>
     <Pressable accessibilityRole="button" onPress={() => setNotice(null)} style={s.close}><Text style={ui.link}>{t("common.close")}</Text></Pressable>
   </View> : null;
   if (compact) return <View style={{ gap: 8 }}>{buttons}{partial}</View>;

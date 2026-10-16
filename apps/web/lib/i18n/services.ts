@@ -668,6 +668,30 @@ export const DICT_SERVICES: Dictionary = {
   "sv.fu_paid_deliver": { pt: "Já pago — entregar", en: "Already paid — deliver", zh: "已付款——交付" },
   "sv.fu_qr_code": { pt: "Código QR {code}", en: "QR code {code}", zh: "二维码 {code}" },
   "sv.fu_qr_show": { pt: "Mostre este QR no posto. O posto lê com a câmara e o site confirma que é verdadeiro.", en: "Show this QR at the station. The station scans it with the camera and the site confirms it's genuine.", zh: "请在加油站出示此二维码。加油站用相机扫描，网站会确认其真伪。" },
+  // --- info
+  "sv.contact_email": { pt: "Pode contactar-nos pelo e-mail {email}.", en: "You can contact us by email at {email}.", zh: "您可以发送电子邮件至 {email} 联系我们。" },
+  "sv.contact_none": { pt: "Pode contactar-nos através da sua conta (Conta → Ajuda) ou denunciando o conteúdo em causa.", en: "You can contact us through your account (Account → Help) or by reporting the content in question.", zh: "您可以通过您的账户（账户 → 帮助）联系我们，或举报相关内容。" },
+  "sv.info_updated": { pt: "Última atualização: {date}", en: "Last updated: {date}", zh: "最后更新：{date}" },
+  "sv.info_more": { pt: "Mais informação", en: "More information", zh: "更多信息" },
+  "sv.info_terms": { pt: "Termos", en: "Terms", zh: "条款" },
+  "sv.info_privacy": { pt: "Privacidade", en: "Privacy", zh: "隐私" },
+  "sv.info_returns": { pt: "Devoluções", en: "Returns", zh: "退货" },
+  "sv.info_delete": { pt: "Apagar conta", en: "Delete account", zh: "删除账户" },
+  "sv.info_pt_only": { pt: "Esta página ainda só está disponível em português.", en: "This page is still only available in Portuguese.", zh: "本页面目前仅提供葡萄牙语版本。" },
+  "sv.help_intro": { pt: "Respostas às perguntas mais comuns. Toque numa pergunta para ver a resposta.", en: "Answers to the most common questions. Tap a question to see the answer.", zh: "常见问题解答。点击问题即可查看答案。" },
+  "sv.help_safety_btn": { pt: "Segurança: pontos de encontro e sinais de burla", en: "Safety: meeting points and scam warning signs", zh: "安全：见面地点和诈骗迹象" },
+  "sv.help_more": { pt: "Precisa de mais ajuda?", en: "Need more help?", zh: "需要更多帮助？" },
+  "sv.help_returns": { pt: "Devoluções e reembolsos", en: "Returns and refunds", zh: "退货和退款" },
+  "sv.help_delete": { pt: "Como apagar a conta", en: "How to delete the account", zh: "如何删除账户" },
+  "sv.sf_title": { pt: "Comprar e vender em segurança", en: "Buying and selling safely", zh: "安全买卖" },
+  "sv.sf_intro": { pt: "A maior parte das pessoas é honesta. Estas regras simples protegem-no das poucas que não são.", en: "Most people are honest. These simple rules protect you from the few who aren't.", zh: "大多数人都是诚实的。这些简单的规则能保护您免受少数不诚实者的侵害。" },
+  "sv.sf_rules": { pt: "Regras de ouro", en: "Golden rules", zh: "黄金法则" },
+  "sv.sf_spots": { pt: "Pontos de encontro seguros", en: "Safe meeting points", zh: "安全见面地点" },
+  "sv.sf_spots_intro": { pt: "Para ver o artigo e pagar, combine num destes lugares:", en: "To see the item and pay, arrange to meet in one of these places:", zh: "查看物品和付款时，请约在以下地点之一：" },
+  "sv.sf_scam": { pt: "Sinais de burla", en: "Scam warning signs", zh: "诈骗迹象" },
+  "sv.sf_scam_intro": { pt: "Nas mensagens, o Huambo Online avisa-o quando a outra pessoa:", en: "In messages, Huambo Online warns you when the other person:", zh: "在消息中，如果对方出现以下情况，Huambo Online 会提醒您：" },
+  "sv.sf_block": { pt: "Bloquear e 🚩 Denunciar", en: "Block and 🚩 Report", zh: "屏蔽和 🚩 举报" },
+  "sv.sf_block_text": { pt: "Numa conversa, carregue em «🚫 Bloquear» para deixar de receber mensagens dessa pessoa e em «🚩 Denunciar» para avisar a administração. Na Loja, use o Pagamento protegido quando estiver disponível: o dinheiro só chega ao vendedor depois de receber a encomenda.", en: "In a conversation, tap “🚫 Block” to stop receiving messages from that person and “🚩 Report” to alert the administration. In the Shop, use Protected payment when available: the money only reaches the seller after you receive the order.", zh: "在对话中，点击“🚫 屏蔽”即可不再接收此人的消息，点击“🚩 举报”可通知管理员。在商店中，如有保障付款请使用：您收到订单后，款项才会交给卖家。" },
   // --- inspection
   "sv.in_my_store": { pt: "A minha loja", en: "My shop", zh: "我的店铺" },
   "sv.in_title": { pt: "Selo «Inspecionado»", en: "“Inspected” badge", zh: "“已实地核查”标志" },
@@ -1058,4 +1082,395 @@ export const DICT_SERVICES: Dictionary = {
   "sv.vd_see_video": { pt: "Ver vídeo", en: "Watch video", zh: "观看视频" },
   "sv.vd_see_photo_n": { pt: "Ver fotografia {n}", en: "See photo {n}", zh: "查看第 {n} 张照片" },
   "sv.vd_photo_alt": { pt: "{title} — fotografia {n} de {total}", en: "{title} — photo {n} of {total}", zh: "{title} — 第 {n} 张，共 {total} 张" }
+};
+
+
+// --- Páginas longas (Termos, Privacidade, Apagar conta, Devoluções), Ajuda e Segurança -------------
+/** Texto de uma página de informação noutra língua. «{contact}» é trocado pela linha de contacto. */
+export type InfoPageText = { title: string; intro: string; sections: { title: string; paragraphs: string[] }[] };
+/** Traduções das páginas do core (legal.ts), pela mesma ordem das secções. */
+export const SV_INFO_PAGES: Record<"en" | "zh", Record<string, InfoPageText>> = {
+  en: {
+    termos: {
+      title: "Terms of Use",
+      intro: "These rules apply to the Huambo Online Site and APP. By creating an account or using the service, you accept these terms.",
+      sections: [
+        { title: "1. What Huambo Online is", paragraphs: [
+          "A place to buy, sell, trade and rent, find professionals and businesses, and request services in Huambo and across Angola.",
+          "Huambo Online connects people. Deals are made between buyer and seller (or client and professional), who are responsible for what they agree."] },
+        { title: "2. Your account", paragraphs: [
+          "You must be at least 18 years old, or have permission from the person responsible for you.",
+          "Your account details must be true. Keep your password safe: everything done on your account is your responsibility.",
+          "You can delete your account whenever you want (see “How to delete my account”)."] },
+        { title: "3. Listings, products and services", paragraphs: [
+          "You may only list what is yours or what you are authorised to sell, rent, trade or provide.",
+          "The title, price, photos and description must be true. State whether the price is fixed, negotiable, open to offers, an auction or a trade.",
+          "Conformity guarantee: by posting, you declare that the listing describes the item truthfully and completely, including defects and anything missing. If something was left out or wrong, whoever bought or rented it is entitled to an exchange, a return with refund, or a refund (full or partial). Claims can be made up to 7 days after the deal, in “Returns and refunds”; the owner replies within 3 days and, if they refuse or don't reply, the administration decides. Anyone who doesn't comply with the decision may have their account suspended.",
+          "It is forbidden to list: weapons, drugs, unauthorised medicines, protected animals, stolen or counterfeit goods, documents, sexual content, and anything prohibited by Angolan law.",
+          "The administration may hide or remove listings, products and profiles that don't follow these rules, and suspend accounts."] },
+        { title: "4. Offers, auctions, trades and orders", paragraphs: [
+          "An accepted offer, a winning bid or a confirmed order is a commitment between the two people. Do what you agreed.",
+          "You can withdraw an offer while it has no reply. A bid can only be withdrawn with a reason, if there are more than 12 hours left in the auction or it was placed less than 1 hour ago; people who withdraw bids often may be prevented from bidding.",
+          "Never pay in advance to someone you don't know. Prefer meeting in a public place, seeing the item and paying on delivery.",
+          "For Shop orders, the buyer can ask for a return, refund or exchange up to 14 days after delivery, and the seller must reply. See “Returns and refunds”."] },
+        { title: "5. Monthly fees and commissions", paragraphs: [
+          "Professional and business profiles get one free month. After that, they pay a monthly fee to the platform: 2,000 Kz per month for professionals and 5,000 Kz per month for businesses (the current amounts appear in “My plan”).",
+          "Payment is made by bank transfer or Multicaixa Express, with the reference or the receipt, and becomes valid when the administration confirms it.",
+          "Shops (products sold in the Shop without a business) follow the same rule as businesses: one free month and then 5,000 Kz per month. A business's products are covered by that business's monthly fee.",
+          "Without a free month or an up-to-date payment, the profile or Shop stops being shown to clients, but is not deleted. It appears again when the payment is confirmed.",
+          "Classified listings don't pay a monthly fee: when an item is sold (including auctions), the seller pays the platform a commission of 5% of the sale amount, within 7 days. The same applies to renting and hiring out movable and immovable property: 5% of the rental amount stated when marking “Rented”, or of the total amount of an accepted rental request. With overdue commissions you cannot post new listings.",
+          "Featuring (optional): the seller can pay for the listing to appear at the top of the lists, with the “⭐ Featured” badge, for the number of days stated (500 Kz for 7 days, unless another amount is announced). Featuring starts when the administration confirms the payment and ends on its own at the end of the period. It doesn't guarantee a sale."] },
+        { title: "6. Protected payment", paragraphs: [
+          "When available, you can choose “Protected payment” for Shop purchases. You pay Huambo Online, which holds the money and only releases it to the seller after the buyer confirms they received the order.",
+          "If the buyer neither confirms nor complains within the stated period after delivery (3 days, unless another amount is announced), the money is released to the seller. A return or refund request opened in time freezes the money until it is resolved.",
+          "Protected orders that are not paid within the stated period (48 hours, unless another amount is announced) are cancelled. Refunds of money still held are made by Huambo Online, to the IBAN or Multicaixa Express number given by the buyer.",
+          "The seller receives released sales in their balance and requests a withdrawal to their account. Withdrawals are paid by transfer on the days announced in “My balance”. If there is a commission on protected payment, it is shown before selling and deducted from the balance.",
+          "Huambo Online acts only as a technology and payment intermediary: it is not the seller of the products and is not responsible for their quality, but it follows the return rules described in “Returns and refunds”."] },
+        { title: "7. Reviews and reports", paragraphs: [
+          "Only people who did business can leave a review. Reviews must be honest and free of insults.",
+          "If you see something wrong, use “Report”. The administration reviews reports and may remove content."] },
+        { title: "8. Profile verification", paragraphs: [
+          "The “Verified” badge means the administration has seen a document. It is not a guarantee about the person or the business: keep being careful."] },
+        { title: "9. Liability", paragraphs: [
+          "Huambo Online does its best to keep the service working and safe, but doesn't guarantee it will always be available and is not responsible for deals made between users.",
+          "These terms may change. When they do, the date at the top is updated."] },
+        { title: "10. Contact", paragraphs: ["{contact}"] }
+      ]
+    },
+    privacidade: {
+      title: "Privacy Policy",
+      intro: "We explain what data we keep, what for and who can see it. We follow Angola's Personal Data Protection Law (Law no. 22/11).",
+      sections: [
+        { title: "1. What data we keep", paragraphs: [
+          "Account: name, email, phone (if you give it), profile photo, municipality.",
+          "What you post: listings, products, photos, videos, prices, offers, reviews and replies.",
+          "Conversations: the messages you exchange with other people.",
+          "Deals: orders, service requests, rentals, deliveries and the history of each one.",
+          "Verification (only if you request it): the photo of the document (ID card, business licence or tax number).",
+          "On your phone: we store the listings you viewed and your last search on the device itself, so you can see them without internet."] },
+        { title: "2. What we use the data for", paragraphs: [
+          "To make the service work: show listings, connect buyers and sellers, send notifications and messages, calculate reviews and profile figures.",
+          "For safety: review reports, verify profiles and prevent abuse.",
+          "We don't sell your data to anyone and we don't show advertising based on it."] },
+        { title: "3. What is public", paragraphs: [
+          "Published listings, products, professional and business profiles, your name, profile photo, reviews and profile figures (sales, services provided).",
+          "Your email is not shown. Your phone only appears if you put it in the listing or the profile.",
+          "Your WhatsApp number only appears if you choose “Show the Chat on WhatsApp button” in “Your account”, and only to signed-in people. You can hide or delete it whenever you want."] },
+        { title: "4. What is private", paragraphs: [
+          "Messages, offers, orders and service requests: only the people involved can see them.",
+          "Verification documents are kept in a private space: only you and the administration can open them, through a temporary link."] },
+        { title: "5. Where the data is kept and who helps us", paragraphs: [
+          "The database and files are on Supabase, on servers in the European Union (Ireland).",
+          "The Site is hosted on Render. The APP is built with Expo.",
+          "Photo search (when active): the photo is sent to Claude (Anthropic) to tell what the item is, and we don't keep it."] },
+        { title: "6. How long we keep it", paragraphs: [
+          "As long as the account exists. Videos of closed or sold listings are deleted automatically after 7 days, and those of hidden products after 30 days.",
+          "When you delete your account, your data is deleted. Some of the provider's backup copies may last a little longer until they are replaced."] },
+        { title: "7. Your rights", paragraphs: [
+          "You can see and correct your data in “Your account”, and delete listings, products and the account itself whenever you want.",
+          "You can ask for information about your data or object to its processing. If you think your rights were not respected, you can complain to Angola's Data Protection Agency (APD)."] },
+        { title: "8. Contact", paragraphs: ["{contact}"] }
+      ]
+    },
+    "apagar-conta": {
+      title: "How to delete my account",
+      intro: "You can delete your Huambo Online account at any time, on the Site or in the APP.",
+      sections: [
+        { title: "Steps", paragraphs: [
+          "1. Sign in to your account (Site or APP).",
+          "2. Open “Your account”.",
+          "3. At the bottom of the page, in “Delete account”, type ELIMINAR and confirm."] },
+        { title: "What is deleted", paragraphs: [
+          "The account, the profile, listings, products, saved items, saved searches, notifications and the data linked to the account.",
+          "Reviews you left for other people and messages already sent may be deleted or remain without your name."] },
+        { title: "Can't sign in?", paragraphs: [
+          "Use “I forgot my password” on the sign-in page to recover access and then delete the account.",
+          "{contact}"] }
+      ]
+    },
+    devolucoes: {
+      title: "Returns and refunds",
+      intro: "How to ask for a return, refund or exchange of an order made in the Huambo Online Shop, and what happens at each step.",
+      sections: [
+        { title: "Listings: the item must match the listing", paragraphs: [
+          "Whoever posts a listing declares that the description, photos and price match the item, including defects.",
+          "If you bought or rented and the item has a hidden defect, is different from the description, is another item or has missing parts, open the listing and tap “The item doesn't match the listing” (up to 7 days after the deal).",
+          "Choose what you want: exchange, return and refund, or refund. The owner has 3 days to reply; if they refuse or don't reply, ask the administration to decide. Claims appear on this page."] },
+        { title: "1. When can I ask", paragraphs: [
+          "For a Shop order you have already paid for or received, up to 14 days after delivery.",
+          "Reasons: not received, arrived damaged or broken, different from the listing, wrong item (model, size, colour) or items missing.",
+          "If the order is still “Pending”, you don't need a request: tap “Cancel”."] },
+        { title: "2. What can I ask for", paragraphs: [
+          "Refund: the seller gives you your money back (full or partial).",
+          "Return and refund: you return the item to the seller and they give you your money back.",
+          "Exchange: the seller sends you another identical item, in good condition."] },
+        { title: "3. How to ask", paragraphs: [
+          "Open “Orders”, choose the order and tap “Ask for a return or refund”.",
+          "Choose the reason, explain what happened and attach up to 4 photos. The photos stay private: only the seller and the administration can see them.",
+          "Follow everything in “Returns and refunds”. Each step sends a notification to the other person."] },
+        { title: "4. What the seller does", paragraphs: [
+          "Accepts the request or refuses it, explaining why.",
+          "If they accept a return, agree by message where to hand over the item. When they receive it, they confirm and give the money back.",
+          "When they give the money back, they tap “I've returned the money” and the buyer confirms they received it."] },
+        { title: "5. If you can't agree", paragraphs: [
+          "If the seller refuses, you can call the administration straight away. If someone doesn't reply within 3 days, either of you can call the administration.",
+          "The administration looks at the request, the messages and the photos, and decides: refund (full or partial), return, exchange or refusal. The decision is recorded.",
+          "Anyone who doesn't comply with a decision may have their account suspended."] },
+        { title: "6. Paid and cancelled order", paragraphs: [
+          "If the order was already paid and was cancelled, the refund request opens on its own: the seller must give all the money back.",
+          "With protected payment, the money still held is returned by Huambo Online: enter your IBAN or Multicaixa Express number in the request."] },
+        { title: "7. How the money arrives", paragraphs: [
+          "For purchases paid to the seller (on delivery, transfer or Multicaixa Express), Huambo Online doesn't hold the money: the refund is made by the seller, by the same payment method, unless the two agree otherwise.",
+          "For purchases with protected payment, the money is held by Huambo Online until receipt is confirmed. While it is held, the refund is made by Huambo Online. After it is released to the seller, the seller gives it back.",
+          "Keep the payment and refund receipts: the administration may ask for them."] },
+        { title: "8. Deals outside the Shop", paragraphs: [
+          "For classified listings (sale, trade, rental) the deal is made directly between people, but the conformity guarantee applies: if the item doesn't match the listing, use “The item doesn't match the listing” on the listing page (see above). For other problems, use “Report” and the administration will review it."] },
+        { title: "9. Contact", paragraphs: ["{contact}"] }
+      ]
+    }
+  },
+  zh: {
+    termos: {
+      title: "使用条款",
+      intro: "本规则适用于 Huambo Online 网站和 APP。创建账户或使用本服务，即表示您接受这些条款。",
+      sections: [
+        { title: "1. 什么是 Huambo Online", paragraphs: [
+          "一个在万博及安哥拉各地买卖、交换和租赁，寻找专业人士和企业，以及请求服务的平台。",
+          "Huambo Online 负责连接人与人。交易在买家与卖家（或客户与专业人士）之间进行，双方对约定内容负责。"] },
+        { title: "2. 您的账户", paragraphs: [
+          "您必须年满 18 岁，或获得您的监护人许可。",
+          "账户资料必须真实。请妥善保管密码：您账户中的一切操作均由您负责。",
+          "您可以随时删除账户（参见“如何删除我的账户”）。"] },
+        { title: "3. 广告、商品和服务", paragraphs: [
+          "您只能发布属于您的，或您有权出售、出租、交换或提供的物品和服务。",
+          "标题、价格、照片和描述必须真实。请注明价格是固定价、可议价、接受报价、拍卖还是交换。",
+          "如实描述保证：发布即表示您声明广告真实、完整地描述了物品，包括缺陷和缺少的部分。如有遗漏或错误，购买或租用者有权要求换货、退货退款或退款（全部或部分）。可在交易后 7 天内通过“退货和退款”提出申诉；物主须在 3 天内答复，如拒绝或未答复，由管理员裁决。不执行裁决者，其账户可能被暂停。",
+          "禁止发布：武器、毒品、未经许可的药品、受保护动物、被盗或假冒商品、证件、色情内容，以及安哥拉法律禁止的一切物品。",
+          "对于不遵守这些规则的广告、商品和资料，管理员可以隐藏或删除，并可暂停相关账户。"] },
+        { title: "4. 报价、拍卖、交换和订单", paragraphs: [
+          "已接受的报价、中标的出价或已确认的订单，是双方之间的承诺。请履行约定。",
+          "在对方尚未回复前，您可以撤回报价。出价只有在说明理由、且距拍卖结束超过 12 小时或出价不到 1 小时的情况下才能撤回；经常撤回出价的人可能会被禁止出价。",
+          "切勿向陌生人预付款。最好在公共场所见面，查看物品后当面付款。",
+          "对于商店订单，买家可在收货后 14 天内申请退货、退款或换货，卖家必须回复。参见“退货和退款”。"] },
+        { title: "5. 月费和佣金", paragraphs: [
+          "专业人士和企业资料可免费使用一个月。之后需向平台支付月费：专业人士每月 2 000 Kz，企业每月 5 000 Kz（现行金额见“我的套餐”）。",
+          "可通过银行转账或 Multicaixa Express 付款，并提供参考号或付款凭证，经管理员确认后生效。",
+          "店铺（不属于企业、在商店中销售的商品）与企业规则相同：免费一个月，之后每月 5 000 Kz。企业的商品由该企业的月费覆盖。",
+          "如没有免费月份且未按时付款，资料或店铺将不再向客户显示，但不会被删除。付款确认后即恢复显示。",
+          "分类广告无需月费：物品售出（包括拍卖）后，卖家须在 7 天内向平台支付成交金额 5% 的佣金。动产和不动产的租赁同样适用：按标记“已出租”时填写的租金的 5%，或已接受租赁请求总金额的 5% 计算。佣金逾期期间无法发布新广告。",
+          "推荐（可选）：卖家可付费让广告在列表顶部显示，并带有“⭐ 推荐”标志，持续指定天数（7 天 500 Kz，另有公告除外）。推荐在管理员确认付款后开始，期满自动结束。推荐不保证成交。"] },
+        { title: "6. 保障付款", paragraphs: [
+          "在可用时，您可以在商店购物时选择“保障付款”。您向 Huambo Online 付款，平台代为保管资金，买家确认收货后才将款项交给卖家。",
+          "如果买家在收货后的规定期限内（3 天，另有公告除外）既未确认也未投诉，款项将交给卖家。在期限内提出的退货或退款申请会冻结款项，直至问题解决。",
+          "未在规定期限内（48 小时，另有公告除外）付款的保障订单将被取消。仍由平台保管的款项，由 Huambo Online 退还至买家提供的 IBAN 或 Multicaixa Express 号码。",
+          "卖家在余额中收到已放款的销售款，并可申请提现到自己的账户。提现按“我的余额”中公布的日期以转账方式支付。如保障付款收取佣金，会在销售前显示并从余额中扣除。",
+          "Huambo Online 仅作为技术和支付中介：并非商品的卖家，也不对商品质量负责，但会遵守“退货和退款”中所述的退货规则。"] },
+        { title: "7. 评价和举报", paragraphs: [
+          "只有实际交易过的人才能评价。评价必须诚实，不得含有侮辱。",
+          "如发现问题，请使用“举报”。管理员会审核举报，并可删除内容。"] },
+        { title: "8. 资料验证", paragraphs: [
+          "“已验证”标志表示管理员已查看过证件。这并不是对个人或业务的担保：请继续保持谨慎。"] },
+        { title: "9. 责任", paragraphs: [
+          "Huambo Online 会尽力保持服务正常和安全，但不保证服务始终可用，也不对用户之间的交易负责。",
+          "这些条款可能会变更。变更时，顶部的日期会随之更新。"] },
+        { title: "10. 联系我们", paragraphs: ["{contact}"] }
+      ]
+    },
+    privacidade: {
+      title: "隐私政策",
+      intro: "我们说明保存哪些数据、用途以及谁可以查看。我们遵守安哥拉《个人数据保护法》（第 22/11 号法律）。",
+      sections: [
+        { title: "1. 我们保存哪些数据", paragraphs: [
+          "账户：姓名、电子邮箱、电话（如您提供）、头像、市镇。",
+          "您发布的内容：广告、商品、照片、视频、价格、报价、评价和回复。",
+          "对话：您与他人往来的消息。",
+          "交易：订单、服务请求、租赁、配送及各自的历史记录。",
+          "验证（仅在您申请时）：证件照片（身份证、营业执照或税号）。",
+          "在手机上：我们会在设备本地保存您浏览过的广告和最近一次搜索，方便您在没有网络时查看。"] },
+        { title: "2. 我们如何使用数据", paragraphs: [
+          "为了让服务正常运行：展示广告、连接买家和卖家、发送通知和消息、计算评价和资料数据。",
+          "为了安全：审核举报、验证资料、防止滥用。",
+          "我们不会将您的数据出售给任何人，也不会基于这些数据向您展示广告。"] },
+        { title: "3. 哪些是公开的", paragraphs: [
+          "已发布的广告、商品、专业人士和企业资料、您的姓名、头像、评价和资料数据（销量、已提供的服务）。",
+          "您的电子邮箱不会显示。电话只有在您填写到广告或资料中时才会显示。",
+          "您的 WhatsApp 号码只有在您于“您的账户”中选择“显示‘通过 WhatsApp 联系’按钮”后才会显示，而且仅对已登录用户可见。您可以随时隐藏或删除。"] },
+        { title: "4. 哪些是私密的", paragraphs: [
+          "消息、报价、订单和服务请求：只有相关当事人可以查看。",
+          "验证证件保存在私密空间：只有您本人和管理员可以通过临时链接打开。"] },
+        { title: "5. 数据存放在哪里，谁在协助我们", paragraphs: [
+          "数据库和文件存放在 Supabase，服务器位于欧盟（爱尔兰）。",
+          "网站托管在 Render。APP 使用 Expo 开发。",
+          "以图搜索（启用时）：照片会发送给 Claude（Anthropic）以识别物品，我们不会保存该照片。"] },
+        { title: "6. 我们保存多长时间", paragraphs: [
+          "只要账户存在就会保存。已关闭或已售出广告的视频会在 7 天后自动删除，已隐藏商品的视频在 30 天后删除。",
+          "删除账户后，您的数据会被删除。服务商的部分备份副本可能会多保留一段时间，直至被替换。"] },
+        { title: "7. 您的权利", paragraphs: [
+          "您可以在“您的账户”中查看和更正您的数据，并随时删除广告、商品及账户本身。",
+          "您可以询问有关您数据的信息，或反对某项数据处理。如果您认为自己的权利未受到尊重，可以向安哥拉数据保护局（APD）投诉。"] },
+        { title: "8. 联系我们", paragraphs: ["{contact}"] }
+      ]
+    },
+    "apagar-conta": {
+      title: "如何删除我的账户",
+      intro: "您可以随时在网站或 APP 中删除您的 Huambo Online 账户。",
+      sections: [
+        { title: "步骤", paragraphs: [
+          "1. 登录您的账户（网站或 APP）。",
+          "2. 打开“您的账户”。",
+          "3. 在页面底部的“删除账户”中输入 ELIMINAR 并确认。"] },
+        { title: "哪些内容会被删除", paragraphs: [
+          "账户、资料、广告、商品、收藏、已保存的搜索、通知以及与账户相关的数据。",
+          "您给他人留下的评价和已发送的消息可能会被删除，或保留但不再显示您的姓名。"] },
+        { title: "无法登录？", paragraphs: [
+          "在登录页面使用“忘记密码”找回访问权限，然后删除账户。",
+          "{contact}"] }
+      ]
+    },
+    devolucoes: {
+      title: "退货和退款",
+      intro: "如何为在 Huambo Online 商店下的订单申请退货、退款或换货，以及每一步会发生什么。",
+      sections: [
+        { title: "广告：物品必须与广告相符", paragraphs: [
+          "发布广告即表示声明描述、照片和价格与物品相符，包括缺陷。",
+          "如果您购买或租用的物品存在隐藏缺陷、与描述不符、是另一件物品或缺少部件，请打开该广告并点击“物品与广告不符”（交易后 7 天内）。",
+          "选择您的诉求：换货、退货退款或退款。物主有 3 天时间答复；如拒绝或未答复，可请管理员裁决。申诉会显示在此页面。"] },
+        { title: "1. 什么时候可以申请", paragraphs: [
+          "对于已付款或已收货的商店订单，可在收货后 14 天内申请。",
+          "原因：未收到、到货时损坏或破碎、与广告不符、物品错误（型号、尺寸、颜色）或缺少物品。",
+          "如果订单仍为“待处理”，无需申请：点击“取消”即可。"] },
+        { title: "2. 可以申请什么", paragraphs: [
+          "退款：卖家退还您的款项（全部或部分）。",
+          "退货退款：您将物品退还给卖家，卖家退还您的款项。",
+          "换货：卖家给您寄送另一件相同且完好的物品。"] },
+        { title: "3. 如何申请", paragraphs: [
+          "打开“订单”，选择订单并点击“申请退货或退款”。",
+          "选择原因，说明发生了什么，并附上最多 4 张照片。照片保持私密：只有卖家和管理员可以查看。",
+          "在“退货和退款”中跟进全部进度。每一步都会通知对方。"] },
+        { title: "4. 卖家需要做什么", paragraphs: [
+          "接受申请，或说明理由后拒绝。",
+          "如接受退货，双方通过消息约定交还物品的地点。卖家收到物品后确认并退款。",
+          "退款后，卖家点击“我已退款”，买家确认已收到。"] },
+        { title: "5. 如果双方无法达成一致", paragraphs: [
+          "如果卖家拒绝，您可以立即请管理员介入。如果有一方 3 天内未回复，任何一方都可以请管理员介入。",
+          "管理员会查看申请、消息和照片，并作出裁决：退款（全部或部分）、退货、换货或驳回。裁决会被记录。",
+          "不执行裁决者，其账户可能被暂停。"] },
+        { title: "6. 已付款后被取消的订单", paragraphs: [
+          "如果订单已付款后被取消，退款申请会自动开启：卖家必须退还全部款项。",
+          "使用保障付款时，仍由平台保管的款项由 Huambo Online 退还：请在申请中填写您的 IBAN 或 Multicaixa Express 号码。"] },
+        { title: "7. 款项如何到账", paragraphs: [
+          "对于直接付给卖家的购买（货到付款、转账或 Multicaixa Express），Huambo Online 不保管款项：退款由卖家通过原付款方式完成，双方另有约定除外。",
+          "对于使用保障付款的购买，款项由 Huambo Online 保管，直至确认收货。保管期间，退款由 Huambo Online 完成；款项交给卖家后，则由卖家退还。",
+          "请保留付款和退款凭证：管理员可能会要求提供。"] },
+        { title: "8. 商店以外的交易", paragraphs: [
+          "对于分类广告（出售、交换、租赁），交易直接在双方之间进行，但同样适用如实描述保证：如果物品与广告不符，请在广告页面使用“物品与广告不符”（见上文）。其他问题请使用“举报”，由管理员审核。"] },
+        { title: "9. 联系我们", paragraphs: ["{contact}"] }
+      ]
+    }
+  }
+
+};
+
+/** Perguntas frequentes (HELP_FAQ do core), pela pergunta em português. */
+export const SV_HELP_FAQ: Record<"en" | "zh", Record<string, { q: string; a: string }>> = {
+  en: {
+    "Como publico um anúncio?": { q: "How do I post a listing?", a: "Tap “Sell” or “Post listing”, choose the type and purpose, say how you want to sell (fixed price, negotiable, offers, auction or trade), add photos and publish." },
+    "O que é «Preço fixo», «Negociável» e «Aberto a propostas»?": { q: "What are “Fixed price”, “Negotiable” and “Open to offers”?", a: "Fixed price: whoever wants it buys at the stated price (“I want to buy”). Negotiable: the buyer can make a lower offer. Open to offers: the price is just a reference and buyers say how much they'll pay." },
+    "Como funcionam as trocas?": { q: "How do trades work?", a: "Choose “Trade only” or tick “I also accept trades” and say what you accept. Anyone interested proposes an item (and can add money). See them all in “Trades”." },
+    "Como faço uma proposta?": { q: "How do I make an offer?", a: "On the listing, tap “Make an offer” and enter the amount and/or what you offer in exchange. The seller accepts or refuses and gets a notification; follow it in “My offers”." },
+    "Como retiro uma proposta?": { q: "How do I withdraw an offer?", a: "In “My offers”, tap “Withdraw offer”. This is only possible while the seller hasn't replied; once accepted, agree with them by message." },
+    "Como funcionam os leilões?": { q: "How do auctions work?", a: "Like on eBay: enter the MAXIMUM you're willing to pay. Huambo Online bids for you only as much as needed to stay ahead, up to that maximum, which nobody sees. If someone else offers more than your maximum, you get a notice and can raise it. In a tie, whoever bid first wins. The winner pays the final price, which is often lower than their maximum. Some auctions have “Buy now”: you can buy straight away at that price until someone bids. Follow everything in “My bids”; you get a notice when less than 1 hour is left." },
+    "Como cancelo um lance num leilão?": { q: "How do I cancel a bid in an auction?", a: "On the auction listing, open “See bids” and tap “Withdraw my bid”, choosing the reason. You can do it if there are more than 12 hours left, or if the bid was placed less than 1 hour ago. At most 3 times in 30 days. The seller can also cancel a person's bids, explaining why." },
+    "O que é o número do anúncio (ex.: A-1001)?": { q: "What is the listing number (e.g. A-1001)?", a: "Each listing (A-…), product (P-…) and order (E-…) has a short number shown on its page. Use it to talk to the seller or the administration, or type it in the search to open the item directly." },
+    "Como mostro os meus trabalhos (portfólio)?": { q: "How do I show my work (portfolio)?", a: "Professionals: in “Your account” → “Professional profile” → “Portfolio”, tap “Add work”, give it a title and add up to 8 photos. Businesses: in “My businesses” → “Logo and portfolio”. The work appears on your public page, in “Completed work”, and you can change the order." },
+    "Quanto custa ter perfil de profissional ou de empresa?": { q: "How much does a professional or business profile cost?", a: "The first month is free. After that, professionals pay 2,000 Kz per month and businesses 5,000 Kz per month. Pay in “Your account” → “My plan”, with the reference or receipt of the transfer or Multicaixa Express. You get notices 7 days and 1 day before it ends. Without payment, the profile stops being shown to clients until you pay." },
+    "Quanto custa vender na Loja e nos anúncios?": { q: "How much does it cost to sell in the Shop and in listings?", a: "Shop: the first month is free, then 5,000 Kz per month (if the products belong to a business, the business's monthly fee is enough). Listings: posting is free; when you sell, rent or hire out, you pay a 5% commission on the amount within 7 days, in “Your account” → “Commissions”. When marking “Sold” or “Rented” you enter the amount and see the commission straight away; for a rental request, the commission is on the total accepted amount." },
+    "Como ponho o meu anúncio em destaque?": { q: "How do I feature my listing?", a: "In “My listings”, on the published listing, tap “⭐ Feature”. Pay the stated amount (500 Kz for 7 days) by transfer or Multicaixa Express and type the reference or attach the receipt. When the administration confirms, the listing appears at the top of the lists with the “⭐ Featured” badge. You can extend it before it ends." },
+    "Como sigo um profissional, uma empresa ou uma loja?": { q: "How do I follow a professional, a business or a shop?", a: "On the page of the professional, business or seller, tap “➕ Follow”. You get a notice when they post a new listing, product or work (at most one notice per hour from each). See who you follow in “Your account” → “Following”; to unfollow, tap “✔ Following”." },
+    "Como vendo produtos do campo (milho, batata, gado…)?": { q: "How do I sell farm produce (maize, potatoes, livestock…)?", a: "In “Sell”, choose the type “Item” or “Other” and turn on “🌾 Farm produce”. State the type (cereals, tubers, livestock…), the selling unit (kg, 50 kg bag, tonne, head…), the quantity and, if you haven't harvested yet, the “available from” date. The price is shown per unit (e.g. 12,000 Kz / 50 kg bag) and the listing goes into the “🌾 Agriculture and farming” section." },
+    "Como peço um serviço a um profissional?": { q: "How do I request a service from a professional?", a: "Open the professional's or business's page and use “Request service”. When the service is finished, confirm and review it — the review is marked “Service confirmed”." },
+    "Como avalio um vendedor ou comprador?": { q: "How do I review a seller or buyer?", a: "After a completed order, or when the listing is marked as sold to the right person, it appears in “Reviews” for you to rate." },
+    "Como fico com o selo «Verificado»?": { q: "How do I get the “Verified” badge?", a: "In “Your account”, open “Verify profile” and send a photo of your ID card (or the business licence/tax number). The document stays private; the administration replies by notification." },
+    "O que é o «Pagamento protegido»?": { q: "What is “Protected payment”?", a: "For Shop purchases, you can pay Huambo Online instead of paying the seller. We hold the money and the seller only receives it after you confirm you received the order. If there's a problem, ask for a refund in “Orders”: the money stays frozen until it's resolved. If you neither confirm nor complain a few days after delivery, the payment goes to the seller." },
+    "Vendo na Loja: como recebo o dinheiro do pagamento protegido?": { q: "I sell in the Shop: how do I receive protected payment money?", a: "Wait for the “Payment received” notice before shipping. After delivering, mark the order as “Delivered”. When the client confirms (or the period passes without a complaint), the money goes to “Your account” → “My balance”. Enter your IBAN or Multicaixa Express number and tap “Request withdrawal”." },
+    "Como partilho um anúncio no WhatsApp?": { q: "How do I share a listing on WhatsApp?", a: "Open the listing or product and tap “📲 Share on WhatsApp”. The message includes the title, price, listing number (e.g. A-1023) and the link, and WhatsApp shows the photo. Choose the contact or group." },
+    "Como recebo mensagens de compradores pelo WhatsApp?": { q: "How do I get messages from buyers on WhatsApp?", a: "In “Your account” → “WhatsApp”, enter your number and turn on “Show the Chat on WhatsApp button”. The button appears on your listings and products, only to signed-in people, with a ready message saying which listing it's about." },
+    "Como funciona o «Convide um amigo»?": { q: "How does “Invite a friend” work?", a: "In “Account” → “Invite friends” you have your code and your link. Anyone who creates an account with your invitation (within the first 14 days) is linked to you. When that person pays their first monthly fee (professional, business or shop), you get 1 free month on your monthly fee. If you don't have a monthly fee yet, the reward is saved." },
+    "O que é um agente no terreno?": { q: "What is a field agent?", a: "A person from the market (for example, Kapango) who helps sellers post listings on Huambo Online. The listing always stays in the seller's account; when posting, the seller enters the agent's code (e.g. AG1001). When that listing is sold, the agent earns a percentage of the sale amount, which the administration confirms and which goes into the agent's balance. To become an agent, open “Account” → “Become an agent”." },
+    "E se o artigo não corresponder ao anúncio?": { q: "What if the item doesn't match the listing?", a: "All listings have a conformity guarantee: whoever posts declares that the description is true and complete, including defects. If the item you bought or rented has a hidden defect or is different, open the listing and tap “The item doesn't match the listing” (up to 7 days after the deal). You can ask for an exchange, return and refund, or a refund. If the owner refuses or doesn't reply within 3 days, the administration decides. For Shop purchases, use “Returns and refunds” on the order." },
+    "Como evito burlas?": { q: "How do I avoid scams?", a: "Meet in a busy public place (see “Safe meeting points” in “Safety”), see the item and pay on delivery, or use Protected payment in the Shop. Never pay in advance or give out codes you receive by SMS or your PIN. In messages, Huambo Online warns you when someone asks for advance payment or codes. If you're suspicious, use “Block” and “Report”." },
+    "Como peço uma devolução ou reembolso?": { q: "How do I ask for a return or refund?", a: "In “Orders”, choose the order and tap “Ask for a return or refund” (up to 14 days after delivery). Explain the problem and attach photos. If the seller refuses or doesn't reply, you can call the administration. See “Returns and refunds”." },
+    "Como gasto menos dados (saldo)?": { q: "How do I use less data (airtime)?", a: "Turn on “📉 Data saver” at the top of the Site, on the APP home page or in “Your account”. Photos in lists stop loading (an icon appears) and, in listings, they only load when you tap “See the photos”. Videos only load when you tap ▶. On the Site, “Automatic” turns on by itself when the phone is in data-saving mode." },
+    "Posso usar sem internet?": { q: "Can I use it without internet?", a: "You can see the home page, your last search and the last listings you opened. To post, send messages or offers you need a connection." },
+    "Como apago a minha conta?": { q: "How do I delete my account?", a: "In “Your account”, at the bottom of the page, type ELIMINAR and confirm. See the details in “How to delete my account”." },
+  },
+  zh: {
+    "Como publico um anúncio?": { q: "如何发布广告？", a: "点击“出售”或“发布广告”，选择类型和用途，说明出售方式（固定价、可议价、接受报价、拍卖或交换），添加照片后发布。" },
+    "O que é «Preço fixo», «Negociável» e «Aberto a propostas»?": { q: "什么是“固定价”“可议价”和“接受报价”？", a: "固定价：想要的人按标价购买（“我要购买”）。可议价：买家可以出更低的价格。接受报价：价格仅供参考，由买家报出愿意支付的金额。" },
+    "Como funcionam as trocas?": { q: "交换如何进行？", a: "选择“仅交换”或勾选“也接受交换”，并说明您接受的物品。感兴趣的人会提出一件物品（也可以加钱）。在“交换”中查看全部。" },
+    "Como faço uma proposta?": { q: "如何报价？", a: "在广告中点击“报价”，填写金额和／或用于交换的物品。卖家接受或拒绝，并会收到通知；您可以在“我的报价”中跟进。" },
+    "Como retiro uma proposta?": { q: "如何撤回报价？", a: "在“我的报价”中点击“撤回报价”。只有在卖家尚未回复时才能撤回；被接受后，请通过消息与卖家协商。" },
+    "Como funcionam os leilões?": { q: "拍卖如何进行？", a: "和 eBay 一样：填写您愿意支付的最高价。Huambo Online 会替您按需出价以保持领先，直至该最高价，而这个最高价别人看不到。如果有人出价超过您的最高价，您会收到通知并可以加价。出价相同时，先出价者获胜。获胜者支付最终价格，通常低于其最高价。部分拍卖设有“立即购买”：在有人出价之前，您可以直接按该价格购买。在“我的出价”中跟进全部情况；距结束不到 1 小时时会通知您。" },
+    "Como cancelo um lance num leilão?": { q: "如何取消拍卖中的出价？", a: "在拍卖广告中打开“查看出价”，点击“撤回我的出价”并选择原因。距结束超过 12 小时，或出价不到 1 小时时可以撤回。30 天内最多 3 次。卖家也可以在说明原因后取消某人的出价。" },
+    "O que é o número do anúncio (ex.: A-1001)?": { q: "广告编号（例如 A-1001）是什么？", a: "每条广告（A-…）、商品（P-…）和订单（E-…）都有一个短编号，显示在页面上。可以用它与卖家或管理员沟通，或在搜索中输入编号直接打开该项。" },
+    "Como mostro os meus trabalhos (portfólio)?": { q: "如何展示我的作品（作品集）？", a: "专业人士：在“您的账户”→“专业资料”→“作品集”中点击“添加作品”，填写标题并添加最多 8 张照片。企业：在“我的企业”→“标志和作品集”中操作。作品会显示在您的公开页面“已完成作品”中，并可调整顺序。" },
+    "Quanto custa ter perfil de profissional ou de empresa?": { q: "专业人士或企业资料收费多少？", a: "第一个月免费。之后专业人士每月 2 000 Kz，企业每月 5 000 Kz。请在“您的账户”→“我的套餐”中付款，并提供转账或 Multicaixa Express 的参考号或凭证。到期前 7 天和 1 天会收到提醒。未付款期间，资料不会向客户显示，直至付款。" },
+    "Quanto custa vender na Loja e nos anúncios?": { q: "在商店和广告中销售收费多少？", a: "商店：第一个月免费，之后每月 5 000 Kz（如果商品属于某个企业，只需支付企业月费）。广告：发布免费；出售、出租或租赁成交后，需在 7 天内于“您的账户”→“佣金”中支付成交金额 5% 的佣金。标记“已售出”或“已出租”时填写金额，即可立即看到佣金；对于租赁请求，佣金按已接受的总金额计算。" },
+    "Como ponho o meu anúncio em destaque?": { q: "如何推荐我的广告？", a: "在“我的广告”中，找到已发布的广告并点击“⭐ 推荐”。通过转账或 Multicaixa Express 支付所示金额（7 天 500 Kz），填写参考号或附上凭证。管理员确认后，广告会显示在列表顶部并带有“⭐ 推荐”标志。您可以在结束前续期。" },
+    "Como sigo um profissional, uma empresa ou uma loja?": { q: "如何关注专业人士、企业或店铺？", a: "在专业人士、企业或卖家的页面点击“➕ 关注”。对方发布新广告、商品或作品时您会收到通知（每个对象每小时最多一条）。在“您的账户”→“关注中”查看您关注的对象；要取消关注，请点击“✔ 关注中”。" },
+    "Como vendo produtos do campo (milho, batata, gado…)?": { q: "如何出售农产品（玉米、土豆、牲畜…）？", a: "在“出售”中选择类型“物品”或“其他”，并开启“🌾 农产品”。填写种类（谷物、块茎、牲畜…）、销售单位（公斤、50 公斤袋、吨、头…）、数量，如尚未收获，请填写“可供应日期”。价格按单位显示（例如 12 000 Kz／50 公斤袋），广告会进入“🌾 农业”栏目。" },
+    "Como peço um serviço a um profissional?": { q: "如何向专业人士请求服务？", a: "打开专业人士或企业的页面，使用“请求服务”。服务完成后请确认并评价——该评价会标记为“服务已确认”。" },
+    "Como avalio um vendedor ou comprador?": { q: "如何评价卖家或买家？", a: "订单完成后，或广告被标记为已售给对应的人后，该交易会出现在“评价”中供您评价。" },
+    "Como fico com o selo «Verificado»?": { q: "如何获得“已验证”标志？", a: "在“您的账户”中打开“验证资料”，上传身份证照片（或企业的营业执照／税号）。证件保持私密；管理员会通过通知答复。" },
+    "O que é o «Pagamento protegido»?": { q: "什么是“保障付款”？", a: "在商店购物时，您可以向 Huambo Online 付款，而不是直接付给卖家。我们代为保管资金，您确认收货后卖家才会收到款项。如有问题，可在“订单”中申请退款：款项会被冻结直至问题解决。如果收货后几天内您既未确认也未投诉，款项将转给卖家。" },
+    "Vendo na Loja: como recebo o dinheiro do pagamento protegido?": { q: "我在商店销售：如何收到保障付款的款项？", a: "收到“已收到付款”通知后再发货。交付后，将订单标记为“已交付”。客户确认（或期限内无投诉）后，款项进入“您的账户”→“我的余额”。填写您的 IBAN 或 Multicaixa Express 号码，然后点击“申请提现”。" },
+    "Como partilho um anúncio no WhatsApp?": { q: "如何在 WhatsApp 上分享广告？", a: "打开广告或商品，点击“📲 分享到 WhatsApp”。消息包含标题、价格、广告编号（例如 A-1023）和链接，WhatsApp 中会显示照片。选择联系人或群组即可。" },
+    "Como recebo mensagens de compradores pelo WhatsApp?": { q: "如何通过 WhatsApp 接收买家消息？", a: "在“您的账户”→“WhatsApp”中填写您的号码，并开启“显示‘通过 WhatsApp 联系’按钮”。该按钮会显示在您的广告和商品上，仅对已登录用户可见，并附带一条说明是哪条广告的预设消息。" },
+    "Como funciona o «Convide um amigo»?": { q: "“邀请朋友”如何运作？", a: "在“账户”→“邀请朋友”中有您的邀请码和链接。通过您的邀请注册账户的人（在注册后 14 天内）会与您关联。当对方支付首月月费（专业人士、企业或店铺）时，您的月费可获得 1 个月免费。如果您还没有月费，奖励会被保留。" },
+    "O que é um agente no terreno?": { q: "什么是地推代理？", a: "来自市场（例如 Kapango）的人，帮助卖家在 Huambo Online 上发布广告。广告始终在卖家本人的账户中；发布时，卖家填写代理代码（例如 AG1001）。该广告售出后，代理可获得成交金额的一定比例，经管理员确认后计入代理余额。要成为代理，请打开“账户”→“成为代理”。" },
+    "E se o artigo não corresponder ao anúncio?": { q: "如果物品与广告不符怎么办？", a: "所有广告都有如实描述保证：发布者声明描述真实完整，包括缺陷。如果您购买或租用的物品有隐藏缺陷或与描述不同，请打开该广告并点击“物品与广告不符”（交易后 7 天内）。您可以要求换货、退货退款或退款。如物主拒绝或 3 天内未回复，由管理员裁决。商店购物请在订单中使用“退货和退款”。" },
+    "Como evito burlas?": { q: "如何避免诈骗？", a: "在人多的公共场所见面（参见“安全”中的“安全见面地点”），查看物品后当面付款，或在商店中使用保障付款。切勿预付款，也不要透露短信收到的验证码或 PIN。在消息中，如果有人要求预付款或索要验证码，Huambo Online 会提醒您。如有怀疑，请使用“屏蔽”和“举报”。" },
+    "Como peço uma devolução ou reembolso?": { q: "如何申请退货或退款？", a: "在“订单”中选择订单，点击“申请退货或退款”（收货后 14 天内）。说明问题并附上照片。如果卖家拒绝或未回复，您可以请管理员介入。参见“退货和退款”。" },
+    "Como gasto menos dados (saldo)?": { q: "如何节省流量（话费）？", a: "在网站顶部、APP 首页或“您的账户”中开启“📉 节省流量”。列表中的照片不再加载（显示为图标），广告中的照片只有在点击“查看照片”时才加载。视频只有在点击 ▶ 时才加载。在网站上，“自动”模式会在手机开启省流量时自动启用。" },
+    "Posso usar sem internet?": { q: "没有网络可以使用吗？", a: "可以查看首页、最近一次搜索和最近打开的广告。发布、发送消息或报价需要网络连接。" },
+    "Como apago a minha conta?": { q: "如何删除我的账户？", a: "在“您的账户”页面底部输入 ELIMINAR 并确认。详情请参见“如何删除我的账户”。" },
+  }
+};
+
+/** Regras de ouro (SAFETY_TIPS do core), pelo texto em português. */
+export const SV_SAFETY_TIPS: Record<"en" | "zh", Record<string, string>> = {
+  en: {
+    "Encontre-se num lugar público e movimentado, de dia. Leve alguém consigo.": "Meet in a busy public place, during the day. Take someone with you.",
+    "Veja e experimente o artigo antes de pagar.": "See and try the item before paying.",
+    "Nunca pague adiantado a quem não conhece. Na Loja, use o Pagamento protegido.": "Never pay in advance to someone you don't know. In the Shop, use Protected payment.",
+    "Nunca dê códigos que recebe por SMS, o PIN ou a palavra-passe.": "Never give out codes you receive by SMS, your PIN or your password.",
+    "Desconfie de preços muito baixos e de quem tem muita pressa.": "Be wary of very low prices and of people in a big hurry.",
+    "Se algo não estiver bem, use «Denunciar» e «Bloquear».": "If something isn't right, use “Report” and “Block”."
+  },
+  zh: {
+    "Encontre-se num lugar público e movimentado, de dia. Leve alguém consigo.": "白天在人多的公共场所见面，并带上同伴。",
+    "Veja e experimente o artigo antes de pagar.": "付款前先查看并试用物品。",
+    "Nunca pague adiantado a quem não conhece. Na Loja, use o Pagamento protegido.": "切勿向陌生人预付款。在商店中请使用保障付款。",
+    "Nunca dê códigos que recebe por SMS, o PIN ou a palavra-passe.": "切勿透露短信收到的验证码、PIN 或密码。",
+    "Desconfie de preços muito baixos e de quem tem muita pressa.": "对价格过低或过于着急的人要保持警惕。",
+    "Se algo não estiver bem, use «Denunciar» e «Bloquear».": "如发现异常，请使用“举报”和“屏蔽”。"
+  }
+};
+
+/** Sinais de burla (SCAM_WARNING_TEXT do core), pela chave. */
+export const SV_SCAM_TEXT: Record<"en" | "zh", Record<string, string>> = {
+  en: {
+    advance_payment: "Asks you to pay before seeing the item. Never pay in advance to someone you don't know: pay on delivery or use Protected payment.",
+    deposit_first: "Asks for a deposit, reservation or “shipping fee” before delivery. It's a common scam trick.",
+    codes: "Talks about codes (SMS, PIN, Multicaixa). Never give anyone the codes you receive by SMS or your PIN: with them they can take your money.",
+    abroad: "Says they're abroad or using a “shipping company”. Be suspicious: prefer to see the item and pay in person.",
+    pressure: "Is pressuring you to pay quickly. Don't rush: an honest deal will wait for you."
+  },
+  zh: {
+    advance_payment: "要求您在看到物品前付款。切勿向陌生人预付款：请货到付款或使用保障付款。",
+    deposit_first: "要求在交付前支付定金、预订费或“运费”。这是常见的诈骗手段。",
+    codes: "提到验证码（短信、PIN、Multicaixa）。切勿把短信收到的验证码或 PIN 告诉任何人：他们可以借此盗取您的钱。",
+    abroad: "自称身在国外或使用“物流公司”。请保持警惕：最好当面查看物品并付款。",
+    pressure: "催促您尽快付款。不要着急：诚实的交易会等您。"
+  }
 };

@@ -19,7 +19,7 @@ export function LanguagePicker({ variant = "chips" }: { variant?: "compact" | "c
     setLang(l);
     setNote(l !== "pt");
   }
-  const noteEl = note && lang !== "pt" ? <small className="lang-note" role="status">{t("lang.partial")}</small> : null;
+  const noteEl = note && lang !== "pt" ? <small className="lang-note" role="status">✔ {t("lang.saved")}</small> : null;
 
   if (variant === "compact") return <span className="lang-picker">
     <select id={id} className="lang-select" aria-label={t("lang.choose")} value={lang} onChange={e => choose(e.target.value as Lang)} title={t("lang.choose")}>

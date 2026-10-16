@@ -47,7 +47,6 @@ export function missingTranslations(dict: Dictionary, lang: Lang): string[] {
 export const COMMON_DICT: Dictionary = {
   "lang.choose": { pt: "Língua", en: "Language", zh: "语言" },
   "lang.saved": { pt: "Língua alterada.", en: "Language changed.", zh: "语言已更改。" },
-  "lang.partial": { pt: "Algumas páginas ainda estão só em português.", en: "Some pages are still only in Portuguese.", zh: "部分页面目前仅提供葡萄牙语。" },
   "app.tagline": { pt: "Compre, venda e encontre tudo no Huambo", en: "Buy, sell and find everything in Huambo", zh: "在万博买卖、寻找一切" },
   "nav.home": { pt: "Início", en: "Home", zh: "首页" },
   "nav.explore": { pt: "Explorar", en: "Explore", zh: "浏览" },
