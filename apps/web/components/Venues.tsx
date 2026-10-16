@@ -322,6 +322,7 @@ function MyOrderCard({ o, onDone, onError }: { o: MyVenueOrder; onDone: (m: stri
 // --- Registar / editar o estabelecimento ---------------------------------------------------------
 type BizOption = { id: string; name: string };
 function VenueForm({ uid, businesses, existing, onSaved }: { uid: string; businesses: BizOption[]; existing?: MyVenue; onSaved: (id: string, msg: string) => void }) {
+  const { lang, t, tc } = useT();
   const [businessId, setBusinessId] = useState(existing?.business_id ?? businesses[0]?.id ?? ""); const [kind, setKind] = useState<VenueKind>(existing?.kind ?? "hotel");
   const [subtype, setSubtype] = useState<VenueSubtype>(existing?.subtype ?? "hotel"); const [reserv, setReserv] = useState(existing?.accepts_reservations ?? true);
   const [atPlace, setAtPlace] = useState(existing?.accepts_pay_at_place ?? true); const [prepay, setPrepay] = useState(existing?.accepts_prepay ?? false);
@@ -334,80 +335,82 @@ function VenueForm({ uid, businesses, existing, onSaved }: { uid: string; busine
     e.preventDefault();
     const input: VenueInput = { businessId, kind, subtype, acceptsReservations: reserv, acceptsPayAtPlace: atPlace, acceptsPrepay: prepay, holdMinutes: Number(hold),
       checkInTime: kind === "hotel" ? checkIn : "", checkOutTime: kind === "hotel" ? checkOut : "", openingHours: hours, policies, pay };
-    const bad = validateVenue(input); if (bad) { setError(bad); return; }
+    const bad = validateVenue(input); if (bad) { setError(tc(bad)); return; }
     setBusy(true); setError("");
     const r = await saveVenue(supabase(), uid, input, existing?.id); setBusy(false);
-    if (r.error || !r.data) setError(friendlyError(r.error)); else onSaved(r.data.id, existing ? "Guardado." : "Registado! A administração vai confirmar antes de aparecer ao público.");
+    if (r.error || !r.data) setError(friendlyErrorIn(r.error, lang)); else onSaved(r.data.id, existing ? t("sv.saved") : t("sv.ve_registered"));
   }
   return <form className="card stack" onSubmit={save}>
-    {existing ? <p className="muted" style={{ margin: 0 }}>⚠️ Se mudar a conta para pagamentos, o estabelecimento volta a ficar à espera de aprovação da administração (para evitar burlas).</p>
-      : <p className="muted" style={{ margin: 0 }}>A administração confirma o estabelecimento antes de aparecer ao público (para evitar estabelecimentos falsos). O nome, a morada, as fotografias e as avaliações vêm da sua empresa.</p>}
-    {!existing && <label>A sua empresa<select value={businessId} onChange={e => setBusinessId(e.target.value)}>{businesses.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>}
-    {!existing && <fieldset className="stack" style={{ gap: 8, border: 0, padding: 0, margin: 0 }}><legend style={{ fontWeight: 700, marginBottom: 6 }}>O que é?</legend>
-      <Choice label="O que é" value={kind} onChange={k => { setKind(k); setSubtype(VENUE_KINDS[k].subtypes[0]); }} options={VENUE_KIND_LIST.map(k => [k, `${VENUE_KINDS[k].icon} ${VENUE_KINDS[k].label}`] as [VenueKind, string])} />
+    {existing ? <p className="muted" style={{ margin: 0 }}>⚠️ {t("sv.ve_edit_warn")}</p>
+      : <p className="muted" style={{ margin: 0 }}>{t("sv.ve_register_note")}</p>}
+    {!existing && <label>{t("sv.ve_your_business")}<select value={businessId} onChange={e => setBusinessId(e.target.value)}>{businesses.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>}
+    {!existing && <fieldset className="stack" style={{ gap: 8, border: 0, padding: 0, margin: 0 }}><legend style={{ fontWeight: 700, marginBottom: 6 }}>{t("sv.ve_what_is")}</legend>
+      <Choice label={t("sv.ve_what_is")} value={kind} onChange={k => { setKind(k); setSubtype(VENUE_KINDS[k].subtypes[0]); }} options={VENUE_KIND_LIST.map(k => [k, `${VENUE_KINDS[k].icon} ${tc(VENUE_KINDS[k].label)}`] as [VenueKind, string])} />
     </fieldset>}
-    <div className="chips" role="radiogroup" aria-label="Tipo de estabelecimento">{VENUE_KINDS[kind].subtypes.map(s =>
-      <button key={s} type="button" role="radio" aria-checked={subtype === s} className={"chip" + (subtype === s ? " on" : "")} onClick={() => setSubtype(s)}>{VENUE_SUBTYPE_LABELS[s]}</button>)}</div>
-    <label>Horário (opcional)<input value={hours} onChange={e => setHours(e.target.value)} maxLength={120} placeholder={kind === "hotel" ? "Ex.: Receção 24 horas" : "Ex.: Seg. a Sáb., 8h–22h"} /></label>
+    <div className="chips" role="radiogroup" aria-label={t("sv.ve_type")}>{VENUE_KINDS[kind].subtypes.map(s =>
+      <button key={s} type="button" role="radio" aria-checked={subtype === s} className={"chip" + (subtype === s ? " on" : "")} onClick={() => setSubtype(s)}>{tc(VENUE_SUBTYPE_LABELS[s])}</button>)}</div>
+    <label>{t("sv.fu_hours")}<input value={hours} onChange={e => setHours(e.target.value)} maxLength={120} placeholder={kind === "hotel" ? t("sv.ve_hours_ph_hotel") : t("sv.ve_hours_ph")} /></label>
     {kind === "hotel" && <div className="row">
-      <label style={{ flex: 1, minWidth: 140 }}>Hora de entrada (check-in)<input type="time" value={checkIn} onChange={e => setCheckIn(e.target.value)} /></label>
-      <label style={{ flex: 1, minWidth: 140 }}>Hora de saída (check-out)<input type="time" value={checkOut} onChange={e => setCheckOut(e.target.value)} /></label>
+      <label style={{ flex: 1, minWidth: 140 }}>{t("sv.ve_check_in_time")}<input type="time" value={checkIn} onChange={e => setCheckIn(e.target.value)} /></label>
+      <label style={{ flex: 1, minWidth: 140 }}>{t("sv.ve_check_out_time")}<input type="time" value={checkOut} onChange={e => setCheckOut(e.target.value)} /></label>
     </div>}
-    <label>Regras (opcional)<textarea rows={3} value={policies} onChange={e => setPolicies(e.target.value)} maxLength={600} placeholder="Ex.: Não se aceitam animais. Cancelamento grátis até 24 h antes." /></label>
-    <fieldset className="card stack" style={{ gap: 8 }}><legend style={{ fontWeight: 700 }}>🛎️ Reservas e pagamentos</legend>
-      <label className="row" style={{ alignItems: "center", fontWeight: 400 }}><input type="checkbox" checked={reserv} onChange={e => setReserv(e.target.checked)} style={box} /> Aceito reservas e encomendas pelo Huambo Online</label>
-      <label className="row" style={{ alignItems: "center", fontWeight: 400 }}><input type="checkbox" checked={atPlace} onChange={e => setAtPlace(e.target.checked)} style={box} /> O cliente pode pagar no local</label>
-      <label className="row" style={{ alignItems: "center", fontWeight: 400 }}><input type="checkbox" checked={prepay} onChange={e => setPrepay(e.target.checked)} style={box} /> Aceito pagamento adiantado (Multicaixa Express ou transferência)</label>
-      <label>Tempo de tolerância (minutos depois da hora marcada)<input value={hold} onChange={e => setHold(e.target.value)} inputMode="numeric" /></label>
+    <label>{t("sv.ve_rules_opt")}<textarea rows={3} value={policies} onChange={e => setPolicies(e.target.value)} maxLength={600} placeholder={t("sv.ve_rules_ph")} /></label>
+    <fieldset className="card stack" style={{ gap: 8 }}><legend style={{ fontWeight: 700 }}>🛎️ {t("sv.ve_res_payments")}</legend>
+      <label className="row" style={{ alignItems: "center", fontWeight: 400 }}><input type="checkbox" checked={reserv} onChange={e => setReserv(e.target.checked)} style={box} /> {t("sv.ve_accept_res")}</label>
+      <label className="row" style={{ alignItems: "center", fontWeight: 400 }}><input type="checkbox" checked={atPlace} onChange={e => setAtPlace(e.target.checked)} style={box} /> {t("sv.ve_pay_at_place")}</label>
+      <label className="row" style={{ alignItems: "center", fontWeight: 400 }}><input type="checkbox" checked={prepay} onChange={e => setPrepay(e.target.checked)} style={box} /> {t("sv.fu_accept_prepay")}</label>
+      <label>{t("sv.ve_tolerance")}<input value={hold} onChange={e => setHold(e.target.value)} inputMode="numeric" /></label>
       {prepay && <>
-        <label>Titular da conta<input value={pay.holder} onChange={e => setPay({ ...pay, holder: e.target.value })} maxLength={80} /></label>
+        <label>{t("sv.account_holder")}<input value={pay.holder} onChange={e => setPay({ ...pay, holder: e.target.value })} maxLength={80} /></label>
         <label>IBAN<input value={pay.iban} onChange={e => setPay({ ...pay, iban: e.target.value })} maxLength={40} placeholder="AO06 …" /></label>
         <label>Multicaixa Express<input value={pay.express} onChange={e => setPay({ ...pay, express: e.target.value })} inputMode="tel" maxLength={20} /></label>
-        <label>Nota para quem paga (opcional)<input value={pay.note} onChange={e => setPay({ ...pay, note: e.target.value })} maxLength={200} /></label>
+        <label>{t("sv.payer_note")}<input value={pay.note} onChange={e => setPay({ ...pay, note: e.target.value })} maxLength={200} /></label>
       </>}
     </fieldset>
     {error && <p className="error" role="alert">{error}</p>}
-    <button type="submit" disabled={busy} style={{ justifySelf: "start", fontSize: 20 }}>{busy ? "A gravar…" : existing ? "💾 Guardar" : "✅ Registar estabelecimento"}</button>
+    <button type="submit" disabled={busy} style={{ justifySelf: "start", fontSize: 20 }}>{busy ? t("sv.saving") : existing ? "💾 " + t("common.save") : "✅ " + t("sv.ve_register")}</button>
   </form>;
 }
 
 /** Os meus estabelecimentos + registar um novo. */
 export function VenueDashboard() {
+  const { lang, t, tc } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined); const [venues, setVenues] = useState<MyVenue[] | null>(null); const [biz, setBiz] = useState<BizOption[]>([]);
   const [open, setOpen] = useState(false); const [error, setError] = useState("");
   async function load(u: string) {
     const [a, b] = await Promise.all([myVenues(supabase()), listMyBusinesses(supabase(), u)]);
-    if (a.error || b.error) setError(friendlyError(a.error ?? b.error));
+    if (a.error || b.error) setError(friendlyErrorIn(a.error ?? b.error, lang));
     setVenues(a.data); setBiz(((b.data ?? []) as BizOption[]).map(x => ({ id: x.id, name: x.name })));
   }
   useEffect(() => { void currentUserId().then(u => { setUid(u); if (u) void load(u); }); }, []);
-  if (uid === undefined) return <main><p>A carregar…</p></main>;
-  if (!uid) return <main className="stack"><h1>🏨 O meu estabelecimento</h1><p>Hotel, hospedaria, restaurante ou armazém? Mostre o que tem e receba reservas e encomendas.</p><a className="btn" style={{ justifySelf: "start" }} href="/conta/login?voltar=/reservas/painel">Entrar</a></main>;
+  if (uid === undefined) return <main><p>{t("common.loading")}</p></main>;
+  if (!uid) return <main className="stack"><h1>🏨 {t("sv.ve_my_venue")}</h1><p>{t("sv.ve_my_venue_intro")}</p><a className="btn" style={{ justifySelf: "start" }} href="/conta/login?voltar=/reservas/painel">{t("auth.login")}</a></main>;
   const free = biz.filter(b => !venues?.some(v => v.business_id === b.id));
   return <main className="stack" style={{ maxWidth: 860 }}>
-    <a href="/reservas">← Reservas</a>
-    <h1 style={{ margin: 0 }}>🏨 Os meus estabelecimentos</h1>
-    <p className="muted" style={{ margin: 0 }}>Registar é grátis. Em cada pedido concluído, o cliente paga mais 5% e o estabelecimento dá 5% do seu preço: entrega os 10% ao Huambo Online.</p>
+    <a href="/reservas">← {t("nav.bookings")}</a>
+    <h1 style={{ margin: 0 }}>🏨 {t("sv.ve_my_venues")}</h1>
+    <p className="muted" style={{ margin: 0 }}>{t("sv.ve_my_venues_intro")}</p>
     {error && <p className="error" role="alert">{error}</p>}
-    {venues === null ? <p>A carregar…</p> : venues.length === 0 ? <p className="card">Ainda não registou nenhum estabelecimento.</p> :
+    {venues === null ? <p>{t("common.loading")}</p> : venues.length === 0 ? <p className="card">{t("sv.ve_none_registered")}</p> :
       venues.map(v => <a key={v.id} href={`/reservas/${v.id}/gerir`} className="card" style={{ color: "inherit", textDecoration: "none", gap: 4, fontWeight: 400 }}>
         <strong style={{ fontSize: 19 }}>{VENUE_KINDS[v.kind].icon} {v.business_name}</strong>
-        <small>{venueRef(v.ref_no)} · {VENUE_SUBTYPE_LABELS[v.subtype]} · {VENUE_STATUS_LABELS[v.status]}</small>
-        {v.admin_note && v.status !== "approved" && <small className="error">Nota da administração: {v.admin_note}</small>}
-        <span className="btn secondary" style={{ justifySelf: "start" }}>⚙️ Gerir</span>
+        <small>{venueRef(v.ref_no)} · {tc(VENUE_SUBTYPE_LABELS[v.subtype])} · {tc(VENUE_STATUS_LABELS[v.status])}</small>
+        {v.admin_note && v.status !== "approved" && <small className="error">{t("sv.vf_admin_note")}: {v.admin_note}</small>}
+        <span className="btn secondary" style={{ justifySelf: "start" }}>⚙️ {t("sv.manage")}</span>
       </a>)}
-    <h2 style={{ margin: 0 }}>➕ Registar estabelecimento</h2>
+    <h2 style={{ margin: 0 }}>➕ {t("sv.ve_register")}</h2>
     {biz.length === 0 ? <div className="card stack" style={{ gap: 8 }}>
-      <span>Primeiro registe a sua empresa (nome, morada, telefone, fotografias). O estabelecimento fica ligado a ela, com o portfólio e as avaliações.</span>
-      <a className="btn" style={{ justifySelf: "start" }} href="/conta/empresas">🏢 Registar a minha empresa</a>
-    </div> : free.length === 0 ? <p className="card">Todas as suas empresas já têm estabelecimento. Para outro, <a href="/conta/empresas">registe outra empresa</a>.</p>
+      <span>{t("sv.ve_first_business")}</span>
+      <a className="btn" style={{ justifySelf: "start" }} href="/conta/empresas">🏢 {t("sv.ve_register_business")}</a>
+    </div> : free.length === 0 ? <p className="card">{t("sv.ve_all_have")} <a href="/conta/empresas">{t("sv.ve_register_other")}</a>.</p>
       : open ? <VenueForm uid={uid} businesses={free} onSaved={id => { window.location.href = `/reservas/${id}/gerir`; }} />
-      : <button type="button" style={{ justifySelf: "start", fontSize: 20 }} onClick={() => setOpen(true)}>🏨 Registar hotel, restaurante ou armazém</button>}
+      : <button type="button" style={{ justifySelf: "start", fontSize: 20 }} onClick={() => setOpen(true)}>🏨 {t("sv.ve_register_kinds")}</button>}
   </main>;
 }
 
 // --- Painel do dono -------------------------------------------------------------------------------
 export function VenueManage({ id }: { id: string }) {
+  const { lang, t, tc } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined); const [venue, setVenue] = useState<MyVenue | null | undefined>(undefined);
   const [panel, setPanel] = useState<VenuePanel | null>(null); const [items, setItems] = useState<VenueItem[]>([]); const [settings, setSettings] = useState<PlatformSettings | null>(null);
   const [code, setCode] = useState(""); const [check, setCheck] = useState<VenueCompleteResult | null>(null); const [filter, setFilter] = useState<"active" | "all">("active");
@@ -416,106 +419,106 @@ export function VenueManage({ id }: { id: string }) {
   async function load() {
     const [a, b, c, s] = await Promise.all([myVenues(supabase()), venuePanel(supabase(), id), listVenueItems(supabase(), id), getPlatformSettings(supabase())]);
     setVenue(a.data.find(x => x.id === id) ?? null); setItems(c.data); setSettings(s.data);
-    if (b.error) setError(friendlyError(b.error)); else setPanel(b.data);
+    if (b.error) setError(friendlyErrorIn(b.error, lang)); else setPanel(b.data);
   }
   useEffect(() => { void currentUserId().then(u => { setUid(u); if (u) void load(); }); }, [id]);
-  if (uid === undefined) return <main><p>A carregar…</p></main>;
-  if (!uid) return <main className="stack"><a className="btn" style={{ justifySelf: "start" }} href={`/conta/login?voltar=/reservas/${id}/gerir`}>Entrar</a></main>;
-  if (venue === null) return <main className="stack"><p className="error">Este estabelecimento não é seu ou não existe.</p><a href="/reservas/painel">← Os meus estabelecimentos</a></main>;
-  if (!venue || !panel) return <main className="stack"><p className={error ? "error" : ""}>{error || "A carregar…"}</p><a href="/reservas/painel">← Os meus estabelecimentos</a></main>;
+  if (uid === undefined) return <main><p>{t("common.loading")}</p></main>;
+  if (!uid) return <main className="stack"><a className="btn" style={{ justifySelf: "start" }} href={`/conta/login?voltar=/reservas/${id}/gerir`}>{t("auth.login")}</a></main>;
+  if (venue === null) return <main className="stack"><p className="error">{t("sv.ve_not_yours")}</p><a href="/reservas/painel">← {t("sv.ve_my_venues")}</a></main>;
+  if (!venue || !panel) return <main className="stack"><p className={error ? "error" : ""}>{error || t("common.loading")}</p><a href="/reservas/painel">← {t("sv.ve_my_venues")}</a></main>;
   const K = VENUE_KINDS[venue.kind];
   const done = (m: string) => { setNotice(m); setError(""); void load(); };
   async function doCheck(e: React.FormEvent) {
     e.preventDefault(); if (!code.trim()) return; setCheck(null);
     const r = await completeVenueOrder(supabase(), id, code);
-    if (r.error) setError(friendlyError(r.error)); else { setError(""); setCheck(r.data); setCode(""); if (r.data?.result === "ok") void load(); }
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setError(""); setCheck(r.data); setCode(""); if (r.data?.result === "ok") void load(); }
   }
   async function decide(o: VenueOrder, ok: boolean) {
-    const note = ok ? "" : prompt("Porque não confirma? (o cliente vai ler)") ?? ""; if (!ok && !note.trim()) return;
-    if (ok && !confirm(`Confirma que recebeu ${formatPrice(o.total)} de ${o.buyer_name}?`)) return;
-    const r = await decideVenuePayment(supabase(), o.id, ok, note); if (r.error) setError(friendlyError(r.error)); else done(ok ? "Pagamento confirmado." : "Pagamento recusado.");
+    const note = ok ? "" : prompt(t("sv.why_not_confirm_client")) ?? ""; if (!ok && !note.trim()) return;
+    if (ok && !confirm(t("sv.fu_confirm_received", { amount: formatPrice(o.total), name: o.buyer_name }))) return;
+    const r = await decideVenuePayment(supabase(), o.id, ok, note); if (r.error) setError(friendlyErrorIn(r.error, lang)); else done(ok ? t("sv.pay_confirmed") : t("sv.pay_refused"));
   }
   async function cancel(o: VenueOrder) {
-    const why = prompt("Porque cancela? (o cliente vai ler)") ?? ""; if (!why.trim()) return;
-    const r = await cancelVenueOrder(supabase(), o.id, why); if (r.error) setError(friendlyError(r.error)); else done("Pedido cancelado. Se o cliente já pagou, devolva o dinheiro.");
+    const why = prompt(t("sv.why_cancel_client")) ?? ""; if (!why.trim()) return;
+    const r = await cancelVenueOrder(supabase(), o.id, why); if (r.error) setError(friendlyErrorIn(r.error, lang)); else done(t("sv.ve_cancelled_refund"));
   }
   const waiting = panel.orders.filter(o => o.status === "submitted");
   const shown = filter === "active" ? panel.orders.filter(o => VENUE_ACTIVE_ORDER.includes(o.status)) : panel.orders;
   const checkSummary = check?.result === "ok" && check.kind ? venueOrderSummary({ kind: check.kind, guests: check.guests ?? null, check_in: check.check_in ?? null, check_out: check.check_out ?? null, slot_at: check.slot_at ?? null, lines: check.lines ?? [] }) : "";
   return <main className="stack" style={{ maxWidth: 960 }}>
-    <a href="/reservas/painel">← Os meus estabelecimentos</a>
+    <a href="/reservas/painel">← {t("sv.ve_my_venues")}</a>
     <h1 style={{ margin: 0 }}>⚙️ {K.icon} {venue.business_name}</h1>
-    <small>{venueRef(venue.ref_no)} · {VENUE_SUBTYPE_LABELS[venue.subtype]} · {VENUE_STATUS_LABELS[venue.status]}</small>
+    <small>{venueRef(venue.ref_no)} · {tc(VENUE_SUBTYPE_LABELS[venue.subtype])} · {tc(VENUE_STATUS_LABELS[venue.status])}</small>
     {venue.status !== "approved" && <p className="banner yellow" style={{ margin: 0, padding: 14, display: "block" }}>
-      {venue.status === "pending" ? "⏳ À espera de aprovação da administração. Entretanto, junte já os " + K.items.toLowerCase() + " com fotografias." : "⛔ Suspenso: não aparece ao público nem recebe pedidos."}
-      {venue.admin_note ? <><br />Nota da administração: <strong>{venue.admin_note}</strong></> : null}</p>}
-    <div className="row"><a className="btn secondary" href={`/reservas/${id}`}>👁️ Ver a página</a><a className="btn secondary" href={`/empresas/${venue.business_id}`}>🏢 Página da empresa</a>
-      <button type="button" className="secondary" aria-expanded={editOpen} onClick={() => setEditOpen(!editOpen)}>✏️ Mudar dados e conta</button></div>
+      {venue.status === "pending" ? "⏳ " + t("sv.ve_pending_add", { items: tc(K.items).toLowerCase() }) : "⛔ " + t("sv.ve_suspended_hidden")}
+      {venue.admin_note ? <><br />{t("sv.vf_admin_note")}: <strong>{venue.admin_note}</strong></> : null}</p>}
+    <div className="row"><a className="btn secondary" href={`/reservas/${id}`}>👁️ {t("sv.see_page")}</a><a className="btn secondary" href={`/empresas/${venue.business_id}`}>🏢 {t("sv.ve_business_page")}</a>
+      <button type="button" className="secondary" aria-expanded={editOpen} onClick={() => setEditOpen(!editOpen)}>✏️ {t("sv.ve_change_data")}</button></div>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
     {editOpen && <VenueForm uid={uid} businesses={[]} existing={venue} onSaved={(_, m) => { setEditOpen(false); done(m); }} />}
 
     <section className="card stack" style={{ gap: 8 }} aria-labelledby="entrada">
-      <h2 id="entrada" style={{ margin: 0 }}>🔳 Confirmar entrada / entrega</h2>
-      <small>Leia o QR do cliente com a câmara do telemóvel (abre a página que confirma se é verdadeiro) ou escreva aqui o código.</small>
+      <h2 id="entrada" style={{ margin: 0 }}>🔳 {t("sv.ve_confirm_entry")}</h2>
+      <small>{t("sv.ve_confirm_entry_hint")}</small>
       <form className="row" onSubmit={doCheck}>
-        <input aria-label="Código do pedido" value={code} onChange={e => setCode(e.target.value)} placeholder="RV-XXXXXX" autoCapitalize="characters" style={{ flex: 1, minWidth: 180, fontSize: 22, letterSpacing: 2 }} />
-        <button type="submit">Confirmar</button>
+        <input aria-label={t("sv.ve_order_code")} value={code} onChange={e => setCode(e.target.value)} placeholder="RV-XXXXXX" autoCapitalize="characters" style={{ flex: 1, minWidth: 180, fontSize: 22, letterSpacing: 2 }} />
+        <button type="submit">{t("common.confirm")}</button>
       </form>
-      {check && <p role="status" className={check.result === "ok" ? "ok" : "error"} style={{ fontSize: 22, margin: 0, fontWeight: 800 }}>{VENUE_COMPLETE_LABELS[check.result] ?? check.result}
-        {check.buyer ? <><br /><span style={{ fontSize: 18 }}>{check.buyer}{checkSummary ? " · " + checkSummary : ""}</span></> : null}
-        {check.result === "ok" && check.total != null ? <><br /><span style={{ fontSize: 18 }}>{check.method === "prepaid" ? "JÁ PAGO" : `Cobrar ${formatPrice(check.total)} (inclui a taxa do APP)`}</span></> : null}</p>}
+      {check && <p role="status" className={check.result === "ok" ? "ok" : "error"} style={{ fontSize: 22, margin: 0, fontWeight: 800 }}>{tc(VENUE_COMPLETE_LABELS[check.result] ?? check.result)}
+        {check.buyer ? <><br /><span style={{ fontSize: 18 }}>{check.buyer}{checkSummary ? " · " + tc(checkSummary) : ""}</span></> : null}
+        {check.result === "ok" && check.total != null ? <><br /><span style={{ fontSize: 18 }}>{check.method === "prepaid" ? t("sv.fu_already_paid") : t("sv.ve_charge", { total: formatPrice(check.total) })}</span></> : null}</p>}
     </section>
 
-    {waiting.length > 0 && <section className="stack" style={{ gap: 8 }}><h2 style={{ margin: 0 }}>💳 Pagamentos por confirmar ({waiting.length})</h2>
+    {waiting.length > 0 && <section className="stack" style={{ gap: 8 }}><h2 style={{ margin: 0 }}>💳 {t("sv.fu_pay_to_confirm", { n: waiting.length })}</h2>
       {waiting.map(o => <article key={o.id} className="card" style={{ gap: 6 }}>
         <strong>{o.buyer_name} — {formatPrice(o.total)}</strong>
-        <small>{venueOrderRef(o.ref_no)} · {o.pay_method ? PLAN_METHOD_LABELS[o.pay_method as PaymentMethodPlan] : ""} · Ref.: <strong>{o.reference}</strong>{o.buyer_phone ? " · 📞 " + o.buyer_phone : ""}</small>
-        <span>{venueOrderSummary(o)}</span>
-        <small>Veja na sua conta se entrou {formatPrice(o.total)} com o descritivo {venueOrderRef(o.ref_no)}. Inclui {formatPrice(o.client_fee)} de taxa do APP.</small>
-        <div className="row">{o.proof_path && <button type="button" className="secondary" onClick={() => void openProof(o.proof_path!, setError)}>📄 Ver comprovativo</button>}
-          <button type="button" onClick={() => void decide(o, true)}>✅ Recebi o dinheiro</button><button type="button" className="secondary" onClick={() => void decide(o, false)}>❌ Não recebi</button></div>
+        <small>{venueOrderRef(o.ref_no)} · {o.pay_method ? tc(PLAN_METHOD_LABELS[o.pay_method as PaymentMethodPlan]) : ""} · {t("sv.ref_short")}: <strong>{o.reference}</strong>{o.buyer_phone ? " · 📞 " + o.buyer_phone : ""}</small>
+        <span>{tc(venueOrderSummary(o))}</span>
+        <small>{t("sv.ve_check_acc", { total: formatPrice(o.total), ref: venueOrderRef(o.ref_no), fee: formatPrice(o.client_fee) })}</small>
+        <div className="row">{o.proof_path && <button type="button" className="secondary" onClick={() => void openProof(o.proof_path!, setError, t("sv.proof_open_fail"))}>📄 {t("sv.see_proof")}</button>}
+          <button type="button" onClick={() => void decide(o, true)}>✅ {t("sv.got_money")}</button><button type="button" className="secondary" onClick={() => void decide(o, false)}>❌ {t("sv.not_received")}</button></div>
       </article>)}</section>}
 
     <section className="stack" style={{ gap: 8 }} aria-labelledby="pedidos">
-      <h2 id="pedidos" style={{ margin: 0 }}>🧾 Reservas e encomendas</h2>
-      <div className="chips" role="group" aria-label="Mostrar">{([["active", "Ativas"], ["all", "Todas"]] as const).map(([k, l]) =>
+      <h2 id="pedidos" style={{ margin: 0 }}>🧾 {t("sv.ve_res_orders")}</h2>
+      <div className="chips" role="group" aria-label={t("sv.show")}>{([["active", t("sv.active_pl")], ["all", t("sv.all_f")]] as const).map(([k, l]) =>
         <button key={k} type="button" className={"chip" + (filter === k ? " on" : "")} aria-pressed={filter === k} onClick={() => setFilter(k)}>{l}</button>)}</div>
-      {shown.length === 0 && <p className="muted" style={{ margin: 0 }}>Sem pedidos nesta lista.</p>}
+      {shown.length === 0 && <p className="muted" style={{ margin: 0 }}>{t("sv.no_orders_list")}</p>}
       {shown.map(o => <article key={o.id} className="card" style={{ gap: 6 }}>
-        <strong>{VENUE_ORDER_KIND_LABELS[o.kind]} · {o.buyer_name}{o.buyer_phone ? <> · <a href={"tel:" + o.buyer_phone.replace(/\s/g, "")}>📞 {o.buyer_phone}</a></> : null}</strong>
-        <span style={{ overflowWrap: "anywhere" }}>{venueOrderSummary(o)}</span>
-        <small>{venueOrderRef(o.ref_no)} · {formatPrice(o.total)} · {o.method === "prepaid" ? "adiantado" : "paga no local"} · {VENUE_ORDER_STATUS_LABELS[o.status].split(" —")[0]}{o.hold_until && (o.status === "reserved" || o.status === "paid") ? " · guardado " + holdText(o.hold_until) : ""}</small>
+        <strong>{tc(VENUE_ORDER_KIND_LABELS[o.kind])} · {o.buyer_name}{o.buyer_phone ? <> · <a href={"tel:" + o.buyer_phone.replace(/\s/g, "")}>📞 {o.buyer_phone}</a></> : null}</strong>
+        <span style={{ overflowWrap: "anywhere" }}>{tc(venueOrderSummary(o))}</span>
+        <small>{venueOrderRef(o.ref_no)} · {formatPrice(o.total)} · {o.method === "prepaid" ? t("sv.ve_prepaid") : t("sv.ve_pays_place")} · {tc(VENUE_ORDER_STATUS_LABELS[o.status]).split(" —")[0]}{o.hold_until && (o.status === "reserved" || o.status === "paid") ? " · " + t("sv.ve_held") + " " + tc(holdText(o.hold_until)) : ""}</small>
         {o.buyer_note && <small>📝 {o.buyer_note}</small>}
-        {o.note && <small className="muted">Motivo: {o.note}</small>}
-        {VENUE_ACTIVE_ORDER.includes(o.status) && <button type="button" className="secondary" style={{ justifySelf: "start" }} onClick={() => void cancel(o)}>Cancelar</button>}
+        {o.note && <small className="muted">{t("sv.reason")}: {o.note}</small>}
+        {VENUE_ACTIVE_ORDER.includes(o.status) && <button type="button" className="secondary" style={{ justifySelf: "start" }} onClick={() => void cancel(o)}>{t("common.cancel")}</button>}
       </article>)}
     </section>
 
     <section className="stack" style={{ gap: 8 }} aria-labelledby="itens">
-      <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}><h2 id="itens" style={{ margin: 0 }}>{K.items} ({items.length})</h2>
-        {itemForm === null && <button type="button" onClick={() => setItemForm("new")}>➕ Juntar {K.item.toLowerCase()}</button>}</div>
-      <small>Marque «Há» ou «Não há» sempre que mudar: os clientes veem logo.</small>
+      <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}><h2 id="itens" style={{ margin: 0 }}>{tc(K.items)} ({items.length})</h2>
+        {itemForm === null && <button type="button" onClick={() => setItemForm("new")}>➕ {t("sv.ve_add_item", { item: tc(K.item).toLowerCase() })}</button>}</div>
+      <small>{t("sv.ve_mark_hint")}</small>
       {itemForm !== null && <ItemForm uid={uid} venueId={id} kind={venue.kind} item={itemForm === "new" ? null : itemForm} onClose={() => setItemForm(null)} onSaved={m => { setItemForm(null); done(m); }} />}
-      {items.length === 0 && itemForm === null && <p className="card">{K.empty}</p>}
+      {items.length === 0 && itemForm === null && <p className="card">{tc(K.empty)}</p>}
       {items.map(i => <ItemControl key={i.id} i={i} kind={venue.kind} onEdit={() => setItemForm(i)} onSaved={done} onError={setError} />)}
     </section>
 
-    <section className="stats" aria-label="Resumo">
-      <div className="stat"><strong>{formatPrice(panel.completed_total)}</strong><span>Pedidos concluídos</span></div>
-      <div className="stat"><strong>{formatPrice(panel.fee_due)}</strong><span>Taxa por entregar</span></div>
+    <section className="stats" aria-label={t("sv.summary")}>
+      <div className="stat"><strong>{formatPrice(panel.completed_total)}</strong><span>{t("sv.ve_completed")}</span></div>
+      <div className="stat"><strong>{formatPrice(panel.fee_due)}</strong><span>{t("sv.ve_fee_due")}</span></div>
     </section>
     <section className="card stack" style={{ gap: 8 }} aria-labelledby="taxa">
-      <h2 id="taxa" style={{ margin: 0 }}>🧾 Taxa do Huambo Online</h2>
-      <small>{venueOwnerFeeNotice(panel.client_fee_pct, panel.business_fee_pct)}</small>
-      <span>Total: {formatPrice(panel.fee_total)} · Por pagar: <strong>{formatPrice(panel.fee_due)}</strong></span>
-      {panel.fee_overdue && <p className="error" style={{ margin: 0, fontSize: 19 }}>⚠️ Taxa em atraso há mais de 7 dias: as novas reservas estão paradas até entregar.</p>}
-      {panel.fee_pending && <span>⏳ Pagamento enviado, à espera de confirmação.</span>}
+      <h2 id="taxa" style={{ margin: 0 }}>🧾 {t("sv.ve_fee_title")}</h2>
+      <small>{tc(venueOwnerFeeNotice(panel.client_fee_pct, panel.business_fee_pct))}</small>
+      <span>{t("sv.total")}: {formatPrice(panel.fee_total)} · {t("sv.to_pay")}: <strong>{formatPrice(panel.fee_due)}</strong></span>
+      {panel.fee_overdue && <p className="error" style={{ margin: 0, fontSize: 19 }}>⚠️ {t("sv.ve_fee_overdue")}</p>}
+      {panel.fee_pending && <span>⏳ {t("sv.pay_sent_waiting")}</span>}
       {panel.fee_due > 0 && !panel.fee_pending && (payOpen ? <VenueFeePayBox venueId={id} uid={uid} amount={panel.fee_due} settings={settings} onDone={m => { setPayOpen(false); done(m); }} onClose={() => setPayOpen(false)} />
-        : <button type="button" style={{ justifySelf: "start" }} onClick={() => setPayOpen(true)}>Entregar a taxa do APP</button>)}
-      <small>Pague até 7 dias depois de concluir o pedido. Depois disso, as reservas ficam paradas.</small>
-      {panel.payments.length > 0 && <details><summary><strong>Pagamentos feitos ({panel.payments.length})</strong></summary>
-        {panel.payments.map(p => <div key={p.id} style={{ padding: "6px 0" }}>{formatPrice(p.amount)} · {new Date(p.created_at).toLocaleDateString("pt-AO")} · {PAYMENT_STATUS_LABELS[p.status] ?? p.status}{p.admin_note ? " · " + p.admin_note : ""}</div>)}
+        : <button type="button" style={{ justifySelf: "start" }} onClick={() => setPayOpen(true)}>{t("sv.fu_pay_fee")}</button>)}
+      <small>{t("sv.ve_pay_fee_hint")}</small>
+      {panel.payments.length > 0 && <details><summary><strong>{t("sv.ve_payments_made", { n: panel.payments.length })}</strong></summary>
+        {panel.payments.map(p => <div key={p.id} style={{ padding: "6px 0" }}>{formatPrice(p.amount)} · {new Date(p.created_at).toLocaleDateString(LANG_TAGS[lang])} · {PAYMENT_STATUS_KEYS[p.status] ? t(PAYMENT_STATUS_KEYS[p.status]) : p.status}{p.admin_note ? " · " + p.admin_note : ""}</div>)}
       </details>}
     </section>
   </main>;

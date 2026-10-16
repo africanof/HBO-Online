@@ -37,7 +37,7 @@ export function ListingGuarantee({ listingId, uid, mine, wanted }: { listingId: 
     {done && <p className="ok" role="status" style={{ margin: 0 }}>{done}</p>}
     {deadline && !done && !open && <div className="row" style={{ alignItems: "center" }}>
       <button type="button" className="secondary" onClick={() => setOpen(true)}>↩️ {t("ls.claim_open_btn")}</button>
-      <small>{tc(claimDeadlineText(deadline))}</small>
+      <small>{tc(claimDeadlineText(deadline) ?? "")}</small>
     </div>}
     {open && <form className="stack" onSubmit={send} style={{ gap: 8 }}>
       <fieldset className="stack" style={{ gap: 6, border: 0, padding: 0 }}><legend style={{ fontWeight: 700 }}>{t("ls.claim_whats_wrong")}</legend>
