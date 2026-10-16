@@ -111,9 +111,20 @@ export function eventShareMessage(siteUrl: string, e: { id: string; title: strin
   return `🎟️ ${e.title}\n📅 ${formatEventDate(e.starts_at)}\n📍 ${e.venue}${priceFrom != null ? "\n💰 " + priceFromText(priceFrom) : ""}\n👉 ${siteUrl.replace(/\/$/, "")}/eventos/${e.id}`;
 }
 export function normalizeTicketCode(code: string): string {
+  // Aceita também o endereço lido do QR (…/eventos/bilhete/HO-XXXX-XXXX).
+  const inUrl = /HO-?([A-Z2-9]{4})-?([A-Z2-9]{4})(?:[^A-Z0-9]|$)/i.exec(code.trim());
+  if (inUrl && /[/:]/.test(code)) return `HO-${inUrl[1].toUpperCase()}-${inUrl[2].toUpperCase()}`;
   let c = code.toUpperCase().replace(/[^A-Z0-9]/g, "");
   if (c.startsWith("HO")) c = c.slice(2);
   return c.length === 8 ? `HO-${c.slice(0, 4)}-${c.slice(4)}` : code.trim().toUpperCase();
+}
+/** Endereço dentro do QR do bilhete: qualquer telemóvel abre a página que diz se é verdadeiro. */
+export function ticketVerifyUrl(siteUrl: string, code: string): string { return `${siteUrl.replace(/\/+$/, "")}/eventos/bilhete/${encodeURIComponent(code)}`; }
+export type TicketView = { result: "ok" | "invalid"; role?: "organizer" | "admin" | "holder" | "other"; code?: string; status?: "valid" | "used" | "void";
+  event_id?: string; event_title?: string; starts_at?: string; venue?: string; event_status?: string; type?: string; holder?: string; checked_in_at?: string | null };
+export async function ticketByCode(client: SupabaseClient, code: string) {
+  const r = await client.rpc("ticket_by_code", { p_code: normalizeTicketCode(code) });
+  return { data: (r.data ?? null) as TicketView | null, error: r.error };
 }
 /** Quadradinhos do QR (true = preto). */
 export function qrMatrix(text: string): boolean[][] {

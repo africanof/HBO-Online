@@ -8,6 +8,8 @@ import { listEvents, getEvent, getEventTickets, getEventPaymentInfo, saveEvent, 
   type EventCategory, type EventSummary, type EventRow, type TicketTypeAvailability, type TicketTypeDraft, type EventPaymentInfo, type MyTicketOrder,
   type OrganizerPanel, type OrganizerOrder, type AdminEventPayment, type CheckInResult, type PaymentMethodPlan, type PlatformSettings, type GeoPoint } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
+import { SITE_URL } from "../lib/site";
+import { ticketVerifyUrl, ticketByCode, checkInTicket as checkInTicketFn, CHECKIN_LABELS as CHECKIN_TEXT, formatEventDate as fmtDate, type TicketView } from "@huambo-online/core";
 import { ItemCard } from "./ItemCard";
 import { LiteImg } from "./LiteImg";
 import { PlaceFields, PlaceView } from "./Place";
@@ -375,7 +377,7 @@ export function EventManage({ id }: { id: string }) {
 }
 
 function TicketQr({ code }: { code: string }) {
-  const q = qrSvgPath(code);
+  const q = qrSvgPath(ticketVerifyUrl(SITE_URL, code));
   return <svg role="img" aria-label={"Código QR do bilhete " + code} viewBox={`-2 -2 ${q.size + 4} ${q.size + 4}`} width={180} height={180} style={{ background: "#fff", borderRadius: 8 }} shapeRendering="crispEdges">
     <path d={q.d} fill="#000" />
   </svg>;
@@ -492,4 +494,38 @@ export function AdminEvents() {
       </div>
     </article>)}
   </section>;
+}
+
+/** Página aberta ao ler o QR do bilhete: diz se é verdadeiro; o organizador deixa entrar aqui. */
+export function TicketVerify({ code }: { code: string }) {
+  const [v, setV] = useState<TicketView | null>(null); const [msg, setMsg] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
+  async function load() { const r = await ticketByCode(supabase(), code); if (r.error) setError(friendlyError(r.error)); setV(r.data ?? { result: "invalid" }); }
+  useEffect(() => { void load(); }, [code]);
+  if (!v) return <main><p>A verificar…</p></main>;
+  if (v.result !== "ok") return <main className="stack" style={{ maxWidth: 640 }}>
+    <h1 style={{ margin: 0 }}>❌ Bilhete não reconhecido</h1>
+    <p className="error" role="alert" style={{ fontSize: 20 }}>Este QR não é de nenhum bilhete do Huambo Online. Não deixe entrar.</p>
+    <a href="/eventos">← Eventos</a>
+  </main>;
+  const usable = v.status === "valid" && v.event_status !== "cancelled";
+  async function letIn() {
+    if (!v?.event_id || !v.code) return;
+    setBusy(true); const r = await checkInTicketFn(supabase(), v.event_id, v.code); setBusy(false);
+    if (r.error) setError(friendlyError(r.error)); else { setMsg(CHECKIN_TEXT[r.data?.result ?? "invalid"]); await load(); }
+  }
+  return <main className="stack" style={{ maxWidth: 640 }}>
+    <a href={"/eventos/" + v.event_id}>← {v.event_title}</a>
+    <h1 style={{ margin: 0 }}>{v.status === "used" ? "⚠️ Bilhete JÁ USADO" : usable ? "✅ Bilhete verdadeiro" : "❌ Bilhete sem efeito"}</h1>
+    <p className={usable ? "ok" : "error"} role="status" style={{ fontSize: 20, margin: 0 }}>{v.code} · {v.event_title}{v.starts_at ? " · " + fmtDate(v.starts_at) : ""}</p>
+    {error && <p className="error" role="alert">{error}</p>}
+    {msg && <p className="ok" role="status">{msg}</p>}
+    {v.role === "other" && <p className="card" style={{ margin: 0 }}>Este bilhete existe no Huambo Online. Só o organizador, com a sua conta, vê o nome e deixa entrar. <a href={"/conta/login?voltar=/eventos/bilhete/" + encodeURIComponent(code)}>Entrar</a></p>}
+    {v.role !== "other" && <dl className="facts card" style={{ margin: 0, gridTemplateColumns: "minmax(0, auto) minmax(0, 1fr)", overflowWrap: "anywhere" }}>
+      {v.holder && <><dt>Nome</dt><dd>{v.holder}</dd></>}
+      {v.type && <><dt>Bilhete</dt><dd>{v.type}</dd></>}
+      {v.venue && <><dt>Local</dt><dd>{v.venue}</dd></>}
+      {v.checked_in_at && <><dt>Entrou</dt><dd>{fmtDate(v.checked_in_at)}</dd></>}
+    </dl>}
+    {(v.role === "organizer") && usable && <button type="button" disabled={busy} style={{ fontSize: 22, justifySelf: "start" }} onClick={() => void letIn()}>🚪 Deixar entrar</button>}
+  </main>;
 }

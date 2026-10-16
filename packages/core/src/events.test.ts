@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { formatEventDate, localInputToIso, isoToLocalInput, eventIsOver, eventRef, ticketOrderRef, priceFromText, ticketsLeftText, eventShareMessage,
-  normalizeTicketCode, qrMatrix, qrSvgPath, validateEvent, reserveTickets, submitTicketPayment, decideTicketOrder, checkInTicket, listEvents, saveEvent,
+  normalizeTicketCode, ticketVerifyUrl, qrMatrix, qrSvgPath, validateEvent, reserveTickets, submitTicketPayment, decideTicketOrder, checkInTicket, listEvents, saveEvent,
   cancelEvent, ticketUsable, partsToLocalInput, localInputToParts, TICKET_METHOD_LABELS, submitEventPlatformPayment, decideEventPayment, CHECKIN_LABELS, EVENT_CATEGORY_LABELS, type EventInput } from "./events";
 import { friendlyError } from "./classified-listings";
 import { getNotificationLink } from "./notifications";
@@ -43,6 +43,9 @@ describe("eventos e bilhetes", () => {
   it("códigos e QR", () => {
     expect(normalizeTicketCode("ho-abcd-efgh")).toBe("HO-ABCD-EFGH");
     expect(normalizeTicketCode("abcdefgh")).toBe("HO-ABCD-EFGH");
+    expect(normalizeTicketCode("https://huambo.online/eventos/bilhete/HO-AB23-CD45")).toBe("HO-AB23-CD45");
+    expect(normalizeTicketCode("https://huambo.online/eventos/bilhete/ho-ab23-cd45?x=1")).toBe("HO-AB23-CD45");
+    expect(ticketVerifyUrl("https://huambo.online/", "HO-AB23-CD45")).toBe("https://huambo.online/eventos/bilhete/HO-AB23-CD45");
     const m = qrMatrix("HO-ABCD-EFGH");
     expect(m.length).toBeGreaterThanOrEqual(21); expect(m[0][0]).toBe(true); // canto do QR é preto
     const svg = qrSvgPath("HO-ABCD-EFGH"); expect(svg.size).toBe(m.length); expect(svg.d.startsWith("M0 0h1v1h-1z")).toBe(true);
