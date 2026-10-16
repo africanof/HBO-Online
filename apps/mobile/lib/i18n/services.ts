@@ -39,6 +39,21 @@ export const DICT_SERVICES: Dictionary = {
   "sv.home_back": { pt: "← Início", en: "← Home", zh: "← 首页" },
   "sv.contact_email": { pt: "Pode contactar-nos pelo e-mail {email}.", en: "You can contact us by email at {email}.", zh: "您可以通过电子邮件 {email} 联系我们。" },
   "sv.contact_none": { pt: "Pode contactar-nos através da sua conta (Conta → Ajuda) ou denunciando o conteúdo em causa.", en: "You can contact us through your account (Account → Help) or by reporting the content in question.", zh: "您可以通过您的账户（账户 → 帮助）联系我们，或举报相关内容。" },
+  // Ajuda e Segurança
+  "sv.help_title": { pt: "❓ Ajuda", en: "❓ Help", zh: "❓ 帮助" },
+  "sv.help_intro": { pt: "Respostas às perguntas mais comuns. Toque numa pergunta para ver a resposta.", en: "Answers to the most common questions. Tap a question to see the answer.", zh: "常见问题解答。点击问题即可查看答案。" },
+  "sv.help_safety_link": { pt: "🛡️ Segurança: pontos de encontro e sinais de burla", en: "🛡️ Safety: meeting points and scam warning signs", zh: "🛡️ 安全：见面地点和诈骗迹象" },
+  "sv.help_more": { pt: "Precisa de mais ajuda?", en: "Need more help?", zh: "需要更多帮助？" },
+  "sv.help_back": { pt: "← Ajuda", en: "← Help", zh: "← 帮助" },
+  "sv.safety_title": { pt: "🛡️ Comprar e vender em segurança", en: "🛡️ Buying and selling safely", zh: "🛡️ 安全买卖" },
+  "sv.safety_intro": { pt: "A maior parte das pessoas é honesta. Estas regras simples protegem-no das poucas que não são.", en: "Most people are honest. These simple rules protect you from the few who aren't.", zh: "大多数人是诚实的。这些简单的规则可以保护您免受少数不诚实者的伤害。" },
+  "sv.safety_rules": { pt: "✅ Regras de ouro", en: "✅ Golden rules", zh: "✅ 黄金法则" },
+  "sv.safety_spots": { pt: "📍 Pontos de encontro seguros", en: "📍 Safe meeting points", zh: "📍 安全见面地点" },
+  "sv.safety_spots_text": { pt: "Para ver o artigo e pagar, combine num destes lugares:", en: "To see the item and pay, meet at one of these places:", zh: "查看物品和付款时，请约在以下地点之一：" },
+  "sv.safety_scam": { pt: "⚠️ Sinais de burla", en: "⚠️ Scam warning signs", zh: "⚠️ 诈骗迹象" },
+  "sv.safety_scam_text": { pt: "Nas mensagens, o Huambo Online avisa-o quando a outra pessoa:", en: "In messages, Huambo Online warns you when the other person:", zh: "在消息中，当对方出现以下情况时，Huambo Online 会提醒您：" },
+  "sv.safety_block": { pt: "🚫 Bloquear e 🚩 Denunciar", en: "🚫 Block and 🚩 Report", zh: "🚫 屏蔽和 🚩 举报" },
+  "sv.safety_block_text": { pt: "Numa conversa, carregue em «🚫 Bloquear» para deixar de receber mensagens dessa pessoa e em «🚩 Denunciar» para avisar a administração. Na Loja, use o Pagamento protegido quando estiver disponível: o dinheiro só chega ao vendedor depois de receber a encomenda.", en: "In a conversation, tap “🚫 Block” to stop receiving messages from that person and “🚩 Report” to alert the admins. In the Shop, use Protected payment when available: the money only reaches the seller after you receive the order.", zh: "在对话中，点击“🚫 屏蔽”即可不再接收此人的消息，点击“🚩 举报”可通知管理员。在商店中，如有担保付款请使用：您收到订单后，款项才会转给卖方。" },
 };
 
 /** Página de informação traduzida; «{contact}» é trocado pela linha de contacto. */

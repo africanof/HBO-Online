@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { findSaved, toggleSaved, recordView, shareMessage, whatsappShareUrl, sellerWhatsappMessage, getSellerWhatsapp, getMyWhatsapp, setMyWhatsapp, formatWhatsapp, whatsappLink, friendlyError,
+import { findSaved, toggleSaved, recordView, shareMessage, whatsappShareUrl, sellerWhatsappMessage, getSellerWhatsapp, getMyWhatsapp, setMyWhatsapp, formatWhatsapp, whatsappLink, friendlyErrorIn,
   getFollowInfo, toggleFollow, recordItemView, recordItemEvent, followersText, followButtonLabel, type FollowKind,
   type SavedKind, type KeyValueStore, type ShareExtra } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
@@ -18,6 +18,7 @@ export function useRecordView(kind: SavedKind, id: string | undefined, title: st
 }
 
 export function SaveButton({ kind, id }: { kind: SavedKind; id: string }) {
+  const { lang, t } = useT();
   const [uid, setUid] = useState<string | null>(null); const [savedId, setSavedId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   useEffect(() => { void (async () => {
@@ -28,22 +29,23 @@ export function SaveButton({ kind, id }: { kind: SavedKind; id: string }) {
     if (!uid) { window.location.href = "/conta/login?voltar=" + encodeURIComponent(window.location.pathname); return; }
     setBusy(true); setError("");
     const r = await toggleSaved(supabase(), uid, kind, id, savedId); setBusy(false);
-    if (r.error) setError(friendlyError(r.error)); else setSavedId(r.data);
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else setSavedId(r.data);
   }
   return <>
-    <button type="button" className="secondary" onClick={click} disabled={busy} aria-pressed={!!savedId}>{savedId ? "★ Guardado" : "☆ Guardar"}</button>
+    <button type="button" className="secondary" onClick={click} disabled={busy} aria-pressed={!!savedId}>{savedId ? "★ " + t("ls.saved") : "☆ " + t("common.save")}</button>
     {error && <span className="error" role="alert">{error}</span>}
   </>;
 }
 
 export function ShareButton({ kind, id, title, extra }: { kind: SavedKind; id: string; title: string; extra?: ShareExtra }) {
+  const { t } = useT();
   const [done, setDone] = useState("");
   async function click() {
     void recordItemEvent(supabase(), kind, id, "share");
     const { url, text } = shareMessage(window.location.origin, kind, id, title, extra);
     try {
       if (navigator.share) { await navigator.share({ title, text, url }); return; }
-      await navigator.clipboard.writeText(url); setDone("Link copiado.");
+      await navigator.clipboard.writeText(url); setDone(t("ls.link_copied"));
     } catch { /* partilha cancelada */ }
   }
   function whatsapp() {
@@ -51,32 +53,33 @@ export function ShareButton({ kind, id, title, extra }: { kind: SavedKind; id: s
     window.open(whatsappShareUrl(shareMessage(window.location.origin, kind, id, title, extra).text), "_blank", "noopener");
   }
   return <>
-    <button type="button" className="secondary" onClick={click}>🔗 Partilhar</button>
-    <button type="button" className="secondary" onClick={whatsapp}>📲 Partilhar no WhatsApp</button>
+    <button type="button" className="secondary" onClick={click}>🔗 {t("common.share")}</button>
+    <button type="button" className="secondary" onClick={whatsapp}>📲 {t("ls.share_whatsapp")}</button>
     {done && <span className="ok" role="status">{done}</span>}
   </>;
 }
 
 /** «Falar no WhatsApp» com o vendedor: só aparece se ele escolheu mostrar o número e para quem tem sessão iniciada. */
 export function SellerWhatsApp({ sellerId, kind, id, title, refCode }: { sellerId: string; kind: "listing" | "product"; id: string; title: string; refCode?: string | null }) {
+  const { t } = useT();
   const [number, setNumber] = useState<string | null>(null);
   useEffect(() => { void getSellerWhatsapp(supabase(), sellerId).then(setNumber); }, [sellerId]);
   if (!number) return null;
   const url = shareMessage(window.location.origin, kind, id, title).url;
   const href = whatsappLink(number, sellerWhatsappMessage(kind, title, refCode, url));
-  return href ? <a className="btn secondary" href={href} target="_blank" rel="noopener" onClick={() => void recordItemEvent(supabase(), kind, id, "whatsapp")}>💬 Falar no WhatsApp</a> : null;
+  return href ? <a className="btn secondary" href={href} target="_blank" rel="noopener" onClick={() => void recordItemEvent(supabase(), kind, id, "whatsapp")}>💬 {t("common.whatsapp")}</a> : null;
 }
 
 /** «A sua conta»: número de WhatsApp e se aparece nos anúncios e produtos. */
 export function WhatsAppSettings({ uid }: { uid: string }) {
-  const { t } = useT();
+  const { lang, t } = useT();
   const [number, setNumber] = useState(""); const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
   useEffect(() => { void getMyWhatsapp(supabase(), uid).then(r => { setNumber(formatWhatsapp(r.data?.whatsapp)); setVisible(!!r.data?.whatsapp_public); }); }, [uid]);
   async function save(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setMsg(""); setErr("");
     const r = await setMyWhatsapp(supabase(), number, visible); setBusy(false);
-    if (r.error) setErr(friendlyError(r.error)); else setMsg(!number.trim() ? t("wa.deleted") : visible ? t("wa.saved_visible") : t("wa.saved_hidden"));
+    if (r.error) setErr(friendlyErrorIn(r.error, lang)); else setMsg(!number.trim() ? t("wa.deleted") : visible ? t("wa.saved_visible") : t("wa.saved_hidden"));
   }
   return <form className="stack card" onSubmit={save}>
     <h2 style={{ margin: 0 }}>💬 WhatsApp</h2>
@@ -92,6 +95,7 @@ export function WhatsAppSettings({ uid }: { uid: string }) {
 
 /** «➕ Seguir» / «✔ A seguir», com o número de seguidores. Sem sessão, leva a entrar. */
 export function FollowButton({ kind, id, mine = false }: { kind: FollowKind; id: string; mine?: boolean }) {
+  const { lang, t, tc } = useT();
   const [info, setInfo] = useState<{ followers: number; following: boolean } | null>(null);
   const [busy, setBusy] = useState(false); const [err, setErr] = useState("");
   useEffect(() => { void getFollowInfo(supabase(), kind, id).then(r => setInfo(r.data)); }, [kind, id]);
@@ -99,14 +103,14 @@ export function FollowButton({ kind, id, mine = false }: { kind: FollowKind; id:
     if (!(await currentUserId())) { window.location.href = "/conta/login?voltar=" + encodeURIComponent(window.location.pathname); return; }
     setBusy(true); setErr("");
     const r = await toggleFollow(supabase(), kind, id); setBusy(false);
-    if (r.error) { setErr(friendlyError(r.error)); return; }
+    if (r.error) { setErr(friendlyErrorIn(r.error, lang)); return; }
     setInfo(i => ({ following: !!r.data, followers: Math.max(0, (i?.followers ?? 0) + (r.data ? 1 : -1)) }));
   }
   if (!info) return null;
   return <>
-    {mine ? <span className="badge">👥 {followersText(info.followers)}</span>
+    {mine ? <span className="badge">👥 {tc(followersText(info.followers))}</span>
       : <button type="button" className={info.following ? "secondary" : ""} aria-pressed={info.following} disabled={busy} onClick={click}
-          title={info.following ? "Carregue para deixar de seguir" : "Receba um aviso quando publicar algo novo"}>{followButtonLabel(info.following)} · {followersText(info.followers)}</button>}
+          title={info.following ? t("ls.follow_unfollow_hint") : t("ls.follow_hint")}>{tc(followButtonLabel(info.following))} · {tc(followersText(info.followers))}</button>}
     {err && <span className="error" role="alert">{err}</span>}
   </>;
 }

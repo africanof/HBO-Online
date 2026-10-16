@@ -175,4 +175,10 @@ export const DICT_LISTINGS: Dictionary = {
   "ls.deal_pick_person": { pt: "Escolha a pessoa para se avaliarem um ao outro.", en: "Choose the person so you can review each other.", zh: "选择对方，以便互相评价。" },
   "ls.deal_nobody": { pt: "Ninguém lhe enviou mensagem sobre este anúncio.", en: "Nobody has messaged you about this listing.", zh: "还没有人就此广告给您发消息。" },
   "ls.deal_close_nobody": { pt: "Fechar sem indicar ninguém", en: "Close without choosing anyone", zh: "不指定任何人直接关闭" },
+  // Guardar, partilhar, seguir
+  "ls.saved": { pt: "Guardado", en: "Saved", zh: "已收藏" },
+  "ls.link_copied": { pt: "Link copiado.", en: "Link copied.", zh: "链接已复制。" },
+  "ls.share_whatsapp": { pt: "Partilhar no WhatsApp", en: "Share on WhatsApp", zh: "分享到 WhatsApp" },
+  "ls.follow_unfollow_hint": { pt: "Carregue para deixar de seguir", en: "Click to unfollow", zh: "点击取消关注" },
+  "ls.follow_hint": { pt: "Receba um aviso quando publicar algo novo", en: "Get notified when they post something new", zh: "对方发布新内容时通知您" },
 };

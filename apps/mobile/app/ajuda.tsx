@@ -1,17 +1,18 @@
 import { Link } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
-import { HELP_FAQ, contactLine } from "@huambo-online/core";
 import { ui } from "../lib/ui";
-import { FaqList, InfoLinks, CONTACT_EMAIL } from "../components/InfoPage";
+import { FaqList, InfoLinks, useContactLine, useHelpFaq } from "../components/InfoPage";
+import { useT } from "../lib/i18n";
 
 export default function Ajuda() {
+  const { t } = useT(); const faq = useHelpFaq(); const contact = useContactLine();
   return <ScrollView contentContainerStyle={ui.screen}>
-    <Link href="/" style={ui.link}>← Início</Link>
-    <Text style={ui.h1}>❓ Ajuda</Text>
-    <Text style={ui.text}>Respostas às perguntas mais comuns. Toque numa pergunta para ver a resposta.</Text>
-    <Link href={"/seguranca" as any} style={ui.link}>🛡️ Segurança: pontos de encontro e sinais de burla</Link>
-    <FaqList items={HELP_FAQ} />
-    <View style={ui.card}><Text style={ui.h2}>Precisa de mais ajuda?</Text><Text style={ui.text}>{contactLine(CONTACT_EMAIL)}</Text></View>
+    <Link href="/" style={ui.link}>{t("sv.home_back")}</Link>
+    <Text style={ui.h1}>{t("sv.help_title")}</Text>
+    <Text style={ui.text}>{t("sv.help_intro")}</Text>
+    <Link href={"/seguranca" as any} style={ui.link}>{t("sv.help_safety_link")}</Link>
+    <FaqList items={faq} />
+    <View style={ui.card}><Text style={ui.h2}>{t("sv.help_more")}</Text><Text style={ui.text}>{contact}</Text></View>
     <InfoLinks />
   </ScrollView>;
 }
