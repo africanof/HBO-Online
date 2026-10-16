@@ -1,12 +1,16 @@
+"use client";
+import { useT } from "../lib/i18n";
+
 export default function NotFound() {
+  const { t } = useT();
   return <main className="stack" style={{ textAlign: "center", justifyItems: "center", paddingTop: 48 }}>
     <span style={{ fontSize: 72 }} aria-hidden>🧭</span>
-    <h1>Página não encontrada</h1>
-    <p style={{ maxWidth: 520 }}>O endereço pode estar errado, ou a página foi retirada. Se acabou de ser publicada, espere um minuto e tente de novo.</p>
+    <h1>{t("nf.title")}</h1>
+    <p style={{ maxWidth: 520 }}>{t("nf.text")}</p>
     <div className="row" style={{ justifyContent: "center" }}>
-      <a className="btn" href="/">Ir para o início</a>
-      <a className="btn secondary" href="/explorar">Ver anúncios</a>
-      <a className="btn secondary" href="/pracas">Praças</a>
+      <a className="btn" href="/">{t("nf.home")}</a>
+      <a className="btn secondary" href="/explorar">{t("nf.listings")}</a>
+      <a className="btn secondary" href="/pracas">{t("nav.markets")}</a>
     </div>
   </main>;
 }

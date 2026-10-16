@@ -4,6 +4,7 @@ import { signIn } from "@huambo-online/supabase";
 import { requestPasswordReset, authErrorMessage, mfaRequired, signOutCurrentUser } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { MfaPrompt } from "../../../components/Mfa";
+import { useT } from "../../../lib/i18n";
 
 function goBack() {
   const back = new URLSearchParams(window.location.search).get("voltar");
@@ -11,6 +12,7 @@ function goBack() {
 }
 
 export default function LoginPage() {
+  const { t } = useT();
   const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
   const [message, setMessage] = useState(""); const [ok, setOk] = useState(""); const [busy, setBusy] = useState(false); const [forgot, setForgot] = useState(false);
   const [needCode, setNeedCode] = useState(false);
@@ -21,7 +23,7 @@ export default function LoginPage() {
       if (forgot) {
         const r = await requestPasswordReset(supabase(), email, `${window.location.origin}/conta/recuperar`);
         if (r.error) throw r.error;
-        setOk("Se o email existir, enviámos um link para definir uma nova palavra-passe.");
+        setOk(t("login.reset_sent"));
       } else {
         const { error } = await signIn(supabase(), email, password);
         if (error) throw error;
@@ -34,22 +36,22 @@ export default function LoginPage() {
 
   if (needCode) return <main style={{ maxWidth: 480 }}>
     <a href="/">← Huambo Online</a>
-    <h1>Entrar — segundo passo</h1>
-    <p>A sua conta está protegida com a entrada em dois passos.</p>
+    <h1>{t("login.step2_title")}</h1>
+    <p>{t("login.step2_text")}</p>
     <MfaPrompt onDone={goBack} onCancel={async () => { await signOutCurrentUser(supabase()); setNeedCode(false); setPassword(""); }} />
   </main>;
 
   return <main style={{ maxWidth: 480 }}>
     <a href="/">← Huambo Online</a>
-    <h1>{forgot ? "Recuperar palavra-passe" : "Entrar"}</h1>
+    <h1>{forgot ? t("login.recover_title") : t("auth.login")}</h1>
     <form onSubmit={submit} className="stack">
-      <label>Email<input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></label>
-      {!forgot && <label>Palavra-passe<input required type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} /></label>}
-      <button type="submit" disabled={busy}>{busy ? "Aguarde…" : forgot ? "Enviar link de recuperação" : "Entrar"}</button>
+      <label>{t("auth.email")}<input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></label>
+      {!forgot && <label>{t("auth.password")}<input required type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} /></label>}
+      <button type="submit" disabled={busy}>{busy ? t("login.wait") : forgot ? t("login.send_link") : t("auth.login")}</button>
       {message && <p className="error" role="alert">{message}</p>}
       {ok && <p className="ok" role="status">{ok}</p>}
     </form>
-    <p><button type="button" className="secondary" onClick={() => { setForgot(!forgot); setMessage(""); setOk(""); }}>{forgot ? "← Voltar a entrar" : "Esqueci-me da palavra-passe"}</button></p>
-    <p><a href="/conta/criar">Criar uma conta</a></p>
+    <p><button type="button" className="secondary" onClick={() => { setForgot(!forgot); setMessage(""); setOk(""); }}>{forgot ? t("login.back_to_login") : t("auth.forgot")}</button></p>
+    <p><a href="/conta/criar">{t("login.create")}</a></p>
   </main>;
 }
