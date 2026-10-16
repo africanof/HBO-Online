@@ -2,14 +2,24 @@ import type { Lang } from "./i18n";
 import { friendlyError } from "./classified-listings";
 import { authErrorMessage } from "./account-security";
 import { mfaErrorMessage } from "./mfa";
+import { CORE_ERROR_ROWS, type CoreRow } from "./i18n-core-errors";
+import { CORE_LABEL_ROWS } from "./i18n-core-labels";
+import { CORE_MESSAGE_ROWS } from "./i18n-core-messages";
+import { CORE_LEGAL_ROWS } from "./i18n-core-legal";
+import { CORE_PATTERNS_LIST, CORE_PATTERN_WORD_ROWS } from "./i18n-core-patterns";
 
 /**
  * Tradução dos textos que o core devolve em português (etiquetas, estados, validações e mensagens de erro).
  * A chave é o próprio texto em português; os textos com partes variáveis usam CORE_PATTERNS ($1, $2… = partes apanhadas).
  */
 export type CoreText = Record<string, { en: string; zh: string }>;
-export const CORE_TEXT: CoreText = {};
-export const CORE_PATTERNS: { re: RegExp; en: string; zh: string }[] = [];
+function rowsToText(...groups: CoreRow[][]): CoreText {
+  const out: CoreText = {};
+  for (const rows of groups) for (const [pt, en, zh] of rows) out[pt] = { en, zh };
+  return out;
+}
+export const CORE_TEXT: CoreText = rowsToText(CORE_LABEL_ROWS, CORE_MESSAGE_ROWS, CORE_ERROR_ROWS, CORE_LEGAL_ROWS, CORE_PATTERN_WORD_ROWS);
+export const CORE_PATTERNS: { re: RegExp; en: string; zh: string }[] = CORE_PATTERNS_LIST;
 
 /** Traduz um texto vindo do core; se não o conhecer, devolve-o como está. */
 export function tc(text: string, lang: Lang): string;

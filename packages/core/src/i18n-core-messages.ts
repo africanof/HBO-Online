@@ -126,6 +126,9 @@ export const CORE_MESSAGE_ROWS: CoreRow[] = [
   ["Tire a selfie a segurar o BI.", "Take the selfie holding the ID card.", "请拍摄手持身份证的自拍。"],
   ["Escreva o número do BI como está no documento (9 algarismos, 2 letras e 3 algarismos, ex.: 004512345LA042).", "Enter the ID card number as it appears on the document (9 digits, 2 letters and 3 digits, e.g. 004512345LA042).", "请按证件上的样式填写身份证号码（9位数字、2个字母和3位数字，例如：004512345LA042）。"],
 
+  // --- Inspeções (inspections.ts) ---
+  ["Escreva um telefone para combinar a visita.", "Enter a phone number to arrange the visit.", "请填写电话以便约定上门时间。"],
+
   // --- Administração (admin.ts) ---
   ["Indique o nome da categoria.", "Enter the category name.", "请填写分类名称。"],
 
