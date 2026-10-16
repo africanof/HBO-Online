@@ -363,7 +363,7 @@ export function EventManageScreen({ id }: { id: string }) {
         : <Button title={featured ? tr("sv.more_days") : tr("sv.feature")} onPress={() => setOpen("boost")} />}
     </View>}
     {p.payments.length > 0 && <View style={ui.card}><Text style={ui.label}>{tr("sv.ev_payments")}</Text>
-      {p.payments.map(x => <Text key={x.id} style={ui.text}>P-{x.ref_no} · {x.kind === "boost" ? tr("sv.boost_days", { n: x.days }) : tr("sv.commission")} · {formatPrice(x.amount)} · {x.status === "pending" ? tr("sv.st_waiting") : x.status === "confirmed" ? tr("sv.st_confirmed") : tr("sv.st_rejected") + (x.admin_note ? ": " + x.admin_note : "")}</Text>)}</View>}
+      {p.payments.map(x => <Text key={x.id} style={ui.text}>P-{x.ref_no} · {x.kind === "boost" ? tr("sv.boost_days", { n: x.days ?? 0 }) : tr("sv.commission")} · {formatPrice(x.amount)} · {x.status === "pending" ? tr("sv.st_waiting") : x.status === "confirmed" ? tr("sv.st_confirmed") : tr("sv.st_rejected") + (x.admin_note ? ": " + x.admin_note : "")}</Text>)}</View>}
     {e.status === "published" && (open === "cancel" ? <View style={ui.card}>
       <Field label={tr("sv.ev_cancel_reason")} value={reason} onChangeText={setReason} maxLength={300} />
       <Button title={tr("sv.ev_cancel_btn")} variant="danger" disabled={busy || !reason.trim()} onPress={() => Alert.alert(tr("sv.ev_cancel_q"), tr("sv.ev_cancel_warn"), [{ text: tr("sv.no"), style: "cancel" }, { text: tr("sv.ev_cancel_confirm"), style: "destructive", onPress: () => void doCancel() }])} />
@@ -466,7 +466,7 @@ export function AdminEvents() {
     <Chips options={[{ value: "pending" as const, label: tr("sv.f_to_confirm") }, { value: "confirmed" as const, label: tr("sv.f_confirmed_m") }, { value: "rejected" as const, label: tr("sv.f_rejected_m") }]} value={status} onChange={setStatus} />
     {items.length === 0 && <Text style={ui.text}>{tr("sv.nothing_in_list")}</Text>}
     {items.map(p => <View key={p.id} style={ui.card}>
-      <Text style={ui.label}>{p.kind === "boost" ? tr("sv.eva_boost", { n: p.days }) : tr("sv.eva_fee")} · {formatPrice(p.amount)}</Text>
+      <Text style={ui.label}>{p.kind === "boost" ? tr("sv.eva_boost", { n: p.days ?? 0 }) : tr("sv.eva_fee")} · {formatPrice(p.amount)}</Text>
       <Text style={ui.text}>{eventRef(p.event_ref)} {p.event_title} · {p.organizer_name}</Text>
       <Text style={ui.muted}>P-{p.ref_no} · {tc(PLAN_METHOD_LABELS[p.method])}{p.reference ? tr("sv.ref_x", { ref: p.reference }) : ""}</Text>
       {!!p.admin_note && <Text style={ui.muted}>{tr("sv.note_x", { note: p.admin_note })}</Text>}

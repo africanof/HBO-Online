@@ -1,6 +1,6 @@
 "use client";
 import { FormEvent, ReactNode, useEffect, useState } from "react";
-import { verifyLoginTotp, mfaRequired, mfaErrorMessage, normalizeTotpCode, signOutCurrentUser } from "@huambo-online/core";
+import { verifyLoginTotp, mfaRequired, mfaErrorIn, normalizeTotpCode, signOutCurrentUser } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { useT } from "../lib/i18n";
 
@@ -15,14 +15,14 @@ export function TotpCodeInput({ value, onChange, id = "totp-code", label }: { va
 
 /** Pede o código da APP autenticadora para subir a sessão para o nível 2 (aal2). */
 export function MfaPrompt({ onDone, onCancel, title, intro }: { onDone: () => void; onCancel?: () => void; title?: string; intro?: ReactNode }) {
-  const { t } = useT();
+  const { lang, t } = useT();
   const [code, setCode] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   async function submit(e: FormEvent) {
     e.preventDefault(); if (busy) return;
     setBusy(true); setError("");
     const r = await verifyLoginTotp(supabase(), code);
     setBusy(false);
-    if (r.error) { setError(mfaErrorMessage(r.error)); setCode(""); return; }
+    if (r.error) { setError(mfaErrorIn(r.error, lang)); setCode(""); return; }
     onDone();
   }
   return <form className="stack card" onSubmit={submit} style={{ maxWidth: 480 }}>

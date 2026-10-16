@@ -412,41 +412,42 @@ export function MyTickets() {
   </main>;
 }
 function TicketOrderCard({ o, highlight, onDone, onError }: { o: MyTicketOrder; highlight: boolean; onDone: (m: string) => void; onError: (m: string) => void }) {
+  const { lang, t, tc } = useT();
   const [method, setMethod] = useState<PaymentMethodPlan>(o.pay_express ? "multicaixa_express" : "bank_transfer"); const [reference, setReference] = useState(""); const [busy, setBusy] = useState(false);
   async function pay() {
     setBusy(true); const r = await submitTicketPayment(supabase(), o.id, method, reference); setBusy(false);
-    if (r.error) onError(friendlyError(r.error)); else onDone("Referência enviada. O organizador vai confirmar e o bilhete aparece aqui.");
+    if (r.error) onError(friendlyErrorIn(r.error, lang)); else onDone(t("sv.ev_ref_sent"));
   }
   async function cancel() {
-    if (!confirm("Cancelar esta reserva?")) return;
+    if (!confirm(t("sv.fu_cancel_q"))) return;
     const r = await cancelTicketOrder(supabase(), o.id);
-    if (r.error) onError(friendlyError(r.error)); else onDone("Reserva cancelada.");
+    if (r.error) onError(friendlyErrorIn(r.error, lang)); else onDone(t("sv.fu_cancelled"));
   }
   const usable = ticketUsable(o);
   return <article className="card stack" style={{ gap: 8, outline: highlight ? "3px solid var(--accent)" : undefined }}>
     <a href={"/eventos/" + o.event_id} style={{ fontWeight: 800, fontSize: 19 }}>{o.title}</a>
-    <small>{ticketOrderRef(o.ref_no)} · 📅 {formatEventDate(o.starts_at)} · 📍 {o.venue}</small>
-    <span>{o.quantity} × {o.type_name} · <strong>{o.total > 0 ? formatPrice(o.total) : "Grátis"}</strong> · {TICKET_ORDER_STATUS_LABELS[o.status]}</span>
-    {o.event_status === "cancelled" && <p className="error" style={{ margin: 0 }}>❌ Evento cancelado{o.cancel_reason ? ": " + o.cancel_reason : ""}. Fale com o organizador para o reembolso.</p>}
-    {o.note && o.status === "rejected" && <span className="error">Motivo: {o.note}</span>}
+    <small>{ticketOrderRef(o.ref_no)} · 📅 {eventDateIn(o.starts_at, lang)} · 📍 {o.venue}</small>
+    <span>{o.quantity} × {o.type_name} · <strong>{o.total > 0 ? formatPrice(o.total) : t("sv.free")}</strong> · {tc(TICKET_ORDER_STATUS_LABELS[o.status])}</span>
+    {o.event_status === "cancelled" && <p className="error" style={{ margin: 0 }}>❌ {t("sv.ev_cancelled_banner")}{o.cancel_reason ? ": " + o.cancel_reason : ""}. {t("sv.ev_refund_talk")}</p>}
+    {o.note && o.status === "rejected" && <span className="error">{t("sv.reason")}: {o.note}</span>}
     {o.status === "reserved" && <div className="stack" style={{ gap: 8 }}>
-      <strong>1. Pague {formatPrice(o.total)} ao organizador{o.pay_by ? ` até ${formatEventDate(o.pay_by)}` : ""}</strong>
+      <strong>1. {t("sv.ev_pay_step", { total: formatPrice(o.total) })}{o.pay_by ? " " + t("sv.until") + " " + eventDateIn(o.pay_by, lang) : ""}</strong>
       <dl className="facts card" style={{ margin: 0 }}>
-        {o.pay_holder && <><dt>Titular</dt><dd>{o.pay_holder}</dd></>}
+        {o.pay_holder && <><dt>{t("sv.holder")}</dt><dd>{o.pay_holder}</dd></>}
         {o.pay_iban && <><dt>IBAN</dt><dd><strong style={{ overflowWrap: "anywhere" }}>{o.pay_iban}</strong></dd></>}
         {o.pay_express && <><dt>Multicaixa Express</dt><dd><strong>{o.pay_express}</strong></dd></>}
       </dl>
       {o.pay_note && <span>{o.pay_note}</span>}
-      <strong>2. Diga como pagou</strong>
+      <strong>2. {t("sv.ev_say_how_paid")}</strong>
       <MethodPicker value={method} onChange={setMethod} />
-      <label>Referência ou número da operação<input value={reference} onChange={e => setReference(e.target.value)} maxLength={120} /></label>
-      <div className="row"><button type="button" disabled={busy} onClick={pay}>{busy ? "A enviar…" : "Já paguei"}</button><button type="button" className="secondary" onClick={cancel}>Cancelar reserva</button></div>
+      <label>{t("sv.ref_label")}<input value={reference} onChange={e => setReference(e.target.value)} maxLength={120} /></label>
+      <div className="row"><button type="button" disabled={busy} onClick={pay}>{busy ? t("sv.sending") : t("sv.ev_paid")}</button><button type="button" className="secondary" onClick={cancel}>{t("sv.fu_cancel_btn")}</button></div>
     </div>}
     {o.status === "confirmed" && o.tickets.length > 0 && <div className="row" style={{ gap: 16 }}>
-      {o.tickets.map(t => <div key={t.code} className="card" style={{ justifyItems: "center", textAlign: "center", gap: 6, borderStyle: t.status === "valid" && usable ? "solid" : "dashed" }}>
-        {t.status === "valid" && usable && <TicketQr code={t.code} />}
-        <strong style={{ fontSize: 22, letterSpacing: 2 }}>{t.code}</strong>
-        <small>{t.status === "used" ? "🚪 Já entrou" : t.status === "void" ? "❌ Anulado" : usable ? "Mostre este código à entrada" : "Evento terminado"}</small>
+      {o.tickets.map(tk => <div key={tk.code} className="card" style={{ justifyItems: "center", textAlign: "center", gap: 6, borderStyle: tk.status === "valid" && usable ? "solid" : "dashed" }}>
+        {tk.status === "valid" && usable && <TicketQr code={tk.code} />}
+        <strong style={{ fontSize: 22, letterSpacing: 2 }}>{tk.code}</strong>
+        <small>{tk.status === "used" ? "🚪 " + t("sv.ev_already_in") : tk.status === "void" ? "❌ " + t("sv.ev_void") : usable ? t("sv.ev_show_code") : t("sv.ev_ended")}</small>
       </div>)}
     </div>}
   </article>;
@@ -454,53 +455,54 @@ function TicketOrderCard({ o, highlight, onDone, onError }: { o: MyTicketOrder; 
 
 /** Administração: comissões e destaques dos eventos por confirmar, e as regras. */
 export function AdminEvents() {
+  const { lang, t, tc } = useT();
   const [s, setS] = useState<PlatformSettings | null>(null); const [items, setItems] = useState<AdminEventPayment[]>([]);
   const [status, setStatus] = useState<"pending" | "confirmed" | "rejected" | "">("pending"); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
   async function load() {
     const [a, b] = await Promise.all([getPlatformSettings(supabase()), listEventPaymentsForAdmin(supabase(), status)]);
-    setS(a.data); if (b.error) setError(friendlyError(b.error)); setItems(b.data);
+    setS(a.data); if (b.error) setError(friendlyErrorIn(b.error, lang)); setItems(b.data);
   }
   useEffect(() => { void load(); }, [status]);
   async function decide(p: AdminEventPayment, ok: boolean) {
-    const note = ok ? "" : prompt("Porque não confirma? (o organizador vai ler)") ?? "";
+    const note = ok ? "" : prompt(t("sv.why_not_confirm_org")) ?? "";
     if (!ok && !note.trim()) return;
-    if (ok && !confirm(`Confirmar ${formatPrice(p.amount)} de ${p.organizer_name}?`)) return;
+    if (ok && !confirm(t("sv.confirm_amount_from", { amount: formatPrice(p.amount), name: p.organizer_name }))) return;
     const r = await decideEventPayment(supabase(), p.id, ok, note);
-    if (r.error) setError(friendlyError(r.error)); else { setNotice(ok ? (p.kind === "boost" ? "Confirmado: o evento fica em destaque." : "Comissão confirmada.") : "Pagamento recusado."); await load(); }
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(ok ? (p.kind === "boost" ? t("sv.ev_adm_boost_ok") : t("sv.ev_adm_fee_ok")) : t("sv.pay_refused")); await load(); }
   }
   async function save(ev: React.FormEvent) {
     ev.preventDefault(); if (!s) return;
     const pct = Number(s.event_ticket_fee_pct), price = Number(s.event_boost_price_kz), days = Number(s.event_boost_days), hours = Number(s.event_payment_hours);
-    if (!(pct >= 0 && pct <= 30) || !(price >= 0) || !Number.isInteger(days) || days < 1 || days > 60 || !Number.isInteger(hours) || hours < 1 || hours > 168) { setError("Verifique a percentagem, o preço, os dias e as horas."); return; }
+    if (!(pct >= 0 && pct <= 30) || !(price >= 0) || !Number.isInteger(days) || days < 1 || days > 60 || !Number.isInteger(hours) || hours < 1 || hours > 168) { setError(t("sv.ev_adm_check")); return; }
     const r = await updatePlatformSettings(supabase(), { event_ticket_fee_pct: pct, event_boost_price_kz: price, event_boost_days: days, event_payment_hours: hours });
-    if (r.error) setError(friendlyError(r.error)); else { setError(""); setNotice("Regras dos eventos guardadas."); }
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setError(""); setNotice(t("sv.ev_adm_saved")); }
   }
-  async function openProof(path: string) { const { data: url } = await paymentProofUrl(supabase(), path); if (url) window.open(url, "_blank", "noopener"); else setError("Não foi possível abrir o comprovativo."); }
+  async function openProof(path: string) { const { data: url } = await paymentProofUrl(supabase(), path); if (url) window.open(url, "_blank", "noopener"); else setError(t("sv.proof_open_fail")); }
   return <section className="stack">
-    <h2 style={{ margin: 0 }}>🎟️ Eventos: comissões e destaques</h2>
+    <h2 style={{ margin: 0 }}>🎟️ {t("sv.ev_adm_title")}</h2>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
     {s && <form className="card stack" style={{ gap: 8 }} onSubmit={save}>
       <div className="row">
-        <label style={{ flex: 1, minWidth: 160 }}>Comissão nos bilhetes (%)<input value={String(s.event_ticket_fee_pct ?? "")} onChange={e => setS({ ...s, event_ticket_fee_pct: e.target.value })} inputMode="decimal" /></label>
-        <label style={{ flex: 1, minWidth: 160 }}>Preço do destaque (Kz)<input value={String(s.event_boost_price_kz ?? "")} onChange={e => setS({ ...s, event_boost_price_kz: e.target.value })} inputMode="numeric" /></label>
-        <label style={{ flex: 1, minWidth: 160 }}>Dias de destaque<input value={String(s.event_boost_days ?? "")} onChange={e => setS({ ...s, event_boost_days: Number(e.target.value) || 0 })} inputMode="numeric" /></label>
-        <label style={{ flex: 1, minWidth: 160 }}>Horas para pagar a reserva<input value={String(s.event_payment_hours ?? "")} onChange={e => setS({ ...s, event_payment_hours: Number(e.target.value) || 0 })} inputMode="numeric" /></label>
+        <label style={{ flex: 1, minWidth: 160 }}>{t("sv.ev_adm_fee")}<input value={String(s.event_ticket_fee_pct ?? "")} onChange={e => setS({ ...s, event_ticket_fee_pct: e.target.value })} inputMode="decimal" /></label>
+        <label style={{ flex: 1, minWidth: 160 }}>{t("sv.ev_adm_boost_price")}<input value={String(s.event_boost_price_kz ?? "")} onChange={e => setS({ ...s, event_boost_price_kz: e.target.value })} inputMode="numeric" /></label>
+        <label style={{ flex: 1, minWidth: 160 }}>{t("sv.ev_adm_boost_days")}<input value={String(s.event_boost_days ?? "")} onChange={e => setS({ ...s, event_boost_days: Number(e.target.value) || 0 })} inputMode="numeric" /></label>
+        <label style={{ flex: 1, minWidth: 160 }}>{t("sv.ev_adm_hours")}<input value={String(s.event_payment_hours ?? "")} onChange={e => setS({ ...s, event_payment_hours: Number(e.target.value) || 0 })} inputMode="numeric" /></label>
       </div>
-      <button type="submit" style={{ justifySelf: "start" }}>Guardar regras</button>
+      <button type="submit" style={{ justifySelf: "start" }}>{t("sv.save_rules")}</button>
     </form>}
-    <div className="chips" role="group" aria-label="Estado">
-      {([["pending", "⏳ Por confirmar"], ["confirmed", "✅ Confirmados"], ["rejected", "❌ Recusados"], ["", "Todos"]] as const).map(([k, l]) =>
+    <div className="chips" role="group" aria-label={t("sv.status")}>
+      {([["pending", "⏳ " + t("sv.to_confirm")], ["confirmed", "✅ " + t("sv.confirmed_pl")], ["rejected", "❌ " + t("sv.refused_pl")], ["", t("sv.all")]] as const).map(([k, l]) =>
         <button key={k} type="button" className={"chip" + (status === k ? " on" : "")} aria-pressed={status === k} onClick={() => setStatus(k)}>{l}</button>)}
     </div>
-    {items.length === 0 && <p className="muted">Nada nesta lista.</p>}
+    {items.length === 0 && <p className="muted">{t("sv.nothing_list")}</p>}
     {items.map(p => <article key={p.id} className="card" style={{ gap: 6 }}>
-      <strong>{p.kind === "boost" ? `⭐ Destaque ${p.days} dias` : "🧾 Comissão dos bilhetes"} · {formatPrice(p.amount)}</strong>
-      <small>P-{p.ref_no} · <a href={"/eventos/" + p.event_id}>{eventRef(p.event_ref)} {p.event_title}</a> · {p.organizer_name} · {PLAN_METHOD_LABELS[p.method]}{p.reference ? ` · Ref.: ${p.reference}` : ""}</small>
-      {p.admin_note && <small>Nota: {p.admin_note}</small>}
+      <strong>{p.kind === "boost" ? "⭐ " + t("sv.ev_boost_days", { n: p.days ?? 0 }) : "🧾 " + t("sv.ev_ticket_fee")} · {formatPrice(p.amount)}</strong>
+      <small>P-{p.ref_no} · <a href={"/eventos/" + p.event_id}>{eventRef(p.event_ref)} {p.event_title}</a> · {p.organizer_name} · {tc(PLAN_METHOD_LABELS[p.method])}{p.reference ? ` · ${t("sv.ref_short")}: ${p.reference}` : ""}</small>
+      {p.admin_note && <small>{t("sv.note")}: {p.admin_note}</small>}
       <div className="row">
-        {p.proof_path && <button type="button" className="secondary" onClick={() => void openProof(p.proof_path!)}>📄 Ver comprovativo</button>}
-        {p.status === "pending" && <><button type="button" onClick={() => void decide(p, true)}>✅ Confirmar</button><button type="button" className="secondary" onClick={() => void decide(p, false)}>❌ Recusar</button></>}
+        {p.proof_path && <button type="button" className="secondary" onClick={() => void openProof(p.proof_path!)}>📄 {t("sv.see_proof")}</button>}
+        {p.status === "pending" && <><button type="button" onClick={() => void decide(p, true)}>✅ {t("common.confirm")}</button><button type="button" className="secondary" onClick={() => void decide(p, false)}>❌ {t("sv.refuse")}</button></>}
       </div>
     </article>)}
   </section>;
@@ -508,34 +510,35 @@ export function AdminEvents() {
 
 /** Página aberta ao ler o QR do bilhete: diz se é verdadeiro; o organizador deixa entrar aqui. */
 export function TicketVerify({ code }: { code: string }) {
+  const { lang, t, tc } = useT();
   const [v, setV] = useState<TicketView | null>(null); const [msg, setMsg] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
-  async function load() { const r = await ticketByCode(supabase(), code); if (r.error) setError(friendlyError(r.error)); setV(r.data ?? { result: "invalid" }); }
+  async function load() { const r = await ticketByCode(supabase(), code); if (r.error) setError(friendlyErrorIn(r.error, lang)); setV(r.data ?? { result: "invalid" }); }
   useEffect(() => { void load(); }, [code]);
-  if (!v) return <main><p>A verificar…</p></main>;
+  if (!v) return <main><p>{t("sv.checking")}</p></main>;
   if (v.result !== "ok") return <main className="stack" style={{ maxWidth: 640 }}>
-    <h1 style={{ margin: 0 }}>❌ Bilhete não reconhecido</h1>
-    <p className="error" role="alert" style={{ fontSize: 20 }}>Este QR não é de nenhum bilhete do Huambo Online. Não deixe entrar.</p>
-    <a href="/eventos">← Eventos</a>
+    <h1 style={{ margin: 0 }}>❌ {t("sv.ev_ticket_unknown")}</h1>
+    <p className="error" role="alert" style={{ fontSize: 20 }}>{t("sv.ev_ticket_unknown_text")}</p>
+    <a href="/eventos">← {t("sv.events")}</a>
   </main>;
   const usable = v.status === "valid" && v.event_status !== "cancelled";
   async function letIn() {
     if (!v?.event_id || !v.code) return;
     setBusy(true); const r = await checkInTicketFn(supabase(), v.event_id, v.code); setBusy(false);
-    if (r.error) setError(friendlyError(r.error)); else { setMsg(CHECKIN_TEXT[r.data?.result ?? "invalid"]); await load(); }
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setMsg(tc(CHECKIN_TEXT[r.data?.result ?? "invalid"])); await load(); }
   }
   return <main className="stack" style={{ maxWidth: 640 }}>
     <a href={"/eventos/" + v.event_id}>← {v.event_title}</a>
-    <h1 style={{ margin: 0 }}>{v.status === "used" ? "⚠️ Bilhete JÁ USADO" : usable ? "✅ Bilhete verdadeiro" : "❌ Bilhete sem efeito"}</h1>
-    <p className={usable ? "ok" : "error"} role="status" style={{ fontSize: 20, margin: 0 }}>{v.code} · {v.event_title}{v.starts_at ? " · " + fmtDate(v.starts_at) : ""}</p>
+    <h1 style={{ margin: 0 }}>{v.status === "used" ? "⚠️ " + t("sv.ev_ticket_used") : usable ? "✅ " + t("sv.ev_ticket_genuine") : "❌ " + t("sv.ev_ticket_void")}</h1>
+    <p className={usable ? "ok" : "error"} role="status" style={{ fontSize: 20, margin: 0 }}>{v.code} · {v.event_title}{v.starts_at ? " · " + eventDateIn(v.starts_at, lang) : ""}</p>
     {error && <p className="error" role="alert">{error}</p>}
     {msg && <p className="ok" role="status">{msg}</p>}
-    {v.role === "other" && <p className="card" style={{ margin: 0 }}>Este bilhete existe no Huambo Online. Só o organizador, com a sua conta, vê o nome e deixa entrar. <a href={"/conta/login?voltar=/eventos/bilhete/" + encodeURIComponent(code)}>Entrar</a></p>}
+    {v.role === "other" && <p className="card" style={{ margin: 0 }}>{t("sv.ev_other_role")} <a href={"/conta/login?voltar=/eventos/bilhete/" + encodeURIComponent(code)}>{t("auth.login")}</a></p>}
     {v.role !== "other" && <dl className="facts card" style={{ margin: 0, gridTemplateColumns: "minmax(0, auto) minmax(0, 1fr)", overflowWrap: "anywhere" }}>
-      {v.holder && <><dt>Nome</dt><dd>{v.holder}</dd></>}
-      {v.type && <><dt>Bilhete</dt><dd>{v.type}</dd></>}
-      {v.venue && <><dt>Local</dt><dd>{v.venue}</dd></>}
-      {v.checked_in_at && <><dt>Entrou</dt><dd>{fmtDate(v.checked_in_at)}</dd></>}
+      {v.holder && <><dt>{t("sv.f_name")}</dt><dd>{v.holder}</dd></>}
+      {v.type && <><dt>{t("sv.ticket")}</dt><dd>{v.type}</dd></>}
+      {v.venue && <><dt>{t("sv.mk_place")}</dt><dd>{v.venue}</dd></>}
+      {v.checked_in_at && <><dt>{t("sv.ev_entered")}</dt><dd>{eventDateIn(v.checked_in_at, lang)}</dd></>}
     </dl>}
-    {(v.role === "organizer") && usable && <button type="button" disabled={busy} style={{ fontSize: 22, justifySelf: "start" }} onClick={() => void letIn()}>🚪 Deixar entrar</button>}
+    {(v.role === "organizer") && usable && <button type="button" disabled={busy} style={{ fontSize: 22, justifySelf: "start" }} onClick={() => void letIn()}>🚪 {t("sv.ev_let_in")}</button>}
   </main>;
 }
