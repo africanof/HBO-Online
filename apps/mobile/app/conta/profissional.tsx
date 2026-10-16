@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { Alert, ScrollView, Switch, Text, TextInput, View } from "react-native";
-import { getProvider, saveMyProviderProfile, setProviderPhoto, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyError, parsePrice, formatPrice, OTHER_CATEGORY, categoryFormValues, pointFrom, type GeoPoint } from "@huambo-online/core";
+import { getProvider, saveMyProviderProfile, setProviderPhoto, listProviderServices, saveService, deleteService, listDirectoryCategories, friendlyErrorIn, parsePrice, formatPrice, OTHER_CATEGORY, categoryFormValues, pointFrom, type GeoPoint } from "@huambo-online/core";
 import { PlaceFields } from "../../components/Place";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
@@ -9,12 +9,13 @@ import { Button, Chips, Message } from "../../components/Ui";
 import { useTerritory } from "../../components/Directory";
 import { PhotoPicker, PortfolioManager } from "../../components/Portfolio";
 import { PlanBanner } from "../../components/Plans";
+import { useT } from "../../lib/i18n";
 
 type Option = { id: string; name: string };
 const empty = { displayName: "", headline: "", bio: "", categoryId: "", customCategory: "", municipalityId: "", phone: "", whatsapp: "", active: true, directions: "", point: null as GeoPoint | null };
 
 export default function PerfilProfissional() {
-  const router = useRouter();
+  const router = useRouter(); const { t, lang } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined);
   const [form, setForm] = useState(empty); const [exists, setExists] = useState(false); const [avatar, setAvatar] = useState<string | null>(null);
   const [services, setServices] = useState<any[]>([]); const [svc, setSvc] = useState({ title: "", description: "", price: "" });
@@ -33,49 +34,49 @@ export default function PerfilProfissional() {
   async function run(fn: () => PromiseLike<{ error: any }>, ok: string) {
     setBusy(true); setError(""); setNotice("");
     const r = await fn(); setBusy(false);
-    if (r.error) setError(friendlyError(r.error)); else { setNotice(ok); if (uid) await load(uid); }
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(ok); if (uid) await load(uid); }
     return !r.error;
   }
 
-  if (uid === undefined) return <View style={ui.screen}><Text style={ui.text}>A carregar…</Text></View>;
-  if (!uid) return <View style={ui.screen}><Link href="/profissionais" style={ui.link}>← Profissionais</Link><Text style={ui.h1}>Perfil profissional</Text><Text style={ui.text}>Inicie sessão para criar o seu perfil.</Text><Button title="Entrar" onPress={() => router.push("/login")} /></View>;
+  if (uid === undefined) return <View style={ui.screen}><Text style={ui.text}>{t("common.loading")}</Text></View>;
+  if (!uid) return <View style={ui.screen}><Link href="/profissionais" style={ui.link}>{t("sv.prov_back")}</Link><Text style={ui.h1}>{t("sv.pro_profile")}</Text><Text style={ui.text}>{t("sv.pro_login")}</Text><Button title={t("auth.login")} onPress={() => router.push("/login")} /></View>;
 
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
-    <Link href="/conta" style={ui.link}>← Conta</Link>
-    <Text style={ui.h1}>{exists ? "O meu perfil profissional" : "Criar perfil profissional"}</Text>
-    <Text style={ui.text}>Apareça na lista de profissionais e receba pedidos de clientes.</Text>
-    {exists && <Button title="Ver o meu perfil público" variant="secondary" onPress={() => router.push(("/profissionais/" + uid) as any)} />}
+    <Link href="/conta" style={ui.link}>{t("sv.account_back_short")}</Link>
+    <Text style={ui.h1}>{exists ? t("sv.pro_mine") : t("sv.pro_create_title")}</Text>
+    <Text style={ui.text}>{t("sv.pro_intro")}</Text>
+    {exists && <Button title={t("sv.pro_public")} variant="secondary" onPress={() => router.push(("/profissionais/" + uid) as any)} />}
     <Message error={error} ok={notice} />
     <View style={ui.card}>
-      <Text style={ui.label}>Nome profissional</Text><TextInput style={ui.input} value={form.displayName} onChangeText={set("displayName")} placeholder="Ex.: João Eletricista" />
-      <Text style={ui.label}>Resumo</Text><TextInput style={ui.input} value={form.headline} onChangeText={set("headline")} placeholder="Ex.: Instalações elétricas" />
-      <Text style={ui.label}>Sobre si</Text><TextInput style={[ui.input, ui.area]} multiline value={form.bio} onChangeText={set("bio")} />
-      <Text style={ui.label}>Área de atividade</Text><Chips options={[...categories.map(c => ({ value: c.id, label: c.name })), { value: OTHER_CATEGORY, label: "Outra (escrever)" }]} value={form.categoryId} onChange={set("categoryId")} />
-      {form.categoryId === OTHER_CATEGORY && <><Text style={ui.label}>Qual é a sua área de atividade?</Text><TextInput style={ui.input} value={form.customCategory} onChangeText={set("customCategory")} maxLength={60} placeholder="Ex.: Canalizador, Costureira, Fotógrafo…" autoFocus /></>}
-      <Text style={ui.label}>Província</Text><Chips options={provinces.map(p => ({ value: p.id, label: p.name }))} value={provinceId} onChange={v => { setProvinceId(v); set("municipalityId")(""); }} />
-      <Text style={ui.label}>Município</Text><Chips options={municipalities.map(m => ({ value: m.id, label: m.name }))} value={form.municipalityId} onChange={set("municipalityId")} />
-      <Text style={ui.label}>Telefone</Text><TextInput style={ui.input} keyboardType="phone-pad" value={form.phone} onChangeText={set("phone")} />
+      <Text style={ui.label}>{t("sv.pro_name")}</Text><TextInput style={ui.input} value={form.displayName} onChangeText={set("displayName")} placeholder={t("sv.pro_name_ph")} />
+      <Text style={ui.label}>{t("sv.pro_headline")}</Text><TextInput style={ui.input} value={form.headline} onChangeText={set("headline")} placeholder={t("sv.pro_headline_ph")} />
+      <Text style={ui.label}>{t("sv.pro_bio")}</Text><TextInput style={[ui.input, ui.area]} multiline value={form.bio} onChangeText={set("bio")} />
+      <Text style={ui.label}>{t("sv.pro_area")}</Text><Chips options={[...categories.map(c => ({ value: c.id, label: c.name })), { value: OTHER_CATEGORY, label: t("sv.other_category") }]} value={form.categoryId} onChange={set("categoryId")} />
+      {form.categoryId === OTHER_CATEGORY && <><Text style={ui.label}>{t("sv.which_activity")}</Text><TextInput style={ui.input} value={form.customCategory} onChangeText={set("customCategory")} maxLength={60} placeholder={t("sv.activity_ph")} autoFocus /></>}
+      <Text style={ui.label}>{t("sv.province")}</Text><Chips options={provinces.map(p => ({ value: p.id, label: p.name }))} value={provinceId} onChange={v => { setProvinceId(v); set("municipalityId")(""); }} />
+      <Text style={ui.label}>{t("sv.municipality")}</Text><Chips options={municipalities.map(m => ({ value: m.id, label: m.name }))} value={form.municipalityId} onChange={set("municipalityId")} />
+      <Text style={ui.label}>{t("sv.phone")}</Text><TextInput style={ui.input} keyboardType="phone-pad" value={form.phone} onChangeText={set("phone")} />
       <Text style={ui.label}>WhatsApp</Text><TextInput style={ui.input} keyboardType="phone-pad" value={form.whatsapp} onChangeText={set("whatsapp")} />
-      <PlaceFields directions={form.directions} point={form.point} onDirections={v => setForm({ ...form, directions: v })} onPoint={p => setForm({ ...form, point: p })} hint="Marque a sua oficina ou loja. Se trabalha em casa dos clientes, deixe vazio." />
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}><Text style={ui.label}>Perfil visível ao público</Text><Switch value={form.active} onValueChange={v => setForm(f => ({ ...f, active: v }))} /></View>
-      <Button title={exists ? "Guardar perfil" : "Criar perfil"} disabled={busy} onPress={() => void run(() => saveMyProviderProfile(supabase(), uid, form), "Perfil guardado.")} />
+      <PlaceFields directions={form.directions} point={form.point} onDirections={v => setForm({ ...form, directions: v })} onPoint={p => setForm({ ...form, point: p })} hint={t("sv.pro_place_hint")} />
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}><Text style={ui.label}>{t("sv.pro_visible")}</Text><Switch value={form.active} onValueChange={v => setForm(f => ({ ...f, active: v }))} /></View>
+      <Button title={exists ? t("sv.pro_save") : t("sv.pro_create")} disabled={busy} onPress={() => void run(() => saveMyProviderProfile(supabase(), uid, form), t("sv.pro_saved"))} />
     </View>
     {exists && <View style={{ gap: 10 }}>
       <PlanBanner kind="provider" subjectId={uid} />
-      <Text style={ui.h2}>Fotografia do perfil</Text>
-      <PhotoPicker uid={uid} current={avatar} label="Fotografia" onSave={url => setProviderPhoto(supabase(), uid, url)} />
+      <Text style={ui.h2}>{t("sv.pro_photo")}</Text>
+      <PhotoPicker uid={uid} current={avatar} label={t("sv.photo")} onSave={url => setProviderPhoto(supabase(), uid, url)} />
       <PortfolioManager uid={uid} target={{ providerId: uid }} />
-      <Text style={ui.h2}>Os meus serviços</Text>
+      <Text style={ui.h2}>{t("sv.my_services")}</Text>
       <View style={ui.card}>
-        <Text style={ui.label}>Serviço</Text><TextInput style={ui.input} value={svc.title} onChangeText={v => setSvc({ ...svc, title: v })} />
-        <Text style={ui.label}>Descrição</Text><TextInput style={ui.input} value={svc.description} onChangeText={v => setSvc({ ...svc, description: v })} />
-        <Text style={ui.label}>Preço desde (Kz)</Text><TextInput style={ui.input} keyboardType="decimal-pad" value={svc.price} onChangeText={v => setSvc({ ...svc, price: v })} placeholder="Vazio = sob consulta" />
-        <Button title="Adicionar serviço" disabled={busy} onPress={() => void run(() => saveService(supabase(), uid, { title: svc.title, description: svc.description, priceFrom: parsePrice(svc.price), categoryId: form.categoryId === OTHER_CATEGORY ? undefined : form.categoryId }), "Serviço adicionado.").then(ok => { if (ok) setSvc({ title: "", description: "", price: "" }); })} />
+        <Text style={ui.label}>{t("sv.service")}</Text><TextInput style={ui.input} value={svc.title} onChangeText={v => setSvc({ ...svc, title: v })} />
+        <Text style={ui.label}>{t("sv.description")}</Text><TextInput style={ui.input} value={svc.description} onChangeText={v => setSvc({ ...svc, description: v })} />
+        <Text style={ui.label}>{t("sv.price_from_kz")}</Text><TextInput style={ui.input} keyboardType="decimal-pad" value={svc.price} onChangeText={v => setSvc({ ...svc, price: v })} placeholder={t("sv.price_empty_ph")} />
+        <Button title={t("sv.add_service")} disabled={busy} onPress={() => void run(() => saveService(supabase(), uid, { title: svc.title, description: svc.description, priceFrom: parsePrice(svc.price), categoryId: form.categoryId === OTHER_CATEGORY ? undefined : form.categoryId }), t("sv.service_added")).then(ok => { if (ok) setSvc({ title: "", description: "", price: "" }); })} />
       </View>
       {services.map(s => <View key={s.id} style={ui.card}>
         <Text style={ui.label}>{s.title}</Text>
-        <Text style={ui.text}>{s.price_from != null ? "desde " + formatPrice(s.price_from, s.currency) : "sob consulta"}</Text>
-        <Button title="Apagar" variant="danger" onPress={() => Alert.alert("Apagar serviço", "Tem a certeza?", [{ text: "Cancelar", style: "cancel" }, { text: "Apagar", style: "destructive", onPress: () => void run(() => deleteService(supabase(), s.id), "Serviço apagado.") }])} />
+        <Text style={ui.text}>{s.price_from != null ? t("sv.price_from_lower", { price: formatPrice(s.price_from, s.currency) }) : t("sv.on_request")}</Text>
+        <Button title={t("common.delete")} variant="danger" onPress={() => Alert.alert(t("sv.delete_service"), t("sv.are_you_sure"), [{ text: t("common.cancel"), style: "cancel" }, { text: t("common.delete"), style: "destructive", onPress: () => void run(() => deleteService(supabase(), s.id), t("sv.service_deleted")) }])} />
       </View>)}
     </View>}
   </ScrollView>;

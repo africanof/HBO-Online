@@ -2,8 +2,10 @@
 import { useEffect, useState } from "react";
 import { ListingForm } from "../../../components/ListingForm";
 import { currentUserId } from "../../../lib/supabase";
+import { useT } from "../../../lib/i18n";
 
 export default function PublicarClassificado() {
+  const { t } = useT();
   const [user, setUser] = useState<string | null | undefined>(undefined);
   const [wanted, setWanted] = useState(false); const [mode, setMode] = useState("");
   useEffect(() => {
@@ -12,11 +14,11 @@ export default function PublicarClassificado() {
     void currentUserId().then(setUser).catch(() => setUser(null));
   }, []);
   return <main>
-    <a href="/explorar">← Voltar</a>
-    <h1>{wanted ? "🔎 Publicar o que procuro" : "Publicar anúncio"}</h1>
-    {!wanted && <p><a href="/classificados/publicar?finalidade=wanted">Quer comprar? Publique o que procura →</a></p>}
-    {user === undefined && <p>A carregar…</p>}
-    {user === null && <p>Para publicar, <a href={"/conta/login?voltar=/classificados/publicar" + (wanted ? "%3Ffinalidade%3Dwanted" : "")}>inicie sessão</a> ou <a href="/conta/criar">crie uma conta</a>.</p>}
+    <a href="/explorar">← {t("common.back")}</a>
+    <h1>{wanted ? "🔎 " + t("ft.post_wanted") : t("ls.publish_listing")}</h1>
+    {!wanted && <p><a href="/classificados/publicar?finalidade=wanted">{t("ls.want_buy_post")} →</a></p>}
+    {user === undefined && <p>{t("common.loading")}</p>}
+    {user === null && <p>{t("ls.to_publish")} <a href={"/conta/login?voltar=/classificados/publicar" + (wanted ? "%3Ffinalidade%3Dwanted" : "")}>{t("ls.sign_in_lc")}</a> {t("ls.or")} <a href="/conta/criar">{t("ls.create_account_lc")}</a>.</p>}
     {user && <ListingForm key={(wanted ? "w" : "s") + mode} initialPurpose={wanted ? "wanted" : undefined} initialSaleMode={mode} />}
   </main>;
 }

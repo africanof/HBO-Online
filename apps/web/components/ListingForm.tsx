@@ -6,7 +6,7 @@ import { ConformityCheck } from "./Conformity";
 import { VideoField } from "./Video";
 import { AgentCodeField, agentCodeFromUrl } from "./Agents";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
-  createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, pointFrom, type GeoPoint, friendlyError, listingTerritory,
+  createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, pointFrom, type GeoPoint, friendlyErrorIn, categoryLabelIn, listingTerritory,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES, validateBudget, budgetPrice,
   saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS,
   loadListingDraft, saveListingDraft, clearListingDraft, draftAgeText, isOfflineError, OFFLINE_PUBLISH_MESSAGE, type ListingDraftFields } from "@huambo-online/core";
@@ -14,11 +14,13 @@ import { browserStore } from "./Engage";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
 import { compressPhoto } from "../lib/image";
+import { useT } from "../lib/i18n";
 
 type Option = { id: string; name: string };
 type Photo = { key: string; src: string; file?: File };
 
 export function ListingForm({ listing, initialPurpose, initialSaleMode }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string }) {
+  const { lang, t, tc } = useT();
   const editing = Boolean(listing);
   const territory = listingTerritory(listing);
   const [listingType, setListingType] = useState<ClassifiedListingType>(listing?.listing_type ?? "classified");
@@ -75,14 +77,14 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
       setSaleMode(f.saleMode as SaleMode | ""); setAcceptsTrade(f.acceptsTrade); setTradeWants(f.tradeWants); setAuctionDays(f.auctionDays); setCategoryId(f.categoryId);
       if (f.provinceId) setProvinceId(f.provinceId); if (f.municipalityId) setMunicipalityId(f.municipalityId); setMarketId(f.marketId); setVideoUrl(f.videoUrl);
       if (f.agentCode) setAgentCode(f.agentCode); setDirections(f.directions); setPoint(f.point);
-      setDraftNote(`📝 Rascunho recuperado (${draftAgeText(d.savedAt)}). Volte a juntar as fotografias.`);
+      setDraftNote("📝 " + t("ls.draft_recovered", { age: tc(draftAgeText(d.savedAt)) }));
     }
     setDraftReady(true);
   })(); }, []);
   const draftFields: ListingDraftFields = { listingType, isAgro, agroCat, agroUnit, agroQty, agroFrom, purpose, title, description, price, budgetMin, budgetMax, saleMode,
     acceptsTrade, tradeWants, auctionDays, categoryId, provinceId, municipalityId, marketId, videoUrl, agentCode, directions, point };
   const draftSnapshot = JSON.stringify(draftFields);
-  useEffect(() => { if (editing || !draftReady) return; const t = setTimeout(() => void saveListingDraft(browserStore, draftFields).catch(() => {}), 700); return () => clearTimeout(t); }, [draftSnapshot, draftReady]);
+  useEffect(() => { if (editing || !draftReady) return; const tm = setTimeout(() => void saveListingDraft(browserStore, draftFields).catch(() => {}), 700); return () => clearTimeout(tm); }, [draftSnapshot, draftReady]);
   async function discardDraft() {
     await clearListingDraft(browserStore).catch(() => {});
     setTitle(""); setDescription(""); setPrice(""); setBudgetMin(""); setBudgetMax(""); setTradeWants(""); setDirections(""); setVideoUrl(""); setPoint(null); setDraftNote("");
@@ -110,13 +112,13 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
     const room = CLASSIFIED_MAX_PHOTOS - photos.length;
     const usable = images.filter(f => f.size <= PHOTO_RAW_MAX_BYTES).slice(0, Math.max(0, room));
     // Fotografias mais leves: reduzidas aqui antes de enviar (poupa dados a quem publica e a quem vê).
-    setStatus("A preparar as fotografias…");
+    setStatus(t("ls.photos_preparing"));
     const ready = await Promise.all(usable.map(f => compressPhoto(f)));
     setStatus("");
     const ok = ready.filter(f => f.size <= CLASSIFIED_MAX_PHOTO_BYTES);
-    if (images.length < chosen.length) setError("Só são aceites imagens.");
-    else if (images.length > room) setError(`Pode juntar no máximo ${CLASSIFIED_MAX_PHOTOS} fotografias.`);
-    else if (ok.length < images.length) setError("Algumas fotografias são demasiado grandes e foram ignoradas.");
+    if (images.length < chosen.length) setError(t("ls.only_images"));
+    else if (images.length > room) setError(t("ls.max_photos", { n: CLASSIFIED_MAX_PHOTOS }));
+    else if (ok.length < images.length) setError(t("ls.photos_too_big"));
     setPhotos(p => [...p, ...ok.map(f => ({ key: crypto.randomUUID(), src: URL.createObjectURL(f), file: f }))]);
   }
 
@@ -134,31 +136,31 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
     setError("");
     const minValue = wanted ? parsePrice(budgetMin) : undefined, maxValue = wanted ? parsePrice(budgetMax) : undefined;
     const budgetError = wanted ? validateBudget(minValue, maxValue) : null;
-    if (budgetError) { setError(budgetError); return; }
+    if (budgetError) { setError(tc(budgetError)); return; }
     const priceValue = wanted ? budgetPrice(minValue, maxValue) : parsePrice(price);
-    if (purpose !== "wanted" && !conform) { setError("Para publicar, confirme que o anúncio descreve o artigo com verdade (incluindo defeitos)."); return; }
+    if (purpose !== "wanted" && !conform) { setError(t("ls.need_conformity")); return; }
     const invalid = validateClassifiedDraft({ listingType, purpose, title, description, price: priceValue, provinceId, municipalityId, photoCount: photos.length })
       ?? (lockedAuction ? null : validateSaleMode({ purpose, listingType, saleMode, price: priceValue, auctionDays: Number(auctionDays), tradeWants, acceptsTrade }));
-    if (invalid) { setError(invalid); return; }
+    if (invalid) { setError(tc(invalid)); return; }
     const agroInvalid = useAgro ? validateAgro({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom }) : null;
-    if (agroInvalid) { setError(agroInvalid); return; }
+    if (agroInvalid) { setError(tc(agroInvalid)); return; }
     const mode = modes.length ? (saleMode || undefined) as SaleMode | undefined : undefined;
     const sale = lockedAuction ? { saleMode: "auction" as const, acceptsTrade: false } : { saleMode: mode, acceptsTrade: mode === "trade" || (canAlsoTrade(purpose, saleMode) && acceptsTrade), tradeWants };
     setBusy(true);
     try {
       const c = supabase();
       const { data: { user } } = await c.auth.getUser();
-      if (!user) { setError("Inicie sessão para publicar."); return; }
+      if (!user) { setError(t("ls.login_to_publish")); return; }
       const media: string[] = [];
       let n = 0;
       for (const photo of photos) {
         if (!photo.file) { media.push(photo.src); continue; }
-        n++; setStatus(`A enviar fotografia ${n}…`);
+        n++; setStatus(t("ls.uploading_photo", { n }));
         const up = await uploadClassifiedMedia(c, photo.file, user.id, photo.file.name, photo.file.type);
-        if (up.error || !up.data) throw up.error ?? new Error("Falha no envio da fotografia.");
+        if (up.error || !up.data) throw up.error ?? new Error(t("ls.photo_upload_failed"));
         media.push(up.data);
       }
-      setStatus(editing ? "A guardar…" : "A publicar…");
+      setStatus(editing ? t("recover.saving") : t("ls.publishing"));
       // Mantém outros atributos já guardados; os do campo só ficam se «Produto do campo» estiver ligado.
       const keep = Object.fromEntries(Object.entries((listing?.attributes ?? {}) as Record<string, unknown>).filter(([k]) => !["agro", "agroCategory", "unit", "quantity", "availableFrom", "provinceId", "municipalityId"].includes(k)));
       const attributes = { ...keep, ...(useAgro ? agroAttributes({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom }) : {}) };
@@ -166,7 +168,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
       // O leilão começa logo depois de publicar (ou de guardar, ao mudar para leilão).
       const startAuction = async (id: string) => {
         if (mode !== "auction" || lockedAuction) return null;
-        setStatus("A abrir o leilão…");
+        setStatus(t("ls.opening_auction"));
         const a = await startListingAuction(c, id, { startingPrice: priceValue ?? 0, days: Number(auctionDays) });
         return a.error ?? null;
       };
@@ -180,94 +182,94 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
       } else {
         const r = await createAndPublishClassifiedListing(c, { ownerId: user.id, ...input, agentCode });
         if (r.error) {
-          if (r.draftId) { await clearListingDraft(browserStore).catch(() => {}); window.location.href = "/meus-anuncios?erro=" + encodeURIComponent(friendlyError(r.error)); return; }
+          if (r.draftId) { await clearListingDraft(browserStore).catch(() => {}); window.location.href = "/meus-anuncios?erro=" + encodeURIComponent(friendlyErrorIn(r.error, lang)); return; }
           throw r.error;
         }
         await clearListingDraft(browserStore).catch(() => {});
         const ae = await startAuction((r.data as any).id);
-        if (ae) { window.location.href = "/meus-anuncios?erro=" + encodeURIComponent("o anúncio foi publicado, mas o leilão não abriu: " + friendlyError(ae)); return; }
+        if (ae) { window.location.href = "/meus-anuncios?erro=" + encodeURIComponent(t("ls.published_no_auction") + " " + friendlyErrorIn(ae, lang)); return; }
         window.location.href = "/classificados/" + (r.data as any).id;
       }
     } catch (err) {
-      if (!editing && isOfflineError(err)) { await saveListingDraft(browserStore, draftFields).catch(() => {}); setError(OFFLINE_PUBLISH_MESSAGE); }
-      else setError(friendlyError(err, "Não foi possível publicar o anúncio."));
+      if (!editing && isOfflineError(err)) { await saveListingDraft(browserStore, draftFields).catch(() => {}); setError(tc(OFFLINE_PUBLISH_MESSAGE)); }
+      else setError(friendlyErrorIn(err, lang, t("ls.publish_failed")));
     } finally { setBusy(false); setStatus(""); }
   }
 
   return (
     <form onSubmit={submit} className="stack" noValidate>
-      {draftNote && <div className="card stack" role="status" style={{ gap: 8 }}><span>{draftNote}</span><button type="button" className="secondary" style={{ justifySelf: "start" }} onClick={() => void discardDraft()}>🗑️ Apagar rascunho e começar de novo</button></div>}
-      {!editing && <small className="muted">💾 O texto que escreve fica guardado neste aparelho, mesmo sem internet (as fotografias não).</small>}
-      <label>Tipo
+      {draftNote && <div className="card stack" role="status" style={{ gap: 8 }}><span>{draftNote}</span><button type="button" className="secondary" style={{ justifySelf: "start" }} onClick={() => void discardDraft()}>🗑️ {t("ls.draft_discard")}</button></div>}
+      {!editing && <small className="muted">💾 {t("ls.draft_note")}</small>}
+      <label>{t("ls.type")}
         <select value={listingType} onChange={e => setListingType(e.target.value as ClassifiedListingType)}>
-          {Object.entries(LISTING_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          {Object.entries(LISTING_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{tc(l)}</option>)}
         </select>
       </label>
-      <label>Finalidade
+      <label>{t("ls.purpose")}
         <select value={purpose} onChange={e => setPurpose(e.target.value as ClassifiedPurpose)}>
-          {PUBLISHABLE_PURPOSES.map(v => <option key={v} value={v}>{PURPOSE_LABELS[v]}</option>)}
+          {PUBLISHABLE_PURPOSES.map(v => <option key={v} value={v}>{tc(PURPOSE_LABELS[v])}</option>)}
         </select>
       </label>
-      {wanted && <p className="ok" style={{ margin: 0 }}>🔎 Pedido de comprador: diga o que procura e quanto pode pagar. Os vendedores e profissionais com artigos ou serviços parecidos são avisados.</p>}
-      <label>{wanted ? "O que procura?" : "Título"}<input value={title} maxLength={140} onChange={e => setTitle(e.target.value)} placeholder={wanted ? (listingType === "service" ? "Ex.: Procuro um eletricista para instalação" : "Ex.: Preciso de um Router 5G da Unitel") : "Ex.: Toyota Hilux 2018"} /></label>
-      <label>Descrição<textarea value={description} onChange={e => setDescription(e.target.value)} rows={6} placeholder={wanted ? "Pormenores: estado, marca, zona, quando precisa…" : "Estado, características, como entregar…"} /></label>
+      {wanted && <p className="ok" style={{ margin: 0 }}>🔎 {t("ls.wanted_intro")}</p>}
+      <label>{wanted ? t("ls.what_looking") : t("ls.title")}<input value={title} maxLength={140} onChange={e => setTitle(e.target.value)} placeholder={wanted ? (listingType === "service" ? t("ls.ph_wanted_service") : t("ls.ph_wanted_item")) : t("ls.ph_title")} /></label>
+      <label>{t("ls.description")}<textarea value={description} onChange={e => setDescription(e.target.value)} rows={6} placeholder={wanted ? t("ls.ph_wanted_desc") : t("ls.ph_desc")} /></label>
       {agroAllowed && <fieldset className="stack" style={{ border: "2px solid var(--line)", borderRadius: 12, padding: 14 }}>
-        <legend style={{ fontWeight: 700 }}>🌾 Agricultura e campo</legend>
-        <label className="check"><input type="checkbox" checked={isAgro} onChange={e => setIsAgro(e.target.checked)} /> É um produto do campo (colheita, gado, sementes, adubos, máquinas ou serviço agrícola)</label>
+        <legend style={{ fontWeight: 700 }}>🌾 {t("ft.farming")}</legend>
+        <label className="check"><input type="checkbox" checked={isAgro} onChange={e => setIsAgro(e.target.checked)} /> {t("ls.is_agro")}</label>
         {isAgro && <>
-          <label>Tipo<select value={agroCat} onChange={e => setAgroCat(e.target.value)}><option value="">Escolha…</option>{AGRO_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.icon} {c.label}</option>)}</select></label>
-          <label>Vende ao/à<select value={agroUnit} onChange={e => setAgroUnit(e.target.value)}>{AGRO_UNITS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}</select></label>
-          <label>Quantidade disponível (opcional)<input value={agroQty} onChange={e => setAgroQty(e.target.value)} inputMode="decimal" placeholder={"Ex.: 200 (" + (agroUnitInfo(agroUnit)?.plural ?? "") + ")"} /></label>
-          <label>Disponível a partir de (opcional, para colheitas futuras)<input type="date" value={agroFrom} onChange={e => setAgroFrom(e.target.value)} /></label>
+          <label>{t("ls.type")}<select value={agroCat} onChange={e => setAgroCat(e.target.value)}><option value="">{t("ls.choose")}</option>{AGRO_CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.icon} {tc(c.label)}</option>)}</select></label>
+          <label>{t("ls.sells_by")}<select value={agroUnit} onChange={e => setAgroUnit(e.target.value)}>{AGRO_UNITS.map(u => <option key={u.value} value={u.value}>{tc(u.label)}</option>)}</select></label>
+          <label>{t("ls.qty_available")}<input value={agroQty} onChange={e => setAgroQty(e.target.value)} inputMode="decimal" placeholder={t("ls.ph_qty", { unit: tc(agroUnitInfo(agroUnit)?.plural ?? "") })} /></label>
+          <label>{t("ls.available_from")}<input type="date" value={agroFrom} onChange={e => setAgroFrom(e.target.value)} /></label>
         </>}
       </fieldset>}
       {wanted ? <div className="row" style={{ flexWrap: "nowrap" }}>
-        <label style={{ flex: 1 }}>Orçamento de (Kz)<input value={budgetMin} onChange={e => setBudgetMin(e.target.value)} inputMode="decimal" placeholder="Ex.: 20 000" /></label>
-        <label style={{ flex: 1 }}>até (Kz)<input value={budgetMax} onChange={e => setBudgetMax(e.target.value)} inputMode="decimal" placeholder="Ex.: 25 000" /></label>
+        <label style={{ flex: 1 }}>{t("ls.budget_from")}<input value={budgetMin} onChange={e => setBudgetMin(e.target.value)} inputMode="decimal" placeholder={t("ls.ex_20000")} /></label>
+        <label style={{ flex: 1 }}>{t("ls.budget_to")}<input value={budgetMax} onChange={e => setBudgetMax(e.target.value)} inputMode="decimal" placeholder={t("ls.ex_25000")} /></label>
       </div> : <>
         {modes.length > 0 && <fieldset className="stack sale-modes">
-          <legend>Como quer vender?</legend>
+          <legend>{t("ls.how_sell")}</legend>
           {modes.map(m => <label key={m} className={"mode" + (saleMode === m ? " on" : "")}>
             <input type="radio" name="sale_mode" value={m} checked={saleMode === m} onChange={() => setSaleMode(m)} />
-            <span><strong>{SALE_MODE_INFO[m].icon} {SALE_MODE_INFO[m].label}</strong><small>{SALE_MODE_INFO[m].help}</small></span>
+            <span><strong>{SALE_MODE_INFO[m].icon} {tc(SALE_MODE_INFO[m].label)}</strong><small>{tc(SALE_MODE_INFO[m].help)}</small></span>
           </label>)}
         </fieldset>}
-        {lockedAuction && <p className="badge">🔨 Este anúncio está em leilão.</p>}
-        <label>{saleMode === "auction" ? "Preço inicial do leilão (Kz)" : saleMode === "offers" || saleMode === "trade" ? "Preço de referência (Kz, opcional)" : useAgro ? `Preço por ${agroUnitInfo(agroUnit)?.short ?? "unidade"} (Kz)` : "Preço (Kz)"}
-          <input value={price} onChange={e => setPrice(e.target.value)} inputMode="decimal" placeholder={saleMode === "fixed" || saleMode === "negotiable" || saleMode === "auction" ? "Ex.: 85 000" : "Deixe vazio para «sob consulta»"} /></label>
-        {saleMode === "auction" && !lockedAuction && <label>Duração do leilão
-          <select value={auctionDays} onChange={e => setAuctionDays(e.target.value)}>{[1, 3, 5, 7, 10, 14].map(d => <option key={d} value={d}>{d} dia{d > 1 ? "s" : ""}</option>)}</select></label>}
-        {canAlsoTrade(purpose, saleMode) && <label className="check"><input type="checkbox" checked={acceptsTrade} onChange={e => setAcceptsTrade(e.target.checked)} /> 🔁 Também aceito troca</label>}
-        {(saleMode === "trade" || (canAlsoTrade(purpose, saleMode) && acceptsTrade)) && <label>O que aceita em troca?<input value={tradeWants} maxLength={300} onChange={e => setTradeWants(e.target.value)} placeholder="Ex.: telemóvel Android, motorizada, ou diga «estou aberto a ofertas»" /></label>}
+        {lockedAuction && <p className="badge">🔨 {t("ls.in_auction")}</p>}
+        <label>{saleMode === "auction" ? t("ls.price_auction_start") : saleMode === "offers" || saleMode === "trade" ? t("ls.price_reference") : useAgro ? t("ls.price_per", { unit: agroUnitInfo(agroUnit)?.short ? tc(agroUnitInfo(agroUnit)!.short) : t("ls.unit") }) : t("ls.price_kz")}
+          <input value={price} onChange={e => setPrice(e.target.value)} inputMode="decimal" placeholder={saleMode === "fixed" || saleMode === "negotiable" || saleMode === "auction" ? t("ls.ex_85000") : t("ls.ph_price_empty")} /></label>
+        {saleMode === "auction" && !lockedAuction && <label>{t("ls.auction_duration")}
+          <select value={auctionDays} onChange={e => setAuctionDays(e.target.value)}>{[1, 3, 5, 7, 10, 14].map(d => <option key={d} value={d}>{t("ls.n_days_s", { n: d })}</option>)}</select></label>}
+        {canAlsoTrade(purpose, saleMode) && <label className="check"><input type="checkbox" checked={acceptsTrade} onChange={e => setAcceptsTrade(e.target.checked)} /> 🔁 {t("ls.also_trade")}</label>}
+        {(saleMode === "trade" || (canAlsoTrade(purpose, saleMode) && acceptsTrade)) && <label>{t("ls.trade_wants")}<input value={tradeWants} maxLength={300} onChange={e => setTradeWants(e.target.value)} placeholder={t("ls.ph_trade_wants")} /></label>}
       </>}
-      <label>Categoria
+      <label>{t("ls.category")}
         <select value={categoryId} onChange={e => setCategoryId(e.target.value)}>
-          <option value="">Sem categoria</option>
-          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          <option value="">{t("ls.no_category")}</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{categoryLabelIn(c.name, lang)}</option>)}
         </select>
       </label>
-      <label>Província
+      <label>{t("ls.province")}
         <select value={provinceId} onChange={e => { setProvinceId(e.target.value); setMunicipalityId(""); }}>
-          <option value="">Escolha a província</option>
+          <option value="">{t("ls.choose_province")}</option>
           {provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       </label>
-      <label>Município
+      <label>{t("auth.municipality")}
         <select value={municipalityId} onChange={e => setMunicipalityId(e.target.value)} disabled={!provinceId}>
-          <option value="">Escolha o município</option>
+          <option value="">{t("ls.choose_municipality")}</option>
           {municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
         </select>
       </label>
       <MarketPicker value={marketId} onChange={setMarketId} />
       {purpose !== "wanted" && <PlaceFields directions={directions} point={point} onDirections={setDirections} onPoint={setPoint} approximate />}
       <fieldset className="stack" style={{ border: "2px solid #ddd", borderRadius: 12, padding: 14 }}>
-        <legend style={{ fontWeight: 700 }}>Fotografias ({photos.length}/{CLASSIFIED_MAX_PHOTOS})</legend>
-        <input type="file" accept="image/*" multiple disabled={photos.length >= CLASSIFIED_MAX_PHOTOS} onChange={e => { addFiles(e.target.files); e.target.value = ""; }} aria-label="Selecionar fotografias" />
+        <legend style={{ fontWeight: 700 }}>{t("ls.photos_count", { n: photos.length, max: CLASSIFIED_MAX_PHOTOS })}</legend>
+        <input type="file" accept="image/*" multiple disabled={photos.length >= CLASSIFIED_MAX_PHOTOS} onChange={e => { addFiles(e.target.files); e.target.value = ""; }} aria-label={t("ls.select_photos")} />
         <div className="row">
           {photos.map((p, i) => (
             <div key={p.key} style={{ display: "grid", gap: 6, width: 120 }}>
-              <img src={p.src} alt={`Fotografia ${i + 1}`} style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8 }} />
-              <button type="button" className="secondary" onClick={() => removePhoto(i)}>Remover</button>
+              <img src={p.src} alt={t("ls.photo_n", { n: i + 1 })} style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8 }} />
+              <button type="button" className="secondary" onClick={() => removePhoto(i)}>{t("ls.remove")}</button>
             </div>
           ))}
         </div>
@@ -277,7 +279,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
       {purpose !== "wanted" && <ConformityCheck checked={conform} onChange={setConform} />}
       {error && <p className="error" role="alert">{error}</p>}
       {status && <p role="status">{status}</p>}
-      <button type="submit" disabled={busy}>{busy ? (status || "Aguarde…") : editing ? "Guardar alterações" : "Publicar anúncio"}</button>
+      <button type="submit" disabled={busy}>{busy ? (status || t("login.wait")) : editing ? t("acct.save_changes") : t("ls.publish_listing")}</button>
     </form>
   );
 }

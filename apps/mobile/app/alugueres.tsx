@@ -1,43 +1,44 @@
 import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams } from "expo-router";
 import { Alert, ScrollView, Text, View } from "react-native";
-import { listMyRentalRequests, respondRentalRequest, cancelRentalRequest, getPlatformSettings, commissionFor, formatPrice, friendlyError, RENTAL_STATUS_LABELS, type RentalStatus } from "@huambo-online/core";
+import { listMyRentalRequests, respondRentalRequest, cancelRentalRequest, getPlatformSettings, commissionFor, formatPrice, friendlyErrorIn, RENTAL_STATUS_LABELS, type RentalStatus } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
-
-const d = (s: string) => new Date(s).toLocaleDateString("pt-AO");
+import { useT, formatDayIn } from "../lib/i18n";
 
 export default function Alugueres() {
+  const { t, tc, lang } = useT();
+  const d = (s: string) => formatDayIn(Date.parse(s), lang);
   const [uid, setUid] = useState<string | null | undefined>(undefined);
   const [pct, setPct] = useState(5);
   useEffect(() => { void getPlatformSettings(supabase()).then(r => { if (r.data?.listing_commission_pct != null) setPct(Number(r.data.listing_commission_pct)); }); }, []);
   const params = useLocalSearchParams<{ recebidos?: string }>();
   const [role, setRole] = useState<"renter" | "owner">(params.recebidos ? "owner" : "renter");
   const [items, setItems] = useState<any[]>([]); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
-  async function load(r = role) { const res = await listMyRentalRequests(supabase(), r); if (res.error) setError(friendlyError(res.error)); else setItems((res.data as any[]) ?? []); }
+  async function load(r = role) { const res = await listMyRentalRequests(supabase(), r); if (res.error) setError(friendlyErrorIn(res.error, lang)); else setItems((res.data as any[]) ?? []); }
   useEffect(() => { void supabase().auth.getUser().then(({ data }) => { const id = data.user?.id ?? null; setUid(id); if (id) void load(params.recebidos ? "owner" : "renter"); }); }, []);
-  async function act(fn: () => PromiseLike<{ error: any }>, msg: string) { setError(""); setNotice(""); const r = await fn(); if (r.error) setError(friendlyError(r.error)); else { setNotice(msg); await load(); } }
-  if (uid === undefined) return <View style={ui.screen}><Text style={ui.text}>A carregar…</Text></View>;
-  if (!uid) return <View style={ui.screen}><Link href="/" style={ui.link}>← Huambo Online</Link><Text style={ui.h1}>Alugueres</Text><Link href="/login" style={ui.link}>Inicie sessão</Link></View>;
+  async function act(fn: () => PromiseLike<{ error: any }>, msg: string) { setError(""); setNotice(""); const r = await fn(); if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(msg); await load(); } }
+  if (uid === undefined) return <View style={ui.screen}><Text style={ui.text}>{t("common.loading")}</Text></View>;
+  if (!uid) return <View style={ui.screen}><Link href="/" style={ui.link}>← Huambo Online</Link><Text style={ui.h1}>{t("ls.rent.title")}</Text><Link href="/login" style={ui.link}>{t("ls.rent.sign_in")}</Link></View>;
   return <ScrollView contentContainerStyle={ui.screen}>
-    <Link href="/conta" style={ui.link}>← Conta</Link>
-    <Text style={ui.h1}>Alugueres</Text>
-    <Chips options={[{ value: "renter", label: "Pedidos que fiz" }, { value: "owner", label: "Pedidos recebidos" }]} value={role} onChange={v => { setRole(v as "renter" | "owner"); void load(v as "renter" | "owner"); }} />
+    <Link href="/conta" style={ui.link}>← {t("nav.account_short")}</Link>
+    <Text style={ui.h1}>{t("ls.rent.title")}</Text>
+    <Chips options={[{ value: "renter", label: t("ls.rent.made") }, { value: "owner", label: t("ls.rent.received") }]} value={role} onChange={v => { setRole(v as "renter" | "owner"); void load(v as "renter" | "owner"); }} />
     <Message error={error} ok={notice} />
-    {items.length === 0 && <Text style={ui.text}>Sem pedidos.</Text>}
+    {items.length === 0 && <Text style={ui.text}>{t("ls.rent.none")}</Text>}
     {items.map(r => <View key={r.id} style={ui.card}>
       <Link href={("/classificados/" + r.listing_id) as any} style={ui.link}>{r.listing_title}</Link>
       <Text style={ui.text}>{d(r.starts_at)} → {d(r.ends_at)} · {formatPrice(r.proposed_price)}</Text>
-      <Text style={ui.label}>{RENTAL_STATUS_LABELS[r.status as RentalStatus] ?? r.status}</Text>
-      <Text style={ui.muted}>{role === "owner" ? "Pedido de" : "Dono"}: {r.other_name}</Text>
+      <Text style={ui.label}>{tc(RENTAL_STATUS_LABELS[r.status as RentalStatus] ?? r.status)}</Text>
+      <Text style={ui.muted}>{role === "owner" ? t("ls.rent.from", { name: r.other_name }) : t("ls.rent.owner", { name: r.other_name })}</Text>
       {!!r.message && <Text style={ui.text}>«{r.message}»</Text>}
       {role === "owner" && r.status === "pending" && <>
-        <Text style={ui.muted}>Ao aceitar, paga {pct}% de comissão sobre o valor ({formatPrice(commissionFor(r.proposed_price, pct))}) em «Comissões».</Text>
-        <Button title="Aceitar" onPress={() => void act(() => respondRentalRequest(supabase(), r.id, true), "Pedido aceite. A comissão está em «Comissões».")} />
-        <Button title="Recusar" variant="danger" onPress={() => void act(() => respondRentalRequest(supabase(), r.id, false), "Pedido recusado.")} />
+        <Text style={ui.muted}>{t("ls.rent.commission", { pct, amount: formatPrice(commissionFor(r.proposed_price, pct)) })}</Text>
+        <Button title={t("ls.accept")} onPress={() => void act(() => respondRentalRequest(supabase(), r.id, true), t("ls.rent.accepted"))} />
+        <Button title={t("ls.decline")} variant="danger" onPress={() => void act(() => respondRentalRequest(supabase(), r.id, false), t("ls.rent.declined"))} />
       </>}
-      {role === "renter" && ["pending", "accepted"].includes(r.status) && <Button title="Cancelar" variant="secondary" onPress={() => Alert.alert("Cancelar este pedido?", "", [{ text: "Não" }, { text: "Sim", onPress: () => void act(() => cancelRentalRequest(supabase(), r.id), "Pedido cancelado.") }])} />}
+      {role === "renter" && ["pending", "accepted"].includes(r.status) && <Button title={t("common.cancel")} variant="secondary" onPress={() => Alert.alert(t("ls.rent.cancel_q"), "", [{ text: t("ls.no") }, { text: t("ls.yes"), onPress: () => void act(() => cancelRentalRequest(supabase(), r.id), t("ls.rent.cancelled")) }])} />}
     </View>)}
   </ScrollView>;
 }

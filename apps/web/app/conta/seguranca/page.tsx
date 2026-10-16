@@ -1,11 +1,13 @@
 "use client";
 import { FormEvent, useEffect, useState } from "react";
-import { listTotpFactors, startTotpEnrollment, verifyTotp, disableTotp, mfaRequired, mfaErrorMessage, formatTotpSecret,
+import { listTotpFactors, startTotpEnrollment, verifyTotp, disableTotp, mfaRequired, mfaErrorIn, formatTotpSecret,
   MFA_STEPS, type MfaFactor, type MfaEnrollment } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../../lib/supabase";
+import { useT, formatDateIn } from "../../../lib/i18n";
 import { MfaGate, MfaPrompt, TotpCodeInput } from "../../../components/Mfa";
 
 function Security() {
+  const { lang, t, tc } = useT();
   const [factor, setFactor] = useState<MfaFactor | null | undefined>(undefined);
   const [enroll, setEnroll] = useState<MfaEnrollment | null>(null);
   const [code, setCode] = useState(""); const [copied, setCopied] = useState(false);
@@ -14,7 +16,7 @@ function Security() {
 
   async function load() {
     const r = await listTotpFactors(supabase());
-    if (r.error) setError(mfaErrorMessage(r.error));
+    if (r.error) setError(mfaErrorIn(r.error, lang));
     setFactor(r.data.find(f => f.status === "verified") ?? null);
   }
   useEffect(() => { void load(); }, []);
@@ -23,7 +25,7 @@ function Security() {
     setBusy(true); setError(""); setNotice(""); setCopied(false);
     const r = await startTotpEnrollment(supabase());
     setBusy(false);
-    if (r.error || !r.data) { setError(mfaErrorMessage(r.error)); return; }
+    if (r.error || !r.data) { setError(mfaErrorIn(r.error, lang)); return; }
     setEnroll(r.data); setCode("");
   }
   async function confirm(e: FormEvent) {
@@ -31,9 +33,9 @@ function Security() {
     setBusy(true); setError("");
     const r = await verifyTotp(supabase(), enroll.factorId, code);
     setBusy(false);
-    if (r.error) { setError(mfaErrorMessage(r.error)); setCode(""); return; }
+    if (r.error) { setError(mfaErrorIn(r.error, lang)); setCode(""); return; }
     setEnroll(null); setCode("");
-    setNotice("✔ Pronto! A entrada em dois passos está ligada. Da próxima vez que entrar, vamos pedir o código da APP autenticadora.");
+    setNotice("✔ " + t("sv.mfa_on_done"));
     await load();
   }
   async function cancelEnroll() {
@@ -42,11 +44,11 @@ function Security() {
   }
   async function copy() {
     if (!enroll) return;
-    try { await navigator.clipboard.writeText(enroll.secret); setCopied(true); } catch { setError("Não foi possível copiar. Escreva a chave à mão."); }
+    try { await navigator.clipboard.writeText(enroll.secret); setCopied(true); } catch { setError(t("sv.mfa_copy_fail")); }
   }
   async function turnOff() {
     if (!factor) return;
-    if (!window.confirm("Desligar a entrada em dois passos? A sua conta fica menos protegida: basta a palavra-passe para entrar.")) return;
+    if (!window.confirm(t("sv.mfa_off_q"))) return;
     setError(""); setNotice("");
     // Para desligar, a sessão tem de estar confirmada com o código (nível 2).
     if (await mfaRequired(supabase())) { setAskCode(true); return; }
@@ -57,52 +59,53 @@ function Security() {
     setAskCode(false); setBusy(true);
     const r = await disableTotp(supabase(), factor.id);
     setBusy(false);
-    if (r.error) { setError(mfaErrorMessage(r.error)); return; }
-    setNotice("A entrada em dois passos foi desligada."); await load();
+    if (r.error) { setError(mfaErrorIn(r.error, lang)); return; }
+    setNotice(t("sv.mfa_off_done")); await load();
   }
 
   return <main className="stack" style={{ maxWidth: 640 }}>
-    <a href="/conta">← A sua conta</a>
-    <h1>🔐 Entrar em dois passos</h1>
-    <p style={{ margin: 0 }}>Proteja a sua conta: além da palavra-passe, para entrar é preciso um código de 6 algarismos que muda a cada 30 segundos, mostrado por uma APP no seu telemóvel. Mesmo que alguém descubra a palavra-passe, não consegue entrar sem o seu telemóvel.</p>
+    <a href="/conta">← {t("sv.your_account")}</a>
+    <h1>🔐 {t("sv.mfa_title")}</h1>
+    <p style={{ margin: 0 }}>{t("sv.mfa_intro")}</p>
     {notice && <p className="ok" role="status">{notice}</p>}
-    {factor === undefined ? <p>A carregar…</p> : factor ? <section className="card">
-      <p className="ok" style={{ margin: 0 }}>✔ Ligado</p>
-      <p style={{ margin: 0 }}>A entrada em dois passos está ligada{factor.created_at ? ` desde ${new Date(factor.created_at).toLocaleDateString("pt-AO")}` : ""}. Ao entrar, vamos pedir o código da APP autenticadora.</p>
-      {askCode ? <MfaPrompt title="Confirme com o código para desligar" onDone={() => void doTurnOff()} onCancel={() => setAskCode(false)} />
-        : <div className="row"><button type="button" className="danger" disabled={busy} onClick={turnOff}>{busy ? "Aguarde…" : "Desligar"}</button></div>}
+    {factor === undefined ? <p>{t("common.loading")}</p> : factor ? <section className="card">
+      <p className="ok" style={{ margin: 0 }}>✔ {t("sv.mfa_on")}</p>
+      <p style={{ margin: 0 }}>{factor.created_at ? t("sv.mfa_on_since", { date: formatDateIn(factor.created_at, lang) }) : t("sv.mfa_on_text")} {t("sv.mfa_on_hint")}</p>
+      {askCode ? <MfaPrompt title={t("sv.mfa_confirm_off")} onDone={() => void doTurnOff()} onCancel={() => setAskCode(false)} />
+        : <div className="row"><button type="button" className="danger" disabled={busy} onClick={turnOff}>{busy ? t("sv.wait") : t("sv.mfa_turn_off")}</button></div>}
       {error && <p className="error" role="alert">{error}</p>}
     </section> : enroll ? <section className="card">
-      <h2 style={{ margin: 0 }}>Ligar a APP autenticadora</h2>
-      <ol style={{ margin: 0, paddingLeft: 22 }}>{MFA_STEPS.map(s => <li key={s}>{s}</li>)}</ol>
-      <img className="totp-qr" src={enroll.qrCode} alt="Código QR para ler com a APP autenticadora" />
-      <p style={{ margin: 0 }}>Não consegue ler o código QR? Na APP escolha «Introduzir chave» e escreva esta chave:</p>
+      <h2 style={{ margin: 0 }}>{t("sv.mfa_link_app")}</h2>
+      <ol style={{ margin: 0, paddingLeft: 22 }}>{MFA_STEPS.map(s => <li key={s}>{tc(s)}</li>)}</ol>
+      <img className="totp-qr" src={enroll.qrCode} alt={t("sv.mfa_qr_alt")} />
+      <p style={{ margin: 0 }}>{t("sv.mfa_no_qr")}</p>
       <div className="row">
-        <code className="totp-secret" aria-label="Chave para escrever na APP">{formatTotpSecret(enroll.secret)}</code>
-        <button type="button" className="secondary" onClick={copy}>{copied ? "✔ Copiada" : "📋 Copiar a chave"}</button>
+        <code className="totp-secret" aria-label={t("sv.mfa_key_aria")}>{formatTotpSecret(enroll.secret)}</code>
+        <button type="button" className="secondary" onClick={copy}>{copied ? "✔ " + t("sv.mfa_copied") : "📋 " + t("sv.mfa_copy")}</button>
       </div>
       <form className="stack" onSubmit={confirm}>
-        <TotpCodeInput value={code} onChange={setCode} label="Código de 6 algarismos que a APP mostra" />
+        <TotpCodeInput value={code} onChange={setCode} label={t("sv.mfa_code_label")} />
         {error && <p className="error" role="alert">{error}</p>}
         <div className="row">
-          <button type="submit" disabled={busy || code.length !== 6}>{busy ? "A confirmar…" : "Confirmar e ligar"}</button>
-          <button type="button" className="secondary" onClick={cancelEnroll}>Cancelar</button>
+          <button type="submit" disabled={busy || code.length !== 6}>{busy ? t("sv.rf_confirming") : t("sv.mfa_confirm_on")}</button>
+          <button type="button" className="secondary" onClick={cancelEnroll}>{t("common.cancel")}</button>
         </div>
       </form>
     </section> : <section className="card">
-      <p style={{ margin: 0 }}><strong>Está desligada.</strong> Como ligar:</p>
-      <ol style={{ margin: 0, paddingLeft: 22 }}>{MFA_STEPS.map(s => <li key={s}>{s}</li>)}</ol>
-      <p style={{ margin: 0 }}>⚠️ Se perder o telemóvel ou apagar a APP, deixa de conseguir entrar sozinho: terá de falar com a administração.</p>
+      <p style={{ margin: 0 }}><strong>{t("sv.mfa_off")}</strong> {t("sv.mfa_how")}</p>
+      <ol style={{ margin: 0, paddingLeft: 22 }}>{MFA_STEPS.map(s => <li key={s}>{tc(s)}</li>)}</ol>
+      <p style={{ margin: 0 }}>⚠️ {t("sv.mfa_lose_warn")}</p>
       {error && <p className="error" role="alert">{error}</p>}
-      <div className="row"><button type="button" disabled={busy} onClick={start}>{busy ? "Aguarde…" : "Ligar"}</button></div>
+      <div className="row"><button type="button" disabled={busy} onClick={start}>{busy ? t("sv.wait") : t("sv.mfa_turn_on")}</button></div>
     </section>}
   </main>;
 }
 
 export default function SegurancaPage() {
+  const { t } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined);
   useEffect(() => { void currentUserId().then(setUid, () => setUid(null)); }, []);
-  if (uid === undefined) return <main><p>A carregar…</p></main>;
-  if (!uid) return <main><a href="/conta">← A sua conta</a><h1>🔐 Entrar em dois passos</h1><p><a href="/conta/login?voltar=/conta/seguranca">Inicie sessão</a> para proteger a sua conta.</p></main>;
-  return <MfaGate intro="Esta conta tem a entrada em dois passos ligada. Para mudar estas definições, escreva primeiro o código da APP autenticadora."><Security /></MfaGate>;
+  if (uid === undefined) return <main><p>{t("common.loading")}</p></main>;
+  if (!uid) return <main><a href="/conta">← {t("sv.your_account")}</a><h1>🔐 {t("sv.mfa_title")}</h1><p><a href="/conta/login?voltar=/conta/seguranca">{t("sv.login_link")}</a> {t("sv.mfa_login_b")}</p></main>;
+  return <MfaGate intro={t("sv.mfa_gate_intro")}><Security /></MfaGate>;
 }

@@ -2,24 +2,26 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { listMyClassifiedListings, deleteClassifiedListing, updateClassifiedStatus, publishClassifiedListing, removeClassifiedMedia,
-  formatPrice, friendlyError, STATUS_LABELS, myOfferCounts, saleModeBadges, listingPriceLabel, formatRef, listMyBoosts, getPlatformSettings, type MyBoost, type PlatformSettings } from "@huambo-online/core";
+  formatPrice, friendlyErrorIn, STATUS_LABELS, myOfferCounts, saleModeBadges, listingPriceLabel, formatRef, listMyBoosts, getPlatformSettings, type MyBoost, type PlatformSettings } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { DealCloser } from "../../components/Reputation";
 import { LiteImg } from "../../components/LiteImg";
 import { BoostBox } from "../../components/Boosts";
+import { useT } from "../../lib/i18n";
 
 function MeusAnuncios() {
   const params = useSearchParams();
+  const { lang, t, tc } = useT();
   const [items, setItems] = useState<any[] | null>(null);
-  const [error, setError] = useState(params.get("erro") ? "O anúncio foi guardado como rascunho mas não foi publicado: " + params.get("erro") : "");
+  const [error, setError] = useState(params.get("erro") ? t("ls.saved_as_draft") + " " + params.get("erro") : "");
   const [busy, setBusy] = useState(""); const [notice, setNotice] = useState(""); const [offers, setOffers] = useState<Record<string, number>>({});
   const [uid, setUid] = useState(""); const [boosts, setBoosts] = useState<MyBoost[]>([]); const [settings, setSettings] = useState<PlatformSettings | null>(null);
 
   async function load() {
     const uid = await currentUserId();
-    if (!uid) { setError("Inicie sessão para ver os seus anúncios."); setItems([]); return; }
+    if (!uid) { setError(t("ls.login_to_see_listings")); setItems([]); return; }
     const r = await listMyClassifiedListings(supabase(), uid);
-    if (r.error) setError(friendlyError(r.error)); setItems(r.data ?? []);
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); setItems(r.data ?? []);
     setOffers((await myOfferCounts(supabase())).data);
     setUid(uid);
     const [b, s] = await Promise.all([listMyBoosts(supabase()), getPlatformSettings(supabase())]); setBoosts(b.data); setSettings(s.data);
@@ -30,35 +32,36 @@ function MeusAnuncios() {
     setBusy(id); setError("");
     const r = await fn();
     setBusy("");
-    if (r.error) setError(friendlyError(r.error)); else await load();
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else await load();
   }
 
   return <main className="stack">
     <a href="/">← Huambo Online</a>
-    <h1>Os meus anúncios</h1>
-    <a className="btn secondary" href="/conta/estatisticas" style={{ justifySelf: "start" }}>📊 Ver estatísticas: vistas, guardados e contactos</a>
-    <a className="btn" href="/classificados/publicar">+ Publicar anúncio</a>
+    <h1>{t("ft.my_ads")}</h1>
+    <a className="btn secondary" href="/conta/estatisticas" style={{ justifySelf: "start" }}>📊 {t("ls.see_stats")}</a>
+    <a className="btn" href="/classificados/publicar">+ {t("ls.publish_listing")}</a>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
-    {items === null && <p>A carregar…</p>}
-    {items?.length === 0 && !error && <p>Ainda não publicou anúncios.</p>}
+    {items === null && <p>{t("common.loading")}</p>}
+    {items?.length === 0 && !error && <p>{t("ls.no_listings_yet")}</p>}
     {items?.map(x => <article key={x.id} className="card">
       {Array.isArray(x.media) && x.media[0] && <LiteImg className="thumb" src={x.media[0]} alt="" style={{ maxWidth: 240 }} />}
-      <strong style={{ fontSize: 20 }}>{x.title}</strong>{x.ref_no && <small className="muted">N.º {formatRef("listing", x.ref_no)}</small>}
-      <span><span className="badge">{STATUS_LABELS[x.status as keyof typeof STATUS_LABELS] ?? x.status}</span> · {listingPriceLabel(x)}{saleModeBadges(x).map(b => <span key={b}> · <span className="mode-badge">{b}</span></span>)}</span>
-      {offers[x.id] > 0 && <a href={"/classificados/" + x.id + "#propostas"} className="ok">💬 {offers[x.id]} proposta(s) à espera de resposta →</a>}
+      <strong style={{ fontSize: 20 }}>{x.title}</strong>{x.ref_no && <small className="muted">{t("ls.no_short")} {formatRef("listing", x.ref_no)}</small>}
+      <span><span className="badge">{tc(STATUS_LABELS[x.status as keyof typeof STATUS_LABELS] ?? x.status)}</span> · {tc(listingPriceLabel(x))}{saleModeBadges(x).map(b => <span key={b}> · <span className="mode-badge">{tc(b)}</span></span>)}</span>
+      {offers[x.id] > 0 && <a href={"/classificados/" + x.id + "#propostas"} className="ok">💬 {t("ls.offers_waiting", { n: offers[x.id] })} →</a>}
       {uid && <BoostBox listing={x} uid={uid} boosts={boosts} settings={settings} onDone={msg => { setNotice(msg); void load(); }} />}
-      {x.deal_with && <span>🤝 Negócio registado — <a href="/avaliacoes">avaliar</a></span>}
+      {x.deal_with && <span>🤝 {t("ls.deal_registered")} — <a href="/avaliacoes">{t("ls.rate_lc")}</a></span>}
       <div className="row">
-        <a className="btn secondary" href={"/classificados/" + x.id}>Ver</a>
-        <a className="btn secondary" href={`/classificados/${x.id}/editar`}>Editar</a>
+        <a className="btn secondary" href={"/classificados/" + x.id}>{t("ls.view")}</a>
+        <a className="btn secondary" href={`/classificados/${x.id}/editar`}>{t("common.edit")}</a>
         {x.status === "published"
-          ? <button className="secondary" disabled={busy === x.id} onClick={() => act(x.id, () => updateClassifiedStatus(supabase(), x.id, "paused"))}>Pausar</button>
-          : <button disabled={busy === x.id} onClick={() => act(x.id, () => publishClassifiedListing(supabase(), x.id))}>Publicar</button>}
+          ? <button className="secondary" disabled={busy === x.id} onClick={() => act(x.id, () => updateClassifiedStatus(supabase(), x.id, "paused"))}>{t("ls.pause")}</button>
+          : <button disabled={busy === x.id} onClick={() => act(x.id, () => publishClassifiedListing(supabase(), x.id))}>{t("ls.publish")}</button>}
         {["published", "sold", "rented", "closed"].includes(x.status) && <DealCloser listing={x} onDone={msg => { setNotice(msg); void load(); }} />}
-        <button className="danger" disabled={busy === x.id} onClick={() => { if (confirm("Apagar este anúncio? Não pode ser desfeito.")) void act(x.id, async () => { const r = await deleteClassifiedListing(supabase(), x.id); if (!r.error) await removeClassifiedMedia(supabase(), x.media ?? []); return r; }); }}>Apagar</button>
+        <button className="danger" disabled={busy === x.id} onClick={() => { if (confirm(t("ls.delete_listing_q"))) void act(x.id, async () => { const r = await deleteClassifiedListing(supabase(), x.id); if (!r.error) await removeClassifiedMedia(supabase(), x.media ?? []); return r; }); }}>{t("common.delete")}</button>
       </div>
     </article>)}
   </main>;
 }
-export default function Page() { return <Suspense fallback={<main><p>A carregar…</p></main>}><MeusAnuncios /></Suspense>; }
+function Loading() { const { t } = useT(); return <main><p>{t("common.loading")}</p></main>; }
+export default function Page() { return <Suspense fallback={<Loading />}><MeusAnuncios /></Suspense>; }

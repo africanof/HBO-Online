@@ -7,7 +7,7 @@ import { listMyDisputes, listOrders, openDispute, validateDispute, canOpenDisput
 import { supabase, currentUserId } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
-import { DisputeCard, EvidencePicker, uploadEvidence, type Evidence } from "../components/Disputes";
+import { DisputeCard, EvidencePicker, uploadEvidence, evidenceFail, type Evidence } from "../components/Disputes";
 import { ListingClaims } from "../components/Conformity";
 import { useT } from "../lib/i18n";
 
@@ -26,7 +26,7 @@ function NewDispute({ order, uid, onDone, onCancel }: { order: any; uid: string;
     const invalid = validateDispute(input, max); if (invalid) { setError(tc(invalid)); return; }
     setBusy(true); setError("");
     try {
-      const paths = await uploadEvidence(order.id, uid, photos);
+      const paths = await uploadEvidence(order.id, uid, photos, evidenceFail(t));
       const r = await openDispute(supabase(), order.id, { ...input, photos: paths });
       if (r.error) throw r.error;
       onDone();

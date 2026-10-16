@@ -1,16 +1,17 @@
 import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { Alert, Linking, ScrollView, Text, View } from "react-native";
-import { listTotpFactors, startTotpEnrollment, verifyTotp, disableTotp, mfaRequired, mfaErrorMessage, formatTotpSecret,
-  MFA_STEPS, type MfaEnrollment, type MfaFactor } from "@huambo-online/core";
+import { listTotpFactors, startTotpEnrollment, verifyTotp, disableTotp, mfaRequired, mfaErrorIn, formatTotpSecret,
+  MFA_STEPS, LANG_TAGS, type MfaEnrollment, type MfaFactor } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { C, ui } from "../../lib/ui";
 import { Button, Message } from "../../components/Ui";
 import { MfaPrompt, QrView, TotpCodeInput } from "../../components/Mfa";
+import { useT } from "../../lib/i18n";
 
 /** Entrar em dois passos: palavra-passe + código de 6 algarismos de uma APP autenticadora. */
 export default function SegurancaConta() {
-  const router = useRouter();
+  const router = useRouter(); const { t, tc, lang } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined);
   const [factor, setFactor] = useState<MfaFactor | null>(null); const [needCode, setNeedCode] = useState(false);
   const [enroll, setEnroll] = useState<MfaEnrollment | null>(null); const [code, setCode] = useState("");
@@ -19,7 +20,7 @@ export default function SegurancaConta() {
   async function load() {
     const c = supabase();
     const [f, need] = await Promise.all([listTotpFactors(c), mfaRequired(c)]);
-    if (f.error) setError(mfaErrorMessage(f.error));
+    if (f.error) setError(mfaErrorIn(f.error, lang));
     setFactor(f.data.find(x => x.status === "verified") ?? null); setNeedCode(need);
   }
   useFocusEffect(useCallback(() => { void currentUserId().then(id => { setUid(id); if (id) void load(); }); }, []));
@@ -28,9 +29,9 @@ export default function SegurancaConta() {
     setBusy(true); setError(""); setNotice(""); setCode("");
     try {
       const r = await startTotpEnrollment(supabase());
-      if (r.error || !r.data) throw r.error ?? new Error("Não foi possível começar.");
+      if (r.error || !r.data) throw r.error ?? new Error(t("sv.mfa_start_fail"));
       setEnroll(r.data);
-    } catch (e) { setError(mfaErrorMessage(e)); } finally { setBusy(false); }
+    } catch (e) { setError(mfaErrorIn(e, lang)); } finally { setBusy(false); }
   }
   async function confirm() {
     if (!enroll || busy) return;
@@ -38,8 +39,8 @@ export default function SegurancaConta() {
     try {
       const r = await verifyTotp(supabase(), enroll.factorId, code);
       if (r.error) throw r.error;
-      setEnroll(null); setCode(""); setNotice("Pronto! A partir de agora, ao entrar, pedimos também o código da APP autenticadora."); await load();
-    } catch (e) { setError(mfaErrorMessage(e)); setCode(""); } finally { setBusy(false); }
+      setEnroll(null); setCode(""); setNotice(t("sv.mfa_on_ok")); await load();
+    } catch (e) { setError(mfaErrorIn(e, lang)); setCode(""); } finally { setBusy(false); }
   }
   async function cancelEnroll() {
     const id = enroll?.factorId; setEnroll(null); setCode(""); setError("");
@@ -48,7 +49,7 @@ export default function SegurancaConta() {
   async function openApp() {
     if (!enroll) return;
     try { await Linking.openURL(enroll.uri); }
-    catch { setError("Não encontrámos uma APP autenticadora neste telemóvel. Instale uma (por exemplo Google Authenticator) ou escreva a chave à mão."); }
+    catch { setError(t("sv.mfa_no_app")); }
   }
   async function disable() {
     if (!factor) return;
@@ -58,56 +59,56 @@ export default function SegurancaConta() {
       if (await mfaRequired(c)) { setNeedCode(true); return; }
       const r = await disableTotp(c, factor.id);
       if (r.error) throw r.error;
-      setNotice("A entrada em dois passos foi desligada. Agora basta a palavra-passe para entrar."); await load();
-    } catch (e) { setError(mfaErrorMessage(e)); } finally { setBusy(false); }
+      setNotice(t("sv.mfa_off_ok")); await load();
+    } catch (e) { setError(mfaErrorIn(e, lang)); } finally { setBusy(false); }
   }
   function askDisable() {
-    Alert.alert("Desligar a entrada em dois passos?", "A sua conta fica menos protegida: quem souber a palavra-passe consegue entrar.", [
-      { text: "Não", style: "cancel" }, { text: "Desligar", style: "destructive", onPress: () => void disable() }]);
+    Alert.alert(t("sv.mfa_off_q"), t("sv.mfa_off_warn"), [
+      { text: t("sv.no"), style: "cancel" }, { text: t("sv.turn_off"), style: "destructive", onPress: () => void disable() }]);
   }
 
-  if (uid === undefined) return <ScrollView contentContainerStyle={ui.screen}><Text style={ui.text}>A carregar…</Text></ScrollView>;
-  if (!uid) return <ScrollView contentContainerStyle={ui.screen}><Text style={ui.h1}>🔐 Entrar em dois passos</Text><Button title="Entrar" onPress={() => router.push("/login")} /></ScrollView>;
+  if (uid === undefined) return <ScrollView contentContainerStyle={ui.screen}><Text style={ui.text}>{t("common.loading")}</Text></ScrollView>;
+  if (!uid) return <ScrollView contentContainerStyle={ui.screen}><Text style={ui.h1}>{t("sv.mfa_title")}</Text><Button title={t("auth.login")} onPress={() => router.push("/login")} /></ScrollView>;
 
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
-    <Link href="/conta" style={ui.link}>← A sua conta</Link>
-    <Text style={ui.h1}>🔐 Entrar em dois passos</Text>
-    <Text style={ui.text}>Além da palavra-passe, ao entrar pedimos um código de 6 algarismos que muda a cada 30 segundos numa APP autenticadora. Assim, mesmo que alguém descubra a sua palavra-passe, não consegue entrar.</Text>
+    <Link href="/conta" style={ui.link}>{t("sv.account_back")}</Link>
+    <Text style={ui.h1}>{t("sv.mfa_title")}</Text>
+    <Text style={ui.text}>{t("sv.mfa_intro")}</Text>
     <Message error={error} ok={notice} />
 
-    {needCode ? <MfaPrompt text="Esta conta já tem a entrada em dois passos ligada. Para mudar, escreva primeiro o código que a APP autenticadora mostra agora."
-      onDone={() => { setNeedCode(false); void load(); }} onCancel={() => router.replace("/conta")} cancelLabel="Voltar" />
+    {needCode ? <MfaPrompt text={t("sv.mfa_need_code")}
+      onDone={() => { setNeedCode(false); void load(); }} onCancel={() => router.replace("/conta")} cancelLabel={t("common.back")} />
 
     : factor ? <View style={ui.card}>
-      <Text style={[ui.h2, { color: C.green }]}>✔ Ligada</Text>
-      <Text style={ui.text}>Ao entrar, depois da palavra-passe, pedimos o código da APP autenticadora.</Text>
-      <Text style={ui.muted}>Ligada desde {new Date(factor.created_at).toLocaleDateString("pt-AO")}</Text>
-      <Text style={ui.muted}>⚠️ Se mudar de telemóvel, ligue a APP autenticadora no novo telemóvel antes de apagar a do antigo.</Text>
-      <Button title={busy ? "Aguarde…" : "Desligar"} variant="danger" disabled={busy} onPress={askDisable} />
+      <Text style={[ui.h2, { color: C.green }]}>{t("sv.mfa_on")}</Text>
+      <Text style={ui.text}>{t("sv.mfa_on_text")}</Text>
+      <Text style={ui.muted}>{t("sv.mfa_since", { date: new Date(factor.created_at).toLocaleDateString(LANG_TAGS[lang]) })}</Text>
+      <Text style={ui.muted}>{t("sv.mfa_phone_warn")}</Text>
+      <Button title={busy ? t("sv.wait") : t("sv.turn_off")} variant="danger" disabled={busy} onPress={askDisable} />
     </View>
 
     : enroll ? <View style={ui.card}>
-      <Text style={ui.h2}>Ligar a APP autenticadora</Text>
-      <Text style={ui.label}>Neste telemóvel</Text>
-      <Text style={ui.text}>Se a APP autenticadora está neste telemóvel, carregue no botão. Se não abrir, escreva a chave à mão na APP.</Text>
-      <Button title="📲 Abrir na APP autenticadora" onPress={() => void openApp()} />
-      <Text style={ui.label}>Chave para escrever à mão</Text>
+      <Text style={ui.h2}>{t("sv.mfa_link")}</Text>
+      <Text style={ui.label}>{t("sv.mfa_this_phone")}</Text>
+      <Text style={ui.text}>{t("sv.mfa_this_phone_text")}</Text>
+      <Button title={t("sv.mfa_open")} onPress={() => void openApp()} />
+      <Text style={ui.label}>{t("sv.mfa_key")}</Text>
       <Text selectable style={[ui.h2, { letterSpacing: 2, fontFamily: "monospace" }]}>{formatTotpSecret(enroll.secret)}</Text>
-      <Text style={ui.muted}>Toque sem largar na chave para a copiar. Na APP escolha «Chave baseada no tempo».</Text>
-      <Text style={ui.label}>Noutro telemóvel</Text>
-      <Text style={ui.text}>Leia este código QR com a APP autenticadora do outro telemóvel.</Text>
-      <QrView text={enroll.uri} label="Código QR para a APP autenticadora" />
-      <Text style={ui.label}>Escreva os 6 algarismos que a APP mostra</Text>
+      <Text style={ui.muted}>{t("sv.mfa_key_hint")}</Text>
+      <Text style={ui.label}>{t("sv.mfa_other_phone")}</Text>
+      <Text style={ui.text}>{t("sv.mfa_other_phone_text")}</Text>
+      <QrView text={enroll.uri} label={t("sv.mfa_qr")} />
+      <Text style={ui.label}>{t("sv.mfa_enter")}</Text>
       <TotpCodeInput value={code} onChangeText={setCode} onSubmit={() => void confirm()} />
-      <Button title={busy ? "A confirmar…" : "Confirmar e ligar"} disabled={busy || code.length !== 6} onPress={() => void confirm()} />
-      <Button title="Cancelar" variant="secondary" disabled={busy} onPress={() => void cancelEnroll()} />
+      <Button title={busy ? t("sv.confirming") : t("sv.mfa_confirm_on")} disabled={busy || code.length !== 6} onPress={() => void confirm()} />
+      <Button title={t("common.cancel")} variant="secondary" disabled={busy} onPress={() => void cancelEnroll()} />
     </View>
 
     : <View style={ui.card}>
-      <Text style={ui.h2}>Desligada</Text>
-      <Text style={ui.label}>Como funciona</Text>
-      {MFA_STEPS.map((s, i) => <Text key={i} style={ui.text}>{i + 1}. {s}</Text>)}
-      <Button title={busy ? "Aguarde…" : "Ligar"} disabled={busy} onPress={() => void start()} />
+      <Text style={ui.h2}>{t("sv.mfa_off")}</Text>
+      <Text style={ui.label}>{t("sv.how_it_works_plain")}</Text>
+      {MFA_STEPS.map((s, i) => <Text key={i} style={ui.text}>{i + 1}. {tc(s)}</Text>)}
+      <Button title={busy ? t("sv.wait") : t("sv.turn_on")} disabled={busy} onPress={() => void start()} />
     </View>}
   </ScrollView>;
 }

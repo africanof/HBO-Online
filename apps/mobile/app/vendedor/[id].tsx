@@ -49,7 +49,7 @@ export default function Vendedor() {
     <FollowButton kind="seller" id={s.id} mine={me === s.id} />
     <TrustBadges userId={s.id} />
     <InspectedBadge info={store[s.id]} big />
-    <StatsBlock rows={userStatsRows(stats).map(r => ({ label: tc(r.label), value: tc(r.value) }))} />
+    <StatsBlock rows={userStatsRows(stats)} />
     <PromoShelf kind="store" id={s.id} />
     <Text style={ui.h2}>{t("ls.seller.listings", { n: listings.length })}</Text>
     {listings.length === 0 && <Text style={ui.text}>{t("ls.seller.no_listings")}</Text>}

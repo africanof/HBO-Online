@@ -7,17 +7,17 @@ import { useT } from "../lib/i18n";
 export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = "📦", video, featured }: {
   href: string; media?: unknown; title: string; price: string; meta?: string; tag?: string; tagRed?: boolean; icon?: string; video?: boolean; featured?: boolean;
 }) {
-  const { t } = useT();
+  const { t, tc } = useT();
   const photo = firstPhoto(media);
   return <a href={href} className={"item" + (featured ? " featured" : "")}>
     <div className="item-img">
       {photo ? <LiteImg src={photo} alt="" loading="lazy" placeholder={icon} /> : <span aria-hidden>{icon}</span>}
-      {tag && <span className={"item-tag" + (tagRed ? " red" : "")}>{tag}</span>}
+      {tag && <span className={"item-tag" + (tagRed ? " red" : "")}>{tc(tag)}</span>}
       {video && <span className="item-video">▶ {t("promo.video")}</span>}
       {featured && <span className="item-feat">⭐ {t("ls.featured")}</span>}
     </div>
     <span className="item-title">{title}</span>
-    <span className="item-price">{price}</span>
+    <span className="item-price">{tc(price)}</span>
     {meta && <span className="item-meta">{meta}</span>}
   </a>;
 }

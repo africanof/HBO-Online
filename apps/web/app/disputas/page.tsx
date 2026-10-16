@@ -24,7 +24,7 @@ function NewDispute({ order, uid, onDone }: { order: any; uid: string; onDone: (
     const invalid = validateDispute(input, max); if (invalid) { setError(tc(invalid)); return; }
     setBusy(true); setError("");
     try {
-      const photos = await uploadEvidence(order.id, uid, files);
+      const photos = await uploadEvidence(order.id, uid, files, t("sh.dc.photo_fail"));
       const r = await openDispute(supabase(), order.id, { ...input, photos });
       if (r.error) throw r.error;
       onDone();

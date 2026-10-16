@@ -1,16 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import { escrowBuyerStep, escrowSellerStep, canPayOrder, canConfirmReceived, submitOrderPayment, requestPaymentReference, confirmOrderReceived,
-  uploadPaymentProof, validateDocument, paymentProofUrl, formatPrice, formatRef, friendlyError, timeLeftText, ESCROW_STATUS_LABELS, ORDER_PAY_METHOD_LABELS,
+  uploadPaymentProof, validateDocument, paymentProofUrl, formatPrice, formatRef, friendlyErrorIn, LANG_TAGS, timeLeftText, ESCROW_STATUS_LABELS, ORDER_PAY_METHOD_LABELS,
   getProtectedSettings, updateProtectedSettings, getEscrowSummary, listOrderPaymentsForAdmin, decideOrderPayment, listPayoutsForAdmin, startPayoutBatch,
   markPayoutsPaid, rejectPayout, releaseEscrowAsAdmin, payoutsCsv, payoutsTotal, payoutDaysText, PAYOUT_STATUS_LABELS, PAYOUT_METHOD_LABELS,
   type ProtectedOrderFields, type OrderPayMethod, type PlatformSettings, type ProtectedSettings, type EscrowSummary, type AdminOrderPayment,
   type AdminPayout, type PayoutStatus } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { PaymentDetails } from "./Plans";
+import { useT } from "../lib/i18n";
 
 /** Pagar uma encomenda protegida: referência ProxyPay (automático) ou transferência/Express com comprovativo. */
 function PayOrder({ order, uid, settings, provider, onDone }: { order: ProtectedOrderFields; uid: string; settings: PlatformSettings | null; provider: "manual" | "proxypay"; onDone: (msg: string) => void }) {
+  const { lang, t, tc } = useT();
   const [method, setMethod] = useState<OrderPayMethod>("multicaixa_express");
   const [reference, setReference] = useState(""); const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
@@ -21,41 +23,41 @@ function PayOrder({ order, uid, settings, provider, onDone }: { order: Protected
     setBusy(true); setError("");
     const r = await requestPaymentReference(supabase(), order.id);
     setBusy(false);
-    if (r.error) setError(friendlyError(r.error)); else setRef(r.data);
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else setRef(r.data);
   }
   async function send() {
-    if (!reference.trim() && !file) { setError("Escreva a referência do pagamento ou junte o comprovativo."); return; }
-    if (file) { const bad = validateDocument({ size: file.size, type: file.type }); if (bad) { setError(bad); return; } }
+    if (!reference.trim() && !file) { setError(t("sh.pp.need_ref")); return; }
+    if (file) { const bad = validateDocument({ size: file.size, type: file.type }); if (bad) { setError(tc(bad)); return; } }
     setBusy(true); setError("");
     try {
       let proof: string | null = null;
-      if (file) { const up = await uploadPaymentProof(supabase(), uid, file, file.name, file.type); if (up.error || !up.data) throw up.error ?? new Error("Não foi possível enviar o comprovativo."); proof = up.data; }
+      if (file) { const up = await uploadPaymentProof(supabase(), uid, file, file.name, file.type); if (up.error || !up.data) throw up.error ?? new Error(t("sh.proof_fail")); proof = up.data; }
       const r = await submitOrderPayment(supabase(), order.id, { method, reference, proofPath: proof });
       if (r.error) throw r.error;
-      onDone("Comprovativo enviado. Vamos confirmar e avisá-lo; o vendedor só envia depois disso.");
-    } catch (e) { setError(friendlyError(e)); } finally { setBusy(false); }
+      onDone(t("sh.pp.proof_sent"));
+    } catch (e) { setError(friendlyErrorIn(e, lang)); } finally { setBusy(false); }
   }
   if (provider === "proxypay") return <div className="stack" style={{ gap: 8 }}>
     {ref ? <dl className="facts card" style={{ margin: 0 }}>
-      <dt>Entidade</dt><dd><strong style={{ fontSize: 22 }}>{ref.entity}</strong></dd>
-      <dt>Referência</dt><dd><strong style={{ fontSize: 22 }}>{ref.reference.replace(/(\d{3})(?=\d)/g, "$1 ")}</strong></dd>
-      <dt>Montante</dt><dd><strong style={{ fontSize: 22 }}>{formatPrice(ref.amount)}</strong></dd>
-      {ref.expires_at && <><dt>Válida</dt><dd>{timeLeftText(ref.expires_at)}</dd></>}
-    </dl> : <button disabled={busy} onClick={getReference} style={{ justifySelf: "start" }}>{busy ? "A gerar…" : "🔢 Gerar referência de pagamento"}</button>}
-    <small>Pague em «Pagamentos → Pagamento por referência» no Multicaixa Express, num ATM ou no banco. A confirmação chega sozinha.</small>
+      <dt>{t("sh.pp.entity")}</dt><dd><strong style={{ fontSize: 22 }}>{ref.entity}</strong></dd>
+      <dt>{t("sh.pp.reference")}</dt><dd><strong style={{ fontSize: 22 }}>{ref.reference.replace(/(\d{3})(?=\d)/g, "$1 ")}</strong></dd>
+      <dt>{t("sh.pp.amount")}</dt><dd><strong style={{ fontSize: 22 }}>{formatPrice(ref.amount)}</strong></dd>
+      {ref.expires_at && <><dt>{t("sh.pp.valid")}</dt><dd>{tc(timeLeftText(ref.expires_at))}</dd></>}
+    </dl> : <button disabled={busy} onClick={getReference} style={{ justifySelf: "start" }}>{busy ? t("sh.pp.generating") : "🔢 " + t("sh.pp.generate")}</button>}
+    <small>{t("sh.pp.ref_hint")}</small>
     {error && <p className="error" role="alert">{error}</p>}
   </div>;
   return <div className="stack" style={{ gap: 10 }}>
-    <strong>1. Pague {formatPrice(order.total)} para o Huambo Online</strong>
+    <strong>1. {t("sh.pp.pay_to_ho", { amount: formatPrice(order.total) })}</strong>
     <PaymentDetails s={settings} />
-    {code && <small>No descritivo escreva <strong>{code}</strong>.</small>}
-    <strong>2. Diga-nos como pagou</strong>
-    <div className="row" role="radiogroup" aria-label="Como pagou">{(Object.keys(ORDER_PAY_METHOD_LABELS) as OrderPayMethod[]).map(m => <button key={m} type="button" role="radio" aria-checked={method === m} className={method === m ? "" : "secondary"} onClick={() => setMethod(m)}>{ORDER_PAY_METHOD_LABELS[m]}</button>)}</div>
-    <label>Referência ou número da operação<input value={reference} onChange={e => setReference(e.target.value)} maxLength={120} placeholder="Ex.: 1234 5678" /></label>
-    <label>Comprovativo (fotografia ou PDF, opcional se escreveu a referência)<input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label>
-    <small>🔒 O comprovativo fica privado: só a administração o vê.</small>
+    {code && <small>{t("sh.pp.descr")} <strong>{code}</strong>.</small>}
+    <strong>2. {t("sh.how_paid")}</strong>
+    <div className="row" role="radiogroup" aria-label={t("sh.how_paid_short")}>{(Object.keys(ORDER_PAY_METHOD_LABELS) as OrderPayMethod[]).map(m => <button key={m} type="button" role="radio" aria-checked={method === m} className={method === m ? "" : "secondary"} onClick={() => setMethod(m)}>{tc(ORDER_PAY_METHOD_LABELS[m])}</button>)}</div>
+    <label>{t("sh.reference")}<input value={reference} onChange={e => setReference(e.target.value)} maxLength={120} placeholder={t("sh.reference_ph")} /></label>
+    <label>{t("sh.proof_label")}<input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label>
+    <small>🔒 {t("sh.proof_private")}</small>
     {error && <p className="error" role="alert">{error}</p>}
-    <button disabled={busy} onClick={send} style={{ justifySelf: "start" }}>{busy ? "A enviar…" : "Enviar comprovativo"}</button>
+    <button disabled={busy} onClick={send} style={{ justifySelf: "start" }}>{busy ? t("sh.sending") : t("sh.pp.send_proof")}</button>
   </div>;
 }
 
@@ -63,30 +65,32 @@ function PayOrder({ order, uid, settings, provider, onDone }: { order: Protected
 export function OrderEscrowPanel({ order, role, uid, settings, provider, hasActiveDispute, onChanged }: {
   order: ProtectedOrderFields; role: "buyer" | "seller"; uid: string; settings: PlatformSettings | null; provider: "manual" | "proxypay";
   hasActiveDispute: boolean; onChanged: (msg: string, error?: boolean) => void }) {
+  const { lang, t, tc } = useT();
   const [paying, setPaying] = useState(false); const [busy, setBusy] = useState(false);
   if (!order.protected || !order.escrow_status) return null;
   const step = role === "buyer" ? escrowBuyerStep(order, hasActiveDispute) : escrowSellerStep(order);
   async function confirmReceived() {
-    if (!confirm("Confirma que recebeu a encomenda e está tudo bem? O pagamento passa para o vendedor e já não pode pedir ao Huambo Online para o guardar.")) return;
+    if (!confirm(t("sh.pp.confirm_q"))) return;
     setBusy(true);
     const r = await confirmOrderReceived(supabase(), order.id);
     setBusy(false);
-    if (r.error) onChanged(friendlyError(r.error), true); else onChanged("Obrigado! O pagamento foi entregue ao vendedor. Não se esqueça de o avaliar.");
+    if (r.error) onChanged(friendlyErrorIn(r.error, lang), true); else onChanged(t("sh.pp.thanks"));
   }
   return <div className="card stack" style={{ gap: 8, borderWidth: 2 }}>
-    <strong>{order.status === "cancelled" && order.escrow_status === "awaiting_payment" ? "🛡️ Pagamento protegido — cancelada" : ESCROW_STATUS_LABELS[order.escrow_status]}</strong>
-    <span>{step}</span>
-    {role === "buyer" && order.payment?.status === "rejected" && order.payment.admin_note && order.escrow_status === "awaiting_payment" && <span className="error">Último comprovativo não confirmado: {order.payment.admin_note}</span>}
+    <strong>{order.status === "cancelled" && order.escrow_status === "awaiting_payment" ? "🛡️ " + t("sh.pp.cancelled") : tc(ESCROW_STATUS_LABELS[order.escrow_status])}</strong>
+    <span>{tc(step)}</span>
+    {role === "buyer" && order.payment?.status === "rejected" && order.payment.admin_note && order.escrow_status === "awaiting_payment" && <span className="error">{t("sh.pp.last_rejected")}: {order.payment.admin_note}</span>}
     {role === "buyer" && canPayOrder(order) && (paying || provider === "proxypay"
       ? <PayOrder order={order} uid={uid} settings={settings} provider={provider} onDone={m => { setPaying(false); onChanged(m); }} />
-      : <button style={{ justifySelf: "start" }} onClick={() => setPaying(true)}>💳 Pagar agora</button>)}
-    {role === "buyer" && canConfirmReceived(order, hasActiveDispute) && <button disabled={busy} style={{ justifySelf: "start" }} onClick={confirmReceived}>✅ Confirmar receção</button>}
-    {role === "seller" && order.escrow_status === "released" && <a href="/conta/saldo">💰 Ver o meu saldo →</a>}
+      : <button style={{ justifySelf: "start" }} onClick={() => setPaying(true)}>💳 {t("sh.pay_now")}</button>)}
+    {role === "buyer" && canConfirmReceived(order, hasActiveDispute) && <button disabled={busy} style={{ justifySelf: "start" }} onClick={confirmReceived}>✅ {t("sh.pp.confirm_received")}</button>}
+    {role === "seller" && order.escrow_status === "released" && <a href="/conta/saldo">💰 {t("sh.pp.see_balance")} →</a>}
   </div>;
 }
 
 /** Administração do pagamento protegido: definições, pagamentos por confirmar e levantamentos. */
 export function AdminProtected() {
+  const { lang, t, tc } = useT();
   const [s, setS] = useState<ProtectedSettings | null>(null); const [sum, setSum] = useState<EscrowSummary | null>(null);
   const [payments, setPayments] = useState<AdminOrderPayment[]>([]); const [payStatus, setPayStatus] = useState<"pending" | "confirmed" | "rejected" | "">("pending");
   const [payouts, setPayouts] = useState<AdminPayout[]>([]); const [poStatus, setPoStatus] = useState<PayoutStatus | "">("requested");
@@ -94,134 +98,134 @@ export function AdminProtected() {
   async function load() {
     const [a, b, c, d] = await Promise.all([getProtectedSettings(supabase()), getEscrowSummary(supabase()), listOrderPaymentsForAdmin(supabase(), payStatus), listPayoutsForAdmin(supabase(), poStatus)]);
     setS(a.data); setSum(b.data); setPayments(c.data); setPayouts(d.data);
-    const err = a.error ?? b.error ?? c.error ?? d.error; if (err) setError(friendlyError(err));
+    const err = a.error ?? b.error ?? c.error ?? d.error; if (err) setError(friendlyErrorIn(err, lang));
   }
   useEffect(() => { void load(); }, [payStatus, poStatus]);
-  const ok = async (p: PromiseLike<{ error: any }>, msg: string) => { setError(""); setNotice(""); const r = await p; if (r.error) setError(friendlyError(r.error)); else { setNotice(msg); await load(); } };
+  const ok = async (p: PromiseLike<{ error: any }>, msg: string) => { setError(""); setNotice(""); const r = await p; if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(msg); await load(); } };
   async function saveSettings(e: React.FormEvent) {
     e.preventDefault(); if (!s) return;
     const num = (v: unknown) => Number(String(v ?? "").replace(/\s/g, "").replace(",", "."));
     const fee = num(s.protected_fee_pct), days = Number(s.auto_release_days), hours = Number(s.payment_window_hours), min = num(s.payout_min_kz);
-    if (!(fee >= 0 && fee <= 20) || !Number.isInteger(days) || days < 1 || days > 30 || !Number.isInteger(hours) || hours < 1 || hours > 168 || !(min >= 0)) { setError("Verifique a comissão (0 a 20%), os dias (1 a 30), as horas (1 a 168) e o mínimo."); return; }
-    if (s.payment_provider === "proxypay" && !/^\d{3,6}$/.test(String(s.proxypay_entity ?? ""))) { setError("Escreva o número da Entidade dado pela ProxyPay."); return; }
-    if (!s.payout_weekdays?.length) { setError("Escolha pelo menos um dia de pagamentos."); return; }
+    if (!(fee >= 0 && fee <= 20) || !Number.isInteger(days) || days < 1 || days > 30 || !Number.isInteger(hours) || hours < 1 || hours > 168 || !(min >= 0)) { setError(t("sh.pa.check")); return; }
+    if (s.payment_provider === "proxypay" && !/^\d{3,6}$/.test(String(s.proxypay_entity ?? ""))) { setError(t("sh.pa.need_entity")); return; }
+    if (!s.payout_weekdays?.length) { setError(t("sh.pa.need_day")); return; }
     setBusy(true);
     await ok(updateProtectedSettings(supabase(), { protected_enabled: !!s.protected_enabled, payment_provider: s.payment_provider, proxypay_entity: s.proxypay_entity?.trim() || null,
-      protected_fee_pct: fee, auto_release_days: days, payment_window_hours: hours, payout_min_kz: min, payout_weekdays: s.payout_weekdays }), "Definições guardadas.");
+      protected_fee_pct: fee, auto_release_days: days, payment_window_hours: hours, payout_min_kz: min, payout_weekdays: s.payout_weekdays }), t("sh.pa.saved"));
     setBusy(false);
   }
   async function decide(p: AdminOrderPayment, confirmIt: boolean) {
-    const note = confirmIt ? "" : prompt("Porque não confirma? (o comprador vai ler)") ?? "";
+    const note = confirmIt ? "" : prompt(t("sh.pa.why_reject")) ?? "";
     if (!confirmIt && !note.trim()) return;
-    if (confirmIt && !confirm(`Confirma que recebeu ${formatPrice(p.amount)} de ${p.buyer_name} (${p.order_ref})? O vendedor é avisado para enviar.`)) return;
-    await ok(decideOrderPayment(supabase(), p.id, confirmIt, note), confirmIt ? "Pagamento confirmado: o dinheiro fica guardado e o vendedor foi avisado." : "Pagamento recusado.");
+    if (confirmIt && !confirm(t("sh.pa.confirm_q", { amount: formatPrice(p.amount), name: p.buyer_name, ref: p.order_ref }))) return;
+    await ok(decideOrderPayment(supabase(), p.id, confirmIt, note), confirmIt ? t("sh.pa.confirmed") : t("sh.pay_rejected"));
   }
-  async function proof(path: string) { const r = await paymentProofUrl(supabase(), path); if (r.data) window.open(r.data, "_blank", "noopener"); else setError(friendlyError(r.error)); }
+  async function proof(path: string) { const r = await paymentProofUrl(supabase(), path); if (r.data) window.open(r.data, "_blank", "noopener"); else setError(friendlyErrorIn(r.error, lang)); }
   function download(rows: AdminPayout[]) {
     const url = URL.createObjectURL(new Blob([payoutsCsv(rows)], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a"); a.href = url; a.download = `levantamentos-huambo-online-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   async function startBatch() {
-    if (!confirm("Juntar todos os pedidos novos num lote e descarregar o ficheiro para o banco?")) return;
+    if (!confirm(t("sh.pa.batch_q"))) return;
     setError(""); setNotice("");
     const r = await startPayoutBatch(supabase());
-    if (r.error) { setError(friendlyError(r.error)); return; }
+    if (r.error) { setError(friendlyErrorIn(r.error, lang)); return; }
     const list = await listPayoutsForAdmin(supabase(), "processing");
     download(list.data.filter(p => p.batch_id === r.data));
-    setNotice("Lote criado e ficheiro descarregado. Depois de pagar no banco, carregue em «Marcar lote como pago».");
+    setNotice(t("sh.pa.batch_done"));
     setPoStatus("processing");
   }
   async function markPaid(rows: AdminPayout[]) {
-    const ref = prompt(`Confirma que pagou ${rows.length} levantamento(s), total ${formatPrice(payoutsTotal(rows))}? Referência do lote no banco (opcional):`);
+    const ref = prompt(t("sh.pa.paid_q", { n: rows.length, total: formatPrice(payoutsTotal(rows)) }));
     if (ref === null) return;
-    await ok(markPayoutsPaid(supabase(), rows.map(r => r.id), ref), "Levantamentos marcados como pagos. Os vendedores foram avisados.");
+    await ok(markPayoutsPaid(supabase(), rows.map(r => r.id), ref), t("sh.pa.paid_done"));
   }
   async function reject(p: AdminPayout) {
-    const note = prompt("Porque não faz este levantamento? (o vendedor vai ler; o dinheiro volta ao saldo dele)") ?? "";
+    const note = prompt(t("sh.pa.reject_q")) ?? "";
     if (!note.trim()) return;
-    await ok(rejectPayout(supabase(), p.id, note), "Levantamento recusado; o dinheiro voltou ao saldo do vendedor.");
+    await ok(rejectPayout(supabase(), p.id, note), t("sh.pa.rejected"));
   }
   async function release() {
-    const code = prompt("Libertar à força o dinheiro de uma encomenda (só sem reclamação aberta). Número da encomenda (ex.: E-1001) ou o código interno:") ?? "";
+    const code = prompt(t("sh.pa.release_q")) ?? "";
     if (!code.trim()) return;
-    const note = prompt("Porquê? (fica registado)") ?? "";
+    const note = prompt(t("sh.pa.why")) ?? "";
     if (!note.trim()) return;
     const id = code.trim();
     const found = /^E-\d+$/i.test(id) ? await supabase().from("orders").select("id").eq("ref_no", Number(id.slice(2))).maybeSingle() : { data: { id }, error: null };
-    if (!found.data?.id) { setError("Encomenda não encontrada."); return; }
-    await ok(releaseEscrowAsAdmin(supabase(), found.data.id, note), "Dinheiro libertado para o saldo do vendedor.");
+    if (!found.data?.id) { setError(t("sh.pa.order_not_found")); return; }
+    await ok(releaseEscrowAsAdmin(supabase(), found.data.id, note), t("sh.pa.released"));
   }
   const toggleDay = (d: number) => s && setS({ ...s, payout_weekdays: (s.payout_weekdays ?? []).includes(d) ? (s.payout_weekdays ?? []).filter(x => x !== d) : [...(s.payout_weekdays ?? []), d].sort() });
   const processing = payouts.filter(p => p.status === "processing");
   return <section className="stack">
-    <h2 style={{ margin: 0 }}>🛡️ Pagamento protegido</h2>
-    <p style={{ margin: 0 }}>O comprador paga ao Huambo Online; o dinheiro fica guardado até ele confirmar que recebeu. Depois passa para o saldo do vendedor, que pede o levantamento.</p>
+    <h2 style={{ margin: 0 }}>🛡️ {t("sh.protected")}</h2>
+    <p style={{ margin: 0 }}>{t("sh.pa.intro")}</p>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
     {sum && <div className="grid">
-      <div className="card"><span>Dinheiro guardado (à espera de entrega)</span><strong style={{ fontSize: 26 }}>{formatPrice(sum.held)}</strong></div>
-      <div className="card"><span>Saldo dos vendedores (por levantar)</span><strong style={{ fontSize: 26 }}>{formatPrice(sum.available)}</strong></div>
-      <div className="card"><span>Levantamentos em curso</span><strong style={{ fontSize: 26 }}>{formatPrice(sum.payouts_open)}</strong><small>{sum.payouts_requested} pedido(s) novo(s) · {sum.payouts_processing} no banco</small></div>
-      <div className="card"><span>Comprovativos por confirmar</span><strong style={{ fontSize: 26 }}>{sum.payments_pending}</strong><small>{sum.awaiting_payment} encomenda(s) à espera de pagamento</small></div>
-      <div className="card"><span>Reembolsos a enviar</span><strong style={{ fontSize: 26 }}>{sum.refunds_to_send}</strong><small>Veja em «Disputas» → «Reembolsos a enviar»</small></div>
-      <div className="card"><span>Comissões (30 dias)</span><strong style={{ fontSize: 26 }}>{formatPrice(sum.fees_30d)}</strong></div>
+      <div className="card"><span>{t("sh.pa.held")}</span><strong style={{ fontSize: 26 }}>{formatPrice(sum.held)}</strong></div>
+      <div className="card"><span>{t("sh.pa.sellers_balance")}</span><strong style={{ fontSize: 26 }}>{formatPrice(sum.available)}</strong></div>
+      <div className="card"><span>{t("sh.pa.payouts_open")}</span><strong style={{ fontSize: 26 }}>{formatPrice(sum.payouts_open)}</strong><small>{t("sh.pa.payouts_detail", { n: sum.payouts_requested, m: sum.payouts_processing })}</small></div>
+      <div className="card"><span>{t("sh.pa.proofs_pending")}</span><strong style={{ fontSize: 26 }}>{sum.payments_pending}</strong><small>{t("sh.pa.awaiting", { n: sum.awaiting_payment })}</small></div>
+      <div className="card"><span>{t("sh.pa.refunds")}</span><strong style={{ fontSize: 26 }}>{sum.refunds_to_send}</strong><small>{t("sh.pa.refunds_where")}</small></div>
+      <div className="card"><span>{t("sh.pa.fees30")}</span><strong style={{ fontSize: 26 }}>{formatPrice(sum.fees_30d)}</strong></div>
     </div>}
 
-    <h3 style={{ margin: 0 }}>Pagamentos das encomendas</h3>
-    <label style={{ maxWidth: 260 }}>Mostrar<select value={payStatus} onChange={e => setPayStatus(e.target.value as any)}>
-      <option value="pending">Por confirmar</option><option value="confirmed">Confirmados</option><option value="rejected">Recusados</option><option value="">Todos</option></select></label>
-    {payments.length === 0 && <p>Sem pagamentos.</p>}
+    <h3 style={{ margin: 0 }}>{t("sh.pa.order_payments")}</h3>
+    <label style={{ maxWidth: 260 }}>{t("sh.show")}<select value={payStatus} onChange={e => setPayStatus(e.target.value as any)}>
+      <option value="pending">{t("sh.to_confirm")}</option><option value="confirmed">{t("sh.confirmed_pl")}</option><option value="rejected">{t("sh.rejected_pl")}</option><option value="">{t("sh.all_m")}</option></select></label>
+    {payments.length === 0 && <p>{t("sh.no_payments")}</p>}
     {payments.map(p => <article key={p.id} className="card">
-      <strong>{formatPrice(p.amount)} · {p.order_ref} · <span className="badge">{p.status === "pending" ? "Por confirmar" : p.status === "confirmed" ? "Confirmado" : p.status === "rejected" ? "Recusado" : "Vencido"}</span></strong>
-      <span>Comprador: {p.buyer_name}{p.buyer_phone ? " · " + p.buyer_phone : ""} · Vendedor: {p.seller_name}</span>
-      <span>{p.provider === "proxypay" ? `ProxyPay · Entidade ${p.entity} · Ref. ${p.reference}` : `${ORDER_PAY_METHOD_LABELS[p.method as OrderPayMethod] ?? p.method}${p.reference ? " · Ref.: " + p.reference : ""}`} · {new Date(p.created_at).toLocaleString("pt-AO")}</span>
-      {p.paid_amount != null && Number(p.paid_amount) !== Number(p.amount) && <span className="error">Valor pago: {formatPrice(p.paid_amount)}</span>}
-      {p.admin_note && <small>Nota: {p.admin_note}</small>}
+      <strong>{formatPrice(p.amount)} · {p.order_ref} · <span className="badge">{p.status === "pending" ? t("sh.to_confirm") : p.status === "confirmed" ? t("sh.confirmed") : p.status === "rejected" ? t("sh.rejected") : t("sh.expired")}</span></strong>
+      <span>{t("sh.buyer")}: {p.buyer_name}{p.buyer_phone ? " · " + p.buyer_phone : ""} · {t("sh.seller")}: {p.seller_name}</span>
+      <span>{p.provider === "proxypay" ? `ProxyPay · ${t("sh.pp.entity")} ${p.entity} · ${t("sh.ref")} ${p.reference}` : `${tc(ORDER_PAY_METHOD_LABELS[p.method as OrderPayMethod] ?? p.method)}${p.reference ? " · " + t("sh.ref") + " " + p.reference : ""}`} · {new Date(p.created_at).toLocaleString(LANG_TAGS[lang])}</span>
+      {p.paid_amount != null && Number(p.paid_amount) !== Number(p.amount) && <span className="error">{t("sh.pa.paid_amount")}: {formatPrice(p.paid_amount)}</span>}
+      {p.admin_note && <small>{t("sh.note")}: {p.admin_note}</small>}
       <div className="row">
-        {p.proof_path && <button className="secondary" onClick={() => proof(p.proof_path!)}>📄 Ver comprovativo</button>}
-        {p.status === "pending" && p.provider === "manual" && <><button onClick={() => decide(p, true)}>✔ Dinheiro recebido</button><button className="danger" onClick={() => decide(p, false)}>✖ Não recebido</button></>}
+        {p.proof_path && <button className="secondary" onClick={() => proof(p.proof_path!)}>📄 {t("sh.see_proof")}</button>}
+        {p.status === "pending" && p.provider === "manual" && <><button onClick={() => decide(p, true)}>✔ {t("sh.pa.received")}</button><button className="danger" onClick={() => decide(p, false)}>✖ {t("sh.not_received")}</button></>}
       </div>
     </article>)}
 
-    <h3 style={{ margin: 0 }}>Levantamentos dos vendedores</h3>
-    <p style={{ margin: 0 }}>Dias de pagamentos: <strong>{payoutDaysText(s?.payout_weekdays)}</strong>. Junte os pedidos num lote, descarregue o ficheiro, pague no banco (pagamentos em lote) e marque o lote como pago.</p>
+    <h3 style={{ margin: 0 }}>{t("sh.pa.seller_payouts")}</h3>
+    <p style={{ margin: 0 }}>{t("sh.pa.pay_days")}: <strong>{tc(payoutDaysText(s?.payout_weekdays))}</strong>. {t("sh.pa.batch_how")}</p>
     <div className="row">
-      <button onClick={startBatch} disabled={!sum?.payouts_requested}>📦 Criar lote e descarregar ficheiro para o banco</button>
-      <button className="secondary" onClick={release}>Libertar dinheiro de uma encomenda…</button>
+      <button onClick={startBatch} disabled={!sum?.payouts_requested}>📦 {t("sh.pa.create_batch")}</button>
+      <button className="secondary" onClick={release}>{t("sh.pa.release")}</button>
     </div>
-    <label style={{ maxWidth: 260 }}>Mostrar<select value={poStatus} onChange={e => setPoStatus(e.target.value as any)}>
-      {(Object.keys(PAYOUT_STATUS_LABELS) as PayoutStatus[]).map(k => <option key={k} value={k}>{PAYOUT_STATUS_LABELS[k]}</option>)}<option value="">Todos</option></select></label>
+    <label style={{ maxWidth: 260 }}>{t("sh.show")}<select value={poStatus} onChange={e => setPoStatus(e.target.value as any)}>
+      {(Object.keys(PAYOUT_STATUS_LABELS) as PayoutStatus[]).map(k => <option key={k} value={k}>{tc(PAYOUT_STATUS_LABELS[k])}</option>)}<option value="">{t("sh.all_m")}</option></select></label>
     {poStatus === "processing" && processing.length > 0 && <div className="row">
-      <button onClick={() => markPaid(processing)}>✔ Marcar lote como pago ({processing.length} · {formatPrice(payoutsTotal(processing))})</button>
-      <button className="secondary" onClick={() => download(processing)}>⬇️ Descarregar outra vez</button>
+      <button onClick={() => markPaid(processing)}>✔ {t("sh.pa.mark_batch", { n: processing.length, total: formatPrice(payoutsTotal(processing)) })}</button>
+      <button className="secondary" onClick={() => download(processing)}>⬇️ {t("sh.pa.download_again")}</button>
     </div>}
-    {payouts.length === 0 && <p>Sem levantamentos.</p>}
+    {payouts.length === 0 && <p>{t("sh.pa.no_payouts")}</p>}
     {payouts.map(p => <article key={p.id} className="card">
-      <strong>L-{p.ref_no} · {formatPrice(p.amount)} · <span className="badge">{PAYOUT_STATUS_LABELS[p.status]}</span></strong>
+      <strong>L-{p.ref_no} · {formatPrice(p.amount)} · <span className="badge">{tc(PAYOUT_STATUS_LABELS[p.status])}</span></strong>
       <span>{p.holder_name} ({p.user_name}{p.phone ? " · " + p.phone : ""})</span>
-      <span style={{ overflowWrap: "anywhere" }}>{PAYOUT_METHOD_LABELS[p.method]}: <strong>{p.destination}</strong></span>
-      <small>Pedido {new Date(p.created_at).toLocaleString("pt-AO")}{p.paid_at ? " · Pago " + new Date(p.paid_at).toLocaleString("pt-AO") : ""}{p.bank_reference ? " · Ref.: " + p.bank_reference : ""}</small>
-      {p.admin_note && <small>Nota: {p.admin_note}</small>}
-      {(p.status === "requested" || p.status === "processing") && <div className="row"><button className="danger" onClick={() => reject(p)}>✖ Não fazer (devolver ao saldo)</button></div>}
+      <span style={{ overflowWrap: "anywhere" }}>{tc(PAYOUT_METHOD_LABELS[p.method])}: <strong>{p.destination}</strong></span>
+      <small>{t("sh.pa.requested")} {new Date(p.created_at).toLocaleString(LANG_TAGS[lang])}{p.paid_at ? " · " + t("sh.paid_on") + " " + new Date(p.paid_at).toLocaleString(LANG_TAGS[lang]) : ""}{p.bank_reference ? " · " + t("sh.ref") + " " + p.bank_reference : ""}</small>
+      {p.admin_note && <small>{t("sh.note")}: {p.admin_note}</small>}
+      {(p.status === "requested" || p.status === "processing") && <div className="row"><button className="danger" onClick={() => reject(p)}>✖ {t("sh.pa.dont_pay")}</button></div>}
     </article>)}
 
     {s && <form className="card stack" onSubmit={saveSettings}>
-      <h3 style={{ margin: 0 }}>Definições</h3>
-      <label className="row" style={{ gap: 8 }}><input type="checkbox" checked={!!s.protected_enabled} onChange={e => setS({ ...s, protected_enabled: e.target.checked })} style={{ width: 24, height: 24 }} /> Mostrar «Pagamento protegido» aos compradores</label>
-      <small>Ative só depois de rever os Termos com um jurista e de ter a conta da empresa pronta.</small>
-      <label>Como os compradores pagam<select value={s.payment_provider ?? "manual"} onChange={e => setS({ ...s, payment_provider: e.target.value as any })}>
-        <option value="manual">Transferência / Multicaixa Express com comprovativo (a administração confirma)</option>
-        <option value="proxypay">Referência ProxyPay (confirmação automática)</option></select></label>
-      {s.payment_provider === "proxypay" && <label>Entidade ProxyPay<input inputMode="numeric" value={s.proxypay_entity ?? ""} onChange={e => setS({ ...s, proxypay_entity: e.target.value })} placeholder="Ex.: 12345" /></label>}
-      {s.payment_provider === "proxypay" && <small>Precisa também do segredo PROXYPAY_API_KEY nas Edge Functions do Supabase (e PROXYPAY_ENV=production para pagamentos reais).</small>}
-      <label>Comissão sobre as vendas protegidas (%)<input inputMode="decimal" value={String(s.protected_fee_pct ?? "")} onChange={e => setS({ ...s, protected_fee_pct: e.target.value })} /></label>
-      <label>Dias depois da entrega para libertar sozinho<input inputMode="numeric" value={String(s.auto_release_days ?? "")} onChange={e => setS({ ...s, auto_release_days: e.target.value as any })} /></label>
-      <label>Horas para o comprador pagar<input inputMode="numeric" value={String(s.payment_window_hours ?? "")} onChange={e => setS({ ...s, payment_window_hours: e.target.value as any })} /></label>
-      <label>Mínimo para levantar (Kz)<input inputMode="numeric" value={String(s.payout_min_kz ?? "")} onChange={e => setS({ ...s, payout_min_kz: e.target.value })} /></label>
-      <fieldset className="row" style={{ gap: 6 }}><legend>Dias de pagamento dos levantamentos</legend>
-        {[[1, "Seg"], [2, "Ter"], [3, "Qua"], [4, "Qui"], [5, "Sex"], [6, "Sáb"]].map(([d, l]) => <button key={d} type="button" role="checkbox" aria-checked={(s.payout_weekdays ?? []).includes(d as number)} className={(s.payout_weekdays ?? []).includes(d as number) ? "" : "secondary"} onClick={() => toggleDay(d as number)}>{l}</button>)}
+      <h3 style={{ margin: 0 }}>{t("sh.pa.settings")}</h3>
+      <label className="row" style={{ gap: 8 }}><input type="checkbox" checked={!!s.protected_enabled} onChange={e => setS({ ...s, protected_enabled: e.target.checked })} style={{ width: 24, height: 24 }} /> {t("sh.pa.enable")}</label>
+      <small>{t("sh.pa.enable_hint")}</small>
+      <label>{t("sh.pa.provider")}<select value={s.payment_provider ?? "manual"} onChange={e => setS({ ...s, payment_provider: e.target.value as any })}>
+        <option value="manual">{t("sh.pa.manual")}</option>
+        <option value="proxypay">{t("sh.pa.proxypay")}</option></select></label>
+      {s.payment_provider === "proxypay" && <label>{t("sh.pa.entity")}<input inputMode="numeric" value={s.proxypay_entity ?? ""} onChange={e => setS({ ...s, proxypay_entity: e.target.value })} placeholder={t("sh.pa.entity_ph")} /></label>}
+      {s.payment_provider === "proxypay" && <small>{t("sh.pa.secret_hint")}</small>}
+      <label>{t("sh.pa.fee")}<input inputMode="decimal" value={String(s.protected_fee_pct ?? "")} onChange={e => setS({ ...s, protected_fee_pct: e.target.value })} /></label>
+      <label>{t("sh.pa.release_days")}<input inputMode="numeric" value={String(s.auto_release_days ?? "")} onChange={e => setS({ ...s, auto_release_days: e.target.value as any })} /></label>
+      <label>{t("sh.pa.hours")}<input inputMode="numeric" value={String(s.payment_window_hours ?? "")} onChange={e => setS({ ...s, payment_window_hours: e.target.value as any })} /></label>
+      <label>{t("sh.pa.min")}<input inputMode="numeric" value={String(s.payout_min_kz ?? "")} onChange={e => setS({ ...s, payout_min_kz: e.target.value })} /></label>
+      <fieldset className="row" style={{ gap: 6 }}><legend>{t("sh.pa.weekdays")}</legend>
+        {[[1, t("sh.day.mon")], [2, t("sh.day.tue")], [3, t("sh.day.wed")], [4, t("sh.day.thu")], [5, t("sh.day.fri")], [6, t("sh.day.sat")]].map(([d, l]) => <button key={d} type="button" role="checkbox" aria-checked={(s.payout_weekdays ?? []).includes(d as number)} className={(s.payout_weekdays ?? []).includes(d as number) ? "" : "secondary"} onClick={() => toggleDay(d as number)}>{l}</button>)}
       </fieldset>
-      <button disabled={busy} style={{ justifySelf: "start" }}>Guardar</button>
+      <button disabled={busy} style={{ justifySelf: "start" }}>{t("common.save")}</button>
     </form>}
   </section>;
 }
