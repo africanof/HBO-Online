@@ -5,13 +5,14 @@ import { venueFeed, venueDetail, myVenues, saveVenue, listVenueItems, saveVenueI
   listVenuePaymentsForAdmin, decideVenueFee, listVenueOrdersForAdmin, listMyBusinesses, validateVenue, validateVenueItem, validateVenueReserve, venueKindFromSlug,
   venueOrderKinds, venuePriceText, venueAvailabilityText, venueFeedBadge, venueOrderSummary, venueFeeBreakdown, venueFeeNotice, venueOwnerFeeNotice, venueVerifyUrl,
   venueTransferNote, venueShareMessage, venueRef, venueOrderRef, nightsBetween, nightsText, dateText, luandaToday, addDays, luandaDateTimeToIso,
-  uploadClassifiedMedia, uploadPaymentProof, paymentProofUrl, validateDocument, sha256Hex, getPlatformSettings, qrSvgPath, holdText, formatPrice, friendlyError,
+  uploadClassifiedMedia, uploadPaymentProof, paymentProofUrl, validateDocument, sha256Hex, getPlatformSettings, qrSvgPath, holdText, formatPrice, friendlyErrorIn, LANG_TAGS,
   whatsappLink, whatsappShareUrl, loadWithCache, isOfflineError, VENUE_KINDS, VENUE_KIND_LIST, VENUE_SUBTYPE_LABELS, VENUE_ORDER_KIND_LABELS, VENUE_METHOD_LABELS,
   VENUE_STATUS_LABELS, VENUE_ORDER_STATUS_LABELS, VENUE_COMPLETE_LABELS, VENUE_ACTIVE_ORDER, VENUE_MAX_PHOTOS, PLAN_METHOD_LABELS,
   type VenueKind, type VenueSubtype, type VenueFeedRow, type VenueDetail, type VenueItem, type VenueOrderKind, type VenueMethod, type VenueStatus, type VenueOrderStatus,
   type MyVenue, type MyVenueOrder, type VenueOrder, type VenuePanel, type VenueOrderView, type VenueCompleteResult, type AdminVenue, type AdminVenuePayment,
   type AdminVenueOrder, type VenueInput, type VenueItemInput, type VenueCartLine, type VenueReserveInput, type PlatformSettings, type PaymentMethodPlan } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
+import { useT } from "../lib/i18n";
 import { SITE_URL } from "../lib/site";
 import { compressPhoto } from "../lib/image";
 import { PlaceView } from "./Place";
@@ -24,28 +25,29 @@ import { LiteImg } from "./LiteImg";
 /** «1 500,5» → 1500.5 */
 const toNum = (s: string) => Number(s.replace(/\s/g, "").replace(",", "."));
 const box = { width: 24, height: 24, flex: "none" } as const;
-const PAYMENT_STATUS_LABELS: Record<string, string> = { pending: "⏳ À espera de confirmação", confirmed: "✅ Confirmado", rejected: "❌ Recusado" };
+const PAYMENT_STATUS_KEYS: Record<string, string> = { pending: "sv.ve_pay_pending", confirmed: "sv.ve_pay_confirmed", rejected: "sv.ve_pay_rejected" };
 const LIVE: VenueOrderStatus[] = ["reserved", "submitted", "paid"];
 
 /** QR único do pedido: leva ao site, que confirma se é verdadeiro. Por baixo, o código para escrever à mão. */
 function VenueCode({ code, token }: { code: string; token?: string | null }) {
+  const { t } = useT();
   const q = qrSvgPath(token ? venueVerifyUrl(SITE_URL, token) : code);
   return <div className="card" style={{ justifyItems: "center", textAlign: "center", gap: 6 }}>
-    <svg role="img" aria-label={"Código QR " + code} viewBox={`-2 -2 ${q.size + 4} ${q.size + 4}`} width={170} height={170} style={{ background: "#fff", borderRadius: 8 }} shapeRendering="crispEdges"><path d={q.d} fill="#000" /></svg>
+    <svg role="img" aria-label={t("sv.fu_qr_code", { code })} viewBox={`-2 -2 ${q.size + 4} ${q.size + 4}`} width={170} height={170} style={{ background: "#fff", borderRadius: 8 }} shapeRendering="crispEdges"><path d={q.d} fill="#000" /></svg>
     <strong style={{ fontSize: 26, letterSpacing: 3 }}>{code}</strong>
-    <small>Mostre este QR ao chegar. O estabelecimento lê com a câmara e o site confirma que é verdadeiro.</small>
+    <small>{t("sv.ve_qr_show")}</small>
   </div>;
 }
-async function openProof(path: string, onError: (m: string) => void) {
+async function openProof(path: string, onError: (m: string) => void, failMsg: string) {
   const r = await paymentProofUrl(supabase(), path);
-  if (r.data) window.open(r.data, "_blank", "noopener"); else onError("Não foi possível abrir o comprovativo.");
+  if (r.data) window.open(r.data, "_blank", "noopener"); else onError(failMsg);
 }
-async function uploadPhotos(uid: string, files: File[]): Promise<string[]> {
+async function uploadPhotos(uid: string, files: File[], failMsg: string): Promise<string[]> {
   const urls: string[] = [];
   for (const f of files) {
     const small = await compressPhoto(f);
     const r = await uploadClassifiedMedia(supabase(), small, uid, small.name, small.type || "image/jpeg");
-    if (r.error || !r.data) throw r.error ?? new Error("Não foi possível enviar a fotografia.");
+    if (r.error || !r.data) throw r.error ?? new Error(failMsg);
     urls.push(r.data);
   }
   return urls;
@@ -57,6 +59,7 @@ function Choice<T extends string>({ value, options, label, onChange }: { value: 
 
 // --- Lista pública -----------------------------------------------------------------------------
 export function VenueList() {
+  const { lang, t, tc } = useT();
   const [kind, setKind] = useState<VenueKind | null>(null); const [query, setQuery] = useState(""); const [municipalityId, setMunicipalityId] = useState("");
   const { municipalities } = useTerritory(); const [rows, setRows] = useState<VenueFeedRow[] | null>(null); const [error, setError] = useState("");
   const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
@@ -66,49 +69,50 @@ export function VenueList() {
     // Guarda a última lista para a mostrar sem rede (com o aviso de que pode ter mudado).
     const r = await loadWithCache<VenueFeedRow[]>(browserStore, `reservas:${k}:${municipalityId}:${q.trim()}`, () => venueFeed(supabase(), k, { municipalityId, query: q }));
     setOffline({ on: r.fromCache || isOfflineError(r.error), at: r.fromCache ? r.savedAt : null });
-    if (r.error && !r.data) { if (!isOfflineError(r.error)) setError(friendlyError(r.error)); setRows([]); } else { setError(""); setRows(r.data); }
+    if (r.error && !r.data) { if (!isOfflineError(r.error)) setError(friendlyErrorIn(r.error, lang)); setRows([]); } else { setError(""); setRows(r.data); }
   }
   useEffect(() => { if (kind) void load(kind); }, [kind, municipalityId]);
   function pick(k: VenueKind) { setKind(k); try { window.history.replaceState(null, "", "/reservas?tipo=" + VENUE_KINDS[k].slug); } catch { /* sem histórico */ } }
   const K = kind ? VENUE_KINDS[kind] : null;
   return <main className="stack">
     <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-      <h1 style={{ margin: 0 }}>🛎️ Reservas</h1>
-      <div className="row"><a className="btn secondary" href="/reservas/minhas">🛎️ As minhas reservas</a><a className="btn secondary" href="/reservas/painel">🏨 Registar / gerir o meu estabelecimento</a></div>
+      <h1 style={{ margin: 0 }}>🛎️ {t("nav.bookings")}</h1>
+      <div className="row"><a className="btn secondary" href="/reservas/minhas">🛎️ {t("sv.fu_my_orders")}</a><a className="btn secondary" href="/reservas/painel">🏨 {t("sv.ve_register_manage")}</a></div>
     </div>
-    <p className="muted" style={{ margin: 0 }}>Veja se há quartos livres, o menu dos restaurantes e os produtos dos armazéns. Reserve e pague no local ou adiantado.</p>
-    <div className="row" role="tablist" aria-label="Tipo">{VENUE_KIND_LIST.map(k =>
-      <button key={k} type="button" role="tab" aria-selected={kind === k} className={kind === k ? "" : "secondary"} style={{ flex: "1 1 180px", fontSize: 18 }} onClick={() => pick(k)}>{VENUE_KINDS[k].icon} {VENUE_KINDS[k].label}</button>)}</div>
+    <p className="muted" style={{ margin: 0 }}>{t("sv.ve_intro")}</p>
+    <div className="row" role="tablist" aria-label={t("sv.type")}>{VENUE_KIND_LIST.map(k =>
+      <button key={k} type="button" role="tab" aria-selected={kind === k} className={kind === k ? "" : "secondary"} style={{ flex: "1 1 180px", fontSize: 18 }} onClick={() => pick(k)}>{VENUE_KINDS[k].icon} {tc(VENUE_KINDS[k].label)}</button>)}</div>
     <form className="row" style={{ alignItems: "end" }} onSubmit={e => { e.preventDefault(); if (kind) void load(kind); }}>
-      <label style={{ flex: 2, minWidth: 200 }}>Pesquisar<input value={query} onChange={e => setQuery(e.target.value)} placeholder="Nome ou bairro" /></label>
-      <label style={{ flex: 1, minWidth: 160 }}>Município<select value={municipalityId} onChange={e => setMunicipalityId(e.target.value)}><option value="">Todos</option>{municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
-      <button type="submit">🔎 Pesquisar</button>
+      <label style={{ flex: 2, minWidth: 200 }}>{t("nav.search")}<input value={query} onChange={e => setQuery(e.target.value)} placeholder={t("sv.ve_search_ph")} /></label>
+      <label style={{ flex: 1, minWidth: 160 }}>{t("sv.municipality")}<select value={municipalityId} onChange={e => setMunicipalityId(e.target.value)}><option value="">{t("sv.all")}</option>{municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
+      <button type="submit">🔎 {t("nav.search")}</button>
     </form>
     <OfflineBanner show={offline.on} savedAt={offline.at} />
     {error && <p className="error" role="alert">{error}</p>}
-    {rows === null || !K ? <p>A carregar…</p> : rows.length === 0 ? <p className="card">Ainda não há {K.label.toLowerCase()} aqui. Tem um? <a href="/reservas/painel">Registe-o</a>.</p> :
+    {rows === null || !K ? <p>{t("common.loading")}</p> : rows.length === 0 ? <p className="card">{t("sv.ve_none_here", { kind: tc(K.label).toLowerCase() })} <a href="/reservas/painel">{t("sv.ve_register_it")}</a>.</p> :
       <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))" }}>{rows.map(r => <a key={r.id} href={"/reservas/" + r.id} className="card" style={{ color: "inherit", textDecoration: "none", gap: 6, fontWeight: 400 }}>
         {(r.photo || r.logo_url) ? <LiteImg src={(r.photo || r.logo_url)!} alt="" loading="lazy" placeholder={K.icon} style={{ width: "100%", height: 160, objectFit: "cover", borderRadius: 12 }} />
           : <span aria-hidden style={{ height: 110, borderRadius: 12, background: "var(--surface)", display: "grid", placeItems: "center", fontSize: 48 }}>{K.icon}</span>}
         <strong style={{ fontSize: 19 }}>{r.name}{r.verified ? " ✔️" : ""}</strong>
-        <small>{VENUE_SUBTYPE_LABELS[r.subtype]}{r.municipality_name ? " · " + r.municipality_name : ""}</small>
-        <span style={{ fontWeight: 700 }}>{venueFeedBadge(r)}</span>
-        {r.price_from != null && <span className="price" style={{ fontSize: 18 }}>desde {formatPrice(r.price_from)}</span>}
+        <small>{tc(VENUE_SUBTYPE_LABELS[r.subtype])}{r.municipality_name ? " · " + r.municipality_name : ""}</small>
+        <span style={{ fontWeight: 700 }}>{tc(venueFeedBadge(r))}</span>
+        {r.price_from != null && <span className="price" style={{ fontSize: 18 }}>{t("sv.from_price", { price: formatPrice(r.price_from) })}</span>}
       </a>)}</div>}
   </main>;
 }
 
 // --- Página do estabelecimento ------------------------------------------------------------------
 export function VenuePage({ id }: { id: string }) {
+  const { lang, t, tc } = useT();
   const today = luandaToday();
   const [from, setFrom] = useState(today); const [to, setTo] = useState(addDays(today, 1));
   const [v, setV] = useState<VenueDetail | null | undefined>(undefined); const [uid, setUid] = useState<string | null>(null); const [error, setError] = useState("");
   const [room, setRoom] = useState(""); const [cart, setCart] = useState<Record<string, string>>({}); const [orderKind, setOrderKind] = useState<VenueOrderKind | null>(null);
-  async function load() { const r = await venueDetail(supabase(), id, from, to); if (r.error) setError(friendlyError(r.error)); else setError(""); setV(r.data); }
+  async function load() { const r = await venueDetail(supabase(), id, from, to); if (r.error) setError(friendlyErrorIn(r.error, lang)); else setError(""); setV(r.data); }
   useEffect(() => { void load(); }, [id, from, to]);
   useEffect(() => { void currentUserId().then(setUid); }, []);
-  if (v === undefined) return <main><p>A carregar…</p></main>;
-  if (!v) return <main className="stack"><h1>Estabelecimento não encontrado</h1>{error && <p className="error">{error}</p>}<a href="/reservas">← Reservas</a></main>;
+  if (v === undefined) return <main><p>{t("common.loading")}</p></main>;
+  if (!v) return <main className="stack"><h1>{t("sv.ve_not_found")}</h1>{error && <p className="error">{error}</p>}<a href="/reservas">← {t("nav.bookings")}</a></main>;
   const K = VENUE_KINDS[v.kind]; const b = v.business; const mine = uid === v.owner_id;
   const kinds = venueOrderKinds(v.kind); const ok = orderKind && kinds.includes(orderKind) ? orderKind : kinds[0];
   const canOrder = v.status === "approved" && v.accepts_reservations && !mine;
@@ -117,197 +121,201 @@ export function VenuePage({ id }: { id: string }) {
     ? v.items.filter(i => i.id === room).map(i => ({ item: i, qty: Math.max(1, Math.floor(toNum(cart[i.id] ?? "1")) || 1) }))
     : v.items.filter(i => toNum(cart[i.id] ?? "") > 0).map(i => ({ item: i, qty: toNum(cart[i.id]) }));
   const sections = Array.from(new Set(v.items.map(i => i.section?.trim() || "")));
-  const wa = whatsappLink(b.whatsapp, `Olá, vi o ${b.name} no Huambo Online.`);
+  const wa = whatsappLink(b.whatsapp, t("sv.wa_saw", { name: b.name }));
   const setQty = (itemId: string, q: string) => setCart(c => ({ ...c, [itemId]: q }));
   function changeFrom(d: string) { if (!d) return; setFrom(d); if (to <= d) setTo(addDays(d, 1)); }
   return <main className="stack" style={{ maxWidth: 960 }}>
-    <a href={"/reservas?tipo=" + K.slug}>← {K.label}</a>
+    <a href={"/reservas?tipo=" + K.slug}>← {tc(K.label)}</a>
     <div className="row" style={{ alignItems: "center", gap: 14, flexWrap: "nowrap" }}>
-      {b.logo_url && <img className="profile-pic" src={b.logo_url} alt={"Logótipo de " + b.name} />}
+      {b.logo_url && <img className="profile-pic" src={b.logo_url} alt={t("sv.logo_of", { name: b.name })} />}
       <h1 style={{ margin: 0, overflowWrap: "anywhere" }}>{K.icon} {b.name}{b.verified ? " ✔️" : ""}</h1>
     </div>
-    <small className="muted">{VENUE_SUBTYPE_LABELS[v.subtype]} · {venueRef(v.ref_no)}{b.municipality_name ? " · " + b.municipality_name : ""}{b.address_text ? " · " + b.address_text : ""}</small>
-    {v.status !== "approved" && <p className="banner yellow" style={{ margin: 0, padding: 14 }}>{v.status === "pending" ? "⏳ À espera de aprovação da administração: ainda não aparece ao público." : "⛔ Suspenso: não aceita reservas agora."}</p>}
-    {mine && <a className="btn" href={`/reservas/${id}/gerir`} style={{ justifySelf: "start" }}>⚙️ Gerir o meu estabelecimento</a>}
+    <small className="muted">{tc(VENUE_SUBTYPE_LABELS[v.subtype])} · {venueRef(v.ref_no)}{b.municipality_name ? " · " + b.municipality_name : ""}{b.address_text ? " · " + b.address_text : ""}</small>
+    {v.status !== "approved" && <p className="banner yellow" style={{ margin: 0, padding: 14 }}>{v.status === "pending" ? "⏳ " + t("sv.fu_pending_public") : "⛔ " + t("sv.ve_suspended_now")}</p>}
+    {mine && <a className="btn" href={`/reservas/${id}/gerir`} style={{ justifySelf: "start" }}>⚙️ {t("sv.ve_manage_mine")}</a>}
     {b.description && <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{b.description}</p>}
     <div className="row">
-      {b.phone && <a className="btn secondary" href={"tel:" + b.phone.replace(/\s/g, "")}>📞 Ligar</a>}
+      {b.phone && <a className="btn secondary" href={"tel:" + b.phone.replace(/\s/g, "")}>📞 {t("common.call")}</a>}
       {wa && <a className="btn secondary" href={wa} target="_blank" rel="noopener">WhatsApp</a>}
-      <a className="btn secondary" href={whatsappShareUrl(venueShareMessage(typeof window === "undefined" ? SITE_URL : window.location.origin, { id: v.id, name: b.name, kind: v.kind, municipality_name: b.municipality_name }))} target="_blank" rel="noopener">📲 Partilhar</a>
-      <a className="btn secondary" href={"/empresas/" + b.id}>⭐ Ver portfólio e avaliações</a>
+      <a className="btn secondary" href={whatsappShareUrl(tc(venueShareMessage(typeof window === "undefined" ? SITE_URL : window.location.origin, { id: v.id, name: b.name, kind: v.kind, municipality_name: b.municipality_name })))} target="_blank" rel="noopener">📲 {t("common.share")}</a>
+      <a className="btn secondary" href={"/empresas/" + b.id}>⭐ {t("sv.ve_portfolio_reviews")}</a>
     </div>
     {(v.opening_hours || v.check_in_time || v.check_out_time || v.policies) && <dl className="facts card" style={{ margin: 0, gridTemplateColumns: "minmax(0, auto) minmax(0, 1fr)", overflowWrap: "anywhere" }}>
-      {v.opening_hours && <><dt>🕒 Horário</dt><dd>{v.opening_hours}</dd></>}
-      {v.check_in_time && <><dt>Entrada (check-in)</dt><dd>a partir das {v.check_in_time.slice(0, 5)}</dd></>}
-      {v.check_out_time && <><dt>Saída (check-out)</dt><dd>até às {v.check_out_time.slice(0, 5)}</dd></>}
-      {v.policies && <><dt>📋 Regras</dt><dd style={{ whiteSpace: "pre-wrap", fontWeight: 400 }}>{v.policies}</dd></>}
+      {v.opening_hours && <><dt>🕒 {t("sv.mk_hours")}</dt><dd>{v.opening_hours}</dd></>}
+      {v.check_in_time && <><dt>{t("sv.ve_check_in")}</dt><dd>{t("sv.ve_from_time", { time: v.check_in_time.slice(0, 5) })}</dd></>}
+      {v.check_out_time && <><dt>{t("sv.ve_check_out")}</dt><dd>{t("sv.ve_until_time", { time: v.check_out_time.slice(0, 5) })}</dd></>}
+      {v.policies && <><dt>📋 {t("sv.ve_rules")}</dt><dd style={{ whiteSpace: "pre-wrap", fontWeight: 400 }}>{v.policies}</dd></>}
     </dl>}
     <PlaceView directions={b.directions} lat={b.geo_lat} lng={b.geo_lng} />
     {v.kind === "hotel" && <section className="card stack" style={{ gap: 8 }} aria-labelledby="datas">
-      <h2 id="datas" style={{ margin: 0, fontSize: 21 }}>📅 Para que dias?</h2>
+      <h2 id="datas" style={{ margin: 0, fontSize: 21 }}>📅 {t("sv.ve_which_days")}</h2>
       <div className="row">
-        <label style={{ flex: 1, minWidth: 190 }}>Entrada<input type="date" value={from} min={today} onChange={e => changeFrom(e.target.value)} /></label>
-        <label style={{ flex: 1, minWidth: 190 }}>Saída<input type="date" value={to} min={addDays(from, 1)} onChange={e => e.target.value && setTo(e.target.value)} /></label>
+        <label style={{ flex: 1, minWidth: 190 }}>{t("sv.ve_in")}<input type="date" value={from} min={today} onChange={e => changeFrom(e.target.value)} /></label>
+        <label style={{ flex: 1, minWidth: 190 }}>{t("sv.ve_out")}<input type="date" value={to} min={addDays(from, 1)} onChange={e => e.target.value && setTo(e.target.value)} /></label>
       </div>
-      <strong>{nights > 0 ? nightsText(nights) : "A saída tem de ser depois da entrada."}</strong>
+      <strong>{nights > 0 ? tc(nightsText(nights)) : t("sv.ve_out_after_in")}</strong>
     </section>}
-    {v.kind === "restaurant" && canOrder && <Choice label="O que quer fazer" value={ok} onChange={setOrderKind} options={[["table", "🍽️ Reservar mesa"], ["order", "🥡 Encomendar para levantar"]]} />}
-    <h2 style={{ margin: 0 }}>{K.items}</h2>
-    {v.items.length === 0 && <p className="card">{K.empty}</p>}
-    {sections.map(sec => <section key={sec || "-"} className="stack" style={{ gap: 8 }} aria-label={sec || K.items}>
+    {v.kind === "restaurant" && canOrder && <Choice label={t("sv.ve_what_do")} value={ok} onChange={setOrderKind} options={[["table", "🍽️ " + t("sv.ve_book_table")], ["order", "🥡 " + t("sv.ve_order_pickup")]]} />}
+    <h2 style={{ margin: 0 }}>{tc(K.items)}</h2>
+    {v.items.length === 0 && <p className="card">{tc(K.empty)}</p>}
+    {sections.map(sec => <section key={sec || "-"} className="stack" style={{ gap: 8 }} aria-label={sec || tc(K.items)}>
       {sec && <h3 style={{ margin: 0 }}>{sec}</h3>}
       {v.items.filter(i => (i.section?.trim() || "") === sec).map(i => <ItemCard key={i.id} i={i} kind={v.kind}>
-        {canOrder && i.available && (v.kind === "hotel" ? (Number(i.free ?? 0) > 0 && <button type="button" className={room === i.id ? "" : "secondary"} aria-pressed={room === i.id} onClick={() => setRoom(room === i.id ? "" : i.id)}>{room === i.id ? "✅ Escolhido" : "Escolher este quarto"}</button>)
-          : v.kind === "restaurant" ? (i.free == null || i.free > 0) && <div className="row" style={{ alignItems: "center" }} role="group" aria-label={"Quantidade de " + i.name}>
-              <button type="button" className="secondary" aria-label={"Menos " + i.name} onClick={() => setQty(i.id, String(Math.max(0, (toNum(cart[i.id] ?? "") || 0) - 1)))}>−</button>
+        {canOrder && i.available && (v.kind === "hotel" ? (Number(i.free ?? 0) > 0 && <button type="button" className={room === i.id ? "" : "secondary"} aria-pressed={room === i.id} onClick={() => setRoom(room === i.id ? "" : i.id)}>{room === i.id ? "✅ " + t("sv.ve_chosen") : t("sv.ve_choose_room")}</button>)
+          : v.kind === "restaurant" ? (i.free == null || i.free > 0) && <div className="row" style={{ alignItems: "center" }} role="group" aria-label={t("sv.ve_qty_of", { name: i.name })}>
+              <button type="button" className="secondary" aria-label={t("sv.ve_less", { name: i.name })} onClick={() => setQty(i.id, String(Math.max(0, (toNum(cart[i.id] ?? "") || 0) - 1)))}>−</button>
               <strong style={{ minWidth: 28, textAlign: "center", fontSize: 20 }}>{toNum(cart[i.id] ?? "") || 0}</strong>
-              <button type="button" aria-label={"Mais " + i.name} onClick={() => setQty(i.id, String((toNum(cart[i.id] ?? "") || 0) + 1))}>+</button>
+              <button type="button" aria-label={t("sv.ve_more", { name: i.name })} onClick={() => setQty(i.id, String((toNum(cart[i.id] ?? "") || 0) + 1))}>+</button>
             </div>
-          : (i.free == null || i.free > 0) && <label style={{ maxWidth: 220 }}>Quantidade{i.unit ? ` (${i.unit})` : ""}<input value={cart[i.id] ?? ""} onChange={e => setQty(i.id, e.target.value)} inputMode="decimal" placeholder={"mínimo " + i.min_qty} /></label>)}
+          : (i.free == null || i.free > 0) && <label style={{ maxWidth: 220 }}>{t("sv.ve_quantity")}{i.unit ? ` (${i.unit})` : ""}<input value={cart[i.id] ?? ""} onChange={e => setQty(i.id, e.target.value)} inputMode="decimal" placeholder={t("sv.ve_min", { n: i.min_qty })} /></label>)}
       </ItemCard>)}
     </section>)}
-    {!v.accepts_reservations && !mine && <p className="card">Este estabelecimento ainda não aceita reservas pelo Huambo Online. Ligue ou envie mensagem.</p>}
+    {!v.accepts_reservations && !mine && <p className="card">{t("sv.ve_no_reservations")}</p>}
     {canOrder && <ReserveForm v={v} uid={uid} kind={ok} lines={lines} from={from} to={to} nights={nights} setRooms={n => setQty(room, String(n))} />}
   </main>;
 }
 
 function ItemCard({ i, kind, children }: { i: VenueItem; kind: VenueKind; children?: React.ReactNode }) {
+  const { t, tc } = useT();
   return <article className="card" style={{ display: "grid", gridTemplateColumns: i.photos.length ? "minmax(0, 110px) minmax(0, 1fr)" : "minmax(0, 1fr)", gap: 12, opacity: i.available ? 1 : 0.7 }}>
     {i.photos.length > 0 && <LiteImg src={i.photos[0]} alt="" loading="lazy" placeholder="🖼️" style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: 10 }} />}
     <div className="stack" style={{ gap: 6, minWidth: 0 }}>
       <strong style={{ fontSize: 19, overflowWrap: "anywhere" }}>{i.name}</strong>
       {i.description && <span style={{ overflowWrap: "anywhere" }}>{i.description}</span>}
-      <span className="price" style={{ fontSize: 19 }}>{venuePriceText(i, kind)}</span>
-      {kind === "hotel" && i.capacity && <small>👥 Até {i.capacity} {i.capacity === 1 ? "pessoa" : "pessoas"} por quarto</small>}
-      {kind === "warehouse" && i.min_qty > 1 && <small>Mínimo por pedido: {i.min_qty}{i.unit ? " " + i.unit : ""}</small>}
-      <span style={{ fontWeight: 700 }}>{venueAvailabilityText(i, kind)}</span>
-      {i.photos.length > 1 && <div className="row" style={{ gap: 6 }}>{i.photos.slice(1).map(p => <a key={p} href={p} target="_blank" rel="noopener"><LiteImg src={p} alt={"Mais uma fotografia de " + i.name} loading="lazy" style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8 }} /></a>)}</div>}
+      <span className="price" style={{ fontSize: 19 }}>{tc(venuePriceText(i, kind))}</span>
+      {kind === "hotel" && i.capacity && <small>👥 {t(i.capacity === 1 ? "sv.ve_cap_one" : "sv.ve_cap_many", { n: i.capacity })}</small>}
+      {kind === "warehouse" && i.min_qty > 1 && <small>{t("sv.ve_min_order")}: {i.min_qty}{i.unit ? " " + i.unit : ""}</small>}
+      <span style={{ fontWeight: 700 }}>{tc(venueAvailabilityText(i, kind))}</span>
+      {i.photos.length > 1 && <div className="row" style={{ gap: 6 }}>{i.photos.slice(1).map(p => <a key={p} href={p} target="_blank" rel="noopener"><LiteImg src={p} alt={t("sv.ve_more_photo", { name: i.name })} loading="lazy" style={{ width: 56, height: 56, objectFit: "cover", borderRadius: 8 }} /></a>)}</div>}
       {children}
     </div>
   </article>;
 }
 
 function ReserveForm({ v, uid, kind, lines, from, to, nights, setRooms }: { v: VenueDetail; uid: string | null; kind: VenueOrderKind; lines: VenueCartLine[]; from: string; to: string; nights: number; setRooms: (n: number) => void }) {
+  const { lang, t, tc } = useT();
   const methods = (["at_place", "prepaid"] as VenueMethod[]).filter(m => m === "at_place" ? v.accepts_pay_at_place : v.accepts_prepay);
   const [method, setMethod] = useState<VenueMethod>(methods[0] ?? "at_place"); const [name, setName] = useState(""); const [phone, setPhone] = useState(""); const [note, setNote] = useState("");
   const [guests, setGuests] = useState(v.kind === "hotel" ? "1" : "2"); const [date, setDate] = useState(luandaToday()); const [time, setTime] = useState("");
   const [agree, setAgree] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
-  if (!uid) return <a className="btn" style={{ justifySelf: "start", fontSize: 20 }} href={"/conta/login?voltar=/reservas/" + v.id}>Entrar para reservar</a>;
+  if (!uid) return <a className="btn" style={{ justifySelf: "start", fontSize: 20 }} href={"/conta/login?voltar=/reservas/" + v.id}>{t("sv.fu_login_reserve")}</a>;
   const sum = venueFeeBreakdown(lines.map(l => ({ price: l.item.price, qty: l.qty })), v.client_fee_pct, v.business_fee_pct, kind === "stay" ? nights : 1);
   const room = kind === "stay" ? lines[0] : undefined;
   async function send(e: React.FormEvent) {
     e.preventDefault();
     const input: VenueReserveInput = { kind, method, name, phone, note, lines, checkIn: from, checkOut: to, guests: kind === "order" ? undefined : Number(guests) || 0,
       slotAt: kind === "stay" ? null : luandaDateTimeToIso(date, time) };
-    const bad = validateVenueReserve(v, input); if (bad) { setError(bad); return; }
-    if (!agree) { setError("Confirme que percebeu a taxa de serviço do APP."); return; }
+    const bad = validateVenueReserve(v, input); if (bad) { setError(tc(bad)); return; }
+    if (!agree) { setError(t("sv.fu_confirm_fee")); return; }
     setBusy(true); setError("");
     const r = await reserveVenue(supabase(), v.id, input); setBusy(false);
-    if (r.error) setError(friendlyError(r.error)); else window.location.href = "/reservas/minhas";
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else window.location.href = "/reservas/minhas";
   }
   return <form className="card stack" style={{ gap: 10 }} onSubmit={send} aria-labelledby="reservar">
-    <h2 id="reservar" style={{ margin: 0 }}>{VENUE_ORDER_KIND_LABELS[kind]}</h2>
+    <h2 id="reservar" style={{ margin: 0 }}>{tc(VENUE_ORDER_KIND_LABELS[kind])}</h2>
     {kind === "stay" && (room ? <>
-      <strong>{room.item.name} · {dateText(from)} → {dateText(to)} ({nightsText(nights)})</strong>
+      <strong>{room.item.name} · {dateText(from)} → {dateText(to)} ({tc(nightsText(nights))})</strong>
       <div className="row">
-        <div className="stack" style={{ flex: 1, minWidth: 140, gap: 4 }}><strong>Quantos quartos?</strong>
-          <span className="row" style={{ alignItems: "center" }} role="group" aria-label="Quantos quartos">
-            <button type="button" className="secondary" aria-label="Menos um quarto" disabled={room.qty <= 1} onClick={() => setRooms(room.qty - 1)}>−</button>
+        <div className="stack" style={{ flex: 1, minWidth: 140, gap: 4 }}><strong>{t("sv.ve_how_many_rooms")}</strong>
+          <span className="row" style={{ alignItems: "center" }} role="group" aria-label={t("sv.ve_how_many_rooms")}>
+            <button type="button" className="secondary" aria-label={t("sv.ve_one_less_room")} disabled={room.qty <= 1} onClick={() => setRooms(room.qty - 1)}>−</button>
             <strong style={{ minWidth: 28, textAlign: "center", fontSize: 20 }}>{room.qty}</strong>
-            <button type="button" aria-label="Mais um quarto" disabled={room.qty >= Number(room.item.free ?? 1)} onClick={() => setRooms(room.qty + 1)}>+</button>
+            <button type="button" aria-label={t("sv.ve_one_more_room")} disabled={room.qty >= Number(room.item.free ?? 1)} onClick={() => setRooms(room.qty + 1)}>+</button>
           </span></div>
-        <label style={{ flex: 1, minWidth: 140 }}>Quantas pessoas?<input value={guests} onChange={e => setGuests(e.target.value)} inputMode="numeric" /></label>
+        <label style={{ flex: 1, minWidth: 140 }}>{t("sv.ve_how_many_people")}<input value={guests} onChange={e => setGuests(e.target.value)} inputMode="numeric" /></label>
       </div>
-    </> : <p style={{ margin: 0 }}>👆 Escolha primeiro um tipo de quarto acima.</p>)}
+    </> : <p style={{ margin: 0 }}>👆 {t("sv.ve_choose_room_first")}</p>)}
     {kind !== "stay" && <>
       {lines.length > 0 ? <ul style={{ margin: 0, paddingLeft: 20 }}>{lines.map(l => <li key={l.item.id}>{l.qty} × {l.item.name} — {formatPrice(Math.round(l.item.price * l.qty))}</li>)}</ul>
-        : <p style={{ margin: 0 }}>{kind === "table" ? "Pode escolher já os pratos acima (opcional)." : "👆 Escolha acima o que quer encomendar."}</p>}
-      {kind === "table" && <label>Mesa para quantas pessoas?<input value={guests} onChange={e => setGuests(e.target.value)} inputMode="numeric" /></label>}
+        : <p style={{ margin: 0 }}>{kind === "table" ? t("sv.ve_dishes_opt") : "👆 " + t("sv.ve_choose_order")}</p>}
+      {kind === "table" && <label>{t("sv.ve_table_for")}<input value={guests} onChange={e => setGuests(e.target.value)} inputMode="numeric" /></label>}
       <div className="row">
-        <label style={{ flex: 1, minWidth: 190 }}>{kind === "table" ? "Dia" : "Dia para levantar"}<input type="date" value={date} min={luandaToday()} onChange={e => setDate(e.target.value)} /></label>
-        <label style={{ flex: 1, minWidth: 150 }}>Hora<input type="time" value={time} onChange={e => setTime(e.target.value)} /></label>
+        <label style={{ flex: 1, minWidth: 190 }}>{kind === "table" ? t("sv.ve_day") : t("sv.ve_pickup_day")}<input type="date" value={date} min={luandaToday()} onChange={e => setDate(e.target.value)} /></label>
+        <label style={{ flex: 1, minWidth: 150 }}>{t("sv.ve_time")}<input type="time" value={time} onChange={e => setTime(e.target.value)} /></label>
       </div>
     </>}
-    <label>O seu nome<input value={name} onChange={e => setName(e.target.value)} maxLength={80} autoComplete="name" /></label>
-    <label>Telefone<input value={phone} onChange={e => setPhone(e.target.value)} inputMode="tel" maxLength={20} autoComplete="tel" /></label>
-    <label>Nota para o estabelecimento (opcional)<textarea rows={2} value={note} onChange={e => setNote(e.target.value)} maxLength={300} placeholder={kind === "stay" ? "Ex.: chego às 20h" : kind === "table" ? "Ex.: mesa perto da janela" : "Ex.: venho de carrinha"} /></label>
-    {methods.length > 1 ? <Choice label="Como quer pagar" value={method} onChange={setMethod} options={methods.map(m => [m, VENUE_METHOD_LABELS[m]] as [VenueMethod, string])} />
-      : <strong>💳 {VENUE_METHOD_LABELS[method]}</strong>}
-    {sum.subtotal > 0 && <dl className="facts card" style={{ margin: 0, gridTemplateColumns: "minmax(0, 1fr) auto" }} aria-label="Contas">
-      <dt>{kind === "stay" ? `Quartos (${nightsText(nights)})` : "Produtos"}</dt><dd>{formatPrice(sum.subtotal)}</dd>
-      <dt>Taxa de serviço do APP ({v.client_fee_pct}%)</dt><dd>{formatPrice(sum.clientFee)}</dd>
-      <dt><strong>Total a pagar ao estabelecimento</strong></dt><dd><strong>{formatPrice(sum.total)}</strong></dd>
+    <label>{t("sv.your_name")}<input value={name} onChange={e => setName(e.target.value)} maxLength={80} autoComplete="name" /></label>
+    <label>{t("auth.phone")}<input value={phone} onChange={e => setPhone(e.target.value)} inputMode="tel" maxLength={20} autoComplete="tel" /></label>
+    <label>{t("sv.ve_note")}<textarea rows={2} value={note} onChange={e => setNote(e.target.value)} maxLength={300} placeholder={kind === "stay" ? t("sv.ve_note_ph_stay") : kind === "table" ? t("sv.ve_note_ph_table") : t("sv.ve_note_ph_order")} /></label>
+    {methods.length > 1 ? <Choice label={t("sv.fu_how_pay")} value={method} onChange={setMethod} options={methods.map(m => [m, tc(VENUE_METHOD_LABELS[m])] as [VenueMethod, string])} />
+      : <strong>💳 {tc(VENUE_METHOD_LABELS[method])}</strong>}
+    {sum.subtotal > 0 && <dl className="facts card" style={{ margin: 0, gridTemplateColumns: "minmax(0, 1fr) auto" }} aria-label={t("sv.fu_sums")}>
+      <dt>{kind === "stay" ? t("sv.ve_rooms_nights", { nights: tc(nightsText(nights)) }) : t("sv.mk_products")}</dt><dd>{formatPrice(sum.subtotal)}</dd>
+      <dt>{t("sv.fu_fee_line", { pct: v.client_fee_pct })}</dt><dd>{formatPrice(sum.clientFee)}</dd>
+      <dt><strong>{t("sv.ve_total_venue")}</strong></dt><dd><strong>{formatPrice(sum.total)}</strong></dd>
     </dl>}
     <label className="row" style={{ alignItems: "flex-start", gap: 8, fontWeight: 400 }}><input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} style={box} />
-      <span>{venueFeeNotice(v.client_fee_pct)} Percebi e aceito.</span></label>
-    <small>{method === "at_place" ? `Recebe já um código e um QR único. Mostre-o ao chegar e pague lá. A reserva é guardada ${Math.round(v.hold_minutes / 60 * 10) / 10} h depois da hora marcada.`
-      : "Depois de reservar, paga para a conta do estabelecimento (aparece em «As minhas reservas») e envia a fotografia do comprovativo. O estabelecimento confirma o pagamento."}</small>
+      <span>{tc(venueFeeNotice(v.client_fee_pct))} {t("sv.fu_agree")}</span></label>
+    <small>{method === "at_place" ? t("sv.ve_at_place_hint", { h: (Math.round(v.hold_minutes / 60 * 10) / 10).toLocaleString(LANG_TAGS[lang]) })
+      : t("sv.ve_prepaid_hint")}</small>
     {error && <p className="error" role="alert">{error}</p>}
-    <button type="submit" disabled={busy} style={{ justifySelf: "start", fontSize: 20 }}>{busy ? "A reservar…" : kind === "order" ? "✅ Encomendar" : "✅ Reservar"}</button>
+    <button type="submit" disabled={busy} style={{ justifySelf: "start", fontSize: 20 }}>{busy ? t("sv.fu_reserving") : kind === "order" ? "✅ " + t("sv.ve_order") : "✅ " + t("sv.fu_reserve")}</button>
   </form>;
 }
 // --- As minhas reservas -------------------------------------------------------------------------
 export function MyVenueOrders() {
+  const { lang, t, tc } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined); const [items, setItems] = useState<MyVenueOrder[] | null>(null);
   const [error, setError] = useState(""); const [notice, setNotice] = useState("");
-  async function load() { const r = await myVenueOrders(supabase()); if (r.error) setError(friendlyError(r.error)); setItems(r.data); }
+  async function load() { const r = await myVenueOrders(supabase()); if (r.error) setError(friendlyErrorIn(r.error, lang)); setItems(r.data); }
   useEffect(() => { void currentUserId().then(u => { setUid(u); if (u) void load(); }); }, []);
-  if (uid === undefined) return <main><p>A carregar…</p></main>;
-  if (!uid) return <main className="stack"><h1>🛎️ As minhas reservas</h1><a className="btn" style={{ justifySelf: "start" }} href="/conta/login?voltar=/reservas/minhas">Entrar</a></main>;
+  if (uid === undefined) return <main><p>{t("common.loading")}</p></main>;
+  if (!uid) return <main className="stack"><h1>🛎️ {t("sv.fu_my_orders")}</h1><a className="btn" style={{ justifySelf: "start" }} href="/conta/login?voltar=/reservas/minhas">{t("auth.login")}</a></main>;
   return <main className="stack" style={{ maxWidth: 820 }}>
-    <a href="/reservas">← Reservas</a>
-    <h1 style={{ margin: 0 }}>🛎️ As minhas reservas</h1>
+    <a href="/reservas">← {t("nav.bookings")}</a>
+    <h1 style={{ margin: 0 }}>🛎️ {t("sv.fu_my_orders")}</h1>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
-    {items === null ? <p>A carregar…</p> : items.length === 0 ? <p className="card">Ainda não fez reservas. <a href="/reservas">Ver hotéis, restaurantes e armazéns</a>.</p> :
+    {items === null ? <p>{t("common.loading")}</p> : items.length === 0 ? <p className="card">{t("sv.fu_no_orders")} <a href="/reservas">{t("sv.ve_see_all_kinds")}</a>.</p> :
       items.map(o => <MyOrderCard key={o.id} o={o} onDone={m => { setError(""); setNotice(m); void load(); }} onError={m => { setNotice(""); setError(m); }} />)}
   </main>;
 }
 function MyOrderCard({ o, onDone, onError }: { o: MyVenueOrder; onDone: (m: string) => void; onError: (m: string) => void }) {
+  const { lang, t, tc } = useT();
   const [method, setMethod] = useState<"multicaixa_express" | "bank_transfer">(o.pay_express ? "multicaixa_express" : "bank_transfer"); const [reference, setReference] = useState("");
   const [file, setFile] = useState<File | null>(null); const [busy, setBusy] = useState(false);
   async function pay() {
-    if (!file) { onError("Junte a fotografia do comprovativo de pagamento."); return; }
-    const bad = validateDocument({ size: file.size, type: file.type }); if (bad) { onError(bad); return; }
-    if (reference.replace(/[^A-Za-z0-9]/g, "").length < 4) { onError("Escreva a referência ou o número da operação (como está no comprovativo)."); return; }
+    if (!file) { onError(t("sv.fu_need_proof")); return; }
+    const bad = validateDocument({ size: file.size, type: file.type }); if (bad) { onError(tc(bad)); return; }
+    if (reference.replace(/[^A-Za-z0-9]/g, "").length < 4) { onError(t("sv.fu_need_ref")); return; }
     setBusy(true);
     try {
-      const uid = await currentUserId(); if (!uid) throw new Error("Entre na sua conta.");
+      const uid = await currentUserId(); if (!uid) throw new Error(t("sv.login_needed"));
       const hash = sha256Hex(await file.arrayBuffer());
-      const up = await uploadPaymentProof(supabase(), uid, file, file.name, file.type); if (up.error || !up.data) throw up.error ?? new Error("Não foi possível enviar o comprovativo.");
+      const up = await uploadPaymentProof(supabase(), uid, file, file.name, file.type); if (up.error || !up.data) throw up.error ?? new Error(t("sv.proof_fail"));
       const r = await submitVenuePayment(supabase(), o.id, { method, reference, proofPath: up.data, proofHash: hash }); if (r.error) throw r.error;
-      onDone("Comprovativo enviado. O estabelecimento vai confirmar o pagamento.");
-    } catch (e) { onError(friendlyError(e)); } finally { setBusy(false); }
+      onDone(t("sv.ve_proof_sent"));
+    } catch (e) { onError(friendlyErrorIn(e, lang)); } finally { setBusy(false); }
   }
-  async function cancel() { if (!confirm("Cancelar esta reserva?")) return; const r = await cancelVenueOrder(supabase(), o.id); if (r.error) onError(friendlyError(r.error)); else onDone("Reserva cancelada."); }
+  async function cancel() { if (!confirm(t("sv.fu_cancel_q"))) return; const r = await cancelVenueOrder(supabase(), o.id); if (r.error) onError(friendlyErrorIn(r.error, lang)); else onDone(t("sv.fu_cancelled")); }
   const payNow = o.method === "prepaid" && (o.status === "awaiting_payment" || o.status === "rejected");
   return <article className="card stack" style={{ gap: 8 }}>
     <a href={"/reservas/" + o.venue_id} style={{ fontWeight: 800, fontSize: 19 }}>{VENUE_KINDS[o.venue_kind].icon} {o.venue_name}</a>
-    <small>{venueOrderRef(o.ref_no)} · {VENUE_ORDER_KIND_LABELS[o.kind]} · {VENUE_METHOD_LABELS[o.method].split(" (")[0]}</small>
-    <span style={{ overflowWrap: "anywhere" }}>{venueOrderSummary(o)}</span>
-    {o.total > 0 && <span><strong>{formatPrice(o.total)}</strong>{o.client_fee > 0 ? ` (${formatPrice(o.subtotal)} + ${formatPrice(o.client_fee)} de taxa do APP)` : ""}</span>}
-    <strong>{VENUE_ORDER_STATUS_LABELS[o.status]}{o.hold_until && (o.status === "reserved" || o.status === "paid") ? " · guardado " + holdText(o.hold_until) : ""}</strong>
-    {o.note && (o.status === "rejected" || o.status === "cancelled") && <span className="error">Motivo: {o.note}</span>}
+    <small>{venueOrderRef(o.ref_no)} · {tc(VENUE_ORDER_KIND_LABELS[o.kind])} · {tc(VENUE_METHOD_LABELS[o.method]).split(" (")[0].split("（")[0]}</small>
+    <span style={{ overflowWrap: "anywhere" }}>{tc(venueOrderSummary(o))}</span>
+    {o.total > 0 && <span><strong>{formatPrice(o.total)}</strong>{o.client_fee > 0 ? " " + t("sv.fu_fee_paren", { sub: formatPrice(o.subtotal), fee: formatPrice(o.client_fee) }) : ""}</span>}
+    <strong>{tc(VENUE_ORDER_STATUS_LABELS[o.status])}{o.hold_until && (o.status === "reserved" || o.status === "paid") ? " · " + t("sv.ve_held") + " " + tc(holdText(o.hold_until)) : ""}</strong>
+    {o.note && (o.status === "rejected" || o.status === "cancelled") && <span className="error">{t("sv.reason")}: {o.note}</span>}
     {o.code && LIVE.includes(o.status) && <VenueCode code={o.code} token={o.qr_token} />}
-    {o.status === "submitted" && <small>O estabelecimento está a confirmar o pagamento na conta dele. Ao chegar, lá verificam o QR e o comprovativo.</small>}
-    {o.status === "reserved" && o.method === "at_place" && <small>Pague no estabelecimento, ao chegar.</small>}
+    {o.status === "submitted" && <small>{t("sv.ve_submitted_hint")}</small>}
+    {o.status === "reserved" && o.method === "at_place" && <small>{t("sv.ve_pay_on_arrival")}</small>}
     {(o.address_text || o.phone) && <small>{o.address_text ? "📍 " + o.address_text : ""}{o.address_text && o.phone ? " · " : ""}{o.phone ? <a href={"tel:" + o.phone.replace(/\s/g, "")}>📞 {o.phone}</a> : null}</small>}
     {payNow && <div className="stack" style={{ gap: 8 }}>
-      <strong>1. Pague {formatPrice(o.total)} ao estabelecimento{o.pay_by ? " " + holdText(o.pay_by) : ""}</strong>
+      <strong>1. {t("sv.ve_pay_step", { total: formatPrice(o.total) })}{o.pay_by ? " " + tc(holdText(o.pay_by)) : ""}</strong>
       <dl className="facts card" style={{ margin: 0, gridTemplateColumns: "minmax(0, auto) minmax(0, 1fr)" }}>
-        {o.pay_holder && <><dt>Titular</dt><dd>{o.pay_holder}</dd></>}
+        {o.pay_holder && <><dt>{t("sv.holder")}</dt><dd>{o.pay_holder}</dd></>}
         {o.pay_iban && <><dt>IBAN</dt><dd><strong style={{ overflowWrap: "anywhere" }}>{o.pay_iban}</strong></dd></>}
         {o.pay_express && <><dt>Multicaixa Express</dt><dd><strong>{o.pay_express}</strong></dd></>}
       </dl>
       {o.pay_note && <span>{o.pay_note}</span>}
-      <p className="banner yellow" style={{ margin: 0, padding: 12, display: "block" }}>✍️ {venueTransferNote(o.ref_no)}<br />⚠️ Pague só para a conta do estabelecimento mostrada aqui. Nunca pague a quem lhe ligar a pedir outra conta.</p>
-      <strong>2. Envie o comprovativo</strong>
-      <Choice label="Como pagou" value={method} onChange={setMethod} options={(["multicaixa_express", "bank_transfer"] as const).map(m => [m, PLAN_METHOD_LABELS[m]] as ["multicaixa_express" | "bank_transfer", string])} />
-      <label>Referência ou número da operação<input value={reference} onChange={e => setReference(e.target.value)} maxLength={120} /></label>
-      <label>Fotografia ou PDF do comprovativo (obrigatório)<input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label>
-      <button type="button" disabled={busy} onClick={() => void pay()} style={{ justifySelf: "start" }}>{busy ? "A enviar…" : "✅ Já paguei — enviar comprovativo"}</button>
+      <p className="banner yellow" style={{ margin: 0, padding: 12, display: "block" }}>✍️ {tc(venueTransferNote(o.ref_no))}<br />⚠️ {t("sv.ve_pay_warn")}</p>
+      <strong>2. {t("sv.fu_send_proof")}</strong>
+      <Choice label={t("sv.how_paid")} value={method} onChange={setMethod} options={(["multicaixa_express", "bank_transfer"] as const).map(m => [m, tc(PLAN_METHOD_LABELS[m])] as ["multicaixa_express" | "bank_transfer", string])} />
+      <label>{t("sv.ref_label")}<input value={reference} onChange={e => setReference(e.target.value)} maxLength={120} /></label>
+      <label>{t("sv.fu_proof_required")}<input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label>
+      <button type="button" disabled={busy} onClick={() => void pay()} style={{ justifySelf: "start" }}>{busy ? t("sv.sending") : "✅ " + t("sv.fu_paid_send")}</button>
     </div>}
-    {(o.status === "reserved" || o.status === "awaiting_payment" || o.status === "rejected") && <button type="button" className="secondary" style={{ justifySelf: "start" }} onClick={() => void cancel()}>Cancelar reserva</button>}
+    {(o.status === "reserved" || o.status === "awaiting_payment" || o.status === "rejected") && <button type="button" className="secondary" style={{ justifySelf: "start" }} onClick={() => void cancel()}>{t("sv.fu_cancel_btn")}</button>}
   </article>;
 }
 

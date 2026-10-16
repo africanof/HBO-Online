@@ -41,7 +41,7 @@ export function ListingGuarantee({ listingId, uid, mine, wanted }: { listingId: 
     <Message ok={done} />
     {!!deadline && !done && !open && <>
       <Button title={t("ls.claim.open")} variant="secondary" onPress={() => setOpen(true)} />
-      <Text style={ui.muted}>{tc(claimDeadlineText(deadline))}</Text>
+      <Text style={ui.muted}>{tc(claimDeadlineText(deadline) ?? "")}</Text>
     </>}
     {open && <View style={{ gap: 8 }}>
       <Text style={ui.label}>{t("ls.claim.whats_wrong")}</Text>
