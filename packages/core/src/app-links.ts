@@ -5,6 +5,8 @@
  */
 export const ANDROID_PACKAGE = "ao.huamboonline.app";
 /** Caminhos do site que a APP abre sozinha (iguais em app.json). */
+/** Certificado que assina a APP na Expo (lido pela ação «APP Android — impressão digital»). Público. */
+export const ANDROID_SHA256_FINGERPRINT = "eb064ed7bb66af8093ccb24f72aaa94052511e42d5f2b9e333373d780066ba6c";
 export const APP_LINK_PATHS = ["/reservas/v/", "/combustivel/v/", "/eventos/bilhete/"] as const;
 
 /** «AB:CD:…» com 32 pares; aceita minúsculas, espaços e várias separadas por vírgulas. Devolve só as válidas. */
@@ -12,6 +14,10 @@ export function parseSha256Fingerprints(text: string | null | undefined): string
   return (text ?? "").split(/[,;\n]+/).map(s => s.replace(/[^0-9a-f]/gi, "").toUpperCase())
     .filter(s => s.length === 64).map(s => s.match(/.{2}/g)!.join(":"))
     .filter((s, i, a) => a.indexOf(s) === i);
+}
+/** Impressões digitais a publicar: as da variável (se houver) mais a da APP. */
+export function appLinkFingerprints(envValue?: string | null): string[] {
+  return parseSha256Fingerprints([envValue ?? "", ANDROID_SHA256_FINGERPRINT].join(","));
 }
 export function assetLinks(fingerprints: string[], packageName = ANDROID_PACKAGE) {
   if (!fingerprints.length) return [];
