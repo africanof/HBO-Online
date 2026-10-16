@@ -55,8 +55,8 @@ export function ListingGuarantee({ listingId, uid, mine, wanted }: { listingId: 
   </section>;
 }
 
-const ACTION_LABELS = { accept: "✅ Aceitar (vou cumprir)", decline: "❌ Recusar", confirm: "✔ Já está resolvido", escalate: "⚖️ Pedir à administração", withdraw: "Retirar a reclamação" } as const;
-const actionLabel = (a: keyof typeof ACTION_LABELS, t: TFunction) => ({ accept: "✅ " + t("ls.claim_act_accept"), decline: "❌ " + t("ls.decline"), confirm: "✔ " + t("ls.claim_act_confirm"), escalate: "⚖️ " + t("ls.claim_act_escalate"), withdraw: t("ls.claim_act_withdraw") })[a];
+type ClaimAction = "accept" | "decline" | "confirm" | "escalate" | "withdraw";
+const actionLabel = (a: ClaimAction, t: TFunction) => ({ accept: "✅ " + t("ls.claim_act_accept"), decline: "❌ " + t("ls.decline"), confirm: "✔ " + t("ls.claim_act_confirm"), escalate: "⚖️ " + t("ls.claim_act_escalate"), withdraw: t("ls.claim_act_withdraw") })[a];
 
 /** Lista das reclamações de anúncios (como comprador e como dono), na página «Devoluções e reembolsos». */
 export function ListingClaims() {
@@ -65,7 +65,7 @@ export function ListingClaims() {
   const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
   async function load() { const r = await listMyListingClaims(supabase()); if (r.error) setError(friendlyErrorIn(r.error, lang)); setItems(r.data); }
   useEffect(() => { void load(); }, []);
-  async function act(c: ListingClaim, a: keyof typeof ACTION_LABELS) {
+  async function act(c: ListingClaim, a: ClaimAction) {
     setBusy(true); setError(""); setNotice("");
     const n = note[c.id];
     const r = a === "accept" || a === "decline" ? await respondListingClaim(supabase(), c.id, a === "accept", n) : await buyerListingClaim(supabase(), c.id, a, n);
