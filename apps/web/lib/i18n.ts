@@ -9,8 +9,12 @@
 import { createContext, createElement, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import {
   COMMON_DICT, DEFAULT_LANG, LANG_COOKIE, LANG_STORAGE_KEY, LANG_TAGS, AVG_PHOTO_KB,
-  detectLang, isLang, makeT, mergeDictionaries, timeAgo, formatEventDate, savedText, type Dictionary, type Lang
+  detectLang, isLang, makeT, mergeDictionaries, tc, timeAgo, formatEventDate, savedText, type Dictionary, type Lang
 } from "@huambo-online/core";
+import { DICT_LISTINGS } from "./i18n/listings";
+import { DICT_SHOP } from "./i18n/shop";
+import { DICT_SERVICES } from "./i18n/services";
+import { DICT_ADMIN } from "./i18n/admin";
 
 export const WEB_DICT: Dictionary = {
   // Cabeçalho
@@ -237,7 +241,7 @@ export const WEB_DICT: Dictionary = {
 };
 
 /** Todos os textos do Site (comuns + só do Site). */
-export const DICT: Dictionary = mergeDictionaries(COMMON_DICT, WEB_DICT);
+export const DICT: Dictionary = mergeDictionaries(COMMON_DICT, WEB_DICT, DICT_LISTINGS, DICT_SHOP, DICT_SERVICES, DICT_ADMIN);
 
 export type TFunction = (key: string, vars?: Record<string, string | number>) => string;
 
@@ -280,18 +284,19 @@ export function saveLang(lang: Lang) {
 }
 
 // --- Contexto React ---------------------------------------------------------------------------
-type I18nValue = { lang: Lang; t: TFunction; setLang: (l: Lang) => void };
+/** tc(texto) traduz um texto que veio do core em português (etiquetas, estados, erros). */
+type I18nValue = { lang: Lang; t: TFunction; tc: (s: string) => string; setLang: (l: Lang) => void };
 const I18nContext = createContext<I18nValue | null>(null);
 
 export function I18nProvider({ children, initialLang = DEFAULT_LANG }: { children: ReactNode; initialLang?: Lang }) {
   // No servidor e na hidratação usa «initialLang» (português); logo a seguir passa para a língua guardada.
   const lang = useSyncExternalStore(subscribe, getSnapshot, () => initialLang);
   useEffect(() => { document.documentElement.lang = LANG_TAGS[lang]; }, [lang]);
-  const value = useMemo<I18nValue>(() => ({ lang, t: makeT(DICT, lang), setLang: saveLang }), [lang]);
+  const value = useMemo<I18nValue>(() => ({ lang, t: makeT(DICT, lang), tc: (s: string) => tc(s, lang), setLang: saveLang }), [lang]);
   return createElement(I18nContext.Provider, { value }, children);
 }
 
-const FALLBACK: I18nValue = { lang: DEFAULT_LANG, t: makeT(DICT, DEFAULT_LANG), setLang: saveLang };
+const FALLBACK: I18nValue = { lang: DEFAULT_LANG, t: makeT(DICT, DEFAULT_LANG), tc: (s: string) => s, setLang: saveLang };
 /** { lang, t, setLang } — t("chave", { n: 3 }). */
 export function useT(): I18nValue { return useContext(I18nContext) ?? FALLBACK; }
 

@@ -1,7 +1,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { I18nManager, NativeModules } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { COMMON_DICT, DEFAULT_LANG, LANG_STORAGE_KEY, LANG_TAGS, AVG_PHOTO_KB, detectLang, formatEventDate, isLang, makeT, mergeDictionaries, type Dictionary, type Lang } from "@huambo-online/core";
+import { COMMON_DICT, DEFAULT_LANG, LANG_STORAGE_KEY, LANG_TAGS, AVG_PHOTO_KB, detectLang, formatEventDate, isLang, makeT, mergeDictionaries, tc, type Dictionary, type Lang } from "@huambo-online/core";
+import { DICT_LISTINGS } from "./i18n/listings";
+import { DICT_SHOP } from "./i18n/shop";
+import { DICT_SERVICES } from "./i18n/services";
+import { DICT_ADMIN } from "./i18n/admin";
 
 /**
  * Línguas da APP: português (base), inglês e mandarim (chinês simplificado).
@@ -217,7 +221,7 @@ export const APP_DICT: Dictionary = {
 };
 
 /** Todos os textos da APP (comuns + só da APP). */
-export const DICT: Dictionary = mergeDictionaries(COMMON_DICT, APP_DICT);
+export const DICT: Dictionary = mergeDictionaries(COMMON_DICT, APP_DICT, DICT_LISTINGS, DICT_SHOP, DICT_SERVICES, DICT_ADMIN);
 
 export type TFn = (key: string, vars?: Record<string, string | number>) => string;
 
@@ -309,8 +313,9 @@ export function detectDeviceLang(locales = deviceLocales()): Lang {
   return DEFAULT_LANG;
 }
 
-type I18nState = { lang: Lang; t: TFn; setLang: (l: Lang) => void };
-const I18nContext = createContext<I18nState>({ lang: DEFAULT_LANG, t: makeT(DICT, DEFAULT_LANG), setLang: () => {} });
+/** tc(texto) traduz um texto que veio do core em português (etiquetas, estados, erros). */
+type I18nState = { lang: Lang; t: TFn; tc: (s: string) => string; setLang: (l: Lang) => void };
+const I18nContext = createContext<I18nState>({ lang: DEFAULT_LANG, t: makeT(DICT, DEFAULT_LANG), tc: (s: string) => s, setLang: () => {} });
 /** { lang, t, setLang } — t("chave", { nome: "…" }) dá o texto na língua escolhida. */
 export const useT = () => useContext(I18nContext);
 
@@ -328,6 +333,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setLangState(l);
     void AsyncStorage.setItem(LANG_STORAGE_KEY, l).catch(() => {});
   }, []);
-  const value = useMemo(() => ({ lang, t: makeT(DICT, lang), setLang }), [lang, setLang]);
+  const value = useMemo(() => ({ lang, t: makeT(DICT, lang), tc: (s: string) => tc(s, lang), setLang }), [lang, setLang]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
