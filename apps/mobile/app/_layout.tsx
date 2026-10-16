@@ -7,6 +7,7 @@ import { BottomNav } from "../components/BottomNav";
 import { C } from "../lib/ui";
 import { ThemeProvider, useThemeController } from "../lib/theme";
 import { DataSaverProvider } from "../lib/dataSaver";
+import { I18nProvider } from "../lib/i18n";
 import { startReferralClaim } from "../lib/referral";
 
 export default function Layout() {
@@ -14,11 +15,11 @@ export default function Layout() {
   useEffect(() => startReferralClaim(), []);
   const theme = useThemeController();
   // key={theme.mode}: ao mudar de tema, tudo é desenhado de novo com as cores do tema escolhido.
-  return <ThemeProvider value={theme}><DataSaverProvider>
+  return <ThemeProvider value={theme}><I18nProvider><DataSaverProvider>
     <View key={theme.mode} style={{ flex: 1, backgroundColor: C.white }}>
       <StatusBar style={theme.mode === "dark" ? "light" : "dark"} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.white } }} />
       <BottomNav />
     </View>
-  </DataSaverProvider></ThemeProvider>;
+  </DataSaverProvider></I18nProvider></ThemeProvider>;
 }

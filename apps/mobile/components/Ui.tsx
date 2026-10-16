@@ -5,7 +5,7 @@ export function Button({ title, onPress, disabled, variant = "primary" }: { titl
   const style = variant === "secondary" ? ui.buttonSecondary : variant === "danger" ? ui.danger : ui.button;
   const textStyle = variant === "secondary" ? ui.buttonSecondaryText : ui.buttonText;
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} disabled={disabled} onPress={onPress} style={({ pressed }) => [style, { opacity: disabled ? 0.5 : pressed ? 0.8 : 1 }]}>
-    <Text style={textStyle}>{title}</Text>
+    <Text style={[textStyle, { textAlign: "center" }]}>{title}</Text>
   </Pressable>;
 }
 

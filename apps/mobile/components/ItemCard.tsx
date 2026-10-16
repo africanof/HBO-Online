@@ -3,6 +3,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { firstPhoto } from "@huambo-online/core";
 import { C, themed } from "../lib/ui";
 import { LiteImage } from "./LiteImage";
+import { useT } from "../lib/i18n";
 
 export const LISTING_ICON: Record<string, string> = { real_estate: "🏠", vehicle: "🚗", product: "📦", service: "🛠️", classified: "🏷️" };
 
@@ -10,14 +11,14 @@ export const LISTING_ICON: Record<string, string> = { real_estate: "🏠", vehic
 export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = "📦", width, video, featured }: {
   href: string; media?: unknown; title: string; price: string; meta?: string; tag?: string; tagRed?: boolean; icon?: string; width?: number | `${number}%`; video?: boolean; featured?: boolean;
 }) {
-  const photo = firstPhoto(media);
+  const photo = firstPhoto(media); const { t } = useT();
   return <Link href={href as any} asChild>
-    <Pressable accessibilityRole="link" accessibilityLabel={`${featured ? "Destaque: " : ""}${title}, ${price}`} style={({ pressed }) => [s.card, width !== undefined && { width }, pressed && { opacity: 0.85 }]}>
+    <Pressable accessibilityRole="link" accessibilityLabel={`${featured ? t("card.featured_a11y") : ""}${title}, ${price}`} style={({ pressed }) => [s.card, width !== undefined && { width }, pressed && { opacity: 0.85 }]}>
       <View style={s.img}>
         {photo ? <LiteImage placeholder={icon} source={{ uri: photo }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : <Text style={{ fontSize: 44 }}>{icon}</Text>}
         {!!tag && <View style={[s.tag, tagRed && { backgroundColor: C.red }]}><Text style={[s.tagText, tagRed && { color: C.onAccent }]}>{tag}</Text></View>}
-        {!!video && <View style={s.video}><Text style={s.videoText}>▶ Vídeo</Text></View>}
-        {!!featured && <View style={s.feat}><Text style={s.featText}>⭐ Destaque</Text></View>}
+        {!!video && <View style={s.video}><Text style={s.videoText}>{t("card.video")}</Text></View>}
+        {!!featured && <View style={s.feat}><Text style={s.featText}>{t("card.featured")}</Text></View>}
       </View>
       <Text style={s.title} numberOfLines={2}>{title}</Text>
       <Text style={s.price}>{price}</Text>
@@ -28,8 +29,9 @@ export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = 
 
 /** Montra horizontal com título e "Ver tudo". */
 export function Shelf({ title, href, children }: { title: string; href?: string; children: React.ReactNode }) {
+  const { t } = useT();
   return <View style={{ gap: 10 }}>
-    <View style={s.head}><Text style={s.headTitle}>{title}</Text>{!!href && <Link href={href as any} style={s.more}>Ver tudo</Link>}</View>
+    <View style={s.head}><Text style={s.headTitle}>{title}</Text>{!!href && <Link href={href as any} style={s.more}>{t("common.see_all")}</Link>}</View>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingRight: 16 }}>{children}</ScrollView>
   </View>;
 }
@@ -51,7 +53,7 @@ const s = themed(C => StyleSheet.create({
   title: { fontSize: 15, color: C.ink, lineHeight: 20 },
   price: { fontSize: 19, fontWeight: "800", color: C.ink },
   meta: { fontSize: 13, color: C.muted },
-  head: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" },
+  head: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 8 },
   headTitle: { fontSize: 21, fontWeight: "800", color: C.ink, flexShrink: 1 },
   more: { color: C.blue, fontWeight: "800", fontSize: 16, textDecorationLine: "underline", padding: 4 },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 18 }
