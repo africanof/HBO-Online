@@ -93,3 +93,4 @@ export * from "./mfa";
 export * from "./i18n";
 export * from "./i18n-core";
 export * from "./seller-delivery";
+export * from "./profile-qr";

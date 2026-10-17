@@ -12,6 +12,7 @@ import { currentUserId } from "../../lib/supabase";
 import { LiteImage } from "../../components/LiteImage";
 import { FollowButton } from "../../components/Engage";
 import { PromoShelf } from "../../components/Promo";
+import { DeliveryPolicyBox } from "../../components/Delivery";
 import { getPublic } from "../../lib/public-api";
 import { sellerPageCached } from "@huambo-online/core";
 import { useT, coreText, formatDayIn } from "../../lib/i18n";
@@ -50,6 +51,8 @@ export default function Vendedor() {
     <TrustBadges userId={s.id} />
     <InspectedBadge info={store[s.id]} big />
     <StatsBlock rows={userStatsRows(stats)} />
+    <DeliveryPolicyBox sellerId={s.id} />
+    {me === s.id && <Link href={"/conta/entregas" as any} style={ui.link}>{t("sh.dl.edit_mine")}</Link>}
     <PromoShelf kind="store" id={s.id} />
     <Text style={ui.h2}>{t("ls.seller.listings", { n: listings.length })}</Text>
     {listings.length === 0 && <Text style={ui.text}>{t("ls.seller.no_listings")}</Text>}

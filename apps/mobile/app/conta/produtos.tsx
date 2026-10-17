@@ -79,6 +79,7 @@ export default function MeusProdutos() {
     <Text style={ui.h1}>{t("sh.my_products")}</Text>
     <Button title={t("sh.view_stats")} variant="secondary" onPress={() => router.push("/conta/estatisticas" as any)} />
     <PlanBanner kind="store" subjectId={uid} />
+    <Button title={t("sh.dl.title")} variant="secondary" onPress={() => router.push("/conta/entregas" as any)} />
     <Button title={"📦 " + t("sh.my_sales")} variant="secondary" onPress={() => router.push("/encomendas?vendas=1" as any)} />
     <Message error={error} ok={notice} />
     {items.map(p => <View key={p.id} style={ui.card}>

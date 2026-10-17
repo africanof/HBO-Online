@@ -49,3 +49,13 @@ export const CORE_DELIVERY_PATTERNS: { re: RegExp; en: string; zh: string }[] = 
   { re: /^Recebeu uma encomenda de (.+) Kz \(inclui entrega: (.+) Kz\)\.(.*)$/, en: "You received an order of $1 Kz (includes delivery: $2 Kz).$3", zh: "您收到一笔 $1 Kz 的订单（含配送费 $2 Kz）。$3" },
   { re: /^Recebeu uma encomenda de (.+) Kz \(entrega grátis\)\.(.*)$/, en: "You received an order of $1 Kz (free delivery).$2", zh: "您收到一笔 $1 Kz 的订单（免费配送）。$2" }
 ];
+
+/** Textos do código QR dos perfis (profile-qr.ts). */
+export const CORE_PROFILE_QR_ROWS: CoreRow[] = [
+  ["Profissional", "Professional", "专业人士"], ["Empresa", "Business", "企业"], ["Loja", "Shop", "商店"],
+  ["Estabelecimento", "Venue", "商家"], ["Posto de combustível", "Fuel station", "加油站"], ["Praça", "Market", "市场"],
+  ["Leia com a câmara do telemóvel", "Scan with your phone camera", "用手机相机扫描"]
+];
+export const CORE_PROFILE_QR_PATTERNS: { re: RegExp; en: string; zh: string }[] = [
+  { re: /^(.+) no Huambo Online — veja o perfil, os produtos e onde fica:\n👉 (.+)$/s, en: "$1 on Huambo Online — see the profile, products and location:\n👉 $2", zh: "$1 在 Huambo Online —— 查看资料、商品和位置：\n👉 $2" }
+];

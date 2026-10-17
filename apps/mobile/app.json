@@ -22,17 +22,37 @@
             {
               "scheme": "https",
               "host": "huambo-na-m-o.onrender.com",
-              "pathPrefix": "/reservas/v/"
+              "pathPrefix": "/reservas/"
             },
             {
               "scheme": "https",
               "host": "huambo-na-m-o.onrender.com",
-              "pathPrefix": "/combustivel/v/"
+              "pathPrefix": "/combustivel/"
             },
             {
               "scheme": "https",
               "host": "huambo-na-m-o.onrender.com",
               "pathPrefix": "/eventos/bilhete/"
+            },
+            {
+              "scheme": "https",
+              "host": "huambo-na-m-o.onrender.com",
+              "pathPrefix": "/profissionais/"
+            },
+            {
+              "scheme": "https",
+              "host": "huambo-na-m-o.onrender.com",
+              "pathPrefix": "/empresas/"
+            },
+            {
+              "scheme": "https",
+              "host": "huambo-na-m-o.onrender.com",
+              "pathPrefix": "/vendedor/"
+            },
+            {
+              "scheme": "https",
+              "host": "huambo-na-m-o.onrender.com",
+              "pathPrefix": "/pracas/"
             }
           ],
           "category": [

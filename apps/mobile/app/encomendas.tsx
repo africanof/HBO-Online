@@ -2,7 +2,7 @@ import { OrderPoint } from "../components/Place";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Alert, Linking, ScrollView, Text, View } from "react-native";
-import { listOrders, changeOrderStatus, formatPrice, friendlyErrorIn, ORDER_STATUS_LABELS, PAYMENT_LABELS, FULFILLMENT_LABELS, NEXT_SELLER_STATUS,
+import { listOrdersV4, changeOrderStatus, formatPrice, friendlyErrorIn, ORDER_STATUS_LABELS, PAYMENT_LABELS, FULFILLMENT_LABELS, NEXT_SELLER_STATUS,
   listMyDeliveries, requestOrderDelivery, cancelDeliveryRequest, latestDeliveryByOrder, isActiveDelivery, DELIVERY_STATUS_LABELS,
   listMyDisputes, latestDisputeByOrder, formatRef, canOpenDispute, DISPUTE_STATUS_LABELS, DISPUTE_OUTCOME_LABELS, type MyDispute,
   getPlatformSettings, getProtectedSettings, isActiveDispute, type PlatformSettings,
@@ -24,7 +24,7 @@ export default function Encomendas() {
   const [deliveries, setDeliveries] = useState<Record<string, any>>({});
   const [disputes, setDisputes] = useState<MyDispute[]>([]);
   async function load(r = role) {
-    const [res, d, ds] = await Promise.all([listOrders(supabase(), r), listMyDeliveries(supabase(), "party"), listMyDisputes(supabase())]);
+    const [res, d, ds] = await Promise.all([listOrdersV4(supabase(), r), listMyDeliveries(supabase(), "party"), listMyDisputes(supabase())]);
     if (res.error) setError(friendlyErrorIn(res.error, lang)); else setItems((res.data as any[]) ?? []);
     setDeliveries(latestDeliveryByOrder((d.data as any[]) ?? []));
     setDisputes(ds.data);
@@ -54,6 +54,9 @@ export default function Encomendas() {
       return <View key={o.id} style={ui.card}>
         <Text style={ui.h2}>{o.ref_no ? formatRef("order", o.ref_no) + " · " : ""}{formatPrice(o.total, o.currency)} · {o.protected && o.status === "completed" && o.escrow_status === "held" ? t("sh.delivered") : tc(ORDER_STATUS_LABELS[o.status as OrderStatus] ?? o.status)}{o.payment_status === "paid" ? " · " + t("sh.paid_tag") : o.payment_status === "refunded" ? " · " + t("sh.refunded_tag") : ""}</Text>
         <Text style={ui.text}>{t(role === "seller" ? "sh.customer" : "sh.seller", { name: o.other_name })}</Text>
+        {o.subtotal != null && <Text style={ui.label}>{[t("sh.dl.sum_items", { price: formatPrice(o.subtotal, o.currency) }),
+          o.fulfillment_type === "delivery" ? (o.delivery_municipality_name ? t("sh.dl.order_delivery_in", { place: o.delivery_municipality_name, price: formatPrice(o.delivery_fee ?? 0, o.currency) }) : t("sh.dl.sum_delivery", { price: formatPrice(o.delivery_fee ?? 0, o.currency) })) : t("sh.dl.choice_pickup"),
+          t("sh.dl.sum_total", { price: formatPrice(o.total, o.currency) })].join(" · ")}</Text>}
         <Text style={ui.muted}>{formatDateTimeIn(o.created_at, lang)} · {tc(FULFILLMENT_LABELS[o.fulfillment_type as Fulfillment] ?? "")} · {o.protected ? t("sh.protected_tag") : tc(PAYMENT_LABELS[o.payment_method as PaymentMethod] ?? o.payment_method)}</Text>
         <OrderEscrowPanel order={o} role={role} uid={uid} settings={settings} provider={provider} hasActiveDispute={!!lastDispute[o.id] && isActiveDispute(lastDispute[o.id].status)}
           onChanged={(m, bad) => { if (bad) { setError(m); setNotice(""); } else { setError(""); setNotice(m); void load(); } }} />

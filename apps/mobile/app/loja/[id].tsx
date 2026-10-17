@@ -10,6 +10,7 @@ import { SaveButton, ShareButton, SellerWhatsApp, FollowButton, useRecordView } 
 import { SellerBadge } from "../../components/Reputation";
 import { ReportButton } from "../../components/Trust";
 import { PhotoGallery } from "../../components/PhotoGallery";
+import { DeliveryPolicyBox } from "../../components/Delivery";
 import { useT } from "../../lib/i18n";
 
 export default function Produto() {
@@ -51,6 +52,7 @@ export default function Produto() {
     <PhotoGallery media={media} icon={"📦"} />
     {!!p.video_url && <VideoPlayer url={p.video_url} />}
     {!!p.description && <Text style={ui.text}>{p.description}</Text>}
+    <DeliveryPolicyBox sellerId={p.seller_id} />
     {!mine && <SellerWhatsApp sellerId={p.seller_id} kind="product" id={id} title={p.name} refCode={p.ref_no ? formatRef("product", p.ref_no) : null} />}
     {!mine && <SaveButton kind="product" id={id} />}
     <ShareButton kind="product" id={id} title={p.name} extra={{ price: p.price, currency: p.currency, refCode: p.ref_no ? formatRef("product", p.ref_no) : null, place: p.municipalities?.name }} />

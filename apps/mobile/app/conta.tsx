@@ -18,7 +18,7 @@ export default function Conta() {
   // Atalhos da conta: [texto, endereço].
   const menu: [string, string][] = [
     ["📋 " + t("more.my_listings"), "/meus-anuncios"], [t("account.pro_profile"), "/conta/profissional"], [t("account.businesses"), "/conta/empresas"],
-    [t("account.products"), "/conta/produtos"], [t("account.plan"), "/conta/plano"], [t("account.commissions"), "/conta/comissoes"], [t("account.balance"), "/conta/saldo"],
+    [t("account.products"), "/conta/produtos"], [t("sh.dl.title"), "/conta/entregas"], [t("account.plan"), "/conta/plano"], [t("account.commissions"), "/conta/comissoes"], [t("account.balance"), "/conta/saldo"],
     [t("account.stats"), "/conta/estatisticas"], ["🤝 " + t("more.agent"), "/agente"], [t("account.tickets"), "/bilhetes"], [t("account.fuel_bookings"), "/combustivel/pedidos"],
     [t("account.fuel_stations"), "/combustivel/meus"], ["🎬 " + t("more.videos"), "/videos/meus"], [t("account.events"), "/eventos/meus"], ["🎁 " + t("more.invite"), "/convidar"],
     ["📦 " + t("more.orders"), "/encomendas"], [t("account.returns"), "/disputas"], [t("account.service_requests"), "/servicos"], [t("account.offers"), "/propostas"],
