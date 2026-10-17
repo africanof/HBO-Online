@@ -278,3 +278,20 @@ details.faq[open] summary { margin-bottom: 6px; }
 .lang-note { font-size: 13px; color: var(--muted); flex-basis: 100%; }
 /* Textos longos (inglês) e chinês sem espaços: quebram em vez de alargar a página. */
 h1, h2, h3, p, label, .btn, button, .chip, .cat, .footer a, .item-title, .item-meta { overflow-wrap: anywhere; }
+
+/* 🚚 Regras de entrega (página do vendedor «Entregas» e carrinho) */
+.dl-pick { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+.dl-check { display: flex; gap: 12px; align-items: center; min-height: 48px; font-weight: 800; }
+.dl-check input { width: 26px; height: 26px; flex: none; margin: 0; padding: 0; }
+.dl-zone { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.dl-choices { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); border: 0; padding: 0; margin: 0; min-width: 0; }
+.dl-choices legend { font-weight: 700; padding: 0; margin-bottom: 6px; }
+.dl-choice { display: flex; gap: 10px; align-items: center; min-height: 56px; padding: 10px 14px; border: 2px solid var(--input-border); border-radius: 14px; background: var(--card); cursor: pointer; font-weight: 800; }
+.dl-choice input { width: 24px; height: 24px; flex: none; margin: 0; padding: 0; }
+.dl-choice:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.dl-choice:has(input:disabled) { border-style: dashed; color: var(--muted); cursor: not-allowed; background: var(--surface); }
+.dl-totals { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; margin: 0; }
+.dl-totals dt { margin: 0; }
+.dl-totals dd { margin: 0; font-weight: 800; text-align: right; }
+.dl-totals .dl-total { font-size: 20px; border-top: 2px solid var(--line); padding-top: 6px; }
+.dl-preview { background: var(--surface); }

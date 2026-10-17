@@ -73,6 +73,7 @@ export default function MeusProdutos() {
     <a className="btn secondary" href="/conta/estatisticas" style={{ justifySelf: "start" }}>📊 {t("sh.my.stats")}</a>
     <PlanBanner kind="store" subjectId={uid} />
     <a className="btn secondary" href="/encomendas?vendas=1" style={{ justifySelf: "start" }}>📦 {t("sh.my_sales")}</a>
+    <a className="btn secondary" href="/conta/entregas" style={{ justifySelf: "start" }}>🚚 {t("sh.dl.link")}</a>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
     {items.map(p => <div key={p.id} className="card">

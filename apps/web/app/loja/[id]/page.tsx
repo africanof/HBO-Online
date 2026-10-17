@@ -7,6 +7,7 @@ import { supabase } from "../../../lib/supabase";
 import { SaveButton, ShareButton, SellerWhatsApp, FollowButton, useRecordView } from "../../../components/Engage";
 import { SellerBadge } from "../../../components/Reputation";
 import { ReportButton } from "../../../components/Trust";
+import { DeliveryPolicyBox } from "../../../components/SellerDelivery";
 import { useT } from "../../../lib/i18n";
 
 export default function Produto() {
@@ -49,7 +50,6 @@ export default function Produto() {
           {p.categories?.name && <><dt>{t("sh.category")}</dt><dd>{p.categories.name}</dd></>}
           {p.municipalities?.name && <><dt>{t("sh.prod.place")}</dt><dd>📍 {p.municipalities.name}</dd></>}
           {p.markets?.name && <><dt>{t("sh.market")}</dt><dd>🧺 <a href={"/pracas/" + p.markets.id}>{p.markets.name}</a></dd></>}
-          <dt>{t("sh.delivery")}</dt><dd>🛵 {t("sh.prod.delivery_how")}</dd>
         </dl>
         {error && <p className="error" role="alert">{error}</p>}
         {notice && <p className="ok" role="status">{notice} <a href="/carrinho">{t("sh.prod.see_cart")} →</a></p>}
@@ -62,6 +62,7 @@ export default function Produto() {
           {!mine && <SaveButton kind="product" id={id} />}
           <ShareButton kind="product" id={id} title={p.name} extra={{ price: p.price, currency: p.currency, refCode: p.ref_no ? formatRef("product", p.ref_no) : null, place: p.municipalities?.name }} />
         </div>
+        <DeliveryPolicyBox sellerId={p.seller_id} />
       </section>
     </div>
     {p.description && <section className="card"><h2 style={{ margin: 0 }}>{t("sh.description")}</h2><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{p.description}</p></section>}

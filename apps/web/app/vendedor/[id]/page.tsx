@@ -11,6 +11,7 @@ import { ReportButton, TrustBadges, ReviewReply } from "../../../components/Trus
 import { currentUserId } from "../../../lib/supabase";
 import { FollowButton } from "../../../components/Engage";
 import { PromoSection } from "../../../components/Promo";
+import { DeliveryPolicyBox } from "../../../components/SellerDelivery";
 import { InspectedBadge, useInspected } from "../../../components/Inspection";
 import { getPublic } from "../../../lib/public-api";
 import { sellerPageCached } from "@huambo-online/core";
@@ -48,6 +49,7 @@ export default function Vendedor() {
     <TrustBadges userId={s.id} />
     <InspectedBadge info={store[s.id]} big />
     <StatsBlock rows={userStatsRows(stats)} />
+    <DeliveryPolicyBox sellerId={s.id} />
     <PromoSection kind="store" id={s.id} />
     <h2>{t("ls.listings_n", { n: listings.length })}</h2>
     {listings.length === 0 && <p>{t("ls.no_published")}</p>}

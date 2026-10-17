@@ -9,6 +9,7 @@ import { supabase } from "../../../lib/supabase";
 import { useT } from "../../../lib/i18n";
 import { SafetyTipsBox } from "../../../components/Safety";
 import { PlaceView } from "../../../components/Place";
+import { DeliveryPolicyBox } from "../../../components/SellerDelivery";
 import { ListingGuarantee } from "../../../components/Conformity";
 import { ShareButton, SellerWhatsApp, useRecordView, browserStore } from "../../../components/Engage";
 import { OfflineBanner } from "../../../components/Offline";
@@ -154,6 +155,7 @@ export default function ClassifiedDetail() {
           </>}
           {item.status === "published" && <ShareButton kind="listing" id={id} title={item.title} extra={{ price: item.purpose === "wanted" ? null : item.price, currency: item.currency, refCode: item.ref_no ? formatRef("listing", item.ref_no) : null, place }} />}
         </div>
+        {item.purpose !== "wanted" && <DeliveryPolicyBox sellerId={item.owner_id} />}
       </section>
     </div>
     {item.purpose === "wanted" && item.status === "published" && <WantedHelpers title={item.title} mine={mine} />}

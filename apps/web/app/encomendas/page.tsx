@@ -2,7 +2,7 @@
 import { OrderPoint } from "../../components/Place";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { listOrders, changeOrderStatus, formatPrice, friendlyErrorIn, LANG_TAGS, ORDER_STATUS_LABELS, PAYMENT_LABELS, FULFILLMENT_LABELS, NEXT_SELLER_STATUS,
+import { listOrdersV4, changeOrderStatus, formatPrice, friendlyErrorIn, LANG_TAGS, ORDER_STATUS_LABELS, PAYMENT_LABELS, FULFILLMENT_LABELS, NEXT_SELLER_STATUS,
   listMyDeliveries, requestOrderDelivery, cancelDeliveryRequest, latestDeliveryByOrder, isActiveDelivery, DELIVERY_STATUS_LABELS,
   listMyDisputes, latestDisputeByOrder, formatRef, canOpenDispute, DISPUTE_STATUS_LABELS, DISPUTE_OUTCOME_LABELS, type MyDispute,
   getPlatformSettings, getProtectedSettings, isActiveDispute, type PlatformSettings,
@@ -21,7 +21,7 @@ function Encomendas() {
   const [deliveries, setDeliveries] = useState<Record<string, any>>({});
   const [disputes, setDisputes] = useState<MyDispute[]>([]);
   async function load(r = role) {
-    const [res, d, ds] = await Promise.all([listOrders(supabase(), r), listMyDeliveries(supabase(), "party"), listMyDisputes(supabase())]);
+    const [res, d, ds] = await Promise.all([listOrdersV4(supabase(), r), listMyDeliveries(supabase(), "party"), listMyDisputes(supabase())]);
     if (res.error) setError(friendlyErrorIn(res.error, lang)); else setItems((res.data as any[]) ?? []);
     setDeliveries(latestDeliveryByOrder((d.data as any[]) ?? []));
     setDisputes(ds.data);
@@ -64,7 +64,8 @@ function Encomendas() {
       return <article key={o.id} id={"encomenda-" + o.id} className="card">
         <strong>{o.ref_no ? formatRef("order", o.ref_no) + " · " : ""}{formatPrice(o.total, o.currency)} · <span className="badge">{o.protected && o.status === "completed" && o.escrow_status === "held" ? t("sh.ord.delivered") : tc(ORDER_STATUS_LABELS[o.status as OrderStatus] ?? o.status)}</span>{o.payment_status === "paid" ? " · ✅ " + t("sh.ord.paid") : o.payment_status === "refunded" ? " · ↩️ " + t("sh.ord.refunded") : ""}</strong>
         <span>{role === "seller" ? t("sh.customer") : t("sh.seller")}: {o.other_name} · {new Date(o.created_at).toLocaleString(LANG_TAGS[lang])}</span>
-        <span>{tc(FULFILLMENT_LABELS[o.fulfillment_type as Fulfillment])} · {o.protected ? "🛡️ " + t("sh.protected") : tc(PAYMENT_LABELS[o.payment_method as PaymentMethod] ?? o.payment_method)}</span>
+        <OrderAmounts order={o} />
+        <span>{o.fulfillment_type === "pickup" ? "🏪 " : "🚚 "}{tc(FULFILLMENT_LABELS[o.fulfillment_type as Fulfillment])} · {o.protected ? "🛡️ " + t("sh.protected") : tc(PAYMENT_LABELS[o.payment_method as PaymentMethod] ?? o.payment_method)}</span>
         <OrderEscrowPanel order={o} role={role} uid={uid} settings={settings} provider={provider} hasActiveDispute={!!lastDispute[o.id] && isActiveDispute(lastDispute[o.id].status)}
           onChanged={(m, bad) => { if (bad) { setError(m); setNotice(""); } else { setError(""); setNotice(m); void load(); } }} />
         <ul style={{ margin: 0 }}>{(o.items ?? []).map((it: any, i: number) => <li key={i}>{it.quantity} × {it.name} — {formatPrice(it.line_total)}</li>)}</ul>
@@ -86,6 +87,15 @@ function Encomendas() {
       </article>;
     })}
   </main>;
+}
+/** «Artigos: X · Entrega: Y (município) · Total: Z» (encomendas antigas, sem estes dados, só mostram o total no título). */
+function OrderAmounts({ order: o }: { order: any }) {
+  const { t } = useT();
+  if (o.subtotal == null) return null;
+  const fee = Number(o.delivery_fee) || 0; const place = o.delivery_municipality_name;
+  const delivery = o.fulfillment_type === "pickup" ? "🏪 " + t("sh.dl.ord_pickup")
+    : (fee === 0 ? t("sh.dl.ord_free") : t("sh.dl.ord_fee", { fee: formatPrice(fee, o.currency) })) + (place ? " (" + place + ")" : "");
+  return <span>{t("sh.dl.ord_items", { v: formatPrice(o.subtotal, o.currency) })} · {delivery} · <strong>{t("sh.dl.ord_total", { v: formatPrice(o.total, o.currency) })}</strong></span>;
 }
 function Loading() { const { t } = useT(); return <main><p>{t("common.loading")}</p></main>; }
 export default function Page() { return <Suspense fallback={<Loading />}><Encomendas /></Suspense>; }

@@ -14,7 +14,7 @@ const ACCOUNT_LINKS: [string, string, string][] = [
   ["📋", "ft.my_ads", "/meus-anuncios"], ["🧰", "acct.l.professional", "/conta/profissional"], ["🏪", "acct.l.businesses", "/conta/empresas"], ["💳", "acct.l.plan", "/conta/plano"],
   ["💸", "acct.l.commissions", "/conta/comissoes"], ["💰", "acct.l.balance", "/conta/saldo"], ["📊", "acct.l.stats", "/conta/estatisticas"], ["🤝", "acct.l.agent", "/agente"],
   ["🎁", "acct.l.invite", "/convidar"], ["🎟️", "acct.l.tickets", "/bilhetes"], ["🎤", "acct.l.events", "/eventos/meus"], ["🎬", "acct.l.videos", "/videos/meus"],
-  ["⛽", "acct.l.fuel_orders", "/combustivel/pedidos"], ["⛽", "acct.l.stations", "/combustivel/meus"], ["🛍️", "acct.l.products", "/conta/produtos"], ["📦", "ft.orders", "/encomendas"],
+  ["⛽", "acct.l.fuel_orders", "/combustivel/pedidos"], ["⛽", "acct.l.stations", "/combustivel/meus"], ["🛍️", "acct.l.products", "/conta/produtos"], ["🚚", "sh.dl.link", "/conta/entregas"], ["📦", "ft.orders", "/encomendas"],
   ["↩️", "info./devolucoes", "/disputas"], ["🛠️", "acct.l.services", "/servicos"], ["💬", "acct.l.offers", "/propostas"], ["🔨", "ft.my_bids", "/licitacoes"],
   ["⭐", "acct.l.reviews", "/avaliacoes"], ["✔", "acct.l.verify", "/conta/verificacao"], ["🏅", "acct.l.inspected", "/inspecao"], ["❓", "nav.help", "/ajuda"],
   ["🛡️", "acct.l.safety", "/seguranca"], ["📅", "ft.rentals", "/alugueres"], ["🛵", "acct.l.deliveries", "/entregas"], ["⭐", "nav.saved", "/guardados"],
