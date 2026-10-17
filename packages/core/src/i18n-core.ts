@@ -8,6 +8,7 @@ import { CORE_MESSAGE_ROWS } from "./i18n-core-messages";
 import { CORE_LEGAL_ROWS } from "./i18n-core-legal";
 import { CORE_PATTERNS_LIST, CORE_PATTERN_WORD_ROWS } from "./i18n-core-patterns";
 import { CORE_NOTIFICATION_ROWS, CORE_NOTIFICATION_PATTERNS } from "./i18n-core-notifications";
+import { CORE_DELIVERY_ROWS, CORE_DELIVERY_PATTERNS } from "./i18n-core-delivery";
 
 /**
  * Tradução dos textos que o core devolve em português (etiquetas, estados, validações e mensagens de erro).
@@ -19,8 +20,8 @@ function rowsToText(...groups: CoreRow[][]): CoreText {
   for (const rows of groups) for (const [pt, en, zh] of rows) out[pt] = { en, zh };
   return out;
 }
-export const CORE_TEXT: CoreText = rowsToText(CORE_LABEL_ROWS, CORE_MESSAGE_ROWS, CORE_ERROR_ROWS, CORE_LEGAL_ROWS, CORE_NOTIFICATION_ROWS, CORE_PATTERN_WORD_ROWS);
-export const CORE_PATTERNS: { re: RegExp; en: string; zh: string }[] = [...CORE_NOTIFICATION_PATTERNS, ...CORE_PATTERNS_LIST];
+export const CORE_TEXT: CoreText = rowsToText(CORE_LABEL_ROWS, CORE_MESSAGE_ROWS, CORE_ERROR_ROWS, CORE_LEGAL_ROWS, CORE_NOTIFICATION_ROWS, CORE_PATTERN_WORD_ROWS, CORE_DELIVERY_ROWS);
+export const CORE_PATTERNS: { re: RegExp; en: string; zh: string }[] = [...CORE_DELIVERY_PATTERNS, ...CORE_NOTIFICATION_PATTERNS, ...CORE_PATTERNS_LIST];
 
 /** Traduz um texto vindo do core; se não o conhecer, devolve-o como está. */
 export function tc(text: string, lang: Lang): string;
