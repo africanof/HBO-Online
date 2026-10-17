@@ -22,6 +22,7 @@ import { PaymentDetails } from "./Plans";
 import { useTerritory } from "./Directory";
 import { QrScanButton } from "./QrScanner";
 import { LiteImage } from "./LiteImage";
+import { ProfileQr } from "./ProfileQr";
 import { useT, formatDateTimeIn } from "../lib/i18n";
 
 const ph = { placeholderTextColor: C.muted };
@@ -214,6 +215,7 @@ export function VenueScreen({ id }: { id: string }) {
       {!!wa && <Button title="WhatsApp" variant="secondary" onPress={() => void Linking.openURL(wa)} />}
       <Button title={tr("sv.share_short")} variant="secondary" onPress={() => void Share.share({ message: tc(venueShareMessage(siteUrl, { id, name: b.name, kind: d.kind, municipality_name: b.municipality_name })) })} />
     </View>
+    <ProfileQr kind="reservas" id={id} name={b.name ?? ""} hint={mine ? tr("sv.qr.print_hint") : undefined} />
     <Button title={tr("sv.ve_portfolio")} variant="secondary" onPress={() => router.push(("/empresas/" + b.id) as any)} />
     <PlaceView directions={b.directions} lat={b.geo_lat} lng={b.geo_lng} />
     <Message error={error} />

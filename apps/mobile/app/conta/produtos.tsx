@@ -4,13 +4,14 @@ import { Link, useRouter } from "expo-router";
 import { Alert, Image, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { listMyProducts, saveProduct, deleteProduct, listProductCategories, uploadClassifiedMedia, removeClassifiedMedia, base64ToArrayBuffer,
-  parsePrice, formatPrice, friendlyErrorIn, MAX_PRODUCT_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, formatRef } from "@huambo-online/core";
+  parsePrice, formatPrice, friendlyErrorIn, MAX_PRODUCT_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, formatRef, getPublicSeller } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { MarketPicker } from "../../components/MarketPicker";
 import { VideoField } from "../../components/Video";
 import { Button, Chips, Message } from "../../components/Ui";
 import { PlanBanner } from "../../components/Plans";
+import { ProfileQr } from "../../components/ProfileQr";
 import { useTerritory } from "../../components/Directory";
 import { shrinkAsset } from "../../lib/image";
 import { useT } from "../../lib/i18n";
@@ -26,8 +27,11 @@ export default function MeusProdutos() {
   const [editing, setEditing] = useState<string | null>(null);
   const [categories, setCategories] = useState<Option[]>([]); const { provinces, municipalities, provinceId, setProvinceId } = useTerritory();
   const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
+  const [shopName, setShopName] = useState("");
 
   async function load(id: string) { const r = await listMyProducts(supabase(), id); setItems(r.data ?? []); }
+  // Nome da loja para o código QR (o mesmo que aparece na página pública do vendedor).
+  useEffect(() => { if (uid) void getPublicSeller(supabase(), uid).then(r => setShopName(r.data?.full_name ?? "")).catch(() => {}); }, [uid]);
   useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) void load(id); }); void listProductCategories(supabase()).then(({ data }) => setCategories(data ?? [])); }, []);
   const set = (k: keyof typeof empty) => (v: string) => setForm(f => ({ ...f, [k]: v }));
 
@@ -79,6 +83,7 @@ export default function MeusProdutos() {
     <Text style={ui.h1}>{t("sh.my_products")}</Text>
     <Button title={t("sh.view_stats")} variant="secondary" onPress={() => router.push("/conta/estatisticas" as any)} />
     <PlanBanner kind="store" subjectId={uid} />
+    <ProfileQr kind="vendedor" id={uid} name={shopName} hint={t("sv.qr.print_hint")} />
     <Button title={t("sh.dl.title")} variant="secondary" onPress={() => router.push("/conta/entregas" as any)} />
     <Button title={"📦 " + t("sh.my_sales")} variant="secondary" onPress={() => router.push("/encomendas?vendas=1" as any)} />
     <Message error={error} ok={notice} />

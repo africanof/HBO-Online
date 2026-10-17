@@ -52,9 +52,10 @@ export function useMfaCheck(enabled = true): ["checking" | "need" | "ok", () => 
 }
 
 /** QR desenhado com quadrados (sem bibliotecas nativas), para ler com outro telemóvel. */
-export function QrView({ text, size = 260, label }: { text: string; size?: number; label: string }) {
-  const m = qrMatrix(text); const n = m.length + 4; const cell = Math.max(2, Math.floor(size / n));
-  return <View accessible accessibilityLabel={label} style={{ backgroundColor: "#fff", padding: cell * 2, borderRadius: 8, alignSelf: "center" }}>
+export function QrView({ text, size = 260, label, quiet = 2 }: { text: string; size?: number; label: string; quiet?: number }) {
+  // quiet = margem branca em quadradinhos (4 é a norma; ajuda as câmaras a ler de longe).
+  const m = qrMatrix(text); const n = m.length + quiet * 2; const cell = Math.max(2, Math.floor(size / n));
+  return <View accessible accessibilityLabel={label} style={{ backgroundColor: "#fff", padding: cell * quiet, borderRadius: 8, alignSelf: "center" }}>
     {m.map((row, y) => {
       // Junta os quadrados seguidos da mesma cor para desenhar menos peças.
       const runs: { on: boolean; len: number }[] = [];

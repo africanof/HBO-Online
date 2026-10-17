@@ -10,6 +10,7 @@ import { Button, Chips, Message } from "../../components/Ui";
 import { useTerritory } from "../../components/Directory";
 import { PhotoPicker, PortfolioManager } from "../../components/Portfolio";
 import { PlanBanner } from "../../components/Plans";
+import { ProfileQr } from "../../components/ProfileQr";
 import { useT } from "../../lib/i18n";
 
 type Option = { id: string; name: string };
@@ -47,6 +48,7 @@ export default function MinhasEmpresas() {
       <Text style={ui.h2}>{b.name}{b.verified ? " ✔️" : ""}{b.active ? "" : t("sv.hidden_f")}</Text>
       <PlanBanner kind="business" subjectId={b.id} />
       <Button title={t("sv.view")} variant="secondary" onPress={() => router.push(("/empresas/" + b.id) as any)} />
+      <ProfileQr kind="empresas" id={b.id} name={b.name ?? ""} hint={t("sv.qr.print_hint")} />
       <Button title={t("sv.logo_portfolio")} variant={showcase === b.id ? "primary" : "secondary"} onPress={() => setShowcase(showcase === b.id ? null : b.id)} />
       {showcase === b.id && <View style={{ gap: 10 }}>
         <Text style={ui.label}>{t("sv.logo")}</Text>

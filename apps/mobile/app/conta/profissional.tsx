@@ -9,6 +9,7 @@ import { Button, Chips, Message } from "../../components/Ui";
 import { useTerritory } from "../../components/Directory";
 import { PhotoPicker, PortfolioManager } from "../../components/Portfolio";
 import { PlanBanner } from "../../components/Plans";
+import { ProfileQr } from "../../components/ProfileQr";
 import { useT } from "../../lib/i18n";
 
 type Option = { id: string; name: string };
@@ -46,6 +47,7 @@ export default function PerfilProfissional() {
     <Text style={ui.h1}>{exists ? t("sv.pro_mine") : t("sv.pro_create_title")}</Text>
     <Text style={ui.text}>{t("sv.pro_intro")}</Text>
     {exists && <Button title={t("sv.pro_public")} variant="secondary" onPress={() => router.push(("/profissionais/" + uid) as any)} />}
+    {exists && <ProfileQr kind="profissionais" id={uid} name={form.displayName} hint={t("sv.qr.print_hint")} />}
     <Message error={error} ok={notice} />
     <View style={ui.card}>
       <Text style={ui.label}>{t("sv.pro_name")}</Text><TextInput style={ui.input} value={form.displayName} onChangeText={set("displayName")} placeholder={t("sv.pro_name_ph")} />

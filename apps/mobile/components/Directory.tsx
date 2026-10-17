@@ -15,6 +15,7 @@ import { PortfolioGallery, BusinessProducts } from "./Portfolio";
 import { PromoShelf } from "./Promo";
 import { LiteImage } from "./LiteImage";
 import { InspectedBadge, useInspected } from "./Inspection";
+import { ProfileQr } from "./ProfileQr";
 import { inspectionKindFor } from "@huambo-online/core";
 import { useT, coreText } from "../lib/i18n";
 
@@ -165,6 +166,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
     <FollowButton kind={kind === "providers" ? "provider" : "business"} id={id} mine={mine} />
     {!mine && <SaveButton kind={viewKind} id={id} />}
     <ShareButton kind={viewKind} id={id} title={kind === "providers" ? item.display_name : item.name} />
+    <ProfileQr kind={kind === "providers" ? "profissionais" : "empresas"} id={id} name={(kind === "providers" ? item.display_name : item.name) ?? ""} />
     {kind === "providers" && services.length > 0 && <View style={{ gap: 8 }}><Text style={ui.h2}>{t("sv.services")}</Text>
       {services.map(s => <View key={s.id} style={ui.card}><Text style={ui.label}>{s.title}</Text>{!!s.description && <Text style={ui.text}>{s.description}</Text>}<Text style={ui.text}>{s.price_from != null ? t("sv.price_from_cap", { price: formatPrice(s.price_from, s.currency) }) : t("price.on_request")}</Text></View>)}
     </View>}

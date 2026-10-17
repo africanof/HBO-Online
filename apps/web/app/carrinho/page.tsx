@@ -59,6 +59,11 @@ export default function Carrinho() {
   const calculating = items.length > 0 && quotes === null;
   const anyDelivery = sellerIds.some(id => choices[id] === "delivery");
   const blocked = calculating || missingQuote || totals.problems.length > 0;
+  // Texto da linha «Entrega»: preço, grátis, «a combinar» (vendedores sem regras) ou «—» enquanto falta escolher o município.
+  const deliveryRows = rows.filter(r => choices[r.seller_id] === "delivery");
+  const toAgree = deliveryRows.some(r => r.quote.delivery && !r.quote.configured);
+  const deliveryText = calculating ? "…" : !anyDelivery ? t("sh.dl.no_delivery_fee") : deliveryRows.some(r => !r.quote.delivery) ? "—"
+    : totals.delivery > 0 ? formatPrice(totals.delivery) + (toAgree ? " + " + t("sh.dl.to_agree") : "") : toAgree ? t("sh.dl.to_agree") : t("sh.dl.free");
 
   function choose(sellerId: string, f: Fulfillment) { setChoices(c => ({ ...c, [sellerId]: f })); setTouched(x => ({ ...x, [sellerId]: true })); }
   async function checkout(e: React.FormEvent) {
@@ -122,7 +127,7 @@ export default function Carrinho() {
       {groups.length > 1 && <p>{t("sh.cart.many_orders", { n: groups.length })}</p>}
       <dl className="dl-totals" aria-live="polite">
         <dt>{t("sh.dl.sum_items")}</dt><dd>{formatPrice(totals.subtotal)}</dd>
-        <dt>{t("sh.dl.sum_delivery")}</dt><dd>{calculating ? "…" : anyDelivery ? (totals.delivery === 0 ? t("sh.dl.free") : formatPrice(totals.delivery)) : t("sh.dl.no_delivery_fee")}</dd>
+        <dt>{t("sh.dl.sum_delivery")}</dt><dd>{deliveryText}</dd>
         <dt className="dl-total">{t("sh.dl.sum_total")}</dt><dd className="dl-total">{formatPrice(totals.total)}</dd>
       </dl>
       {anyDelivery && <label>{t("sh.cart.address")}<input value={address} onChange={e => setAddress(e.target.value)} placeholder={t("sh.cart.address_ph")} /></label>}

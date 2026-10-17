@@ -1116,6 +1116,20 @@ export const DICT_SERVICES: Dictionary = {
   "sv.f_done_m": { pt: "✔ Concluídos", en: "✔ Completed", zh: "✔ 已完成" },
   "sv.va_on_site": { pt: "no local", en: "on site", zh: "现场" },
   "sv.va_fees_x": { pt: " · taxas {v}", en: " · fees {v}", zh: " · 服务费 {v}" },
+  // Código QR do perfil (profissional, empresa, loja, estabelecimento, posto, praça)
+  "sv.qr.button": { pt: "📱 Código QR", en: "📱 QR code", zh: "📱 二维码" },
+  "sv.qr.title": { pt: "📱 Código QR do perfil", en: "📱 Profile QR code", zh: "📱 主页二维码" },
+  "sv.qr.a11y": { pt: "Código QR do perfil de {name}", en: "QR code for {name}'s profile", zh: "{name} 的主页二维码" },
+  "sv.qr.read": { pt: "Leia com a câmara do telemóvel", en: "Scan it with your phone's camera", zh: "用手机相机扫描" },
+  "sv.qr.explain": { pt: "Quem ler este código vê o seu perfil, os produtos e onde fica. Com a APP instalada, abre na APP.", en: "Anyone who scans this code sees the profile, the products and where it is. If they have the app installed, it opens in the app.", zh: "扫描此二维码的人可以看到主页、商品和位置。如果已安装 APP，会在 APP 中打开。" },
+  "sv.qr.share": { pt: "📤 Partilhar", en: "📤 Share", zh: "📤 分享" },
+  "sv.qr.share_fail": { pt: "Não foi possível partilhar. Tente outra vez.", en: "Could not share. Please try again.", zh: "无法分享，请重试。" },
+  "sv.qr.download": { pt: "⬇️ Baixar imagem", en: "⬇️ Download image", zh: "⬇️ 下载图片" },
+  "sv.qr.download_hint": { pt: "A imagem abre no navegador para guardar.", en: "The image opens in the browser so you can save it.", zh: "图片会在浏览器中打开，方便您保存。" },
+  "sv.qr.open_fail": { pt: "Não foi possível abrir o navegador.", en: "Could not open the browser.", zh: "无法打开浏览器。" },
+  "sv.qr.link": { pt: "🔗 Ligação do perfil", en: "🔗 Profile link", zh: "🔗 主页链接" },
+  "sv.qr.copy_hint": { pt: "Toque sem largar na ligação para a copiar.", en: "Press and hold the link to copy it.", zh: "长按链接即可复制。" },
+  "sv.qr.print_hint": { pt: "Imprima e cole na sua loja ou banca.", en: "Print it and put it up in your shop or stall.", zh: "打印出来，贴在您的店铺或摊位上。" },
 };
 
 /** Página de informação traduzida; «{contact}» é trocado pela linha de contacto. */

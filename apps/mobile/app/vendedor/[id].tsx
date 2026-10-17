@@ -11,6 +11,7 @@ import { InspectedBadge, useInspected } from "../../components/Inspection";
 import { currentUserId } from "../../lib/supabase";
 import { LiteImage } from "../../components/LiteImage";
 import { FollowButton } from "../../components/Engage";
+import { ProfileQr } from "../../components/ProfileQr";
 import { PromoShelf } from "../../components/Promo";
 import { DeliveryPolicyBox } from "../../components/Delivery";
 import { getPublic } from "../../lib/public-api";
@@ -48,6 +49,7 @@ export default function Vendedor() {
     </View>
     {s.is_provider && <><Text style={ui.text}>{tc(coreText(ratingLabel(s.rating, s.review_count), t) ?? "")}</Text><Link href={("/profissionais/" + s.id) as any} style={ui.link}>{t("ls.seller.pro_profile")}</Link></>}
     <FollowButton kind="seller" id={s.id} mine={me === s.id} />
+    <ProfileQr kind="vendedor" id={s.id} name={s.full_name || t("ls.user")} hint={me === s.id ? t("sv.qr.print_hint") : undefined} />
     <TrustBadges userId={s.id} />
     <InspectedBadge info={store[s.id]} big />
     <StatsBlock rows={userStatsRows(stats)} />

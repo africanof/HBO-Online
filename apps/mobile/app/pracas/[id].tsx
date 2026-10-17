@@ -5,6 +5,7 @@ import { getMarket, listMarketContents, formatPrice, friendlyErrorIn, PURPOSE_LA
 import { supabase } from "../../lib/supabase";
 import { ui, C } from "../../lib/ui";
 import { Button, Chips } from "../../components/Ui";
+import { ProfileQr } from "../../components/ProfileQr";
 import { ItemCard, Grid, LISTING_ICON } from "../../components/ItemCard";
 import { useT, coreText, timeAgoIn } from "../../lib/i18n";
 
@@ -36,6 +37,7 @@ export default function Praca() {
     <Text style={ui.text}>📍 {[m.address_text, m.municipalities?.name].filter(Boolean).join(", ") || "Huambo"}</Text>
     {!!m.opening_hours && <Text style={ui.text}>🕘 {m.opening_hours}</Text>}
     {!!m.description && <Text style={ui.text}>{m.description}</Text>}
+    <ProfileQr kind="pracas" id={id} name={m.name ?? ""} />
     <View style={{ backgroundColor: C.greenSoft, borderRadius: 16, padding: 14, gap: 8 }}>
       <Text style={ui.label}>{t("sv.mk_sell_here")}</Text>
       <Text style={ui.text}>{t("sv.mk_sell_here_text", { name: m.name })}</Text>

@@ -18,6 +18,7 @@ import { PlaceFields, PlaceView } from "./Place";
 import { PaymentDetails } from "./Plans";
 import { useTerritory } from "./Directory";
 import { QrScanButton } from "./QrScanner";
+import { ProfileQr } from "./ProfileQr";
 import { getPublic } from "../lib/public-api";
 import { OfflineBanner } from "./Offline";
 import { deviceStore } from "./Engage";
@@ -133,6 +134,7 @@ export function StationScreen({ id }: { id: string }) {
       {!!wa && <Button title="WhatsApp" variant="secondary" onPress={() => void Linking.openURL(wa)} />}
       {!!first && <Button title={tr("sv.share_short")} variant="secondary" onPress={() => void Share.share({ message: tc(fuelShareMessage(siteUrl, first)) })} />}
     </View>
+    <ProfileQr kind="combustivel" id={id} name={st.name ?? ""} hint={mine ? tr("sv.qr.print_hint") : undefined} />
     <Message error={error} ok={notice} />
     {rows.map(r => <View key={r.product_id} style={ui.card}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 }}><Text style={[ui.h2, { flex: 1 }]}>{FUEL_PRODUCTS[r.product].icon} {tc(FUEL_PRODUCTS[r.product].label)}</Text><Badge s={r.status} /></View>

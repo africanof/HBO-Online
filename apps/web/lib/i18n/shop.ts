@@ -527,6 +527,7 @@ export const DICT_SHOP: Dictionary = {
   "sh.dl.sum_delivery": { pt: "Entrega", en: "Delivery", zh: "配送费" },
   "sh.dl.sum_total": { pt: "Total", en: "Total", zh: "合计" },
   "sh.dl.free": { pt: "Grátis 🎁", en: "Free 🎁", zh: "免费 🎁" },
+  "sh.dl.to_agree": { pt: "a combinar", en: "to be arranged", zh: "另行商定" },
   "sh.dl.no_delivery_fee": { pt: "— (levantamento)", en: "— (pickup)", zh: "—（自取）" },
   "sh.dl.ord_items": { pt: "Artigos: {v}", en: "Items: {v}", zh: "商品：{v}" },
   "sh.dl.ord_fee": { pt: "Entrega: {fee}", en: "Delivery: {fee}", zh: "配送费：{fee}" },
