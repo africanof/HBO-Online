@@ -4,8 +4,9 @@ import { MarketPicker } from "../../../components/MarketPicker";
 import { VideoField } from "../../../components/Video";
 import { useEffect, useState } from "react";
 import { listMyProducts, saveProduct, deleteProduct, listProductCategories, uploadClassifiedMedia, removeClassifiedMedia, parsePrice, formatPrice, friendlyErrorIn,
-  MAX_PRODUCT_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES, formatRef } from "@huambo-online/core";
+  MAX_PRODUCT_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES, formatRef, getPublicSeller } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../../lib/supabase";
+import { ProfileQr } from "../../../components/ProfileQr";
 import { useTerritory } from "../../../components/Directory";
 import { compressPhoto } from "../../../lib/image";
 import { PlanBanner } from "../../../components/Plans";
@@ -22,9 +23,10 @@ export default function MeusProdutos() {
   const [editing, setEditing] = useState<string | null>(null);
   const [categories, setCategories] = useState<Option[]>([]); const { provinces, municipalities, provinceId, setProvinceId } = useTerritory();
   const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
+  const [shopName, setShopName] = useState("");
 
   async function load(id: string) { const r = await listMyProducts(supabase(), id); setItems(r.data ?? []); }
-  useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) void load(id); }); void listProductCategories(supabase()).then(({ data }) => setCategories(data ?? [])); }, []);
+  useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) { void load(id); void getPublicSeller(supabase(), id).then(({ data }) => setShopName(data?.full_name ?? "")); } }); void listProductCategories(supabase()).then(({ data }) => setCategories(data ?? [])); }, []);
   const set = (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setForm({ ...form, [k]: e.target.value });
 
   async function addFiles(files: FileList | null) {
@@ -72,6 +74,7 @@ export default function MeusProdutos() {
     <h1>{t("sh.my.title")}</h1>
     <a className="btn secondary" href="/conta/estatisticas" style={{ justifySelf: "start" }}>📊 {t("sh.my.stats")}</a>
     <PlanBanner kind="store" subjectId={uid} />
+    <ProfileQr kind="vendedor" id={uid} name={shopName} owner />
     <a className="btn secondary" href="/encomendas?vendas=1" style={{ justifySelf: "start" }}>📦 {t("sh.my_sales")}</a>
     <a className="btn secondary" href="/conta/entregas" style={{ justifySelf: "start" }}>🚚 {t("sh.dl.link")}</a>
     {error && <p className="error" role="alert">{error}</p>}

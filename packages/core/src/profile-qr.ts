@@ -33,10 +33,12 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 export function profileQrSvg(url: string, title: string, subtitle = "Leia com a câmara do telemóvel"): string {
   const m = qrMatrix(url); const n = m.length; const cell = 10, quiet = 4 * cell, size = n * cell + quiet * 2, footer = 90;
   let d = ""; m.forEach((row, r) => row.forEach((on, c) => { if (on) d += `M${quiet + c * cell} ${quiet + r * cell}h${cell}v${cell}h-${cell}z`; }));
-  const t = esc(title.length > 40 ? title.slice(0, 39) + "…" : title);
+  const short = title.length > 50 ? title.slice(0, 49) + "…" : title; const t = esc(short);
+  // Letra mais pequena para nomes compridos (cabe sempre na largura do cartaz).
+  const font = Math.max(10, Math.min(26, Math.floor((size - 40) / (Math.max(1, short.length) * 0.62))));
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size + footer}" viewBox="0 0 ${size} ${size + footer}">` +
     `<rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/>` +
-    `<text x="${size / 2}" y="${size + 30}" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#000">${t}</text>` +
+    `<text x="${size / 2}" y="${size + 30}" text-anchor="middle" font-family="Arial, sans-serif" font-size="${font}" font-weight="700" fill="#000">${t}</text>` +
     `<text x="${size / 2}" y="${size + 64}" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#333">${esc(subtitle)} · Huambo Online</text></svg>`;
 }
 

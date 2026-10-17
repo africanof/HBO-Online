@@ -7,6 +7,7 @@ import { useT } from "../../../lib/i18n";
 import { useTerritory } from "../../../components/Directory";
 import { PlanBanner } from "../../../components/Plans";
 import { PhotoPicker, PortfolioManager } from "../../../components/Portfolio";
+import { ProfileQr } from "../../../components/ProfileQr";
 
 type Option = { id: string; name: string };
 const empty = { displayName: "", headline: "", bio: "", categoryId: "", customCategory: "", municipalityId: "", phone: "", whatsapp: "", active: true, directions: "", point: null as GeoPoint | null };
@@ -44,6 +45,7 @@ export default function PerfilProfissional() {
     {exists && <a className="btn secondary" href="/conta/estatisticas" style={{ justifySelf: "start" }}>📊 {t("sv.f_stats")}</a>}
     <p>{t("sv.pro_intro")}</p>
     {exists && <a href={"/profissionais/" + uid}>{t("sv.pro_public")} →</a>}
+    {exists && <ProfileQr kind="profissionais" id={uid} name={form.displayName} owner />}
     {exists && <PlanBanner kind="provider" subjectId={uid} />}
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}

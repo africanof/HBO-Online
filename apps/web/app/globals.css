@@ -295,3 +295,10 @@ h1, h2, h3, p, label, .btn, button, .chip, .cat, .footer a, .item-title, .item-m
 .dl-totals dd { margin: 0; font-weight: 800; text-align: right; }
 .dl-totals .dl-total { font-size: 20px; border-top: 2px solid var(--line); padding-top: 6px; }
 .dl-preview { background: var(--surface); }
+/* Código QR dos perfis: ao imprimir, só sai o cartaz (QR + nome) */
+@media print {
+  body.printing-qr * { visibility: hidden !important; }
+  body.printing-qr .qr-print, body.printing-qr .qr-print * { visibility: visible !important; }
+  body.printing-qr .qr-print { position: fixed; inset: 0; margin: auto; height: max-content; background: #fff !important; color: #000 !important; }
+  body.printing-qr .qr-print img { max-width: 14cm !important; border: 0 !important; }
+}

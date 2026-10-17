@@ -20,6 +20,9 @@ describe("QR dos perfis", () => {
     expect(svg.startsWith("<svg")).toBe(true);
     expect(svg).toContain("Loja &lt;b&gt;Teste&lt;/b&gt;");
     expect(svg).not.toContain("<b>");
+    const long = profileQrSvg("https://h.ao/empresas/" + ID, "Padaria e Pastelaria Ekuikui Muito Comprida Para Testar o Cartaz");
+    const font = Number(/font-size="(\d+)" font-weight="700"/.exec(long)![1]); const width = Number(/width="(\d+)"/.exec(long)![1]);
+    expect(font).toBeLessThan(26); expect(50 * font * 0.62).toBeLessThanOrEqual(width);
   });
   it("PNG válido, com os quadradinhos do QR", () => {
     const url = profileUrl("https://huambo-na-m-o.onrender.com", "empresas", ID);

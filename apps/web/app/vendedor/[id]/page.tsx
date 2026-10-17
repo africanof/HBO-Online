@@ -15,6 +15,7 @@ import { DeliveryPolicyBox } from "../../../components/SellerDelivery";
 import { InspectedBadge, useInspected } from "../../../components/Inspection";
 import { getPublic } from "../../../lib/public-api";
 import { sellerPageCached } from "@huambo-online/core";
+import { ProfileQr } from "../../../components/ProfileQr";
 
 export default function Vendedor() {
   const { id } = useParams<{ id: string }>();
@@ -45,7 +46,7 @@ export default function Vendedor() {
       <div><h1 style={{ margin: 0 }}>{s.full_name || t("ls.user")}</h1><p style={{ margin: 0 }}>{[s.municipality, t("ls.member_since", { d: formatDateIn(s.member_since, lang) })].filter(Boolean).join(" · ")}</p></div>
     </div>
     {s.is_provider && <p>{tc(ratingLabel(s.rating, s.review_count))} · <a href={"/profissionais/" + s.id}>{t("ls.see_pro_profile")} →</a></p>}
-    <div className="row"><FollowButton kind="seller" id={s.id} mine={me === s.id} /></div>
+    <div className="row"><FollowButton kind="seller" id={s.id} mine={me === s.id} /><ProfileQr kind="vendedor" id={s.id} name={s.full_name || t("ls.user")} /></div>
     <TrustBadges userId={s.id} />
     <InspectedBadge info={store[s.id]} big />
     <StatsBlock rows={userStatsRows(stats)} />

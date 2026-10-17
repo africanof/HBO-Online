@@ -19,6 +19,7 @@ import { OfflineBanner } from "./Offline";
 import { browserStore } from "./Engage";
 import { loadWithCache, isOfflineError } from "@huambo-online/core";
 import { fuelFeedCached } from "@huambo-online/core";
+import { ProfileQr } from "./ProfileQr";
 
 const STATUS_COLORS: Record<FuelStatus, string> = { available: "var(--ok)", low: "var(--gold-text)", out: "var(--danger)", unknown: "var(--muted)" };
 function StatusBadge({ s }: { s: FuelStatus }) {
@@ -122,6 +123,7 @@ export function StationPage({ id }: { id: string }) {
       {st.phone && <a className="btn secondary" href={"tel:" + st.phone}>📞 {t("common.call")}</a>}
       {whatsappLink(st.whatsapp, t("sv.wa_saw", { name: st.name })) && <a className="btn secondary" href={whatsappLink(st.whatsapp, t("sv.wa_saw", { name: st.name }))!} target="_blank" rel="noopener">WhatsApp</a>}
       {first && <a className="btn secondary" href={whatsappShareUrl(tc(fuelShareMessage(typeof window === "undefined" ? "" : window.location.origin, first)))} target="_blank" rel="noopener">📲 {t("common.share")}</a>}
+      <ProfileQr kind="combustivel" id={st.id} name={st.name} />
     </div>
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}

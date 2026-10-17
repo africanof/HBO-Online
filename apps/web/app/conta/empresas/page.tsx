@@ -8,6 +8,7 @@ import { useT } from "../../../lib/i18n";
 import { useTerritory } from "../../../components/Directory";
 import { PlanBanner } from "../../../components/Plans";
 import { PhotoPicker, PortfolioManager } from "../../../components/Portfolio";
+import { ProfileQr } from "../../../components/ProfileQr";
 
 type Option = { id: string; name: string };
 const empty = { name: "", description: "", categoryId: "", customCategory: "", municipalityId: "", marketId: "", phone: "", whatsapp: "", addressText: "", active: true, directions: "", point: null as GeoPoint | null };
@@ -43,6 +44,7 @@ export default function MinhasEmpresas() {
     {items.map(b => <div key={b.id} className="card">
       <strong>{b.name}{b.verified ? " ✔️" : ""}{b.active ? "" : " " + t("sv.biz_hidden")}</strong>
       <PlanBanner kind="business" subjectId={b.id} />
+      <ProfileQr kind="empresas" id={b.id} name={b.name ?? ""} owner />
       <div className="row">
         <a className="btn secondary" href={"/empresas/" + b.id}>{t("sv.view")}</a>
         <button className={showcase === b.id ? "" : "secondary"} aria-expanded={showcase === b.id} onClick={() => setShowcase(showcase === b.id ? null : b.id)}>📸 {t("sv.biz_logo_portfolio")}</button>

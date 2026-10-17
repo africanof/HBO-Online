@@ -14,6 +14,7 @@ import { LiteImg } from "./LiteImg";
 import { PlaceView } from "./Place";
 import { InspectedBadge, useInspected } from "./Inspection";
 import { inspectionKindFor } from "@huambo-online/core";
+import { ProfileQr } from "./ProfileQr";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string; slug?: string | null };
@@ -198,6 +199,7 @@ export function DirectoryDetail({ kind, id }: { kind: Kind; id: string }) {
       {mine && <a className="btn" href={kind === "providers" ? "/conta/profissional" : "/conta/empresas"}>{t("common.edit")}</a>}
       {!mine && <SaveButton kind={viewKind} id={id} />}
       <ShareButton kind={viewKind} id={id} title={name} />
+      <ProfileQr kind={kind === "providers" ? "profissionais" : "empresas"} id={id} name={name ?? ""} />
     </div>
     {kind === "providers" && services.length > 0 && <section className="stack"><h2>{t("nav.services")}</h2>
       {services.map(s => <div key={s.id} className="card"><strong>{s.title}</strong>{s.description && <span>{s.description}</span>}<span>{s.price_from != null ? t("sv.dir_from_price", { price: formatPrice(s.price_from, s.currency) }) : t("sv.dir_price_on_request")}</span></div>)}

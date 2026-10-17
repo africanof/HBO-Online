@@ -5,6 +5,7 @@ import { getMarket, listMarketContents, formatPrice, friendlyErrorIn, PURPOSE_LA
 import { useT, timeAgoIn } from "../../../lib/i18n";
 import { supabase } from "../../../lib/supabase";
 import { ItemCard, LISTING_ICON } from "../../../components/ItemCard";
+import { ProfileQr } from "../../../components/ProfileQr";
 
 type Tab = "products" | "listings" | "businesses";
 
@@ -36,6 +37,7 @@ export default function Praca() {
           {m.opening_hours && <><dt>{t("sv.mk_hours")}</dt><dd>🕘 {m.opening_hours}</dd></>}
         </dl>
         {m.description && <p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{m.description}</p>}
+        <div className="row"><ProfileQr kind="pracas" id={m.id} name={m.name} /></div>
         <div className="banner green" style={{ padding: 16 }}>
           <div><strong>{t("sv.mk_sell_here")}</strong><p>{t("sv.mk_sell_hint", { name: m.name })}</p></div>
           <div className="row"><a className="btn" href="/classificados/publicar">{t("sv.mk_post")}</a><a className="btn secondary" href="/conta/produtos">{t("sv.mk_sell_products")}</a></div>

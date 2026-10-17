@@ -21,6 +21,7 @@ import { useTerritory } from "./Directory";
 import { OfflineBanner } from "./Offline";
 import { browserStore } from "./Engage";
 import { LiteImg } from "./LiteImg";
+import { ProfileQr } from "./ProfileQr";
 
 /** «1 500,5» → 1500.5 */
 const toNum = (s: string) => Number(s.replace(/\s/g, "").replace(",", "."));
@@ -138,6 +139,7 @@ export function VenuePage({ id }: { id: string }) {
       {b.phone && <a className="btn secondary" href={"tel:" + b.phone.replace(/\s/g, "")}>📞 {t("common.call")}</a>}
       {wa && <a className="btn secondary" href={wa} target="_blank" rel="noopener">WhatsApp</a>}
       <a className="btn secondary" href={whatsappShareUrl(tc(venueShareMessage(typeof window === "undefined" ? SITE_URL : window.location.origin, { id: v.id, name: b.name, kind: v.kind, municipality_name: b.municipality_name })))} target="_blank" rel="noopener">📲 {t("common.share")}</a>
+      <ProfileQr kind="reservas" id={v.id} name={b.name} />
       <a className="btn secondary" href={"/empresas/" + b.id}>⭐ {t("sv.ve_portfolio_reviews")}</a>
     </div>
     {(v.opening_hours || v.check_in_time || v.check_out_time || v.policies) && <dl className="facts card" style={{ margin: 0, gridTemplateColumns: "minmax(0, auto) minmax(0, 1fr)", overflowWrap: "anywhere" }}>

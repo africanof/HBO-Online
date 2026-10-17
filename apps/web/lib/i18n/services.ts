@@ -1081,7 +1081,22 @@ export const DICT_SERVICES: Dictionary = {
   "sv.vd_see_photos": { pt: "Ver as {n} fotografias", en: "See the {n} photos", zh: "查看 {n} 张照片" },
   "sv.vd_see_video": { pt: "Ver vídeo", en: "Watch video", zh: "观看视频" },
   "sv.vd_see_photo_n": { pt: "Ver fotografia {n}", en: "See photo {n}", zh: "查看第 {n} 张照片" },
-  "sv.vd_photo_alt": { pt: "{title} — fotografia {n} de {total}", en: "{title} — photo {n} of {total}", zh: "{title} — 第 {n} 张，共 {total} 张" }
+  "sv.vd_photo_alt": { pt: "{title} — fotografia {n} de {total}", en: "{title} — photo {n} of {total}", zh: "{title} — 第 {n} 张，共 {total} 张" },
+  // --- qr (código QR dos perfis)
+  "sv.qr.button": { pt: "Código QR", en: "QR code", zh: "二维码" },
+  "sv.qr.title": { pt: "Código QR do perfil", en: "Profile QR code", zh: "资料二维码" },
+  "sv.qr.img_alt": { pt: "Código QR de {name}", en: "QR code for {name}", zh: "{name} 的二维码" },
+  "sv.qr.explain": { pt: "Quem ler este código vê o seu perfil, os produtos e onde fica. Com a APP instalada, abre na APP.", en: "Anyone who scans this code sees your profile, products and location. If they have the APP installed, it opens in the APP.", zh: "扫描此二维码即可查看您的资料、商品和位置。如已安装 APP，将在 APP 中打开。" },
+  "sv.qr.owner_hint": { pt: "Imprima e cole na sua loja ou banca.", en: "Print it and put it up in your shop or stall.", zh: "打印出来，贴在您的店铺或摊位上。" },
+  "sv.qr.png": { pt: "Baixar imagem (PNG)", en: "Download image (PNG)", zh: "下载图片（PNG）" },
+  "sv.qr.svg": { pt: "Baixar cartaz (SVG)", en: "Download poster (SVG)", zh: "下载海报（SVG）" },
+  "sv.qr.share": { pt: "Partilhar", en: "Share", zh: "分享" },
+  "sv.qr.copy": { pt: "Copiar ligação", en: "Copy link", zh: "复制链接" },
+  "sv.qr.copied": { pt: "Ligação copiada.", en: "Link copied.", zh: "链接已复制。" },
+  "sv.qr.copy_manual": { pt: "Não foi possível copiar. A ligação está selecionada: copie-a à mão.", en: "Couldn't copy. The link is selected: copy it manually.", zh: "无法复制。链接已选中，请手动复制。" },
+  "sv.qr.link": { pt: "Ligação do perfil", en: "Profile link", zh: "资料链接" },
+  "sv.qr.print": { pt: "Imprimir", en: "Print", zh: "打印" },
+  "sv.qr.close": { pt: "Fechar", en: "Close", zh: "关闭" },
 };
 
 
