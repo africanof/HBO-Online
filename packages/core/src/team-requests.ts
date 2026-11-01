@@ -37,8 +37,8 @@ export function teamRequestState(r: Pick<TeamRequest, "forwarded_at" | "declined
 }
 
 export type MyTeamRequestState = { kind: TeamRequestKind; id: string; ref_no: number | null; created_at: string; title: string;
-  amount: number | null; state: "pending" | "declined"; team_note: string | null };
-/** Os pedidos de quem tem a sessão aberta que ainda esperam pela equipa (ou que a equipa recusou). */
+  amount: number | null; state: "pending" | "approved" | "declined"; team_note: string | null };
+/** Os pedidos de quem tem a sessão aberta: à espera da equipa, ou aprovados/recusados nos últimos 30 dias. */
 export async function listMyTeamRequestStates(client: SupabaseClient) {
   const r = await client.rpc("my_team_request_states");
   const data = ((r.data ?? []) as any[]).map(x => ({ ...x, amount: x.amount == null ? null : Number(x.amount), ref_no: x.ref_no == null ? null : Number(x.ref_no) })) as MyTeamRequestState[];

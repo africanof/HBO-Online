@@ -37,5 +37,7 @@ describe("Estado dos pedidos para o cliente", () => {
     expect((await listMyTeamRequestStates(client)).data[0]).toMatchObject({ amount: 6000, state: "pending" });
     expect(teamRequestTarget("Posto: Sonangol Cidade Alta")).toBe("Sonangol Cidade Alta");
     expect(teamRequestTarget("Encomenda da Loja")).toBe("");
+    const c2 = { rpc: () => Promise.resolve({ data: [{ kind: "orders", id: "o1", state: "approved" }], error: null }) } as any;
+    expect((await listMyTeamRequestStates(c2)).data[0].state).toBe("approved");
   });
 });
