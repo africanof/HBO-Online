@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { listMyTeamRequestStates, teamRequestTarget, formatPrice, type MyTeamRequestState } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { useT, formatDateIn } from "../lib/i18n";
+import { RequestWhatsApp } from "./Engage";
 
 /** Pedidos do cliente e a equipa do Huambo Online: à espera, aprovados ou recusados. */
 export function TeamRequestStatus() {
@@ -18,6 +19,7 @@ export function TeamRequestStatus() {
       {r.amount != null && <> · {formatPrice(r.amount)}</>}
       <div><small>{formatDateIn(r.created_at, lang)} · {r.state === "pending" ? "⏳ " + t("trs.pending") : r.state === "approved" ? "✅ " + t("trs.approved") : "❌ " + t("trs.declined")}</small></div>
       {r.state === "declined" && r.team_note && <small>{t("trs.reason")}: {r.team_note}</small>}
+      <div><RequestWhatsApp what={t("ad.req.kind." + r.kind) + (teamRequestTarget(r.title) ? " · " + teamRequestTarget(r.title) : "")} refNo={r.ref_no} path={r.link} /></div>
     </div>)}
   </section>;
 }

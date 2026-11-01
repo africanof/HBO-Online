@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { findSaved, toggleSaved, recordView, shareMessage, whatsappShareUrl, sellerWhatsappMessage, getSellerWhatsapp, getMyWhatsapp, setMyWhatsapp, formatWhatsapp, whatsappLink, friendlyErrorIn,
+import { getTeamWhatsapp, setTeamWhatsapp, teamWhatsappMessage, teamWhatsappRequestMessage, teamWhatsappLink, findSaved, toggleSaved, recordView, shareMessage, whatsappShareUrl, sellerWhatsappMessage, getSellerWhatsapp, getMyWhatsapp, setMyWhatsapp, formatWhatsapp, whatsappLink, friendlyErrorIn,
   getFollowInfo, toggleFollow, recordItemView, recordItemEvent, followersText, followButtonLabel, type FollowKind,
   type SavedKind, type KeyValueStore, type ShareExtra } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
@@ -62,12 +62,51 @@ export function ShareButton({ kind, id, title, extra }: { kind: SavedKind; id: s
 /** «Falar no WhatsApp» com o vendedor: só aparece à equipa (administração e moderadores). */
 export function SellerWhatsApp({ sellerId, kind, id, title, refCode }: { sellerId: string; kind: "listing" | "product"; id: string; title: string; refCode?: string | null }) {
   const { t } = useT();
-  const [number, setNumber] = useState<string | null>(null);
-  useEffect(() => { void getSellerWhatsapp(supabase(), sellerId).then(setNumber); }, [sellerId]);
-  if (!number) return null;
-  const url = shareMessage(window.location.origin, kind, id, title).url;
-  const href = whatsappLink(number, sellerWhatsappMessage(kind, title, refCode, url));
-  return href ? <a className="btn secondary" href={href} target="_blank" rel="noopener" onClick={() => void recordItemEvent(supabase(), kind, id, "whatsapp")}>💬 {t("common.whatsapp")}</a> : null;
+  // O vendedor só é devolvido à equipa; os outros falam com o WhatsApp oficial da equipa.
+  const [seller, setSeller] = useState<string | null>(null); const [team, setTeam] = useState<string | null>(null);
+  useEffect(() => { void getSellerWhatsapp(supabase(), sellerId).then(setSeller); void getTeamWhatsapp(supabase()).then(setTeam); }, [sellerId]);
+  const url = typeof window !== "undefined" ? shareMessage(window.location.origin, kind, id, title).url : "";
+  const track = () => void recordItemEvent(supabase(), kind, id, "whatsapp");
+  if (seller) {
+    const href = whatsappLink(seller, sellerWhatsappMessage(kind, title, refCode, url));
+    return href ? <a className="btn secondary" href={href} target="_blank" rel="noopener">{t("wa.seller_staff")}</a> : null;
+  }
+  const href = teamWhatsappLink(team, teamWhatsappMessage(kind, title, refCode, url));
+  if (!href) return null;
+  return <div className="stack" style={{ gap: 4 }}>
+    <a className="btn" href={href} target="_blank" rel="noopener" onClick={track} style={{ background: "#25D366", borderColor: "#25D366", color: "#08321A", fontWeight: 800 }}>{t("wa.team_btn")}</a>
+    <small className="muted">{t("wa.team_hint")}</small>
+  </div>;
+}
+
+/** «💬 Falar deste pedido no WhatsApp» (com o pedido e a ligação direta). */
+export function RequestWhatsApp({ what, refNo, path }: { what: string; refNo?: number | null; path?: string | null }) {
+  const { t } = useT();
+  const [team, setTeam] = useState<string | null>(null);
+  useEffect(() => { void getTeamWhatsapp(supabase()).then(setTeam); }, []);
+  const url = path && typeof window !== "undefined" ? window.location.origin + path : null;
+  const href = teamWhatsappLink(team, teamWhatsappRequestMessage(what, refNo, url));
+  return href ? <a href={href} target="_blank" rel="noopener" style={{ fontWeight: 700, color: "#128C7E" }}>{t("wa.team_req")}</a> : null;
+}
+
+/** Administração: número oficial de WhatsApp da equipa. */
+export function TeamWhatsappSettings() {
+  const { lang, t } = useT();
+  const [number, setNumber] = useState(""); const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
+  useEffect(() => { void getTeamWhatsapp(supabase()).then(n => setNumber(formatWhatsapp(n))); }, []);
+  async function save(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true); setMsg(""); setErr("");
+    const r = await setTeamWhatsapp(supabase(), number); setBusy(false);
+    if (r.error) setErr(friendlyErrorIn(r.error, lang)); else { setMsg(number.trim() ? t("wa.team_saved") : t("wa.team_deleted")); setNumber(formatWhatsapp(r.data as string | null)); }
+  }
+  return <form className="stack card" onSubmit={save}>
+    <h2 style={{ margin: 0 }}>{t("wa.team_title")}</h2>
+    <p style={{ margin: 0 }}>{t("wa.team_text")}</p>
+    <label>{t("wa.number")}<input type="tel" value={number} onChange={e => setNumber(e.target.value)} placeholder="923 000 000" /></label>
+    {msg && <p className="ok" role="status">{msg}</p>}
+    {err && <p className="error" role="alert">{err}</p>}
+    <button disabled={busy} style={{ justifySelf: "start" }}>{t("wa.save")}</button>
+  </form>;
 }
 
 /** «A sua conta»: número de WhatsApp (só a equipa o vê). */

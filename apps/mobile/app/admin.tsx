@@ -14,6 +14,7 @@ import { Button, Chips, Message } from "../components/Ui";
 import { AdminCouriers } from "../components/AdminCouriers";
 import { AdminMessages } from "../components/AdminMessages";
 import { AdminAiFlags } from "../components/AiTools";
+import { TeamWhatsappSettings } from "../components/Engage";
 import { AdminRequests } from "../components/AdminRequests";
 import { AdminMarkets } from "../components/AdminMarkets";
 import { AdminVerifications, AdminAudit } from "../components/AdminTrust";
@@ -104,6 +105,7 @@ export default function Admin() {
     {tab === "inspections" && <AdminInspections />}
     {tab === "audit" && <AdminAudit />}
     {tab === "stats" && <JobQueueLine />}
+    {tab === "stats" && <TeamWhatsappSettings />}
     {tab === "stats" && stats && ADMIN_STAT_LABELS.map(([k, l]) => <View key={k} style={ui.card}><Text style={ui.text}>{tc(l)}</Text><Text style={ui.h1}>{stats[k]}</Text></View>)}
 
     {tab === "reports" && <View style={{ gap: 12 }}>

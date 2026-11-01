@@ -94,6 +94,34 @@ export async function getSellerWhatsapp(client: SupabaseClient, userId: string):
   return typeof r.data === "string" && r.data ? r.data : null;
 }
 
+// WhatsApp da equipa: o botão «💬 WhatsApp» do Site e da APP abre sempre a conversa com a
+// administração (intermediária), nunca com o vendedor.
+/** Número oficial de WhatsApp da equipa (público), ou null se ainda não foi definido. */
+export async function getTeamWhatsapp(client: SupabaseClient): Promise<string | null> {
+  const r = await client.from("platform_settings").select("team_whatsapp").eq("id", 1).maybeSingle();
+  const n = (r.data as { team_whatsapp?: string | null } | null)?.team_whatsapp;
+  return typeof n === "string" && n ? n : null;
+}
+/** Só a equipa: muda o número oficial (vazio apaga). */
+export function setTeamWhatsapp(client: SupabaseClient, number: string) {
+  if (number.trim() && !normalizeWhatsapp(number)) return Promise.resolve({ data: null, error: new Error("INVALID_WHATSAPP") });
+  return client.rpc("admin_set_team_whatsapp", { p_number: number.trim() || null });
+}
+/** Mensagem para a equipa sobre um anúncio ou produto, com a ligação direta. */
+export function teamWhatsappMessage(kind: "listing" | "product", title: string, refCode?: string | null, url?: string | null): string {
+  const what = kind === "product" ? "o produto" : "o anúncio";
+  return `Olá, equipa Huambo Online! Vi ${what} «${title}»${refCode ? ` (${refCode})` : ""} e gostaria de saber se ainda está disponível.${url ? "\n👉 " + url : ""}`;
+}
+/** Mensagem para a equipa sobre um pedido feito no Site ou na APP (encomenda, reserva, proposta…). */
+export function teamWhatsappRequestMessage(what: string, refNo?: number | null, url?: string | null): string {
+  return `Olá, equipa Huambo Online! Fiz um pedido: ${what}${refNo ? ` (n.º ${refNo})` : ""}. Podem ajudar-me a acompanhá-lo?${url ? "\n👉 " + url : ""}`;
+}
+/** Ligação «https://wa.me/…» para a equipa com a mensagem já escrita, ou null sem número. */
+export function teamWhatsappLink(number: string | null | undefined, text: string): string | null {
+  const n = normalizeWhatsapp(number);
+  return n ? `https://wa.me/${n}?text=${encodeURIComponent(text)}` : null;
+}
+
 // Fotografia de perfil
 export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 export async function uploadAvatar(client: SupabaseClient, userId: string, file: Blob | ArrayBuffer, filename: string, contentType: string) {

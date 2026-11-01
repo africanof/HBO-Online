@@ -12,6 +12,7 @@ import { AdminCouriers } from "../../components/AdminCouriers";
 import { AdminMessages } from "../../components/AdminMessages";
 import { AdminRequests } from "../../components/AdminRequests";
 import { AdminAiFlags } from "../../components/AiTools";
+import { TeamWhatsappSettings } from "../../components/Engage";
 import { AdminMarkets } from "../../components/AdminMarkets";
 import { AdminVerifications, AdminAudit } from "../../components/AdminTrust";
 import { AdminDisputes } from "../../components/Disputes";
@@ -108,6 +109,7 @@ function AdminContent() {
     {tab === "revenue" && <AdminRevenue />}
     {tab === "audit" && <AdminAudit />}
     {tab === "stats" && <JobQueueLine />}
+    {tab === "stats" && <TeamWhatsappSettings />}
     {tab === "stats" && stats && <section className="grid">{ADMIN_STAT_LABELS.map(([k, l]) => <div key={k} className="card"><span>{tc(l)}</span><strong style={{ fontSize: 32 }}>{stats[k]}</strong></div>)}</section>}
 
     {tab === "reports" && <section className="stack">
