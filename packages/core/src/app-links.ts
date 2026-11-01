@@ -6,7 +6,7 @@
 export const ANDROID_PACKAGE = "ao.huamboonline.app";
 /** Caminhos do site que a APP abre sozinha (iguais em app.json). */
 /** Certificado que assina a APP na Expo (lido pela ação «APP Android — impressão digital»). Público. */
-export const ANDROID_SHA256_FINGERPRINT = "eb064ed7bb66af8093ccb24f72aaa94052511e42d5f2b9e333373d780066ba6c";
+export const ANDROID_SHA256_FINGERPRINT = "56789542025662d3fececbfd153671c47b5025af06b56b2d6ec5657284e03939";
 /** Inclui as páginas de perfil (QR de cada profissional, empresa, loja, estabelecimento, posto e praça). */
 export const APP_LINK_PATHS = ["/reservas/", "/combustivel/", "/eventos/bilhete/", "/profissionais/", "/empresas/", "/vendedor/", "/pracas/"] as const;
 

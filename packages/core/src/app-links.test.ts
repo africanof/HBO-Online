@@ -12,7 +12,7 @@ describe("App Links", () => {
   });
   it("usa sempre a impressão digital da APP", () => {
     const app = parseSha256Fingerprints(ANDROID_SHA256_FINGERPRINT);
-    expect(app[0]).toBe("EB:06:4E:D7:BB:66:AF:80:93:CC:B2:4F:72:AA:A9:40:52:51:1E:42:D5:F2:B9:E3:33:37:3D:78:00:66:BA:6C");
+    expect(app[0]).toBe("56:78:95:42:02:56:62:D3:FE:CE:CB:FD:15:36:71:C4:7B:50:25:AF:06:B5:6B:2D:6E:C5:65:72:84:E0:39:39");
     expect(appLinkFingerprints(undefined)).toEqual(app);
     expect(appLinkFingerprints(fp)).toEqual([fp, app[0]]);
     expect(appLinkFingerprints(ANDROID_SHA256_FINGERPRINT.toUpperCase())).toEqual(app);
