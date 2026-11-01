@@ -5,7 +5,7 @@ export const AI_WRITER_DAILY_LIMIT = 15;
 
 export type AiWriterInput = {
   title: string; description: string;
-  category?: string; listingType?: string; purpose?: string;
+  category?: string; categorySlug?: string; listingType?: string; purpose?: string;
   details?: Record<string, string | number | boolean | null | undefined>;
 };
 export type AiWriterResult = { optimized_title: string; optimized_description: string; remaining: number };
@@ -37,7 +37,7 @@ export async function improveListingText(client: SupabaseClient, input: AiWriter
   for (const [k, v] of Object.entries(input.details ?? {})) if (v !== null && v !== undefined && v !== "") details[k] = String(v);
   try {
     const r = await client.functions.invoke("generate-ad", { body: {
-      title: input.title, description: input.description, category: input.category ?? "",
+      title: input.title, description: input.description, category: input.category ?? "", categorySlug: input.categorySlug ?? "",
       listingType: input.listingType ?? "", purpose: input.purpose ?? "", details
     } });
     if (r.error) {

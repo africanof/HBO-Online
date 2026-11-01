@@ -295,6 +295,15 @@ export const CORE_ERROR_ROWS: CoreRow[] = [
   ["Escreva primeiro um título ou uma pequena descrição.", "First write a title or a short description.", "请先填写标题或简短描述。"],
   ["Não conseguimos melhorar o texto agora. Tente de novo.", "We couldn't improve the text right now. Try again.", "我们暂时无法优化文字。请重试。"],
 
+  // --- Assistente de IA (ai-assist.ts) ---
+  ["Inicie sessão para usar o assistente de IA.", "Sign in to use the AI assistant.", "请登录后使用 AI 助手。"],
+  ["Já usou o assistente de IA as vezes permitidas hoje. Volte amanhã.", "You've reached today's AI assistant limit. Come back tomorrow.", "您今天的 AI 助手次数已用完。请明天再来。"],
+  ["O assistente de IA ainda não está ativo. Tente mais tarde.", "The AI assistant isn't active yet. Try later.", "AI 助手尚未开通。请稍后再试。"],
+  ["Escreva primeiro o que procura ou a sua pergunta.", "First write what you're looking for or your question.", "请先输入您要找的内容或您的问题。"],
+  ["O assistente de IA não conseguiu responder agora. Tente de novo.", "The AI assistant couldn't answer right now. Try again.", "AI 助手暂时无法回答。请重试。"],
+  ["Só a equipa (administração e moderadores) pode usar isto.", "Only the team (administrators and moderators) can use this.", "只有团队（管理员和版主）可以使用此功能。"],
+  ["Não encontrámos o que procura. Atualize a página.", "We couldn't find what you're looking for. Refresh the page.", "未找到您要的内容。请刷新页面。"],
+
   // --- Localização (places.ts) ---
   ["Autorize a localização para marcar o ponto (ou cole as coordenadas do Google Maps).", "Allow location access to mark the point (or paste the coordinates from Google Maps).", "请允许定位以标记位置（或粘贴 Google 地图的坐标）。"],
   ["O GPS demorou demasiado. Tente outra vez num lugar aberto.", "The GPS took too long. Try again in an open place.", "GPS 定位超时。请在空旷处重试。"],

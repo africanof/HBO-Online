@@ -227,7 +227,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
       {wanted && <p className="ok" style={{ margin: 0 }}>🔎 {t("ls.wanted_intro")}</p>}
       <label>{wanted ? t("ls.what_looking") : t("ls.title")}<input value={title} maxLength={140} onChange={e => setTitle(e.target.value)} placeholder={wanted ? (listingType === "service" ? t("ls.ph_wanted_service") : t("ls.ph_wanted_item")) : t("ls.ph_title")} /></label>
       <label>{t("ls.description")}<textarea value={description} onChange={e => setDescription(e.target.value)} rows={6} placeholder={wanted ? t("ls.ph_wanted_desc") : t("ls.ph_desc")} /></label>
-      {!wanted && <AiImprove input={{ title, description, listingType, purpose, category: categories.find(c => c.id === categoryId)?.name, details }} onApply={(nt, nd) => { setTitle(nt); setDescription(nd); }} />}
+      {!wanted && <AiImprove input={{ title, description, listingType, purpose, category: categories.find(c => c.id === categoryId)?.name, categorySlug: catSlug, details }} onApply={(nt, nd) => { setTitle(nt); setDescription(nd); }} />}
       {listingType === "real_estate" && (purpose === "rent" || purpose === "lease") && <p className="ok" style={{ margin: 0 }}>{t("ls.rent_free_badge")}</p>}
       {!wanted && <DetailFields listingType={listingType} categorySlug={catSlug} values={details} onChange={setDetails} />}
       {agroAllowed && <fieldset className="stack" style={{ border: "2px solid var(--line)", borderRadius: 12, padding: 14 }}>

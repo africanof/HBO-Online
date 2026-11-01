@@ -59,6 +59,7 @@ export * from "./markets";
 export * from "./videos";
 export * from "./photo-search";
 export * from "./ai-writer";
+export * from "./ai-assist";
 export * from "./wanted";
 export * from "./deal-reviews";
 export * from "./trust";

@@ -68,7 +68,11 @@ Deno.serve(async req => {
   }
   const remaining = quota.data as number;
 
+  // Ofertas de emprego e estágios: texto organizado como uma vaga.
+  const isJob = ["emprego", "estagios-remunerados", "estagios-nao-remunerados"].includes(clip(body.categorySlug, 60));
+  const jobHint = isJob ? "Isto é uma OFERTA DE EMPREGO OU ESTÁGIO. Título: «Vaga: <função>» (+ local se for dado). Descrição em secções curtas, só com o que foi dado: «Funções», «Requisitos», «Horário e local», «Remuneração» (só se indicada; nunca inventes salário) e, no fim, «Como se candidatar: envie o seu CV (PDF, Word ou foto) pelas Mensagens do Huambo Online.»" : "";
   const user = [
+    jobHint,
     `Categoria: ${clip(body.category, 80) || "—"}`, `Tipo de anúncio: ${clip(body.listingType, 30) || "—"}`,
     `Finalidade: ${clip(body.purpose, 30) || "—"}`, details ? `Dados do artigo: ${details}` : "",
     `Título original: ${title || "—"}`, `Descrição original: ${description || "—"}`

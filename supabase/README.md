@@ -33,4 +33,4 @@ Configurados no painel do Supabase (nunca no repositório):
 | Segredo | Usado por |
 | --- | --- |
 | `PROXYPAY_API_KEY`, `PROXYPAY_ENV` | `payment-reference`, `payment-webhook` |
-| `OPENAI_API_KEY` | `photo-search` e `generate-ad` |
+| `OPENAI_API_KEY` | `photo-search`, `generate-ad`, `ai-assist` e `ai-triage` |
