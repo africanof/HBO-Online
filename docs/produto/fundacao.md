@@ -3,7 +3,7 @@
 ## Regras de projeto
 
 - Este projeto começa do zero.
-- O backend oficial é o Supabase `foqsmszwbhiyqqtuwypg`.
+- O backend oficial é o Supabase `pewymvkowbdizdiyjmao` (ver `docs/infraestrutura/supabase.md`).
 - Angola Localiza e Huambo Localiza são projetos independentes e não são dependências.
 - Site e APP compartilham contratos e regras de domínio.
 - Merge automático é permitido.

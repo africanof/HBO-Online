@@ -9,8 +9,8 @@
       "pnpm": "10.17.1",
       "env": {
         "EXPO_PUBLIC_SITE_URL": "https://huambo-na-m-o.onrender.com",
-        "EXPO_PUBLIC_SUPABASE_URL": "https://foqsmszwbhiyqqtuwypg.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_NbNWAsdnSHyAoZHtnYjHhg_cElJ6Nez"
+        "EXPO_PUBLIC_SUPABASE_URL": "https://pewymvkowbdizdiyjmao.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_ZrKSsj6YexF9YRENSg1sKg_Zp3Q2Fw5"
       }
     },
     "preview": {

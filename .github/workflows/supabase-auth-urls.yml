@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
-      PROJECT_REF: foqsmszwbhiyqqtuwypg
+      PROJECT_REF: pewymvkowbdizdiyjmao
       SITE_URL: ${{ inputs.site_url }}
       EXTRA_SITE_URLS: ${{ inputs.extra_site_urls }}
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

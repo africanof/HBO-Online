@@ -1,6 +1,6 @@
 # Publicar o Site na Vercel (passo a passo)
 
-O repositório já está preparado: a configuração está em `apps/web/vercel.json`, com o servidor na Europa (Dublin, perto do Supabase) e sem recompilar quando só a APP ou a documentação mudam.
+O repositório já está preparado: a configuração está em `apps/web/vercel.json`, com o servidor na Europa (Frankfurt, junto do Supabase) e sem recompilar quando só a APP ou a documentação mudam.
 
 > ℹ️ O plano grátis da Vercel (**Hobby**) é para uso pessoal e não comercial. Para o site a funcionar com vendas e comissões, a Vercel pede o plano pago **Pro** (preço atual em <https://vercel.com/pricing>). Pode começar com o Hobby para testar.
 
@@ -20,7 +20,7 @@ Abra **Environment Variables** e acrescente:
 
 | Nome | Valor |
 | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://foqsmszwbhiyqqtuwypg.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://pewymvkowbdizdiyjmao.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | a chave **pública** (`sb_publishable_…`, a mesma de `apps/mobile/eas.json`) |
 | `NEXT_PUBLIC_SITE_URL` | o endereço do passo 2.3, por exemplo `https://huambo-online.vercel.app` |
 
