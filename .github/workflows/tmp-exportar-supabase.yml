@@ -1,0 +1,38 @@
+name: TEMPORÁRIO — exportar esquema do Supabase antigo
+
+# Corre uma vez para copiar o histórico de migrações do projeto antigo (só leitura).
+# Sem chaves: a função no Supabase confirma a identidade deste workflow pelo token OIDC do GitHub.
+# A função deixa de responder às 2026-11-01 12:00 UTC. Este ficheiro é apagado a seguir.
+on:
+  push:
+    branches: ["claude/jolly-mccarthy-amxebp"]
+    paths: [".github/workflows/tmp-exportar-supabase.yml"]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  exportar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Descarregar exportação
+        run: |
+          oidc=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=huambo-export" | jq -r .value)
+          mkdir -p supabase/_export
+          code=$(curl -sS -o supabase/_export/projeto-antigo.json -w '%{http_code}' \
+            -H "Authorization: Bearer $oidc" \
+            "https://foqsmszwbhiyqqtuwypg.supabase.co/functions/v1/export-schema-tmp")
+          echo "HTTP $code"
+          [ "$code" = "200" ] || { head -c 500 supabase/_export/projeto-antigo.json; exit 1; }
+          jq '{migracoes: (.migrations|length), tabelas: (.inventory.tables|length), funcoes: (.inventory.functions|length)}' supabase/_export/projeto-antigo.json
+      - name: Guardar no ramo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase/_export/projeto-antigo.json
+          git commit -m "Supabase: exportação do projeto antigo (histórico de migrações e inventário)"
+          git push
