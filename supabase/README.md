@@ -8,7 +8,9 @@ Projeto, isolamento e regras: [`docs/infraestrutura/supabase.md`](../docs/infrae
 
 ```text
 supabase/
-├── migrations/   # Alterações à base de dados, aplicadas por ordem do nome
+├── migrations/   # Alterações à base de dados, aplicadas por ordem do nome (começa no esquema inicial completo)
+├── baseline/     # Dados de referência, tarefas agendadas e inventário do esquema (ver README)
+├── migrations_historico/  # Migrações antigas, só para consulta
 └── functions/    # Edge Functions (Deno)
     ├── _shared/            # Código partilhado entre funções (cliente ProxyPay)
     ├── payment-reference/  # Cria referências de pagamento ProxyPay (Multicaixa)
