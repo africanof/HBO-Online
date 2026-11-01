@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { jobQueueStats, jobQueueText, listTotpFactors } from "@huambo-online/core";
 import { getMyAdminRole, getAdminStats, listReports, resolveReport, listListingsForModeration, moderateListing, listUsersForAdmin,
-  setUserStatus, setUserRole, listAllCategories, createCategory, setCategoryActive, canModerate, canManageRoles, friendlyErrorIn, formatPrice, LANG_TAGS,
+  setUserStatus, setUserRole, listAllCategories, createCategory, setCategoryActive, canModerate, canManageRoles, assignableRoles, canManageAccount, friendlyErrorIn, formatPrice, LANG_TAGS,
   ADMIN_STAT_LABELS, REPORT_STATUS_LABELS, USER_STATUS_LABELS, ROLE_LABELS, STATUS_LABELS, CATEGORY_TYPES, CATEGORY_TYPE_LABELS,
   listReportsV2, setTargetActive, reportTargetHref, REPORT_TARGET_LABELS, type ReportTargetType,
   type AdminRole, type AdminStats, type ReportStatus, type UserStatus } from "@huambo-online/core";
@@ -151,13 +151,13 @@ function AdminContent() {
       {users.map(u => <article key={u.id} className="card">
         <strong>{u.full_name || tr("ad.no_name")} — {u.email}</strong>
         <span><span className="badge">{tc(USER_STATUS_LABELS[u.status as UserStatus] ?? u.status)}</span> · {tc(ROLE_LABELS[u.role as AdminRole] ?? u.role)} · {tr(Number(u.listings) === 1 ? "ad.listings_one" : "ad.listings_many", { n: u.listings ?? 0 })} · {tr("ad.since", { date: formatDateIn(u.created_at, lang) })}</span>
-        <div className="row">
+        {canManageAccount(role, u.role) ? <div className="row">
           {u.status === "active" ? <button className="danger" onClick={() => { if (confirm(tr("ad.confirm_suspend_user"))) void act(() => setUserStatus(supabase(), u.id, "suspended"), tr("ad.ok_user_suspended")); }}>{tr("ad.suspend")}</button>
             : <button onClick={() => act(() => setUserStatus(supabase(), u.id, "active"), tr("ad.ok_user_reactivated"))}>{tr("ad.reactivate")}</button>}
           {canManageRoles(role) && <select value={u.role} onChange={e => act(() => setUserRole(supabase(), u.id, e.target.value as AdminRole), tr("ad.ok_role_updated"))} style={{ maxWidth: 220 }} aria-label={tr("ad.role")}>
-            {Object.entries(ROLE_LABELS).map(([v, l]) => <option key={v} value={v}>{tc(l)}</option>)}
+            {assignableRoles(role).map(v => <option key={v} value={v}>{tc(ROLE_LABELS[v])}</option>)}
           </select>}
-        </div>
+        </div> : <small>🔒 {tr("ad.protected_admin")}</small>}
       </article>)}
     </section>}
 

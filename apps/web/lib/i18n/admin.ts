@@ -43,6 +43,7 @@ export const DICT_ADMIN: Dictionary = {
 
   // Geral
   "ad.no_access": { pt: "Acesso reservado à administração.", en: "Access restricted to administrators.", zh: "仅限管理员访问。" },
+  "ad.protected_admin": { pt: "Conta de administrador: só um administrador a pode alterar.", en: "Administrator account: only an administrator can change it.", zh: "管理员账户：只有管理员才能修改。" },
   "ad.role": { pt: "Papel", en: "Role", zh: "角色" },
   "ad.status": { pt: "Estado", en: "Status", zh: "状态" },
   "ad.all_f": { pt: "Todas", en: "All", zh: "全部" },

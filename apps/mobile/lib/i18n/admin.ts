@@ -29,6 +29,7 @@ export const DICT_ADMIN: Dictionary = {
   "ad.mfa_intro": { pt: "Por segurança, confirme que é mesmo você antes de abrir a administração.", en: "For security, confirm it's really you before opening the administration.", zh: "为了安全，打开管理后台前请确认是您本人。" },
   "ad.back_home": { pt: "Voltar ao início", en: "Back to home", zh: "返回首页" },
   "ad.restricted": { pt: "Acesso reservado à administração.", en: "Access restricted to administrators.", zh: "仅限管理员访问。" },
+  "ad.protected_admin": { pt: "Conta de administrador: só um administrador a pode alterar.", en: "Administrator account: only an administrator can change it.", zh: "管理员账户：只有管理员才能修改。" },
   "ad.role": { pt: "Papel: {role}", en: "Role: {role}", zh: "角色：{role}" },
   "ad.all_f": { pt: "Todas", en: "All", zh: "全部" },
   "ad.all_m": { pt: "Todos", en: "All", zh: "全部" },

@@ -1,12 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { canModerate, canManageRoles, slugify, getMyAdminRole, createCategory } from "./admin";
+import { canModerate, canManageRoles, assignableRoles, canManageAccount, slugify, getMyAdminRole, createCategory } from "./admin";
 import { friendlyError } from "./classified-listings";
 
 describe("admin helpers", () => {
   it("checks roles", () => {
     expect(canModerate("moderator")).toBe(true);
     expect(canModerate("user")).toBe(false);
-    expect(canManageRoles("moderator")).toBe(false);
+    expect(canManageRoles("moderator")).toBe(true);
+    expect(canManageRoles("user")).toBe(false);
+    expect(assignableRoles("moderator")).toEqual(["user", "moderator"]);
+    expect(assignableRoles("admin")).toEqual(["user", "moderator", "admin"]);
+    expect(assignableRoles("user")).toEqual([]);
+    expect(canManageAccount("moderator", "user")).toBe(true);
+    expect(canManageAccount("moderator", "moderator")).toBe(true);
+    expect(canManageAccount("moderator", "admin")).toBe(false);
+    expect(canManageAccount("admin", "admin")).toBe(true);
+    expect(canManageAccount("user", "user")).toBe(false);
     expect(canManageRoles("admin")).toBe(true);
   });
   it("slugifies Portuguese names", () => {

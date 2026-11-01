@@ -331,6 +331,7 @@ const errorMessages: [RegExp, string][] = [
   [/INVALID_TRANSITION/, "Este passo já não é possível. Atualize a página."],
   [/TARGET_NOT_FOUND/, "Este perfil já não está disponível."],
   [/USE_SERVER_FUNCTIONS/, "Operação não permitida."],
+  [/PROTECTED_ADMIN/, "Só um administrador pode alterar uma conta de administrador."],
   [/ADMIN_ONLY/, "Só a administração pode fazer isto."],
   [/CANNOT_CHANGE_SELF/, "Não pode alterar a sua própria conta aqui."],
   [/duplicate key.*slug|categories_slug/i, "Já existe uma categoria com esse nome."],

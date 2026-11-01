@@ -246,6 +246,7 @@ export const CORE_ERROR_ROWS: CoreRow[] = [
   ["Só quem pediu o serviço pode fazer isto.", "Only the person who requested the service can do this.", "只有申请服务的人才能执行此操作。"],
   ["Este passo já não é possível. Atualize a página.", "This step is no longer possible. Refresh the page.", "此步骤已无法执行。请刷新页面。"],
   ["Este perfil já não está disponível.", "This profile is no longer available.", "该资料已不可用。"],
+  ["Só um administrador pode alterar uma conta de administrador.", "Only an administrator can change an administrator account.", "只有管理员才能修改管理员账户。"],
   ["Só a administração pode fazer isto.", "Only the administration can do this.", "只有管理员才能执行此操作。"],
   ["Não pode alterar a sua própria conta aqui.", "You can't change your own account here.", "您不能在此修改自己的账户。"],
   ["Já existe uma categoria com esse nome.", "A category with that name already exists.", "已存在同名分类。"],

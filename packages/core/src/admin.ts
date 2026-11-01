@@ -26,7 +26,17 @@ export const ADMIN_STAT_LABELS: [keyof AdminStats, string][] = [
 ];
 
 export function canModerate(role: string | null | undefined) { return role === "moderator" || role === "admin"; }
-export function canManageRoles(role: string | null | undefined) { return role === "admin"; }
+/** Administradores e moderadores podem mudar papéis (os moderadores só entre utilizador e moderador). */
+export function canManageRoles(role: string | null | undefined) { return canModerate(role); }
+/** Papéis que esta pessoa pode dar a outra conta. */
+export function assignableRoles(myRole: string | null | undefined): AdminRole[] {
+  return myRole === "admin" ? ["user", "moderator", "admin"] : myRole === "moderator" ? ["user", "moderator"] : [];
+}
+/** Só um administrador pode suspender, banir, reativar ou mudar o papel de uma conta de administrador. */
+export function canManageAccount(myRole: string | null | undefined, targetRole: string | null | undefined) {
+  if (!canModerate(myRole)) return false;
+  return targetRole !== "admin" || myRole === "admin";
+}
 
 export async function getMyAdminRole(client: SupabaseClient): Promise<AdminRole> {
   const { data, error } = await client.rpc("my_admin_role");

@@ -3,7 +3,7 @@ import { jobQueueStats, jobQueueText } from "@huambo-online/core";
 import { Link, useRouter } from "expo-router";
 import { Alert, ScrollView, Text, TextInput, View } from "react-native";
 import { getMyAdminRole, getAdminStats, listReports, resolveReport, listListingsForModeration, moderateListing, listUsersForAdmin,
-  setUserStatus, setUserRole, listAllCategories, createCategory, setCategoryActive, canModerate, canManageRoles, friendlyErrorIn, formatPrice,
+  setUserStatus, setUserRole, listAllCategories, createCategory, setCategoryActive, canModerate, canManageRoles, assignableRoles, canManageAccount, friendlyErrorIn, formatPrice,
   ADMIN_STAT_LABELS, REPORT_STATUS_LABELS, USER_STATUS_LABELS, ROLE_LABELS, STATUS_LABELS, CATEGORY_TYPES, CATEGORY_TYPE_LABELS,
   listReportsV2, setTargetActive, reportTargetHref, REPORT_TARGET_LABELS, type ReportTargetType,
   type AdminRole, type AdminStats, type ReportStatus, type UserStatus } from "@huambo-online/core";
@@ -136,10 +136,12 @@ export default function Admin() {
         <Text style={ui.h2}>{u.full_name || tr("ad.no_name")}</Text>
         <Text style={ui.text}>{u.email}</Text>
         <Text style={ui.muted}>{tc(USER_STATUS_LABELS[u.status as UserStatus] ?? u.status)} · {tc(ROLE_LABELS[u.role as AdminRole] ?? u.role)} · {tr("ad.listings_count", { n: u.listings })}</Text>
+        {!canManageAccount(role, u.role) ? <Text style={ui.muted}>🔒 {tr("ad.protected_admin")}</Text> : <>
         {u.status === "active"
           ? <Button title={tr("ad.suspend")} variant="danger" onPress={() => Alert.alert(tr("ad.suspend_user"), tr("ad.suspend_user_msg"), [{ text: tr("common.cancel"), style: "cancel" }, { text: tr("ad.suspend"), style: "destructive", onPress: () => void act(() => setUserStatus(supabase(), u.id, "suspended"), tr("ad.ok.user_suspended")) }])} />
           : <Button title={tr("ad.reactivate")} onPress={() => void act(() => setUserStatus(supabase(), u.id, "active"), tr("ad.ok.user_reactivated"))} />}
-        {canManageRoles(role) && <Chips options={Object.entries(ROLE_LABELS).map(([value, label]) => ({ value: value as AdminRole, label: tc(label) }))} value={u.role} onChange={v => void act(() => setUserRole(supabase(), u.id, v), tr("ad.ok.role_updated"))} />}
+        {canManageRoles(role) && <Chips options={assignableRoles(role).map(value => ({ value, label: tc(ROLE_LABELS[value]) }))} value={u.role as AdminRole} onChange={v => void act(() => setUserRole(supabase(), u.id, v), tr("ad.ok.role_updated"))} />}
+        </>}
       </View>)}
     </View>}
 
