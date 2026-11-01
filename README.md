@@ -4,7 +4,7 @@
 
 Plataforma digital de comércio, serviços e negócios do Huambo — um único produto com **Site** e **APP** (Android/iOS) a partilhar as mesmas regras e a mesma base de dados.
 
-🌐 **Site publicado:** <https://huambo-na-m-o.onrender.com> (Render, a partir do ramo `main`)
+🌐 **Site publicado:** <https://huambo-na-m-o.onrender.com> — em mudança do Render para a **Vercel** ([guia](docs/guias/publicar-site-vercel.md))
 
 ## Índice
 
@@ -68,6 +68,7 @@ Cada pasta principal tem o seu próprio `README.md` com detalhes.
 - **APP:** Expo 57, React Native, expo-router, EAS Build
 - **Backend:** Supabase (PostgreSQL 17, Auth, Storage, Realtime, Edge Functions, pg_cron)
 - **Testes:** Vitest (unitários), Playwright + axe (site publicado)
+- **Alojamento do Site:** Vercel (publica automaticamente a partir de `main`)
 - **CI:** GitHub Actions
 
 ## Começar
@@ -119,7 +120,7 @@ Toda a documentação está em [`docs/`](docs/README.md):
 
 - **Produto:** [arquitetura de produto](docs/produto/arquitetura-de-produto.md), [fundação](docs/produto/fundacao.md), [fase 1](docs/produto/fase-1-identidade-descoberta.md)
 - **Infraestrutura:** [Supabase](docs/infraestrutura/supabase.md), [cache](docs/infraestrutura/cache.md)
-- **Guias:** [gerar e publicar a APP Android](docs/guias/lancar-app-android.md)
+- **Guias:** [publicar o Site na Vercel](docs/guias/publicar-site-vercel.md), [gerar e publicar a APP Android](docs/guias/lancar-app-android.md)
 
 ## Princípios
 

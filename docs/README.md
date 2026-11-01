@@ -19,6 +19,7 @@
 
 ## Guias
 
+- [Publicar o Site na Vercel](guias/publicar-site-vercel.md)
 - [Gerar e publicar a APP Android](guias/lancar-app-android.md)
 
 ## Convenções

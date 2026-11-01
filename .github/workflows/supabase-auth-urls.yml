@@ -9,6 +9,10 @@ on:
         description: "Endereço do site"
         required: false
         default: "https://huambo-na-m-o.onrender.com"
+      extra_site_urls:
+        description: "Outros endereços autorizados, separados por vírgulas (ex.: o antigo, durante uma mudança)"
+        required: false
+        default: ""
       leaked_password_protection:
         description: "Recusar palavras-passe que já apareceram em fugas de dados (HaveIBeenPwned)"
         type: boolean
@@ -22,6 +26,7 @@ jobs:
     env:
       PROJECT_REF: foqsmszwbhiyqqtuwypg
       SITE_URL: ${{ inputs.site_url }}
+      EXTRA_SITE_URLS: ${{ inputs.extra_site_urls }}
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
     steps:
       - name: Verificar segredo
@@ -31,7 +36,11 @@ jobs:
           fi
       - name: Definir Site URL e Redirect URLs
         run: |
-          body=$(jq -n --arg site "$SITE_URL" '{site_url: $site, uri_allow_list: ($site + "/**,huamboonline://**")}')
+          # Endereço principal + outros endereços (cada um com /**) + a APP (huamboonline://)
+          body=$(jq -n --arg site "${SITE_URL%/}" --arg extra "$EXTRA_SITE_URLS" '
+            ([$site] + ($extra | split(",") | map(gsub("^\\s+|\\s+$"; "") | sub("/$"; "")) | map(select(length > 0))))
+            | unique | map(. + "/**") + ["huamboonline://**"]
+            | {site_url: $site, uri_allow_list: join(",")}')
           code=$(curl -sS -o resp.json -w '%{http_code}' -X PATCH \
             "https://api.supabase.com/v1/projects/$PROJECT_REF/config/auth" \
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" -d "$body")
