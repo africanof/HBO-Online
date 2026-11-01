@@ -380,13 +380,31 @@ export async function createAndPublishClassifiedListing(client: SupabaseClient, 
 }
 
 export async function updateClassifiedListing(client: SupabaseClient, id: string, input: Omit<ClassifiedDraftInput, "ownerId">) {
-  return client.from("classified_listings").update({
+  const updated = await client.from("classified_listings").update({
     category_id: input.categoryId || null, listing_type: input.listingType, purpose: input.purpose,
     title: input.title.trim(), description: input.description?.trim() || null, price: input.price ?? null,
     attributes: buildAttributes(input), media: input.media || [], market_id: input.marketId || null, video_url: input.videoUrl || null,
     budget_min: input.purpose === "wanted" ? input.budgetMin ?? null : null, budget_max: input.purpose === "wanted" ? input.budgetMax ?? null : null,
-    ...saleColumns(input), ...placeColumns(input.directions, input.point), ...(input.conformity ? { conformity_accepted_at: new Date().toISOString() } : {}), updated_at: new Date().toISOString()
+    ...saleColumns(input), ...(input.conformity ? { conformity_accepted_at: new Date().toISOString() } : {}), updated_at: new Date().toISOString()
   }).eq("id", id).select().single();
+  if (updated.error) return updated;
+  const place = await setListingPrivatePlace(client, id, input.directions, input.point);
+  return place.error ? { ...updated, data: null, error: place.error } : updated;
+}
+
+/**
+ * Localização do anúncio (indicações e ponto no mapa): privada.
+ * Só o dono e a equipa (administradores e moderadores) a veem; para os outros devolve null.
+ */
+export async function getListingPrivatePlace(client: SupabaseClient, id: string) {
+  const r = await client.rpc("listing_private_place", { p_listing_id: id });
+  const row = Array.isArray(r.data) ? r.data[0] : null;
+  return row ? { directions: (row.directions as string | null) ?? null, geo_lat: row.geo_lat == null ? null : Number(row.geo_lat), geo_lng: row.geo_lng == null ? null : Number(row.geo_lng) } : null;
+}
+/** Grava (ou apaga) a localização privada do próprio anúncio. */
+export async function setListingPrivatePlace(client: SupabaseClient, id: string, directions: string | null | undefined, point: GeoPoint | null | undefined) {
+  const c = placeColumns(directions, point);
+  return client.rpc("set_listing_private_place", { p_listing_id: id, p_directions: c.directions, p_geo_lat: c.geo_lat, p_geo_lng: c.geo_lng });
 }
 
 export async function deleteClassifiedListing(client: SupabaseClient, id: string) {
@@ -417,7 +435,11 @@ export async function listClassifiedListingsByIds(client: SupabaseClient, ids: s
 
 /** Anúncio publicado, ou do próprio dono (rascunho/pausado) — as regras do Supabase decidem. */
 export async function getClassifiedListing(client: SupabaseClient, id: string) {
-  return client.from("classified_listings").select(LISTING_COLUMNS).eq("id", id).maybeSingle();
+  const r = await client.from("classified_listings").select(LISTING_COLUMNS).eq("id", id).maybeSingle();
+  if (!r.data) return r;
+  // A localização só chega ao dono e à equipa.
+  const place = await getListingPrivatePlace(client, id).catch(() => null);
+  return place ? { ...r, data: { ...r.data, ...place } } : r;
 }
 
 export async function updateClassifiedStatus(client: SupabaseClient, id: string, status: Exclude<ClassifiedStatus, "published">) {

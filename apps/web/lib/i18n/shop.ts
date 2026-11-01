@@ -268,7 +268,7 @@ export const DICT_SHOP: Dictionary = {
   "sh.pl.use_location": { pt: "Usar a minha localização", en: "Use my location", zh: "使用我的位置" },
   "sh.pl.paste": { pt: "…ou cole as coordenadas ou a ligação do Google Maps", en: "…or paste the coordinates or the Google Maps link", zh: "……或粘贴坐标或 Google 地图链接" },
   "sh.pl.directions": { pt: "Como chegar (ponto de referência, opcional)", en: "How to get there (landmark, optional)", zh: "如何到达（参照地标，可选）" },
-  "sh.pl.approx_hint": { pt: "Por segurança, o ponto aparece aproximado (cerca de 100 m). Não marque a sua casa: marque onde mostra o artigo.", en: "For safety, the point is shown approximately (about 100 m). Don't mark your home: mark where you show the item.", zh: "为安全起见，位置会以近似方式显示（约 100 米）。请不要标记您的住所，而是标记展示物品的地点。" },
+  "sh.pl.approx_hint": { pt: "A localização fica privada: só a equipa do Huambo Online (administração e moderadores) a vê. Não marque a sua casa: marque onde mostra o artigo.", en: "The location stays private: only the Huambo Online team (administrators and moderators) can see it. Don't mark your home: mark where you show the item.", zh: "位置保持私密：只有 Huambo Online 团队（管理员和版主）可以看到。请不要标记您的住址，而是标记您展示物品的地点。" },
   "sh.pl.how_get": { pt: "Como chegar", en: "How to get there", zh: "如何到达" },
   "sh.pl.open_map": { pt: "Abrir no mapa", en: "Open in map", zh: "在地图中打开" },
   "sh.pl.show_map": { pt: "Mostrar mapa aqui", en: "Show map here", zh: "在此显示地图" },

@@ -12,7 +12,7 @@ function fakeStorage() {
   });
   const rows: any[] = [];
   const q: any = { select: () => q, eq: () => q, single: () => Promise.resolve({ data: {}, error: null }) };
-  const client: any = { storage: { from: bucket }, from: () => ({ insert: (r: any) => { rows.push(r); return q; }, update: (r: any) => { rows.push(r); return q; } }) };
+  const client: any = { storage: { from: bucket }, from: () => ({ insert: (r: any) => { rows.push(r); return q; }, update: (r: any) => { rows.push(r); return q; } }), rpc: () => Promise.resolve({ data: null, error: null }) };
   return { client, calls, rows };
 }
 

@@ -85,17 +85,36 @@ export async function listProviders(client: SupabaseClient, f: DirectoryFilters 
   return client.rpc("provider_directory", { p_query: f.query?.trim() ?? "", p_category_id: f.categoryId || null, p_municipality_id: f.municipalityId || null, p_limit: f.limit ?? 30 });
 }
 export async function getProvider(client: SupabaseClient, userId: string) {
-  return client.from("provider_profiles").select("user_id,display_name,headline,bio,category_id,custom_category,municipality_id,phone,whatsapp,avatar_url,verified,active,created_at,directions,geo_lat,geo_lng,categories(name),municipalities(name)").eq("user_id", userId).maybeSingle();
+  const r = await client.from("provider_profiles").select("user_id,display_name,headline,bio,category_id,custom_category,municipality_id,phone,whatsapp,avatar_url,verified,active,created_at,directions,geo_lat,geo_lng,categories(name),municipalities(name)").eq("user_id", userId).maybeSingle();
+  if (!r.data) return r;
+  // Telefone, WhatsApp e localização só chegam ao próprio e à equipa.
+  const contact = await getProviderPrivateContact(client, userId).catch(() => null);
+  return contact ? { ...r, data: { ...r.data, ...contact } } : r;
+}
+/** Contactos e localização de um profissional: só o próprio e a equipa (administradores e moderadores). */
+export async function getProviderPrivateContact(client: SupabaseClient, userId: string) {
+  const r = await client.rpc("provider_private_contact", { p_user_id: userId });
+  const row = Array.isArray(r.data) ? r.data[0] : null;
+  return row ? { phone: (row.phone as string | null) ?? null, whatsapp: (row.whatsapp as string | null) ?? null, directions: (row.directions as string | null) ?? null,
+    geo_lat: row.geo_lat == null ? null : Number(row.geo_lat), geo_lng: row.geo_lng == null ? null : Number(row.geo_lng) } : null;
 }
 export async function saveMyProviderProfile(client: SupabaseClient, userId: string, input: ProviderInput) {
   const invalid = validateProviderInput(input);
   if (invalid) return { data: null, error: new Error(invalid) };
-  return client.from("provider_profiles").upsert({
+  const saved = await client.from("provider_profiles").upsert({
     user_id: userId, display_name: input.displayName.trim(), headline: input.headline?.trim() || null, bio: input.bio?.trim() || null,
-    ...categoryColumns(input.categoryId, input.customCategory), municipality_id: input.municipalityId, phone: input.phone?.trim() || null,
-    whatsapp: input.whatsapp?.trim() || null, active: input.active ?? true, updated_at: new Date().toISOString(),
-    ...(input.directions !== undefined || input.point !== undefined ? placeColumns(input.directions, input.point) : {})
+    ...categoryColumns(input.categoryId, input.customCategory), municipality_id: input.municipalityId,
+    active: input.active ?? true, updated_at: new Date().toISOString()
   }, { onConflict: "user_id" }).select().single();
+  if (saved.error) return saved;
+  // Contactos e localização ficam numa tabela privada (só o próprio e a equipa os veem).
+  const keepPlace = input.directions === undefined && input.point === undefined;
+  const current = keepPlace ? await getProviderPrivateContact(client, userId).catch(() => null) : null;
+  const place = keepPlace ? { directions: current?.directions ?? null, geo_lat: current?.geo_lat ?? null, geo_lng: current?.geo_lng ?? null }
+    : placeColumns(input.directions, input.point);
+  const c = await client.rpc("set_my_provider_contact", { p_phone: input.phone?.trim() || null, p_whatsapp: input.whatsapp?.trim() || null,
+    p_directions: place.directions, p_geo_lat: place.geo_lat, p_geo_lng: place.geo_lng });
+  return c.error ? { ...saved, data: null, error: c.error } : saved;
 }
 export async function listProviderServices(client: SupabaseClient, providerId: string, includeInactive = false) {
   let q = client.from("services").select("id,provider_id,title,description,price_from,currency,category_id,active,created_at").eq("provider_id", providerId).order("created_at");

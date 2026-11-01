@@ -59,7 +59,7 @@ export function ShareButton({ kind, id, title, extra }: { kind: SavedKind; id: s
   </>;
 }
 
-/** «Falar no WhatsApp» com o vendedor: só aparece se ele escolheu mostrar o número e para quem tem sessão iniciada. */
+/** «Falar no WhatsApp» com o vendedor: só aparece à equipa (administração e moderadores). */
 export function SellerWhatsApp({ sellerId, kind, id, title, refCode }: { sellerId: string; kind: "listing" | "product"; id: string; title: string; refCode?: string | null }) {
   const { t } = useT();
   const [number, setNumber] = useState<string | null>(null);
@@ -70,22 +70,21 @@ export function SellerWhatsApp({ sellerId, kind, id, title, refCode }: { sellerI
   return href ? <a className="btn secondary" href={href} target="_blank" rel="noopener" onClick={() => void recordItemEvent(supabase(), kind, id, "whatsapp")}>💬 {t("common.whatsapp")}</a> : null;
 }
 
-/** «A sua conta»: número de WhatsApp e se aparece nos anúncios e produtos. */
+/** «A sua conta»: número de WhatsApp (só a equipa o vê). */
 export function WhatsAppSettings({ uid }: { uid: string }) {
   const { lang, t } = useT();
-  const [number, setNumber] = useState(""); const [visible, setVisible] = useState(false);
+  const [number, setNumber] = useState("");
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
-  useEffect(() => { void getMyWhatsapp(supabase(), uid).then(r => { setNumber(formatWhatsapp(r.data?.whatsapp)); setVisible(!!r.data?.whatsapp_public); }); }, [uid]);
+  useEffect(() => { void getMyWhatsapp(supabase(), uid).then(r => setNumber(formatWhatsapp(r.data?.whatsapp))); }, [uid]);
   async function save(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setMsg(""); setErr("");
-    const r = await setMyWhatsapp(supabase(), number, visible); setBusy(false);
-    if (r.error) setErr(friendlyErrorIn(r.error, lang)); else setMsg(!number.trim() ? t("wa.deleted") : visible ? t("wa.saved_visible") : t("wa.saved_hidden"));
+    const r = await setMyWhatsapp(supabase(), number, false); setBusy(false);
+    if (r.error) setErr(friendlyErrorIn(r.error, lang)); else setMsg(!number.trim() ? t("wa.deleted") : t("wa.saved_visible"));
   }
   return <form className="stack card" onSubmit={save}>
     <h2 style={{ margin: 0 }}>💬 WhatsApp</h2>
     <p style={{ margin: 0 }}>{t("wa.text")}</p>
     <label>{t("wa.number")}<input type="tel" value={number} onChange={e => setNumber(e.target.value)} placeholder="923 000 000" autoComplete="tel" /></label>
-    <label className="row" style={{ gap: 8 }}><input type="checkbox" checked={visible} onChange={e => setVisible(e.target.checked)} style={{ width: 24, height: 24 }} /> {t("wa.show")}</label>
     <small>{t("wa.note")}</small>
     {msg && <p className="ok" role="status">{msg}</p>}
     {err && <p className="error" role="alert">{err}</p>}

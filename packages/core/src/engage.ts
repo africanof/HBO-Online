@@ -88,7 +88,7 @@ export function setMyWhatsapp(client: SupabaseClient, number: string, visible: b
   if (number.trim() && !normalizeWhatsapp(number)) return Promise.resolve({ data: null, error: new Error("INVALID_WHATSAPP") });
   return client.rpc("set_my_whatsapp", { p_number: number.trim() || null, p_public: visible });
 }
-/** Número do vendedor, só se ele escolheu mostrá-lo e só para quem tem sessão iniciada. */
+/** Número de WhatsApp de uma conta: só a equipa (administradores e moderadores) o recebe. */
 export async function getSellerWhatsapp(client: SupabaseClient, userId: string): Promise<string | null> {
   const r = await client.rpc("seller_whatsapp", { p_user_id: userId });
   return typeof r.data === "string" && r.data ? r.data : null;

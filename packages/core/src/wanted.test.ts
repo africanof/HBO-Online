@@ -30,6 +30,7 @@ describe("Procura-se", () => {
     const c: any = { from: () => ({ insert: (r: any) => { rows.push(r); return q; }, update: (r: any) => { rows.push(r); return q; } }), rpc: (f: string, a: any) => { rpc.push(a); return Promise.resolve({ data: [], error: null }); } };
     await createClassifiedListing(c, { ownerId: "u", listingType: "product", purpose: "wanted", title: "Preciso de router", budgetMin: 20000, budgetMax: 25000, price: 25000 });
     await updateClassifiedListing(c, "l", { listingType: "product", purpose: "sale", title: "Router", budgetMin: 1, budgetMax: 2 });
+    rpc.length = 0;
     expect(rows[0]).toMatchObject({ budget_min: 20000, budget_max: 25000, price: 25000 });
     expect(rows[1]).toMatchObject({ budget_min: null, budget_max: null });
     await listWanted(c, "router");

@@ -210,14 +210,12 @@ export const APP_DICT: Dictionary = {
   "account.sign_out": { pt: "Terminar sessão", en: "Sign out", zh: "退出登录" },
 
   // WhatsApp (na conta)
-  "wa.text": { pt: "Os compradores podem falar consigo pelo WhatsApp, além das mensagens do Huambo Online.", en: "Buyers can contact you on WhatsApp as well as through Huambo Online messages.", zh: "除了 Huambo Online 的消息外，买家还可以通过 WhatsApp 联系您。" },
+  "wa.text": { pt: "O seu número de WhatsApp fica guardado só para a equipa do Huambo Online (administração e moderadores). Os outros utilizadores falam consigo pelas Mensagens.", en: "Your WhatsApp number is kept only for the Huambo Online team (administrators and moderators). Other users contact you through Messages.", zh: "您的 WhatsApp 号码仅供 Huambo Online 团队（管理员和版主）查看。其他用户通过站内消息与您联系。" },
   "wa.number": { pt: "Número de WhatsApp", en: "WhatsApp number", zh: "WhatsApp 号码" },
-  "wa.show": { pt: "Mostrar o botão «Falar no WhatsApp» nos meus anúncios e produtos", en: "Show the “Chat on WhatsApp” button on my listings and products", zh: "在我的信息和商品上显示“通过WhatsApp联系”按钮" },
-  "wa.privacy": { pt: "Só quem tem sessão iniciada vê o seu número. Pode esconder ou apagar quando quiser.", en: "Only signed-in users can see your number. You can hide or delete it at any time.", zh: "只有已登录的用户才能看到您的号码。您可以随时隐藏或删除。" },
+  "wa.privacy": { pt: "Pode apagar o número quando quiser.", en: "You can delete the number at any time.", zh: "您可以随时删除该号码。" },
   "wa.save": { pt: "Guardar WhatsApp", en: "Save WhatsApp", zh: "保存 WhatsApp" },
   "wa.deleted": { pt: "Número de WhatsApp apagado.", en: "WhatsApp number deleted.", zh: "WhatsApp 号码已删除。" },
-  "wa.saved_public": { pt: "Guardado. O botão «Falar no WhatsApp» aparece nos seus anúncios e produtos.", en: "Saved. The “Chat on WhatsApp” button now appears on your listings and products.", zh: "已保存。“通过WhatsApp联系”按钮将显示在您的信息和商品上。" },
-  "wa.saved_hidden": { pt: "Guardado. O número fica escondido.", en: "Saved. Your number stays hidden.", zh: "已保存。您的号码将保持隐藏。" }
+  "wa.saved_public": { pt: "Guardado. Só a equipa do Huambo Online vê o seu número.", en: "Saved. Only the Huambo Online team can see your number.", zh: "已保存。只有 Huambo Online 团队能看到您的号码。" },
 };
 
 /** Todos os textos da APP (comuns + só da APP). */

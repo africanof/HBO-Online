@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
-import { Linking, Share, Switch, Text, TextInput, View } from "react-native";
+import { Linking, Share, Text, TextInput, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { findSaved, toggleSaved, recordView, shareMessage, whatsappShareUrl, sellerWhatsappMessage, getSellerWhatsapp, getMyWhatsapp, setMyWhatsapp, formatWhatsapp, whatsappLink,
   getFollowInfo, toggleFollow, recordItemView, recordItemEvent, followersText, followButtonLabel, type FollowKind,
@@ -46,7 +46,7 @@ export function ShareButton({ kind, id, title, extra }: { kind: SavedKind; id: s
   </>;
 }
 
-/** «Falar no WhatsApp» com o vendedor: só aparece se ele escolheu mostrar o número e para quem tem sessão iniciada. */
+/** «Falar no WhatsApp» com o vendedor: só aparece à equipa (administração e moderadores). */
 export function SellerWhatsApp({ sellerId, kind, id, title, refCode }: { sellerId: string; kind: "listing" | "product"; id: string; title: string; refCode?: string | null }) {
   const { t, tc } = useT();
   const [number, setNumber] = useState<string | null>(null);
@@ -56,25 +56,21 @@ export function SellerWhatsApp({ sellerId, kind, id, title, refCode }: { sellerI
   return href ? <Button title={"💬 " + t("common.whatsapp")} variant="secondary" onPress={() => { void recordItemEvent(supabase(), kind, id, "whatsapp"); void Linking.openURL(href); }} /> : null;
 }
 
-/** «A sua conta»: número de WhatsApp e se aparece nos anúncios e produtos. */
+/** «A sua conta»: número de WhatsApp (só a equipa o vê). */
 export function WhatsAppSettings({ uid }: { uid: string }) {
-  const [number, setNumber] = useState(""); const [visible, setVisible] = useState(false);
+  const [number, setNumber] = useState("");
   const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(""); const [err, setErr] = useState(""); const { t, lang } = useT();
-  useEffect(() => { void getMyWhatsapp(supabase(), uid).then(r => { setNumber(formatWhatsapp(r.data?.whatsapp)); setVisible(!!r.data?.whatsapp_public); }); }, [uid]);
+  useEffect(() => { void getMyWhatsapp(supabase(), uid).then(r => setNumber(formatWhatsapp(r.data?.whatsapp))); }, [uid]);
   async function save() {
     setBusy(true); setMsg(""); setErr("");
-    const r = await setMyWhatsapp(supabase(), number, visible); setBusy(false);
-    if (r.error) setErr(friendlyErrorIn(r.error, lang)); else setMsg(!number.trim() ? t("wa.deleted") : visible ? t("wa.saved_public") : t("wa.saved_hidden"));
+    const r = await setMyWhatsapp(supabase(), number, false); setBusy(false);
+    if (r.error) setErr(friendlyErrorIn(r.error, lang)); else setMsg(!number.trim() ? t("wa.deleted") : t("wa.saved_public"));
   }
   return <View style={ui.card}>
     <Text style={ui.h2}>💬 WhatsApp</Text>
     <Text style={ui.text}>{t("wa.text")}</Text>
     <Text style={ui.label}>{t("wa.number")}</Text>
     <TextInput style={ui.input} keyboardType="phone-pad" value={number} onChangeText={setNumber} placeholder="923 000 000" placeholderTextColor={C.muted} accessibilityLabel={t("wa.number")} />
-    <View style={[ui.row, { alignItems: "center" }]}>
-      <Switch value={visible} onValueChange={setVisible} accessibilityLabel={t("wa.show")} />
-      <Text style={[ui.text, { flex: 1 }]}>{t("wa.show")}</Text>
-    </View>
     <Text style={ui.muted}>{t("wa.privacy")}</Text>
     <Message error={err} ok={msg} />
     <Button title={t("wa.save")} disabled={busy} onPress={() => void save()} />

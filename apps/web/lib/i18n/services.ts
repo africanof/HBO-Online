@@ -1169,8 +1169,8 @@ export const SV_INFO_PAGES: Record<"en" | "zh", Record<string, InfoPageText>> = 
           "We don't sell your data to anyone and we don't show advertising based on it."] },
         { title: "3. What is public", paragraphs: [
           "Published listings, products, professional and business profiles, your name, profile photo, reviews and profile figures (sales, services provided).",
-          "Your email is not shown. Your phone only appears if you put it in the listing or the profile.",
-          "Your WhatsApp number only appears if you choose “Show the Chat on WhatsApp button” in “Your account”, and only to signed-in people. You can hide or delete it whenever you want."] },
+          "Your email, phone, WhatsApp and location (address, directions and map point) are not shown to other users. Only the Huambo Online team (administrators and moderators) can see them. Other users contact you through Messages.",
+          "Businesses, fuel stations, hotels, restaurants and events show the contacts and location they provide, because they exist to be found. You can delete your WhatsApp number at any time."] },
         { title: "4. What is private", paragraphs: [
           "Messages, offers, orders and service requests: only the people involved can see them.",
           "Verification documents are kept in a private space: only you and the administration can open them, through a temporary link."] },
@@ -1308,8 +1308,8 @@ export const SV_INFO_PAGES: Record<"en" | "zh", Record<string, InfoPageText>> = 
           "我们不会将您的数据出售给任何人，也不会基于这些数据向您展示广告。"] },
         { title: "3. 哪些是公开的", paragraphs: [
           "已发布的广告、商品、专业人士和企业资料、您的姓名、头像、评价和资料数据（销量、已提供的服务）。",
-          "您的电子邮箱不会显示。电话只有在您填写到广告或资料中时才会显示。",
-          "您的 WhatsApp 号码只有在您于“您的账户”中选择“显示‘通过 WhatsApp 联系’按钮”后才会显示，而且仅对已登录用户可见。您可以随时隐藏或删除。"] },
+          "您的电子邮箱、电话、WhatsApp 和位置（地址、路线说明和地图位置）不会向其他用户显示。只有 Huambo Online 团队（管理员和版主）可以看到。其他用户通过站内消息与您联系。",
+          "企业、加油站、酒店、餐厅和活动会显示其提供的联系方式和位置，因为它们需要被人找到。您可以随时删除您的 WhatsApp 号码。"] },
         { title: "4. 哪些是私密的", paragraphs: [
           "消息、报价、订单和服务请求：只有相关当事人可以查看。",
           "验证证件保存在私密空间：只有您本人和管理员可以通过临时链接打开。"] },
@@ -1409,7 +1409,7 @@ export const SV_HELP_FAQ: Record<"en" | "zh", Record<string, { q: string; a: str
     "O que é o «Pagamento protegido»?": { q: "What is “Protected payment”?", a: "For Shop purchases, you can pay Huambo Online instead of paying the seller. We hold the money and the seller only receives it after you confirm you received the order. If there's a problem, ask for a refund in “Orders”: the money stays frozen until it's resolved. If you neither confirm nor complain a few days after delivery, the payment goes to the seller." },
     "Vendo na Loja: como recebo o dinheiro do pagamento protegido?": { q: "I sell in the Shop: how do I receive protected payment money?", a: "Wait for the “Payment received” notice before shipping. After delivering, mark the order as “Delivered”. When the client confirms (or the period passes without a complaint), the money goes to “Your account” → “My balance”. Enter your IBAN or Multicaixa Express number and tap “Request withdrawal”." },
     "Como partilho um anúncio no WhatsApp?": { q: "How do I share a listing on WhatsApp?", a: "Open the listing or product and tap “📲 Share on WhatsApp”. The message includes the title, price, listing number (e.g. A-1023) and the link, and WhatsApp shows the photo. Choose the contact or group." },
-    "Como recebo mensagens de compradores pelo WhatsApp?": { q: "How do I get messages from buyers on WhatsApp?", a: "In “Your account” → “WhatsApp”, enter your number and turn on “Show the Chat on WhatsApp button”. The button appears on your listings and products, only to signed-in people, with a ready message saying which listing it's about." },
+    "Os compradores podem ver o meu WhatsApp?": { q: "Can buyers see my WhatsApp?", a: "To protect your privacy, your number is not shown to buyers: they contact you through Huambo Online Messages. If you save your WhatsApp in “Your account” → “WhatsApp”, only the Huambo Online team can see it." },
     "Como funciona o «Convide um amigo»?": { q: "How does “Invite a friend” work?", a: "In “Account” → “Invite friends” you have your code and your link. Anyone who creates an account with your invitation (within the first 14 days) is linked to you. When that person pays their first monthly fee (professional, business or shop), you get 1 free month on your monthly fee. If you don't have a monthly fee yet, the reward is saved." },
     "O que é um agente no terreno?": { q: "What is a field agent?", a: "A person from the market (for example, Kapango) who helps sellers post listings on Huambo Online. The listing always stays in the seller's account; when posting, the seller enters the agent's code (e.g. AG1001). When that listing is sold, the agent earns a percentage of the sale amount, which the administration confirms and which goes into the agent's balance. To become an agent, open “Account” → “Become an agent”." },
     "E se o artigo não corresponder ao anúncio?": { q: "What if the item doesn't match the listing?", a: "All listings have a conformity guarantee: whoever posts declares that the description is true and complete, including defects. If the item you bought or rented has a hidden defect or is different, open the listing and tap “The item doesn't match the listing” (up to 7 days after the deal). You can ask for an exchange, return and refund, or a refund. If the owner refuses or doesn't reply within 3 days, the administration decides. For Shop purchases, use “Returns and refunds” on the order." },
@@ -1440,7 +1440,7 @@ export const SV_HELP_FAQ: Record<"en" | "zh", Record<string, { q: string; a: str
     "O que é o «Pagamento protegido»?": { q: "什么是“保障付款”？", a: "在商店购物时，您可以向 Huambo Online 付款，而不是直接付给卖家。我们代为保管资金，您确认收货后卖家才会收到款项。如有问题，可在“订单”中申请退款：款项会被冻结直至问题解决。如果收货后几天内您既未确认也未投诉，款项将转给卖家。" },
     "Vendo na Loja: como recebo o dinheiro do pagamento protegido?": { q: "我在商店销售：如何收到保障付款的款项？", a: "收到“已收到付款”通知后再发货。交付后，将订单标记为“已交付”。客户确认（或期限内无投诉）后，款项进入“您的账户”→“我的余额”。填写您的 IBAN 或 Multicaixa Express 号码，然后点击“申请提现”。" },
     "Como partilho um anúncio no WhatsApp?": { q: "如何在 WhatsApp 上分享广告？", a: "打开广告或商品，点击“📲 分享到 WhatsApp”。消息包含标题、价格、广告编号（例如 A-1023）和链接，WhatsApp 中会显示照片。选择联系人或群组即可。" },
-    "Como recebo mensagens de compradores pelo WhatsApp?": { q: "如何通过 WhatsApp 接收买家消息？", a: "在“您的账户”→“WhatsApp”中填写您的号码，并开启“显示‘通过 WhatsApp 联系’按钮”。该按钮会显示在您的广告和商品上，仅对已登录用户可见，并附带一条说明是哪条广告的预设消息。" },
+    "Os compradores podem ver o meu WhatsApp?": { q: "买家能看到我的 WhatsApp 吗？", a: "为保护您的隐私，您的号码不会向买家显示：他们通过 Huambo Online 站内消息与您联系。如果您在“您的账户”→“WhatsApp”中保存号码，只有 Huambo Online 团队能看到。" },
     "Como funciona o «Convide um amigo»?": { q: "“邀请朋友”如何运作？", a: "在“账户”→“邀请朋友”中有您的邀请码和链接。通过您的邀请注册账户的人（在注册后 14 天内）会与您关联。当对方支付首月月费（专业人士、企业或店铺）时，您的月费可获得 1 个月免费。如果您还没有月费，奖励会被保留。" },
     "O que é um agente no terreno?": { q: "什么是地推代理？", a: "来自市场（例如 Kapango）的人，帮助卖家在 Huambo Online 上发布广告。广告始终在卖家本人的账户中；发布时，卖家填写代理代码（例如 AG1001）。该广告售出后，代理可获得成交金额的一定比例，经管理员确认后计入代理余额。要成为代理，请打开“账户”→“成为代理”。" },
     "E se o artigo não corresponder ao anúncio?": { q: "如果物品与广告不符怎么办？", a: "所有广告都有如实描述保证：发布者声明描述真实完整，包括缺陷。如果您购买或租用的物品有隐藏缺陷或与描述不同，请打开该广告并点击“物品与广告不符”（交易后 7 天内）。您可以要求换货、退货退款或退款。如物主拒绝或 3 天内未回复，由管理员裁决。商店购物请在订单中使用“退货和退款”。" },

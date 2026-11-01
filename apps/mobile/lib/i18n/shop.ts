@@ -260,7 +260,7 @@ export const DICT_SHOP: Dictionary = {
   "sh.coords_a11y": { pt: "Coordenadas ou ligação do Google Maps", en: "Coordinates or Google Maps link", zh: "坐标或 Google 地图链接" },
   "sh.directions_label": { pt: "Como chegar (ponto de referência, opcional)", en: "How to get there (landmark, optional)", zh: "如何到达（参照物，可选）" },
   "sh.directions": { pt: "Como chegar", en: "How to get there", zh: "如何到达" },
-  "sh.approx_hint": { pt: "Por segurança, o ponto aparece aproximado (cerca de 100 m). Não marque a sua casa: marque onde mostra o artigo.", en: "For safety, the point is shown approximately (about 100 m). Don't mark your home: mark where you show the item.", zh: "为安全起见，位置会以近似方式显示（约 100 米）。请不要标记您的住处，而是标记展示物品的地点。" },
+  "sh.approx_hint": { pt: "A localização fica privada: só a equipa do Huambo Online (administração e moderadores) a vê. Não marque a sua casa: marque onde mostra o artigo.", en: "The location stays private: only the Huambo Online team (administrators and moderators) can see it. Don't mark your home: mark where you show the item.", zh: "位置保持私密：只有 Huambo Online 团队（管理员和版主）可以看到。请不要标记您的住址，而是标记您展示物品的地点。" },
   "sh.open_on_map": { pt: "📍 Abrir no mapa", en: "📍 Open on map", zh: "📍 在地图中打开" },
   "sh.approx_place": { pt: "Local aproximado (cerca de 100 m).", en: "Approximate location (about 100 m).", zh: "大致位置（约 100 米）。" },
   "sh.open_delivery_point": { pt: "📍 Abrir o ponto da entrega no mapa", en: "📍 Open the delivery point on the map", zh: "📍 在地图中打开送货点" },
