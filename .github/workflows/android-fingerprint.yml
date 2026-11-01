@@ -4,6 +4,10 @@ name: APP Android — impressão digital (App Links)
 # do certificado que assina a APP (informação pública, vai no ficheiro /.well-known/assetlinks.json do site).
 on:
   workflow_dispatch:
+    inputs:
+      expo_account:
+        description: "Nome de utilizador da conta Expo dona da APP (sem @)"
+        required: true
 
 jobs:
   fingerprint:
@@ -12,9 +16,10 @@ jobs:
       - name: Ler a impressão digital na Expo
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_ACCOUNT: ${{ inputs.expo_account }}
         run: |
           if [ -z "$EXPO_TOKEN" ]; then echo "::error::Falta o segredo EXPO_TOKEN."; exit 1; fi
-          query='{"query":"{ app { byFullName(fullName: \"@aires_festo/huambo-online\") { androidAppCredentials(filter: {applicationIdentifier: \"ao.huamboonline.app\"}) { androidAppBuildCredentialsList { isDefault name androidKeystore { sha256CertificateFingerprint } } } } } }"}'
+          query='{"query":"{ app { byFullName(fullName: \"@'"${EXPO_ACCOUNT#@}"'/huambo-online\") { androidAppCredentials(filter: {applicationIdentifier: \"ao.huamboonline.app\"}) { androidAppBuildCredentialsList { isDefault name androidKeystore { sha256CertificateFingerprint } } } } } }"}'
           curl -sS https://api.expo.dev/graphql -H "Authorization: Bearer $EXPO_TOKEN" -H "Content-Type: application/json" -d "$query" > r.json
           jq -r '.errors // empty' r.json
           jq -r '.data.app.byFullName.androidAppCredentials[]?.androidAppBuildCredentialsList[]? | "SHA256=\(.androidKeystore.sha256CertificateFingerprint) default=\(.isDefault) name=\(.name)"' r.json
