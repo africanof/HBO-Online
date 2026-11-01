@@ -251,6 +251,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
     <TextInput style={ui.input} value={title} maxLength={140} onChangeText={setTitle} placeholder={wanted ? (listingType === "service" ? t("ls.form.ph_wanted_service") : t("ls.form.ph_wanted")) : t("ls.form.ph_title")} />
     <Text style={ui.label}>{t("ls.form.description")}</Text>
     <TextInput style={[ui.input, ui.area]} multiline value={description} onChangeText={setDescription} placeholder={wanted ? t("ls.form.ph_desc_wanted") : t("ls.form.ph_desc")} />
+    {listingType === "real_estate" && (purpose === "rent" || purpose === "lease") && <Text style={ui.label}>{t("ls.rent_free_badge")}</Text>}
     {!wanted && <DetailFields listingType={listingType} categorySlug={catSlug} values={details} onChange={setDetails} />}
     {agroAllowed && <View style={[ui.card, { gap: 8 }]}>
       <Text style={ui.h2}>🌾 {t("more.agri")}</Text>

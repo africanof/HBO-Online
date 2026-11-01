@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "expo-router";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { getUserStats, requestService, validateServiceRequest, sellerBadge, friendlyErrorIn, validateReview, submitDealReview, listDealCandidates, setListingDeal,
-  closeListing, getPlatformSettings, commissionFor, parsePrice, formatPrice, finalDealStatus, quickDates, DEAL_ROLE_LABELS, type UserStats, type PendingReview, type DealCandidate } from "@huambo-online/core";
+  closeListing, getPlatformSettings, commissionFor, isCommissionFree, parsePrice, formatPrice, finalDealStatus, quickDates, DEAL_ROLE_LABELS, type UserStats, type PendingReview, type DealCandidate } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
@@ -97,7 +97,8 @@ export function DealCloser({ listing, onDone }: { listing: { id: string; purpose
   const [open, setOpen] = useState(false); const [people, setPeople] = useState<DealCandidate[] | null>(null); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
   const [amount, setAmount] = useState(listing.price != null ? String(Number(listing.price)) : ""); const [pct, setPct] = useState(5);
   const final = finalDealStatus(listing.purpose);
-  const charged = (final === "sold" || final === "rented") && listing.status === "published" && listing.purpose !== "auction";
+  // Arrendamento de imóveis é grátis: não se pede o valor nem há comissão.
+  const charged = (final === "sold" || final === "rented") && listing.status === "published" && listing.purpose !== "auction" && !isCommissionFree(listing);
   async function show() {
     setOpen(true); setError("");
     const [r, s] = await Promise.all([listDealCandidates(supabase(), listing.id), getPlatformSettings(supabase())]);

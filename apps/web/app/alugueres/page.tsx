@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { listMyRentalRequests, respondRentalRequest, cancelRentalRequest, getPlatformSettings, commissionFor, formatPrice, friendlyErrorIn, RENTAL_STATUS_LABELS, type RentalStatus } from "@huambo-online/core";
+import { listMyRentalRequests, respondRentalRequest, cancelRentalRequest, getPlatformSettings, commissionFor, commissionFreeListingIds, formatPrice, friendlyErrorIn, RENTAL_STATUS_LABELS, type RentalStatus } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { useT, formatDateIn } from "../../lib/i18n";
 
@@ -11,8 +11,8 @@ export default function Alugueres() {
   const [pct, setPct] = useState(5);
   useEffect(() => { void getPlatformSettings(supabase()).then(r => { if (r.data?.listing_commission_pct != null) setPct(Number(r.data.listing_commission_pct)); }); }, []);
   const [role, setRole] = useState<"renter" | "owner">(typeof window !== "undefined" && new URLSearchParams(window.location.search).get("recebidos") ? "owner" : "renter");
-  const [items, setItems] = useState<any[]>([]); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
-  async function load(r = role) { const res = await listMyRentalRequests(supabase(), r); if (res.error) setError(friendlyErrorIn(res.error, lang)); else setItems((res.data as any[]) ?? []); }
+  const [items, setItems] = useState<any[]>([]); const [free, setFree] = useState<Set<string>>(new Set()); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
+  async function load(r = role) { const res = await listMyRentalRequests(supabase(), r); if (res.error) setError(friendlyErrorIn(res.error, lang)); else { const rows = (res.data as any[]) ?? []; setItems(rows); setFree(await commissionFreeListingIds(supabase(), rows.map(x => x.listing_id))); } }
   useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) void load(); }); }, []);
   async function act(fn: () => PromiseLike<{ error: any }>, msg: string) { setError(""); setNotice(""); const r = await fn(); if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(msg); await load(); } }
   if (uid === undefined) return <main><p>{t("common.loading")}</p></main>;
@@ -33,7 +33,7 @@ export default function Alugueres() {
       <span>{role === "owner" ? t("ls.request_from") : t("ls.owner")}: {r.other_name}</span>
       {r.message && <span>«{r.message}»</span>}
       <div className="row">
-        {role === "owner" && r.status === "pending" && <><small style={{ flexBasis: "100%" }}>{t("ls.rental_fee_note", { pct, amount: formatPrice(commissionFor(r.proposed_price, pct)) })}</small><button onClick={() => act(() => respondRentalRequest(supabase(), r.id, true), t("ls.rental_accepted"))}>{t("ls.accept")}</button><button className="danger" onClick={() => act(() => respondRentalRequest(supabase(), r.id, false), t("ls.request_declined"))}>{t("ls.decline")}</button></>}
+        {role === "owner" && r.status === "pending" && <><small style={{ flexBasis: "100%" }}>{free.has(r.listing_id) ? "🎉 " + t("ls.rent_free_note") : t("ls.rental_fee_note", { pct, amount: formatPrice(commissionFor(r.proposed_price, pct)) })}</small><button onClick={() => act(() => respondRentalRequest(supabase(), r.id, true), t("ls.rental_accepted"))}>{t("ls.accept")}</button><button className="danger" onClick={() => act(() => respondRentalRequest(supabase(), r.id, false), t("ls.request_declined"))}>{t("ls.decline")}</button></>}
         {role === "renter" && ["pending", "accepted"].includes(r.status) && <button className="secondary" onClick={() => { if (confirm(t("ls.cancel_request_q"))) void act(() => cancelRentalRequest(supabase(), r.id), t("ls.request_cancelled")); }}>{t("common.cancel")}</button>}
       </div>
     </article>)}

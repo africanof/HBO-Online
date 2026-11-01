@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams } from "expo-router";
 import { Alert, ScrollView, Text, View } from "react-native";
-import { listMyRentalRequests, respondRentalRequest, cancelRentalRequest, getPlatformSettings, commissionFor, formatPrice, friendlyErrorIn, RENTAL_STATUS_LABELS, type RentalStatus } from "@huambo-online/core";
+import { listMyRentalRequests, respondRentalRequest, cancelRentalRequest, getPlatformSettings, commissionFor, commissionFreeListingIds, formatPrice, friendlyErrorIn, RENTAL_STATUS_LABELS, type RentalStatus } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
@@ -15,8 +15,8 @@ export default function Alugueres() {
   useEffect(() => { void getPlatformSettings(supabase()).then(r => { if (r.data?.listing_commission_pct != null) setPct(Number(r.data.listing_commission_pct)); }); }, []);
   const params = useLocalSearchParams<{ recebidos?: string }>();
   const [role, setRole] = useState<"renter" | "owner">(params.recebidos ? "owner" : "renter");
-  const [items, setItems] = useState<any[]>([]); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
-  async function load(r = role) { const res = await listMyRentalRequests(supabase(), r); if (res.error) setError(friendlyErrorIn(res.error, lang)); else setItems((res.data as any[]) ?? []); }
+  const [items, setItems] = useState<any[]>([]); const [free, setFree] = useState<Set<string>>(new Set()); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
+  async function load(r = role) { const res = await listMyRentalRequests(supabase(), r); if (res.error) setError(friendlyErrorIn(res.error, lang)); else { const rows = (res.data as any[]) ?? []; setItems(rows); setFree(await commissionFreeListingIds(supabase(), rows.map(x => x.listing_id))); } }
   useEffect(() => { void supabase().auth.getUser().then(({ data }) => { const id = data.user?.id ?? null; setUid(id); if (id) void load(params.recebidos ? "owner" : "renter"); }); }, []);
   async function act(fn: () => PromiseLike<{ error: any }>, msg: string) { setError(""); setNotice(""); const r = await fn(); if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(msg); await load(); } }
   if (uid === undefined) return <View style={ui.screen}><Text style={ui.text}>{t("common.loading")}</Text></View>;
@@ -34,7 +34,7 @@ export default function Alugueres() {
       <Text style={ui.muted}>{role === "owner" ? t("ls.rent.from", { name: r.other_name }) : t("ls.rent.owner", { name: r.other_name })}</Text>
       {!!r.message && <Text style={ui.text}>«{r.message}»</Text>}
       {role === "owner" && r.status === "pending" && <>
-        <Text style={ui.muted}>{t("ls.rent.commission", { pct, amount: formatPrice(commissionFor(r.proposed_price, pct)) })}</Text>
+        <Text style={ui.muted}>{free.has(r.listing_id) ? "🎉 " + t("ls.rent_free_note") : t("ls.rent.commission", { pct, amount: formatPrice(commissionFor(r.proposed_price, pct)) })}</Text>
         <Button title={t("ls.accept")} onPress={() => void act(() => respondRentalRequest(supabase(), r.id, true), t("ls.rent.accepted"))} />
         <Button title={t("ls.decline")} variant="danger" onPress={() => void act(() => respondRentalRequest(supabase(), r.id, false), t("ls.rent.declined"))} />
       </>}

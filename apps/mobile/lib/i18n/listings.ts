@@ -441,6 +441,8 @@ export const DICT_LISTINGS: Dictionary = {
   "hub.real_estate.search_ph": { pt: "Ex.: casa T3, terreno, Cidade Baixa", en: "E.g. 3-bed house, land, Cidade Baixa", zh: "例如：三居室、土地、Cidade Baixa" },
   "hub.real_estate.none": { pt: "Ainda não há imóveis com estes filtros.", en: "No properties with these filters yet.", zh: "暂无符合条件的房产。" },
   "hub.real_estate.be_first": { pt: "Publique o primeiro imóvel", en: "Post the first property", zh: "发布第一个房产" },
+  "ls.rent_free_note": { pt: "Arrendamento de imóveis é grátis: sem custos nem comissões.", en: "Property rentals are free: no fees or commissions.", zh: "房产出租免费：无任何费用或佣金。" },
+  "ls.rent_free_badge": { pt: "🎉 Anunciar imóveis para arrendar é grátis — sem custos nem comissões.", en: "🎉 Listing property for rent is free — no fees or commissions.", zh: "🎉 发布房产出租信息免费——无任何费用或佣金。" },
   "ls.chat.you": { pt: "Você", en: "You", zh: "您" },
   "ls.chat.write": { pt: "Escreva uma mensagem", en: "Write a message", zh: "输入消息" },
 

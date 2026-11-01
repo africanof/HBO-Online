@@ -37,6 +37,7 @@ export function TypeHub({ kind }: { kind: Kind }) {
     <Link href="/" style={ui.link}>← {t("nav.home")}</Link>
     <Text style={ui.h1}>{c.icon} {t(`hub.${kind}.title`)}</Text>
     <Text style={ui.text}>{t(`hub.${kind}.intro`)}</Text>
+    {kind === "real_estate" && <Text style={ui.label}>{t("ls.rent_free_badge")}</Text>}
     <Button title={"+ " + t(`hub.${kind}.publish`)} onPress={() => router.push(publish as any)} />
     <View style={[ui.row, { flexWrap: "nowrap" }]}>
       <TextInput style={[ui.input, { flex: 1 }]} value={q} onChangeText={setQ} onSubmitEditing={() => void load()} placeholder={t(`hub.${kind}.search_ph`)} placeholderTextColor={C.muted} returnKeyType="search" />

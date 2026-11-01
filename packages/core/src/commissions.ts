@@ -49,3 +49,15 @@ export function updateCommissionAsAdmin(client: SupabaseClient, id: string, acti
 export function closeListing(client: SupabaseClient, listingId: string, status: "sold" | "rented" | "closed", saleAmount?: number | null) {
   return client.from("classified_listings").update({ status, ...(status === "sold" || status === "rented" ? { sale_amount: saleAmount ?? null } : {}), updated_at: new Date().toISOString() }).eq("id", listingId).select().single();
 }
+
+/** Arrendamento/aluguer de imóveis é grátis: sem comissão (igual à regra da base de dados). */
+export function isCommissionFree(listing: { listing_type?: string | null; purpose?: string | null } | null | undefined): boolean {
+  return listing?.listing_type === "real_estate" && (listing.purpose === "rent" || listing.purpose === "lease");
+}
+/** Dos anúncios indicados, quais não pagam comissão (para a lista de pedidos de aluguer). */
+export async function commissionFreeListingIds(client: SupabaseClient, listingIds: string[]): Promise<Set<string>> {
+  const ids = [...new Set(listingIds.filter(Boolean))];
+  if (!ids.length) return new Set();
+  const r = await client.from("classified_listings").select("id,listing_type,purpose").in("id", ids);
+  return new Set(((r.data ?? []) as any[]).filter(isCommissionFree).map(x => x.id as string));
+}

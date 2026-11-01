@@ -39,5 +39,6 @@ Schema, RLS, Auth, Storage, Edge Functions e demais recursos só são alterados 
 | `20261101190000_categorias_emprego.sql` | Categorias de anúncios «Emprego e recrutamento», «Estágios remunerados» e «Estágios não remunerados». |
 | `20261101200000_documentos_emprego.sql` | Documentos Word/PDF no chat, só em conversas sobre vagas de emprego e estágios; corrige o reencaminhamento de anexos pela equipa. |
 | `20261101210000_mais_categorias.sql` | 59 categorias novas: anúncios, Loja, profissionais, serviços e empresas. |
+| `20261101220000_arrendamento_imoveis_gratis.sql` | Arrendamento e aluguer de imóveis sem comissão (`listing_commission_free`). |
 
 Todas já estão aplicadas no projeto `pewymvkowbdizdiyjmao`.

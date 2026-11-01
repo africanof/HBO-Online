@@ -30,7 +30,7 @@ export function TypeHub({ kind }: { kind: Kind }) {
   return <main className="stack">
     <a href="/">← {t("nav.home")}</a>
     <section className="banner blue">
-      <div><h1 style={{ margin: 0 }}>{c.icon} {t(`hub.${kind}.title`)}</h1><p>{t(`hub.${kind}.intro`)}</p></div>
+      <div><h1 style={{ margin: 0 }}>{c.icon} {t(`hub.${kind}.title`)}</h1><p>{t(`hub.${kind}.intro`)}</p>{kind === "real_estate" && <p style={{ fontWeight: 800 }}>{t("ls.rent_free_badge")}</p>}</div>
       <a className="btn" href={`/classificados/publicar?tipo=${kind}`}>+ {t(`hub.${kind}.publish`)}</a>
     </section>
     <form onSubmit={e => { e.preventDefault(); void load(); }} className="row">

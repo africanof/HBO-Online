@@ -51,3 +51,16 @@ describe("comissão dos anúncios", () => {
     expect(friendlyError(new Error("STORE_UNAVAILABLE"))).toMatch(/Loja/);
   });
 });
+
+import { isCommissionFree, commissionFreeListingIds } from "./commissions";
+describe("arrendamento de imóveis grátis", () => {
+  it("só imóveis para arrendar/alugar ficam sem comissão", async () => {
+    expect(isCommissionFree({ listing_type: "real_estate", purpose: "rent" })).toBe(true);
+    expect(isCommissionFree({ listing_type: "real_estate", purpose: "lease" })).toBe(true);
+    expect(isCommissionFree({ listing_type: "real_estate", purpose: "sale" })).toBe(false);
+    expect(isCommissionFree({ listing_type: "vehicle", purpose: "lease" })).toBe(false);
+    expect(isCommissionFree(null)).toBe(false);
+    const q: any = { select: () => q, in: () => Promise.resolve({ data: [{ id: "a", listing_type: "real_estate", purpose: "rent" }, { id: "b", listing_type: "vehicle", purpose: "lease" }] }) };
+    expect([...await commissionFreeListingIds({ from: () => q } as any, ["a", "b"])]).toEqual(["a"]);
+  });
+});
