@@ -40,7 +40,9 @@ Deno.serve(async req => {
 
   const { data: queue, error } = await admin.rpc("ai_triage_queue", { p_limit: 15 });
   if (error) { console.error("ai-triage queue", error.message); return reply({ error: "QUEUE_FAILED" }, 500); }
-  const { data: cats } = await admin.from("categories").select("name").eq("type", "classified").eq("active", true);
+  // As categorias são públicas: lidas com a chave pública (o service_role só usa funções).
+  const pub = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { auth: { persistSession: false } });
+  const { data: cats } = await pub.from("categories").select("name").eq("type", "classified").eq("active", true);
   const categoryNames = (cats ?? []).map(c => c.name).join(", ");
 
   let done = 0, flagged = 0;

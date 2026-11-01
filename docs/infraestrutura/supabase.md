@@ -43,5 +43,6 @@ Schema, RLS, Auth, Storage, Edge Functions e demais recursos só são alterados 
 | `20261101230000_recomendacoes.sql` | Recomendações «Para si»: histórico `user_interests` (vistas, pesquisas, guardados; 90 dias) e `recommended_listings`. |
 | `20261101240000_ia_anuncios.sql` | «✨ Melhorar com IA»: limite de 15 usos por dia (`ai_writer_usage`, `consume_ai_writer`) para a Edge Function `generate-ad` (OpenAI gpt-4o-mini; segredo `OPENAI_API_KEY`). |
 | `20261101250000_ia_assistente.sql` | Assistente de IA: limites `ai_usage`/`consume_ai`, triagem automática `listing_ai_reviews` (cron a cada 10 min → `ai-triage`), traduções `listing_translations`, ajuda no preço `price_hint`. |
+| `20261101251000_ia_traducoes_funcoes.sql` | Traduções pela Edge Function só através de funções (`ai_listing_text`, `ai_cached_translation`, `ai_save_translation`): o `service_role` deste projeto não lê nem escreve tabelas diretamente. |
 
 Todas já estão aplicadas no projeto `pewymvkowbdizdiyjmao`.

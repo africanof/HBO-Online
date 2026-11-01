@@ -69,18 +69,20 @@ Deno.serve(async req => {
     if (task === "translate") {
       const listingId = String(body.listingId ?? ""), lang = String(body.lang ?? "");
       if (!/^[0-9a-f-]{36}$/i.test(listingId) || !LANG_NAMES[lang]) return reply({ error: "INVALID_INPUT" }, 400);
-      const { data: l } = await admin.from("classified_listings").select("title,description,status").eq("id", listingId).maybeSingle();
-      if (!l || !["published", "sold", "rented"].includes(l.status)) return reply({ error: "NOT_FOUND" }, 404);
-      const { data: hash } = await admin.rpc("listing_text_hash", { p_listing_id: listingId });
-      const { data: cached } = await admin.from("listing_translations").select("title,description,source_hash").eq("listing_id", listingId).eq("lang", lang).maybeSingle();
-      if (cached && cached.source_hash === hash) return reply({ title: cached.title, description: cached.description, cached: true });
+      // O service_role deste projeto só trabalha através de funções (sem acesso direto às tabelas).
+      const { data: rows } = await admin.rpc("ai_listing_text", { p_listing_id: listingId });
+      const l = Array.isArray(rows) ? rows[0] : rows;
+      if (!l) return reply({ error: "NOT_FOUND" }, 404);
+      const { data: cachedRows } = await admin.rpc("ai_cached_translation", { p_listing_id: listingId, p_lang: lang, p_source_hash: l.source_hash });
+      const cached = Array.isArray(cachedRows) ? cachedRows[0] : cachedRows;
+      if (cached) return reply({ title: cached.title, description: cached.description, cached: true });
       const out = await chat(apiKey, [
         { role: "system", content: `Translate this classified ad from Huambo (Angola) into ${LANG_NAMES[lang]}. Keep prices, numbers, units, brand and place names exactly as they are. Do not add or remove information. Return JSON with "title" and "description".` },
         { role: "user", content: `Title: ${text(l.title, 200)}\n\nDescription:\n${text(l.description, 4000)}` }
       ], obj({ title: str, description: str }), { temperature: 0.1, max_tokens: 1800 });
       if (!out?.title) return reply({ error: "AI_FAILED" }, 502);
       const t = { title: clip(out.title, 200), description: text(out.description, 6000) };
-      await admin.from("listing_translations").upsert({ listing_id: listingId, lang, source_hash: hash, ...t, created_at: new Date().toISOString() });
+      await admin.rpc("ai_save_translation", { p_listing_id: listingId, p_lang: lang, p_source_hash: l.source_hash, p_title: t.title, p_description: t.description });
       return reply({ ...t, cached: false });
     }
 
