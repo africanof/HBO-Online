@@ -24,3 +24,25 @@ describe("viaturas e imóveis", () => {
     expect(detailFieldsFor("product")).toEqual([]);
   });
 });
+
+import { attributeFilters, safeAttributeFilters, filterFieldsFor, CATEGORY_FIELDS } from "./listing-details";
+describe("campos e filtros por categoria", () => {
+  it("cada categoria tem os seus campos (a subcategoria primeiro)", () => {
+    expect(detailFieldsFor("classified", "informatica").map(f => f.key)).toEqual(["computerType", "brand", "model", "condition"]);
+    expect(detailFieldsFor("product", "telemoveis-e-tablets")[0].key).toBe("phoneType");
+    expect(detailFieldsFor("vehicle", "informatica")[0].key).toBe("vehicleType");
+    expect(detailFieldsFor("service", "informatica")).toEqual([]);
+    expect(detailFieldsFor("classified", "emprego")).toEqual([]);
+    for (const [slug, fields] of Object.entries(CATEGORY_FIELDS)) expect(fields.length, slug).toBeGreaterThan(0);
+  });
+  it("valida e grava os campos da categoria", () => {
+    expect(validateDetails("classified", { computerType: "tablet" }, "informatica")).toBe("attr.err.computerType");
+    expect(buildDetailAttributes("classified", { computerType: "portatil", brand: "HP", condition: "usado" }, "informatica")).toEqual({ computerType: "portatil", brand: "HP", condition: "usado" });
+  });
+  it("filtros: só listas, só valores válidos", () => {
+    expect(filterFieldsFor("classified", "moda-e-acessorios").map(f => f.key)).toEqual(["fashionType", "gender", "condition"]);
+    expect(attributeFilters("classified", "informatica", { computerType: "portatil", condition: "xpto", brand: "HP" })).toEqual({ computerType: "portatil" });
+    expect(safeAttributeFilters({ fuel: "gasoleo", propertyType: "casa", brand: "Toyota", bad: "x", condition: 3 })).toEqual({ fuel: "gasoleo", propertyType: "casa" });
+    expect(safeAttributeFilters(null)).toEqual({});
+  });
+});

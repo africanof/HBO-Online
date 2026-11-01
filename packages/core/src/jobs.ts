@@ -27,12 +27,16 @@ export async function listJobListings(client: SupabaseClient, categories: JobCat
   const r = await q;
   return { data: (r.data ?? []) as any[], error: r.error };
 }
-/** A categoria de um anúncio é de emprego? Devolve a categoria (ou null). */
-export async function jobCategoryOf(client: SupabaseClient, categoryId: string | null | undefined): Promise<JobCategory | null> {
+/** Categoria de um anúncio (id, nome e slug), ou null. */
+export async function categoryOf(client: SupabaseClient, categoryId: string | null | undefined): Promise<{ id: string; name: string; slug: string } | null> {
   if (!categoryId) return null;
   const r = await client.from("categories").select("id,name,slug").eq("id", categoryId).maybeSingle();
-  const c = r.data as JobCategory | null;
-  return c && isJobCategorySlug(c.slug) ? c : null;
+  return (r.data as { id: string; name: string; slug: string } | null) ?? null;
+}
+/** A categoria de um anúncio é de emprego? Devolve a categoria (ou null). */
+export async function jobCategoryOf(client: SupabaseClient, categoryId: string | null | undefined): Promise<JobCategory | null> {
+  const c = await categoryOf(client, categoryId);
+  return c && isJobCategorySlug(c.slug) ? (c as JobCategory) : null;
 }
 /** «150 000 Kz» ou «Salário a combinar»; nos estágios não remunerados, «Não remunerado». */
 export function salaryLabel(price: number | string | null | undefined, slug?: string | null, currency = "AOA"): string {

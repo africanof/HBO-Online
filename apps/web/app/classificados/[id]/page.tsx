@@ -16,7 +16,7 @@ import { OfflineBanner } from "../../../components/Offline";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
 import { MarketFact } from "../../../components/MarketPicker";
 import { DetailFacts } from "../../../components/ListingDetails";
-import { AUCTIONABLE_TYPES, formatRef, jobCategoryOf, salaryLabel, type JobCategory } from "@huambo-online/core";
+import { AUCTIONABLE_TYPES, formatRef, categoryOf, isJobCategorySlug, salaryLabel, type JobCategory } from "@huambo-online/core";
 import { SellerBadge } from "../../../components/Reputation";
 import { OfferBox, OffersList } from "../../../components/Offers";
 
@@ -24,7 +24,7 @@ export default function ClassifiedDetail() {
   const { id } = useParams<{ id: string }>();
   const { lang, t, tc } = useT();
   const [item, setItem] = useState<any>(null);
-  const [job, setJob] = useState<JobCategory | null>(null);
+  const [job, setJob] = useState<JobCategory | null>(null); const [catSlug, setCatSlug] = useState<string | undefined>();
   const [place, setPlace] = useState("");
   const [seller, setSeller] = useState("");
   const [uid, setUid] = useState<string | null>(null);
@@ -38,7 +38,7 @@ export default function ClassifiedDetail() {
   const [reason, setReason] = useState("");
 
   // Vaga de emprego ou estágio: o preço é o salário e o CV vai pelas Mensagens.
-  useEffect(() => { void jobCategoryOf(supabase(), item?.category_id).then(setJob).catch(() => setJob(null)); }, [item?.category_id]);
+  useEffect(() => { void categoryOf(supabase(), item?.category_id).then(c => { setCatSlug(c?.slug); setJob(c && isJobCategorySlug(c.slug) ? (c as JobCategory) : null); }).catch(() => setJob(null)); }, [item?.category_id]);
   useEffect(() => {
     if (!id) return;
     void (async () => {
@@ -135,7 +135,7 @@ export default function ClassifiedDetail() {
         {badges.length > 0 && <div className="row">{badges.map(b => <span key={b} className="mode-badge">{tc(b)}</span>)}</div>}
         {item.trade_wants && <p style={{ margin: 0 }}>🔁 {t("ls.accepts_trade")} <strong>{item.trade_wants}</strong></p>}
         <dl className="facts">
-          <DetailFacts listingType={item.listing_type} attributes={item.attributes} />
+          <DetailFacts listingType={item.listing_type} attributes={item.attributes} categorySlug={catSlug} />
           {item.ref_no && <><dt>{t("ls.listing_no")}</dt><dd><strong>{formatRef("listing", item.ref_no)}</strong></dd></>}
           <dt>{t("ls.type")}</dt><dd>{typeLabel}</dd>
           {readAgro(item.attributes) && <><dt>{t("ls.from_farm")}</dt><dd><a href="/agricultura">{tc(agroSummary(readAgro(item.attributes)!))}</a></dd></>}

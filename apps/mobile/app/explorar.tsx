@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams } from "expo-router";
 import { ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { SALE_MODE_FILTERS, cardSaleTag, loadWithCache, isOfflineError, searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyErrorIn, parsePrice,
-  LISTING_TYPE_LABELS, PURPOSE_LABELS, readExploreParams, type ClassifiedSearchFilters, listingPriceLabel, isFeatured, categoryLabelIn } from "@huambo-online/core";
+  LISTING_TYPE_LABELS, PURPOSE_LABELS, readExploreParams, filterFieldsFor, attributeFilters, type ClassifiedSearchFilters, listingPriceLabel, isFeatured, categoryLabelIn } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
@@ -24,7 +24,7 @@ export default function Explorar() {
   const [q, setQ] = useState(initial.query); const [purpose, setPurpose] = useState(initial.purpose); const [type, setType] = useState(initial.listingType); const [mode, setMode] = useState(initial.saleMode);
   const [categoryId, setCategoryId] = useState(""); const [provinceId, setProvinceId] = useState(""); const [municipalityId, setMunicipalityId] = useState("");
   const [min, setMin] = useState(""); const [max, setMax] = useState(""); const [name, setName] = useState(""); const [showFilters, setShowFilters] = useState(false);
-  const [categories, setCategories] = useState<Option[]>([]); const [provinces, setProvinces] = useState<Option[]>([]); const [municipalities, setMunicipalities] = useState<Option[]>([]);
+  const [categories, setCategories] = useState<(Option & { slug?: string })[]>([]); const [attrs, setAttrs] = useState<Record<string, string>>({}); const [provinces, setProvinces] = useState<Option[]>([]); const [municipalities, setMunicipalities] = useState<Option[]>([]);
   const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
 
@@ -44,7 +44,7 @@ export default function Explorar() {
   }, [provinceId]);
 
   function filters(o: { q?: string; purpose?: string; mode?: string; categoryId?: string } = {}): ClassifiedSearchFilters {
-    return { query: o.q ?? q, purpose: ((o.purpose ?? purpose) || undefined) as any, listingType: (type || undefined) as any, categoryId: (o.categoryId ?? categoryId) || undefined,
+    return { query: o.q ?? q, purpose: ((o.purpose ?? purpose) || undefined) as any, listingType: (type || undefined) as any, categoryId: (o.categoryId ?? categoryId) || undefined, attributes: attributeFilters(type, categories.find(c => c.id === (o.categoryId ?? categoryId))?.slug, attrs),
       provinceId: provinceId || undefined, municipalityId: municipalityId || undefined, minPrice: parsePrice(min), maxPrice: parsePrice(max), saleMode: ((o.mode ?? mode) || undefined) as ClassifiedSearchFilters["saleMode"] };
   }
   async function search(o: { q?: string; purpose?: string; mode?: string; categoryId?: string } = {}) {
@@ -75,9 +75,13 @@ export default function Explorar() {
     <Button title={showFilters ? t("ls.explore.hide_filters") : t("ls.explore.filters")} variant="secondary" onPress={() => setShowFilters(!showFilters)} />
     {showFilters && <View style={{ gap: 10 }}>
       <Text style={ui.label}>{t("ls.explore.type")}</Text>
-      <Chips options={[{ value: "", label: t("ls.all_m") }, ...Object.entries(LISTING_TYPE_LABELS).map(([v, l]) => ({ value: v, label: tc(l) }))]} value={type} onChange={setType} />
+      <Chips options={[{ value: "", label: t("ls.all_m") }, ...Object.entries(LISTING_TYPE_LABELS).map(([v, l]) => ({ value: v, label: tc(l) }))]} value={type} onChange={v => { setType(v); setAttrs({}); }} />
       <Text style={ui.label}>{t("ls.explore.category")}</Text>
-      <Chips options={[{ value: "", label: t("ls.all_f") }, ...categories.map(c => ({ value: c.id, label: categoryLabelIn(c.name, lang) }))]} value={categoryId} onChange={setCategoryId} />
+      <Chips options={[{ value: "", label: t("ls.all_f") }, ...categories.map(c => ({ value: c.id, label: categoryLabelIn(c.name, lang) }))]} value={categoryId} onChange={v => { setCategoryId(v); setAttrs({}); }} />
+      {filterFieldsFor(type, categories.find(c => c.id === categoryId)?.slug).map(fd => <View key={fd.key} style={{ gap: 6 }}>
+        <Text style={ui.label}>{t("attr." + fd.key)}</Text>
+        <Chips options={[{ value: "", label: t("ls.all_m") }, ...fd.options!.map(o => ({ value: o, label: t(`attr.${fd.key}.${o}`) }))]} value={attrs[fd.key] ?? ""} onChange={v => setAttrs(a => ({ ...a, [fd.key]: v }))} />
+      </View>)}
       <Text style={ui.label}>{t("ls.explore.province")}</Text>
       <Chips options={[{ value: "", label: t("ls.all_f") }, ...provinces.map(p => ({ value: p.id, label: p.name }))]} value={provinceId} onChange={v => { setProvinceId(v); setMunicipalityId(""); }} />
       {!!provinceId && <><Text style={ui.label}>{t("auth.municipality")}</Text>

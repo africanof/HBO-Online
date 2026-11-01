@@ -7,10 +7,10 @@ import { useT } from "../../../lib/i18n";
 export default function PublicarClassificado() {
   const { t } = useT();
   const [user, setUser] = useState<string | null | undefined>(undefined);
-  const [wanted, setWanted] = useState(false); const [mode, setMode] = useState(""); const [cat, setCat] = useState("");
+  const [wanted, setWanted] = useState(false); const [mode, setMode] = useState(""); const [cat, setCat] = useState(""); const [tipo, setTipo] = useState<"vehicle" | "real_estate" | "">("");
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setWanted(params.get("finalidade") === "wanted"); setMode(params.get("modo") ?? ""); setCat((params.get("categoria") ?? "").toLowerCase().replace(/[^a-z0-9-]/g, ""));
+    setWanted(params.get("finalidade") === "wanted"); setMode(params.get("modo") ?? ""); setCat((params.get("categoria") ?? "").toLowerCase().replace(/[^a-z0-9-]/g, "")); const tp = params.get("tipo"); setTipo(tp === "vehicle" || tp === "real_estate" ? tp : "");
     void currentUserId().then(setUser).catch(() => setUser(null));
   }, []);
   return <main>
@@ -19,6 +19,6 @@ export default function PublicarClassificado() {
     {!wanted && <p><a href="/classificados/publicar?finalidade=wanted">{t("ls.want_buy_post")} →</a></p>}
     {user === undefined && <p>{t("common.loading")}</p>}
     {user === null && <p>{t("ls.to_publish")} <a href={"/conta/login?voltar=/classificados/publicar" + (wanted ? "%3Ffinalidade%3Dwanted" : "")}>{t("ls.sign_in_lc")}</a> {t("ls.or")} <a href="/conta/criar">{t("ls.create_account_lc")}</a>.</p>}
-    {user && <ListingForm key={(wanted ? "w" : "s") + mode + cat} initialPurpose={wanted ? "wanted" : undefined} initialSaleMode={mode} initialCategorySlug={cat || undefined} />}
+    {user && <ListingForm key={(wanted ? "w" : "s") + mode + cat + tipo} initialListingType={tipo || undefined} initialPurpose={wanted ? "wanted" : undefined} initialSaleMode={mode} initialCategorySlug={cat || undefined} />}
   </main>;
 }

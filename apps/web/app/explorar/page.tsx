@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { filterFieldsFor, attributeFilters } from "@huambo-online/core";
 import { loadWithCache, isOfflineError, searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyErrorIn, parsePrice, readExploreParams, categoryLabelIn,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, type ClassifiedSearchFilters, listingPriceLabel, SALE_MODE_FILTERS, cardSaleTag, isFeatured } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
@@ -11,14 +12,14 @@ import { getPublic } from "../../lib/public-api";
 import { classifiedsCached } from "@huambo-online/core";
 
 type Option = { id: string; name: string };
-type F = { q: string; purpose: string; type: string; categoryId: string; provinceId: string; municipalityId: string; min: string; max: string; mode: string };
-const EMPTY: F = { q: "", purpose: "", type: "", categoryId: "", provinceId: "", municipalityId: "", min: "", max: "", mode: "" };
+type F = { q: string; purpose: string; type: string; categoryId: string; provinceId: string; municipalityId: string; min: string; max: string; mode: string; attrs: Record<string, string> };
+const EMPTY: F = { q: "", purpose: "", type: "", categoryId: "", provinceId: "", municipalityId: "", min: "", max: "", mode: "", attrs: {} };
 
 export default function ExplorarPage() {
   const { lang, t, tc } = useT();
   const [f, setF] = useState<F>(EMPTY);
   const [name, setName] = useState(""); const [showFilters, setShowFilters] = useState(false);
-  const [categories, setCategories] = useState<Option[]>([]); const [provinces, setProvinces] = useState<Option[]>([]); const [municipalities, setMunicipalities] = useState<Option[]>([]);
+  const [categories, setCategories] = useState<(Option & { slug?: string })[]>([]); const [provinces, setProvinces] = useState<Option[]>([]); const [municipalities, setMunicipalities] = useState<Option[]>([]);
   const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
 
@@ -41,7 +42,8 @@ export default function ExplorarPage() {
   }, [f.provinceId]);
 
   function toFilters(v: F): ClassifiedSearchFilters {
-    return { query: v.q, purpose: (v.purpose || undefined) as any, listingType: (v.type || undefined) as any, categoryId: v.categoryId || undefined,
+    const attributes = attributeFilters(v.type, categories.find(c => c.id === v.categoryId)?.slug, v.attrs);
+    return { query: v.q, purpose: (v.purpose || undefined) as any, listingType: (v.type || undefined) as any, categoryId: v.categoryId || undefined, ...(Object.keys(attributes).length ? { attributes } : {}),
       provinceId: v.provinceId || undefined, municipalityId: v.municipalityId || undefined, minPrice: parsePrice(v.min), maxPrice: parsePrice(v.max), saleMode: (v.mode || undefined) as ClassifiedSearchFilters["saleMode"] };
   }
   async function search(v = f) {
@@ -79,8 +81,13 @@ export default function ExplorarPage() {
       <form className="filters card" onSubmit={e => { e.preventDefault(); void search(); }}>
         <div className="row" style={{ justifyContent: "space-between" }}><h2>{t("ls.filters")}</h2><button type="button" className="secondary" onClick={() => setShowFilters(!showFilters)} style={{ minHeight: 40, padding: "4px 14px" }} aria-expanded={showFilters}>{showFilters ? t("ls.less") : t("ls.more")}</button></div>
         <label>{t("nav.search")}<input value={f.q} onChange={set("q")} placeholder={t("ls.ph_search")} /></label>
-        <label>{t("ls.type")}<select value={f.type} onChange={set("type")}><option value="">{t("ls.all")}</option>{Object.entries(LISTING_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{tc(l)}</option>)}</select></label>
-        <label>{t("ls.category")}<select value={f.categoryId} onChange={set("categoryId")}><option value="">{t("ls.all_f")}</option>{categories.map(c => <option key={c.id} value={c.id}>{categoryLabelIn(c.name, lang)}</option>)}</select></label>
+        <label>{t("ls.type")}<select value={f.type} onChange={e => setF({ ...f, type: e.target.value, attrs: {} })}><option value="">{t("ls.all")}</option>{Object.entries(LISTING_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{tc(l)}</option>)}</select></label>
+        <label>{t("ls.category")}<select value={f.categoryId} onChange={e => setF({ ...f, categoryId: e.target.value, attrs: {} })}><option value="">{t("ls.all_f")}</option>{categories.map(c => <option key={c.id} value={c.id}>{categoryLabelIn(c.name, lang)}</option>)}</select></label>
+        {/* Filtros da categoria ou do tipo: subcategoria, estado, combustível, tipo de imóvel… */}
+        {filterFieldsFor(f.type, categories.find(c => c.id === f.categoryId)?.slug).map(fd => <label key={fd.key}>{t("attr." + fd.key)}
+          <select value={f.attrs[fd.key] ?? ""} onChange={e => setF({ ...f, attrs: { ...f.attrs, [fd.key]: e.target.value } })}>
+            <option value="">{t("ls.all")}</option>{fd.options!.map(o => <option key={o} value={o}>{t(`attr.${fd.key}.${o}`)}</option>)}
+          </select></label>)}
         <div className="row" style={{ flexWrap: "nowrap" }}>
           <label style={{ flex: 1 }}>{t("ls.price_min")}<input value={f.min} onChange={set("min")} inputMode="numeric" placeholder="Kz" /></label>
           <label style={{ flex: 1 }}>{t("ls.price_max")}<input value={f.max} onChange={set("max")} inputMode="numeric" placeholder="Kz" /></label>

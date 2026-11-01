@@ -5,13 +5,13 @@ import { C, ui } from "../lib/ui";
 import { Chips } from "./Ui";
 
 /** Campos próprios de viaturas (marca, modelo, ano…) e imóveis (tipo, área, quartos…). */
-export function DetailFields({ listingType, values, onChange }: { listingType: string; values: Record<string, string>; onChange: (v: Record<string, string>) => void }) {
+export function DetailFields({ listingType, categorySlug, values, onChange }: { listingType: string; categorySlug?: string; values: Record<string, string>; onChange: (v: Record<string, string>) => void }) {
   const { t } = useT();
-  const fields = detailFieldsFor(listingType);
+  const fields = detailFieldsFor(listingType, categorySlug);
   if (!fields.length) return null;
   const set = (k: string, v: string) => onChange({ ...values, [k]: v });
   return <View style={[ui.card, { gap: 8 }]}>
-    <Text style={ui.h2}>{listingType === "vehicle" ? "🚗 " + t("attr.vehicle") : "🏠 " + t("attr.real_estate")}</Text>
+    <Text style={ui.h2}>{listingType === "vehicle" ? "🚗 " + t("attr.vehicle") : listingType === "real_estate" ? "🏠 " + t("attr.real_estate") : "📋 " + t("attr.details")}</Text>
     {fields.map(f => <View key={f.key} style={{ gap: 6 }}>
       <Text style={ui.label}>{t("attr." + f.key)}{f.unit ? ` (${t("attr.unit." + f.unit)})` : ""}{f.required ? " *" : ""}</Text>
       {f.kind === "select"
@@ -23,9 +23,9 @@ export function DetailFields({ listingType, values, onChange }: { listingType: s
 }
 
 /** Ficha técnica no anúncio: «Marca: Toyota», «Ano: 2015», «Quilómetros: 120 000 km». */
-export function DetailFacts({ listingType, attributes }: { listingType: string; attributes: unknown }) {
+export function DetailFacts({ listingType, attributes, categorySlug }: { listingType: string; attributes: unknown; categorySlug?: string }) {
   const { t, lang } = useT();
-  const facts = detailFacts(listingType, attributes);
+  const facts = detailFacts(listingType, attributes, categorySlug);
   if (!facts.length) return null;
   const num = (v: string) => Number(v).toLocaleString(lang === "zh" ? "zh-CN" : lang === "en" ? "en-GB" : "pt-PT");
   return <View style={[ui.card, { gap: 4 }]}>

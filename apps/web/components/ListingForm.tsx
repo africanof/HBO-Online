@@ -20,11 +20,11 @@ import { useT } from "../lib/i18n";
 type Option = { id: string; name: string; slug?: string };
 type Photo = { key: string; src: string; file?: File };
 
-export function ListingForm({ listing, initialPurpose, initialSaleMode, initialCategorySlug }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string; initialCategorySlug?: string }) {
+export function ListingForm({ listing, initialPurpose, initialSaleMode, initialCategorySlug, initialListingType }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string; initialCategorySlug?: string; initialListingType?: ClassifiedListingType }) {
   const { lang, t, tc } = useT();
   const editing = Boolean(listing);
   const territory = listingTerritory(listing);
-  const [listingType, setListingType] = useState<ClassifiedListingType>(listing?.listing_type ?? "classified");
+  const [listingType, setListingType] = useState<ClassifiedListingType>(listing?.listing_type ?? initialListingType ?? "classified");
   const [purpose, setPurpose] = useState<ClassifiedPurpose>(listing?.purpose ?? initialPurpose ?? "sale");
   const [title, setTitle] = useState(listing?.title ?? "");
   const [description, setDescription] = useState(listing?.description ?? "");
@@ -65,7 +65,8 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
   /** Viaturas e imóveis: marca, modelo, ano… / tipo, área, quartos… */
   const [details, setDetails] = useState<Record<string, string>>(detailValuesFrom(listing?.attributes));
   /** Vaga de emprego ou estágio: o preço é o salário e não há «como vende». */
-  const isJob = isJobCategorySlug(categories.find(c => c.id === categoryId)?.slug);
+  const catSlug = categories.find(c => c.id === categoryId)?.slug;
+  const isJob = isJobCategorySlug(catSlug);
   const [provinces, setProvinces] = useState<Option[]>([]);
   const [municipalities, setMunicipalities] = useState<Option[]>([]);
   const [busy, setBusy] = useState(false);
@@ -154,7 +155,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
     if (invalid) { setError(tc(invalid)); return; }
     const agroInvalid = useAgro ? validateAgro({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom }) : null;
     if (agroInvalid) { setError(tc(agroInvalid)); return; }
-    const detailsInvalid = !wanted ? validateDetails(listingType, details) : null;
+    const detailsInvalid = !wanted ? validateDetails(listingType, details, catSlug) : null;
     if (detailsInvalid) { setError(t(detailsInvalid)); return; }
     const mode = modes.length ? (saleMode || undefined) as SaleMode | undefined : undefined;
     const sale = lockedAuction ? { saleMode: "auction" as const, acceptsTrade: false } : { saleMode: mode, acceptsTrade: mode === "trade" || (canAlsoTrade(purpose, saleMode) && acceptsTrade), tradeWants };
@@ -175,7 +176,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
       setStatus(editing ? t("recover.saving") : t("ls.publishing"));
       // Mantém outros atributos já guardados; os do campo só ficam se «Produto do campo» estiver ligado.
       const keep = Object.fromEntries(Object.entries((listing?.attributes ?? {}) as Record<string, unknown>).filter(([k]) => !["agro", "agroCategory", "unit", "quantity", "availableFrom", "provinceId", "municipalityId"].includes(k)));
-      const attributes = { ...withoutDetailKeys(keep), ...(!wanted ? buildDetailAttributes(listingType, details) : {}), ...(useAgro ? agroAttributes({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom }) : {}) };
+      const attributes = { ...withoutDetailKeys(keep), ...(!wanted ? buildDetailAttributes(listingType, details, catSlug) : {}), ...(useAgro ? agroAttributes({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom }) : {}) };
       const input = { attributes, listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale, directions, point, conformity: purpose !== "wanted" && conform };
       // O leilão começa logo depois de publicar (ou de guardar, ao mudar para leilão).
       const startAuction = async (id: string) => {
@@ -225,7 +226,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
       {wanted && <p className="ok" style={{ margin: 0 }}>🔎 {t("ls.wanted_intro")}</p>}
       <label>{wanted ? t("ls.what_looking") : t("ls.title")}<input value={title} maxLength={140} onChange={e => setTitle(e.target.value)} placeholder={wanted ? (listingType === "service" ? t("ls.ph_wanted_service") : t("ls.ph_wanted_item")) : t("ls.ph_title")} /></label>
       <label>{t("ls.description")}<textarea value={description} onChange={e => setDescription(e.target.value)} rows={6} placeholder={wanted ? t("ls.ph_wanted_desc") : t("ls.ph_desc")} /></label>
-      {!wanted && <DetailFields listingType={listingType} values={details} onChange={setDetails} />}
+      {!wanted && <DetailFields listingType={listingType} categorySlug={catSlug} values={details} onChange={setDetails} />}
       {agroAllowed && <fieldset className="stack" style={{ border: "2px solid var(--line)", borderRadius: 12, padding: 14 }}>
         <legend style={{ fontWeight: 700 }}>🌾 {t("ft.farming")}</legend>
         <label className="check"><input type="checkbox" checked={isAgro} onChange={e => setIsAgro(e.target.checked)} /> {t("ls.is_agro")}</label>

@@ -6,7 +6,7 @@ import { WantedHelpers } from "../../../components/WantedHelpers";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
-  reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatRef, formatPrice, friendlyErrorIn, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary, jobCategoryOf, salaryLabel, type JobCategory } from "@huambo-online/core";
+  reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatRef, formatPrice, friendlyErrorIn, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary, categoryOf, isJobCategorySlug, salaryLabel, type JobCategory } from "@huambo-online/core";
 import { DetailFacts } from "../../../components/ListingDetails";
 import { supabase } from "../../../lib/supabase";
 import { ui, C } from "../../../lib/ui";
@@ -27,9 +27,9 @@ export default function ClassifiedDetail() {
   const { width } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [item, setItem] = useState<any>(null);
-  const [job, setJob] = useState<JobCategory | null>(null);
+  const [job, setJob] = useState<JobCategory | null>(null); const [catSlug, setCatSlug] = useState<string | undefined>();
   // Vaga de emprego ou estágio: o preço é o salário e o CV vai pelas Mensagens.
-  useEffect(() => { void jobCategoryOf(supabase(), item?.category_id).then(setJob).catch(() => setJob(null)); }, [item?.category_id]);
+  useEffect(() => { void categoryOf(supabase(), item?.category_id).then(c => { setCatSlug(c?.slug); setJob(c && isJobCategorySlug(c.slug) ? (c as JobCategory) : null); }).catch(() => setJob(null)); }, [item?.category_id]);
   const [place, setPlace] = useState("");
   const [seller, setSeller] = useState("");
   const [uid, setUid] = useState<string | null>(null);
@@ -129,7 +129,7 @@ export default function ClassifiedDetail() {
     {item.purpose === "wanted" ? <Text style={ui.price}>{t("home.budget")} {tc(coreText(listingPriceLabel(item), t) ?? "")}</Text> : job ? <Text style={ui.price}>{t("job.salary")}: {tc(salaryLabel(item.price, job.slug, item.currency))}</Text>
       : <Text style={ui.price}>{tc(coreText(listingPriceLabel(item), t) ?? "")}</Text>}
     {!!job && <Text style={ui.text}>{t("job.detail_hint")}</Text>}
-    <DetailFacts listingType={item.listing_type} attributes={item.attributes} />
+    <DetailFacts listingType={item.listing_type} attributes={item.attributes} categorySlug={catSlug} />
     {badges.length > 0 && <View style={ui.row}>{badges.map(b => <Text key={b} style={{ backgroundColor: C.blueSoft, color: C.blueText, fontWeight: "800", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 }}>{tc(coreText(b, t) ?? b)}</Text>)}</View>}
     {!!mode && !!SALE_MODE_INFO[mode] && <Text style={ui.muted}>{SALE_MODE_INFO[mode].icon} {tc(SALE_MODE_INFO[mode].label)}</Text>}
     {!!item.trade_wants && <Text style={ui.text}>{t("ls.detail.trade_for")} <Text style={ui.label}>{item.trade_wants}</Text></Text>}

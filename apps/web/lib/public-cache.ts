@@ -1,5 +1,5 @@
 // Só no servidor (rotas /api/publico): nunca importar em componentes do navegador.
-import { createCached, pickCacheStore, normalizeSearchFilters, type ClassifiedSearchFilters } from "@huambo-online/core";
+import { createCached, pickCacheStore, normalizeSearchFilters, type ClassifiedSearchFilters, safeAttributeFilters } from "@huambo-online/core";
 
 /** Uma só cache por servidor: Redis (Upstash) se UPSTASH_REDIS_REST_URL/TOKEN existirem, senão memória. */
 const store = pickCacheStore(process.env);
@@ -34,6 +34,8 @@ export function readFilters(raw: string | null): ClassifiedSearchFilters | null 
   if (MODES.includes(f.saleMode)) out.saleMode = f.saleMode;
   for (const k of ["categoryId", "provinceId", "municipalityId"] as const) if (typeof f[k] === "string" && UUID.test(f[k])) out[k] = f[k];
   for (const k of ["minPrice", "maxPrice"] as const) if (typeof f[k] === "number" && Number.isFinite(f[k]) && f[k] >= 0) out[k] = f[k];
+  const attrs = safeAttributeFilters(f.attributes);
+  if (Object.keys(attrs).length) out.attributes = attrs;
   out.limit = Math.max(1, Math.min(Number(f.limit) || 30, 60));
   return normalizeSearchFilters(out);
 }

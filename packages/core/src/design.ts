@@ -58,8 +58,8 @@ export function readExploreParams(get: (key: string) => string | null | undefine
 
 /** Categorias redondas da página inicial. */
 export const HOME_CATEGORIES: { label: string; icon: string; href: string }[] = [
-  { label: "Imóveis", icon: "🏠", href: "/explorar?tipo=real_estate" },
-  { label: "Viaturas", icon: "🚗", href: "/explorar?tipo=vehicle" },
+  { label: "Imóveis", icon: "🏠", href: "/imoveis" },
+  { label: "Viaturas", icon: "🚗", href: "/viaturas" },
   { label: "Campo", icon: "🌾", href: "/agricultura" },
   { label: "Fábricas", icon: "🏭", href: "/empresas?categoria=fabricas" },
   { label: "Emprego", icon: "💼", href: "/emprego" },
