@@ -1,8 +1,8 @@
 // Teste rápido do site publicado (só leitura: não cria contas nem dados).
-// Uso: SITE_URL=https://huambo-na-m-o.onrender.com node scripts/smoke-site.mjs
+// Uso: SITE_URL=https://huambo-online.vercel.app node scripts/smoke-site.mjs
 import { chromium } from "playwright";
 
-const SITE = (process.env.SITE_URL || "https://huambo-na-m-o.onrender.com").replace(/\/$/, "");
+const SITE = (process.env.SITE_URL || "https://huambo-online.vercel.app").replace(/\/$/, "");
 const pages = [
   { path: "/", expect: "Compre, venda e encontre tudo no Huambo" },
   { path: "/explorar", expect: "Classificados", options: "select" },
@@ -31,7 +31,7 @@ const badText = [/Serviço indisponível/i, /configuração do Supabase em falta
 
 const browser = await chromium.launch();
 let failures = 0;
-// O Render gratuito adormece: a primeira visita pode demorar ~1 minuto.
+// Margem para a primeira visita (arranque a frio do servidor).
 const warm = await browser.newPage();
 try { await warm.goto(SITE + "/", { timeout: 120000, waitUntil: "domcontentloaded" }); } catch (e) { console.log("Aviso ao acordar o site:", e.message); }
 await warm.close();

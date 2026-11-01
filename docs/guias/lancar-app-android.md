@@ -25,8 +25,8 @@ A APP já está preparada: nome «Huambo Online», ícone, ecrã de arranque, id
 1. Conta de programador Google Play (pagamento único de 25 USD).
 2. Gere com **production** (ficheiro AAB) e envie-o na Play Console.
 3. Na ficha da APP use:
-   - Política de privacidade: <https://huambo-na-m-o.onrender.com/privacidade>
-   - Eliminação de conta: <https://huambo-na-m-o.onrender.com/apagar-conta>
+   - Política de privacidade: <https://huambo-online.vercel.app/privacidade>
+   - Eliminação de conta: <https://huambo-online.vercel.app/apagar-conta>
 
 ## Mudar o identificador
 O identificador `ao.huamboonline.app` **não pode mudar depois da 1.ª publicação na Google Play**.

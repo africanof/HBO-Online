@@ -38,14 +38,14 @@ A partir daqui, **cada envio para `main` publica o site sozinho**. Cada pull req
 Sem este passo, os links de confirmação de conta e de recuperação de palavra-passe não abrem no novo site.
 
 1. No GitHub: **Actions → «Configurar endereços de autenticação do Supabase» → Run workflow**.
-2. **Endereço do site:** o novo endereço da Vercel.
-3. **Outros endereços autorizados:** `https://huambo-na-m-o.onrender.com` (a APP atual ainda usa este).
+2. **Endereço do site:** `https://huambo-online.vercel.app` (já vem preenchido).
+3. **Outros endereços autorizados:** `https://huambo-na-m-o.onrender.com` (já vem preenchido; as versões antigas da APP ainda usam este).
 4. **Run workflow**. Precisa do segredo `SUPABASE_ACCESS_TOKEN` no GitHub.
 
 ## 6. Domínio próprio (opcional)
 **Vercel → projeto → Settings → Domains → Add** e siga as instruções de DNS. Depois atualize `NEXT_PUBLIC_SITE_URL` e repita o passo 5.
 
 ## 7. Terminar a mudança
-1. Dê o endereço final ao responsável técnico. A APP (`apps/mobile/app.json` e `eas.json`), os testes e a documentação passam a apontar para ele, e gera-se uma nova versão da APP.
+1. ✅ Feito: a APP (`apps/mobile/app.json` e `eas.json`), os testes e a documentação já apontam para `https://huambo-online.vercel.app`. Falta gerar a nova versão da APP ([guia](lancar-app-android.md)).
 2. **Mantenha o Render ligado** até a nova versão da APP estar instalada pelos utilizadores, porque as versões antigas abrem links do Render.
 3. Depois disso, apague o serviço no Render e corra de novo o passo 5 sem o endereço antigo.

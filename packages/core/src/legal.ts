@@ -6,7 +6,7 @@
 export type InfoSection = { title: string; paragraphs: string[] };
 export type InfoPage = { slug: string; title: string; intro: string; updated: string; sections: InfoSection[] };
 
-export const LEGAL_UPDATED = "2026-10-13";
+export const LEGAL_UPDATED = "2026-11-01";
 /** E-mail de contacto público (opcional). Sem e-mail, as páginas indicam a Conta e as Mensagens. */
 export function contactLine(email?: string | null): string {
   const e = (email ?? "").trim();
@@ -88,8 +88,8 @@ export function privacyPage(email?: string | null): InfoPage {
         "Mensagens, propostas, encomendas e pedidos de serviço: só as pessoas envolvidas os veem.",
         "Os documentos de verificação ficam num espaço privado: só o próprio e a administração os podem abrir, através de uma ligação temporária."] },
       { title: "5. Onde ficam os dados e quem nos ajuda", paragraphs: [
-        "A base de dados e os ficheiros estão no Supabase, em servidores na União Europeia (Irlanda).",
-        "O Site está alojado na Render. A APP é feita com Expo.",
+        "A base de dados e os ficheiros estão no Supabase, em servidores na União Europeia (Alemanha, Frankfurt).",
+        "O Site está alojado na Vercel. A APP é feita com Expo.",
         "Pesquisa por fotografia (quando estiver ativa): a fotografia é enviada ao Claude (Anthropic) para dizer o que é o artigo, e não é guardada por nós."] },
       { title: "6. Quanto tempo guardamos", paragraphs: [
         "Enquanto a conta existir. Os vídeos de anúncios fechados ou vendidos são apagados automaticamente depois de 7 dias, e os de produtos escondidos depois de 30 dias.",

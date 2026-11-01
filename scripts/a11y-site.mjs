@@ -1,10 +1,10 @@
 // Acessibilidade do site publicado (WCAG 2 A/AA) com o axe — só leitura, não cria dados.
-// Uso: npm install --no-save playwright@1 axe-core@4 && SITE_URL=https://huambo-na-m-o.onrender.com node scripts/a11y-site.mjs
+// Uso: npm install --no-save playwright@1 axe-core@4 && SITE_URL=https://huambo-online.vercel.app node scripts/a11y-site.mjs
 import { chromium } from "playwright";
 import { createRequire } from "node:module";
 import fs from "node:fs";
 
-const SITE = (process.env.SITE_URL || "https://huambo-na-m-o.onrender.com").replace(/\/$/, "");
+const SITE = (process.env.SITE_URL || "https://huambo-online.vercel.app").replace(/\/$/, "");
 const axe = fs.readFileSync(createRequire(import.meta.url).resolve("axe-core/axe.min.js"), "utf8");
 const pages = ["/", "/explorar", "/loja", "/profissionais", "/empresas", "/pracas", "/procura-se", "/trocas",
   "/ajuda", "/termos", "/privacidade", "/apagar-conta", "/conta/login", "/conta/criar", "/classificados/publicar"];

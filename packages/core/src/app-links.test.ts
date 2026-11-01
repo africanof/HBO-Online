@@ -27,6 +27,6 @@ describe("App Links", () => {
     const f = app.android.intentFilters[0];
     expect(f.autoVerify).toBe(true);
     expect(f.data.map((d: any) => d.pathPrefix)).toEqual([...APP_LINK_PATHS]);
-    expect(new Set(f.data.map((d: any) => d.host))).toEqual(new Set(["huambo-na-m-o.onrender.com"]));
+    expect(new Set(f.data.map((d: any) => d.host))).toEqual(new Set(["huambo-online.vercel.app"]));
   });
 });

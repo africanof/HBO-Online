@@ -7,7 +7,7 @@ on:
       site_url:
         description: "Endereço do site"
         required: false
-        default: "https://huambo-na-m-o.onrender.com"
+        default: "https://huambo-online.vercel.app"
 
 jobs:
   smoke:

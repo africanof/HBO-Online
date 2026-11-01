@@ -1175,8 +1175,8 @@ export const SV_INFO_PAGES: Record<"en" | "zh", Record<string, InfoPageText>> = 
           "Messages, offers, orders and service requests: only the people involved can see them.",
           "Verification documents are kept in a private space: only you and the administration can open them, through a temporary link."] },
         { title: "5. Where the data is kept and who helps us", paragraphs: [
-          "The database and files are on Supabase, on servers in the European Union (Ireland).",
-          "The Site is hosted on Render. The APP is built with Expo.",
+          "The database and files are on Supabase, on servers in the European Union (Germany, Frankfurt).",
+          "The Site is hosted on Vercel. The APP is built with Expo.",
           "Photo search (when active): the photo is sent to Claude (Anthropic) to tell what the item is, and we don't keep it."] },
         { title: "6. How long we keep it", paragraphs: [
           "As long as the account exists. Videos of closed or sold listings are deleted automatically after 7 days, and those of hidden products after 30 days.",
@@ -1314,8 +1314,8 @@ export const SV_INFO_PAGES: Record<"en" | "zh", Record<string, InfoPageText>> = 
           "消息、报价、订单和服务请求：只有相关当事人可以查看。",
           "验证证件保存在私密空间：只有您本人和管理员可以通过临时链接打开。"] },
         { title: "5. 数据存放在哪里，谁在协助我们", paragraphs: [
-          "数据库和文件存放在 Supabase，服务器位于欧盟（爱尔兰）。",
-          "网站托管在 Render。APP 使用 Expo 开发。",
+          "数据库和文件存放在 Supabase，服务器位于欧盟（德国法兰克福）。",
+          "网站托管在 Vercel。APP 使用 Expo 开发。",
           "以图搜索（启用时）：照片会发送给 Claude（Anthropic）以识别物品，我们不会保存该照片。"] },
         { title: "6. 我们保存多长时间", paragraphs: [
           "只要账户存在就会保存。已关闭或已售出广告的视频会在 7 天后自动删除，已隐藏商品的视频在 30 天后删除。",

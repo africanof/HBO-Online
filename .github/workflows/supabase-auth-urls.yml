@@ -8,11 +8,11 @@ on:
       site_url:
         description: "Endereço do site"
         required: false
-        default: "https://huambo-na-m-o.onrender.com"
+        default: "https://huambo-online.vercel.app"
       extra_site_urls:
         description: "Outros endereços autorizados, separados por vírgulas (ex.: o antigo, durante uma mudança)"
         required: false
-        default: ""
+        default: "https://huambo-na-m-o.onrender.com"
       leaked_password_protection:
         description: "Recusar palavras-passe que já apareceram em fugas de dados (HaveIBeenPwned)"
         type: boolean

@@ -5,7 +5,7 @@
 - Guardam a resposta na **memória do servidor do Site**: combustível 30 s, classificados e vendedores 60 s.
 - Muitos pedidos iguais ao mesmo tempo → **uma só consulta** ao PostgreSQL (o resto espera pela mesma resposta).
 - Se a base de dados demorar mais de 8 s, o pedido desiste (não fica preso) e **erros nunca são guardados**.
-- O Site e a APP usam primeiro estes endereços. Se não responderem em 3–4 s (por exemplo, o servidor do Render a acordar),
+- O Site e a APP usam primeiro estes endereços. Se não responderem em 3–4 s (por exemplo, o servidor a arrancar a frio),
   vão **direto ao Supabase**, como antes, e só voltam a tentar a cache uns minutos depois. Nada deixa de funcionar.
 - Só listas **públicas** (iguais para todos) passam pela cache. Nada pessoal (reservas, mensagens, pagamentos) é guardado.
 - Cada resposta traz `X-Cache: HIT-memory` (veio da cache) ou `MISS-memory` (foi à base de dados).
@@ -16,12 +16,12 @@ O código já está preparado — não é preciso mudar código, só pôr duas v
 
 1. Criar uma conta em **upstash.com** → *Create Database* → Redis → região mais perto (ex.: Frankfurt `eu-central-1`).
 2. Na página da base de dados, copiar **REST URL** e **REST TOKEN**.
-3. No **Render** → serviço do Site → *Environment* → juntar:
+3. Na **Vercel** → projeto `huambo-online` → *Settings → Environment Variables* → juntar (ambiente Production):
    - `UPSTASH_REDIS_REST_URL` = (o REST URL)
    - `UPSTASH_REDIS_REST_TOKEN` = (o REST TOKEN)
    ⚠️ **Sem** `NEXT_PUBLIC_` no nome: o token é secreto e fica só no servidor.
-4. Guardar e deixar o Render reiniciar. As respostas passam a dizer `X-Cache: HIT-redis`.
+4. Guardar e fazer *Redeploy* da última publicação. As respostas passam a dizer `X-Cache: HIT-redis`.
 
 Para tirar o Redis, basta apagar as duas variáveis: volta à memória do servidor sozinho.
 
-Recomendação para a Fase 2: pôr o Site num plano do Render que **não adormece**, para a APP usar sempre a cache.
+Nota: na Vercel cada pedido pode correr numa máquina diferente, por isso a cache em memória ajuda pouco. Com mais visitas, ligar o Redis é o passo certo.
