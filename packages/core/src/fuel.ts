@@ -186,11 +186,22 @@ export async function fuelFeed(client: SupabaseClient, f: { product?: FuelProduc
 }
 export async function getStation(client: SupabaseClient, id: string) {
   const r = await client.from("fuel_stations").select("*").eq("id", id).maybeSingle();
-  return { data: (r.data ?? null) as FuelStation | null, error: r.error };
+  if (!r.data) return { data: null as FuelStation | null, error: r.error };
+  // Telefone e WhatsApp só chegam ao dono e à equipa; a localização continua pública.
+  const contact = await getStationPrivateContact(client, id).catch(() => null);
+  return { data: { ...r.data, ...(contact ?? {}) } as FuelStation, error: r.error };
+}
+/** Telefone e WhatsApp de um posto: só o dono e a equipa (administradores e moderadores). */
+export async function getStationPrivateContact(client: SupabaseClient, id: string) {
+  const r = await client.rpc("fuel_station_private_contact", { p_station_id: id });
+  const row = Array.isArray(r.data) ? r.data[0] : null;
+  return row ? { phone: (row.phone as string | null) ?? null, whatsapp: (row.whatsapp as string | null) ?? null } : null;
 }
 export async function listMyStations(client: SupabaseClient, ownerId: string) {
   const r = await client.from("fuel_stations").select("*").eq("owner_id", ownerId).order("created_at");
-  return { data: (r.data ?? []) as FuelStation[], error: r.error };
+  const rows = (r.data ?? []) as FuelStation[];
+  const data = await Promise.all(rows.map(async s => ({ ...s, ...((await getStationPrivateContact(client, s.id).catch(() => null)) ?? {}) })));
+  return { data, error: r.error };
 }
 export async function listStationProducts(client: SupabaseClient, stationId: string) {
   const r = await client.from("fuel_products").select("id,station_id,product,price,status,queue,reservable_qty,max_per_order,note,status_at").eq("station_id", stationId);
@@ -207,11 +218,14 @@ export async function saveStation(client: SupabaseClient, ownerId: string, i: St
   const bad = validateStation(i); if (bad) return { data: null, error: new Error(bad) };
   const pc = placeColumns(i.directions, i.point);
   const row = { name: i.name.trim(), kind: i.kind, municipality_id: i.municipalityId || null, address: i.address?.trim() || null, directions: pc.directions,
-    geo_lat: pc.geo_lat, geo_lng: pc.geo_lng, phone: i.phone?.replace(/\s/g, "") || null, whatsapp: i.whatsapp?.replace(/\s/g, "") || null,
+    geo_lat: pc.geo_lat, geo_lng: pc.geo_lng,
     opening_hours: i.openingHours?.trim() || null, accepts_reservations: i.acceptsReservations, accepts_prepay: i.acceptsPrepay, hold_minutes: i.holdMinutes };
   const st = id ? await client.from("fuel_stations").update(row).eq("id", id).select("id").single() : await client.from("fuel_stations").insert({ ...row, owner_id: ownerId }).select("id").single();
   if (st.error || !st.data) return { data: null, error: st.error };
   const stationId = (st.data as { id: string }).id;
+  // Telefone e WhatsApp ficam numa tabela privada (só o dono e a equipa os veem).
+  const contact = await client.rpc("set_fuel_station_private_contact", { p_station_id: stationId, p_phone: i.phone?.replace(/\s/g, "") || null, p_whatsapp: i.whatsapp?.replace(/\s/g, "") || null });
+  if (contact.error) return { data: { id: stationId }, error: contact.error };
   const pay = await client.from("fuel_station_pay").upsert({ station_id: stationId, holder: i.pay.holder.trim() || null, iban: i.pay.iban.replace(/\s/g, "") || null,
     express: i.pay.express.replace(/\s/g, "") || null, note: i.pay.note.trim() || null, updated_at: new Date().toISOString() });
   if (pay.error) return { data: { id: stationId }, error: pay.error };

@@ -22,3 +22,15 @@ Chaves secretas/service-role nunca devem entrar no repositório nem no cliente W
 
 ## Regra de alterações
 Schema, RLS, Auth, Storage, Edge Functions e demais recursos só são alterados neste projeto, com uma nova migração em `supabase/migrations/`, e verificados depois de cada mudança.
+
+## Mudanças depois da cópia (novembro de 2026)
+
+| Migração | O que faz |
+| --- | --- |
+| `20261101120000_moderadores.sql` | Moderadores fazem tudo no painel, menos alterar contas de administrador ou dar o papel de administrador. |
+| `20261101130000_contactos_privados.sql` | Telefone, WhatsApp e localização de anúncios e profissionais ficam em tabelas privadas (só o próprio e a equipa). |
+| `20261101140000_mensagens_mediadas.sql` | Mensagens mediadas: os utilizadores só veem as suas mensagens e as da «Equipa Huambo Online»; a equipa reencaminha (painel → Mensagens). |
+| `20261101150000_contactos_privados_negocios.sql` | Telefone e WhatsApp de empresas (hotéis, restaurantes…) e postos ficam privados; a localização continua pública. |
+| `20261101160000_permissoes_sequencias.sql` | Correção: repõe a permissão de uso dos contadores (`ref_no`), perdida na cópia. |
+
+Todas já estão aplicadas no projeto `pewymvkowbdizdiyjmao`.

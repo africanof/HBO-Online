@@ -134,19 +134,36 @@ export async function listBusinesses(client: SupabaseClient, f: DirectoryFilters
   return client.rpc("business_directory", { p_query: f.query?.trim() ?? "", p_category_id: f.categoryId || null, p_municipality_id: f.municipalityId || null, p_limit: f.limit ?? 30 });
 }
 export async function getBusiness(client: SupabaseClient, id: string) {
-  return client.from("businesses").select("id,owner_id,name,description,category_id,custom_category,municipality_id,phone,whatsapp,logo_url,address_text,market_id,verified,active,created_at,directions,geo_lat,geo_lng,categories(name),municipalities(name),markets(id,name)").eq("id", id).maybeSingle();
+  const r = await client.from("businesses").select("id,owner_id,name,description,category_id,custom_category,municipality_id,phone,whatsapp,logo_url,address_text,market_id,verified,active,created_at,directions,geo_lat,geo_lng,categories(name),municipalities(name),markets(id,name)").eq("id", id).maybeSingle();
+  if (!r.data) return r;
+  // Telefone e WhatsApp só chegam ao dono e à equipa; a localização continua pública.
+  const contact = await getBusinessPrivateContact(client, id).catch(() => null);
+  return contact ? { ...r, data: { ...r.data, ...contact } } : r;
+}
+/** Telefone e WhatsApp de uma empresa: só o dono e a equipa (administradores e moderadores). */
+export async function getBusinessPrivateContact(client: SupabaseClient, id: string) {
+  const r = await client.rpc("business_private_contact", { p_business_id: id });
+  const row = Array.isArray(r.data) ? r.data[0] : null;
+  return row ? { phone: (row.phone as string | null) ?? null, whatsapp: (row.whatsapp as string | null) ?? null } : null;
 }
 export async function listMyBusinesses(client: SupabaseClient, ownerId: string) {
-  return client.from("businesses").select("id,name,description,category_id,custom_category,municipality_id,phone,whatsapp,address_text,market_id,verified,active,logo_url,directions,geo_lat,geo_lng").eq("owner_id", ownerId).order("created_at");
+  const r = await client.from("businesses").select("id,name,description,category_id,custom_category,municipality_id,phone,whatsapp,address_text,market_id,verified,active,logo_url,directions,geo_lat,geo_lng").eq("owner_id", ownerId).order("created_at");
+  if (!r.data?.length) return r;
+  const withContacts = await Promise.all(r.data.map(async (b: any) => ({ ...b, ...((await getBusinessPrivateContact(client, b.id).catch(() => null)) ?? {}) })));
+  return { ...r, data: withContacts };
 }
 export async function saveBusiness(client: SupabaseClient, ownerId: string, input: BusinessInput, id?: string) {
   const invalid = validateBusinessInput(input);
   if (invalid) return { data: null, error: new Error(invalid) };
   const row = { owner_id: ownerId, name: input.name.trim(), description: input.description?.trim() || null, ...categoryColumns(input.categoryId, input.customCategory),
-    municipality_id: input.municipalityId, phone: input.phone?.trim() || null, whatsapp: input.whatsapp?.trim() || null,
+    municipality_id: input.municipalityId,
     address_text: input.addressText?.trim() || null, market_id: input.marketId || null, active: input.active ?? true, updated_at: new Date().toISOString(),
     ...(input.directions !== undefined || input.point !== undefined ? placeColumns(input.directions, input.point) : {}) };
-  return id ? client.from("businesses").update(row).eq("id", id).select().single() : client.from("businesses").insert(row).select().single();
+  const saved = id ? await client.from("businesses").update(row).eq("id", id).select().single() : await client.from("businesses").insert(row).select().single();
+  if (saved.error || !saved.data) return saved;
+  // Telefone e WhatsApp ficam numa tabela privada (só o dono e a equipa os veem).
+  const c = await client.rpc("set_business_private_contact", { p_business_id: (saved.data as any).id, p_phone: input.phone?.trim() || null, p_whatsapp: input.whatsapp?.trim() || null });
+  return c.error ? { ...saved, data: null, error: c.error } : saved;
 }
 export async function deleteBusiness(client: SupabaseClient, id: string) { return client.from("businesses").delete().eq("id", id); }
 

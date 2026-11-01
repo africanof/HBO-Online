@@ -69,6 +69,7 @@ function MensagensContent() {
       })}</aside>
       <article>
         <h2>{selected ? ((otherName(selected.id) ? otherName(selected.id) + " — " : "") + (selected.subject || t("ls.conversation"))) : t("ls.select_conversation")}</h2>
+        {selected && <p className="scam-warn" style={{ margin: "0 0 8px" }}>{t("ls.mediated_note")}</p>}
         {selected && uid && <ConversationSafety messages={msgs} uid={uid} otherUserId={partners[selected.id]?.other_user_id} otherName={otherName(selected.id)} />}
         {msgs.map(m => <div key={m.id} style={{ margin: "10px 0" }}>
           <strong>{m.sender_id === uid ? t("ls.you") : (otherName(selected?.id) ?? t("ls.user"))}:</strong> {m.body}

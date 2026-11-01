@@ -83,9 +83,9 @@ export function privacyPage(email?: string | null): InfoPage {
       { title: "3. O que é público", paragraphs: [
         "Os anúncios publicados, produtos, perfis de profissionais e empresas, o seu nome, a fotografia de perfil, as avaliações e os números do perfil (vendas, serviços prestados).",
         "O seu e-mail, telefone, WhatsApp e localização (morada, indicações e ponto no mapa) não são mostrados a outros utilizadores. Só a equipa do Huambo Online (administração e moderadores) os vê. Os outros utilizadores falam consigo pelas Mensagens.",
-        "Empresas, postos de combustível, hotéis, restaurantes e eventos mostram os contactos e a localização que indicarem, porque existem para ser encontrados. Pode apagar o seu número de WhatsApp quando quiser."] },
+        "Empresas, postos de combustível, hotéis, restaurantes e eventos mostram só a localização (morada e mapa), para poderem ser encontrados. O telefone e o WhatsApp deles também ficam só para a equipa. Pode apagar o seu número de WhatsApp quando quiser."] },
       { title: "4. O que é privado", paragraphs: [
-        "Mensagens, propostas, encomendas e pedidos de serviço: só as pessoas envolvidas os veem.",
+        "As mensagens passam sempre pela equipa do Huambo Online (administração e moderadores), que as lê e as reencaminha à outra parte: os utilizadores não falam diretamente entre si. Propostas, encomendas e pedidos de serviço só são vistos pelas pessoas envolvidas e pela equipa.",
         "Os documentos de verificação ficam num espaço privado: só o próprio e a administração os podem abrir, através de uma ligação temporária."] },
       { title: "5. Onde ficam os dados e quem nos ajuda", paragraphs: [
         "A base de dados e os ficheiros estão no Supabase, em servidores na União Europeia (Alemanha, Frankfurt).",

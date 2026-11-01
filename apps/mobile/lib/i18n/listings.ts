@@ -217,6 +217,7 @@ export const DICT_LISTINGS: Dictionary = {
   "ls.chat.no_messages": { pt: "Sem mensagens", en: "No messages", zh: "暂无消息" },
   "ls.chat.unread": { pt: "● Não lida", en: "● Unread", zh: "● 未读" },
   "ls.chat.back": { pt: "← Conversas", en: "← Conversations", zh: "← 对话列表" },
+  "ls.chat.mediated_note": { pt: "🛡️ As mensagens passam pela Equipa Huambo Online: lemos e reencaminhamos à outra parte. Não partilhe telefone, morada nem dados bancários aqui.", en: "🛡️ Messages go through the Huambo Online Team: we read them and forward them to the other party. Do not share phone numbers, addresses or bank details here.", zh: "🛡️ 消息会先经过 Huambo Online 团队：我们阅读后转发给对方。请勿在此分享电话、地址或银行信息。" },
   "ls.chat.you": { pt: "Você", en: "You", zh: "您" },
   "ls.chat.write": { pt: "Escreva uma mensagem", en: "Write a message", zh: "输入消息" },
 

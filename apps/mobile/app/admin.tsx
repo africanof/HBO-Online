@@ -12,6 +12,7 @@ import { formatDateTimeIn, useT } from "../lib/i18n";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
 import { AdminCouriers } from "../components/AdminCouriers";
+import { AdminMessages } from "../components/AdminMessages";
 import { AdminMarkets } from "../components/AdminMarkets";
 import { AdminVerifications, AdminAudit } from "../components/AdminTrust";
 import { AdminDisputes } from "../components/Disputes";
@@ -27,8 +28,8 @@ import { AdminVenues } from "../components/Venues";
 import { AdminInspections } from "../components/Inspection";
 import { MfaPrompt, useMfaCheck } from "../components/Mfa";
 
-type Tab = "stats" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
-const TABS: Tab[] = ["stats", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "inspections", "disputes", "verifications", "listings",
+type Tab = "stats" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+const TABS: Tab[] = ["stats", "messages", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "inspections", "disputes", "verifications", "listings",
   "users", "categories", "couriers", "markets", "audit"];
 
 export default function Admin() {
@@ -51,6 +52,7 @@ export default function Admin() {
 
   async function load(t: Tab) {
     setError("");
+    if (t === "messages") return;
     if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "disputes" || t === "plans" || t === "safety" || t === "agents" || t === "events" || t === "videos" || t === "fuel" || t === "venues" || t === "inspections" || t === "revenue" || t === "protected") return;
     const c = supabase();
     const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReportsV2(c, reportFilter || undefined)
@@ -81,6 +83,7 @@ export default function Admin() {
     <Chips options={tabOptions} value={tab} onChange={setTab} />
     <Message error={error} ok={notice} />
 
+    {tab === "messages" && <AdminMessages />}
     {tab === "couriers" && <AdminCouriers />}
     {tab === "markets" && <AdminMarkets />}
     {tab === "verifications" && <AdminVerifications />}

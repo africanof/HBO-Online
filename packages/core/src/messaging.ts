@@ -25,7 +25,7 @@ export function conversationFromParticipantRow(row:any){return row?.conversation
 export function isConversationUnread(row:any,lastMessage:any,userId:string){return !!lastMessage&&lastMessage.sender_id!==userId&&(!row.last_read_at||new Date(lastMessage.created_at)>new Date(row.last_read_at));}
 
 export async function listMessages(client:SupabaseClient,conversationId:string){
-  return client.from("messages").select("id,conversation_id,sender_id,body,created_at,edited_at,attachment_kind,attachment_path,attachment_seconds").eq("conversation_id",conversationId).order("created_at");
+  return client.from("messages").select("id,conversation_id,sender_id,body,created_at,edited_at,attachment_kind,attachment_path,attachment_seconds,from_team,audience,forwarded_from,handled_at").eq("conversation_id",conversationId).order("created_at");
 }
 
 export async function sendMessage(client:SupabaseClient,conversationId:string,senderId:string,body:string){
@@ -56,4 +56,36 @@ export async function listConversationPartners(client: SupabaseClient): Promise<
   const map: Record<string, ConversationPartner> = {};
   for (const row of (data as ConversationPartner[] | null) ?? []) map[row.conversation_id] = row;
   return map;
+}
+
+// ───────────── Mensagens mediadas pela equipa ─────────────
+// Os utilizadores nunca falam diretamente: cada um só vê as suas mensagens e as da equipa.
+// A equipa (administradores e moderadores) lê tudo e reencaminha ou responde a cada lado.
+export type MediatedParticipant = { user_id: string; name: string; role: "starter" | "owner" };
+export type MediatedConversation = { conversation_id: string; subject: string | null; context_type: string; classified_listing_id: string | null;
+  updated_at: string; pending: number; last_message_at: string | null; participants: MediatedParticipant[] };
+
+export async function listMediatedConversations(client: SupabaseClient, pendingOnly = true, limit = 50) {
+  const r = await client.rpc("admin_list_mediated_conversations", { p_pending_only: pendingOnly, p_limit: limit });
+  return { data: ((r.data ?? []) as any[]).map(x => ({ ...x, pending: Number(x.pending ?? 0) })) as MediatedConversation[], error: r.error };
+}
+export async function pendingMessagesCount(client: SupabaseClient): Promise<number> {
+  const r = await client.rpc("admin_pending_messages_count"); return Number(r.data ?? 0);
+}
+/** A equipa escreve a uma das partes (audience) ou às duas (null). */
+export async function teamSendMessage(client: SupabaseClient, conversationId: string, audience: string | null, body: string) {
+  if (!body.trim()) return { data: null, error: new Error("MESSAGE_REQUIRED") };
+  return client.rpc("team_send_message", { p_conversation_id: conversationId, p_audience: audience, p_body: body.trim(), p_forward_message_id: null });
+}
+/** Reencaminha a mensagem de um utilizador para a outra parte (pode corrigir o texto antes). */
+export async function teamForwardMessage(client: SupabaseClient, conversationId: string, messageId: string, audience: string, body?: string) {
+  return client.rpc("team_send_message", { p_conversation_id: conversationId, p_audience: audience, p_body: body?.trim() || null, p_forward_message_id: messageId });
+}
+/** Marca como tratada sem reencaminhar (por exemplo, conteúdo impróprio ou contactos pessoais). */
+export async function markMessageHandled(client: SupabaseClient, messageId: string) {
+  return client.rpc("admin_mark_message_handled", { p_message_id: messageId });
+}
+/** A outra parte de uma conversa (para onde se reencaminha). */
+export function otherParticipant(c: Pick<MediatedConversation, "participants">, senderId: string): MediatedParticipant | null {
+  return c.participants.find(p => p.user_id !== senderId) ?? null;
 }

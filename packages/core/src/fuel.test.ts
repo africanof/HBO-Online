@@ -96,7 +96,7 @@ describe("combustível e gás", () => {
       delete: () => ({ eq: async (_: string, id: string) => { calls.push([table, "delete", id]); return { error: null }; } }),
       select: () => ({ eq: async (_: string, id: string) => ({ count: id === "old-with-orders" ? 3 : 0 }) })
     });
-    const client = { from: (t: string) => chain(t) } as any;
+    const client = { from: (t: string) => chain(t), rpc: async (f: string, a: any) => { calls.push([f, "rpc", a]); return { data: null, error: null }; } } as any;
     const existing: any[] = [{ id: "old-with-orders", product: "gasoleo" }, { id: "old-empty", product: "petroleo" }, { id: "keep", product: "gasolina" }];
     const r = await saveStation(client, "u", station, "s1", existing);
     expect(r.error).toBeNull();
