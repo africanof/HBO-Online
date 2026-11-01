@@ -77,8 +77,8 @@ Deno.serve(async req => {
       const cached = Array.isArray(cachedRows) ? cachedRows[0] : cachedRows;
       if (cached) return reply({ title: cached.title, description: cached.description, cached: true });
       const out = await chat(apiKey, [
-        { role: "system", content: `Translate this classified ad from Huambo (Angola) into ${LANG_NAMES[lang]}. Keep prices, numbers, units, brand and place names exactly as they are. Do not add or remove information. Return JSON with "title" and "description".` },
-        { role: "user", content: `Title: ${text(l.title, 200)}\n\nDescription:\n${text(l.description, 4000)}` }
+        { role: "system", content: `You are a professional translator. The user sends a classified ad written in Portuguese (Angola). Translate BOTH the title and the description into ${LANG_NAMES[lang]}: every sentence of the output must be written in ${LANG_NAMES[lang]}, never left in Portuguese. Keep prices, numbers, units, brand names and place names (e.g. Huambo, Kz) as they are. Do not add, remove or judge information. Return JSON with "title" and "description" in ${LANG_NAMES[lang]}.` },
+        { role: "user", content: `Translate into ${LANG_NAMES[lang]}:\n\nTitle: ${text(l.title, 200)}\n\nDescription:\n${text(l.description, 4000)}` }
       ], obj({ title: str, description: str }), { temperature: 0.1, max_tokens: 1800 });
       if (!out?.title) return reply({ error: "AI_FAILED" }, 502);
       const t = { title: clip(out.title, 200), description: text(out.description, 6000) };
