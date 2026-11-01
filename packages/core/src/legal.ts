@@ -92,7 +92,9 @@ export function privacyPage(email?: string | null): InfoPage {
         "A base de dados e os ficheiros estão no Supabase, em servidores na União Europeia (Alemanha, Frankfurt).",
         "O Site está alojado na Vercel. A APP é feita com Expo.",
         "Pesquisa por fotografia (quando estiver ativa): a fotografia é enviada à OpenAI para dizer o que é o artigo, e não é guardada por nós.",
-        "Melhorar com IA (só quando carrega no botão): o título, a descrição e os dados do anúncio são enviados à OpenAI para propor um texto melhor, e não são guardados por nós."] },
+        "Melhorar com IA (só quando carrega no botão): o título, a descrição e os dados do anúncio são enviados à OpenAI para propor um texto melhor, e não são guardados por nós.",
+        "Assistente de IA (só quando o usa): as fotografias para preencher um anúncio, o que escreve na pesquisa inteligente e as perguntas ao assistente de ajuda são enviadas à OpenAI para responder, e não são guardadas por nós. Os anúncios publicados podem ser traduzidos automaticamente para inglês e chinês (as traduções ficam guardadas).",
+        "Segurança: os anúncios publicados são analisados automaticamente pela IA (OpenAI) para ajudar a equipa a encontrar burlas, artigos proibidos e contactos escondidos. A equipa também pode usar a IA para sugerir respostas nas Mensagens e resumir disputas. A IA só assinala e sugere: quem decide é sempre uma pessoa da equipa."] },
       { title: "6. Quanto tempo guardamos", paragraphs: [
         "Enquanto a conta existir. Os vídeos de anúncios fechados ou vendidos são apagados automaticamente depois de 7 dias, e os de produtos escondidos depois de 30 dias.",
         "Quando apaga a conta, os seus dados são apagados. Algumas cópias de segurança do fornecedor podem durar mais algum tempo até serem substituídas."] },
@@ -196,6 +198,7 @@ export const HELP_FAQ: FaqItem[] = [
   { q: "Como peço uma devolução ou reembolso?", a: "Em «Encomendas», escolha a encomenda e carregue em «Pedir devolução ou reembolso» (até 14 dias depois da entrega). Explique o problema e junte fotografias. Se o vendedor recusar ou não responder, pode chamar a administração. Veja «Devoluções e reembolsos»." },
   { q: "Como gasto menos dados (saldo)?", a: "Ligue «📉 Poupar dados» no topo do Site, na página inicial da APP ou em «A sua conta». As fotografias das listas deixam de carregar (aparece um ícone) e, nos anúncios, só carregam quando tocar em «Ver as fotografias». Os vídeos só carregam quando carregar em ▶. No Site, «Automático» liga sozinho quando o telemóvel está em poupança de dados." },
   { q: "Posso usar sem internet?", a: "Pode ver a página inicial, a última pesquisa e os últimos anúncios que abriu. Para publicar, enviar mensagens ou propostas precisa de ligação." },
+  { q: "O que faz o assistente de IA?", a: "Ajuda a publicar e a encontrar mais depressa: «📷 Preencher pela foto» propõe o título, a categoria e os dados do anúncio a partir de uma fotografia; «✨ Melhorar com IA» reescreve o texto; «✨ Pesquisa inteligente» percebe pedidos como «carro diesel até 5 milhões»; e o assistente da Ajuda responde a dúvidas. Reveja sempre o que a IA propõe. Há um limite de usos por dia." },
   { q: "Como apago a minha conta?", a: "Em «A sua conta», no fim da página, escreva ELIMINAR e confirme. Veja os pormenores em «Como apagar a minha conta»." }
 ];
 
