@@ -32,5 +32,7 @@ Schema, RLS, Auth, Storage, Edge Functions e demais recursos só são alterados 
 | `20261101140000_mensagens_mediadas.sql` | Mensagens mediadas: os utilizadores só veem as suas mensagens e as da «Equipa Huambo Online»; a equipa reencaminha (painel → Mensagens). |
 | `20261101150000_contactos_privados_negocios.sql` | Telefone e WhatsApp de empresas (hotéis, restaurantes…) e postos ficam privados; a localização continua pública. |
 | `20261101160000_permissoes_sequencias.sql` | Correção: repõe a permissão de uso dos contadores (`ref_no`), perdida na cópia. |
+| `20261101170000_pedidos_mediados.sql` | Encomendas, reservas, bilhetes, pedidos de serviço, propostas e alugueres ficam à espera da equipa (painel → Pedidos) até serem reencaminhados; avisos ao vendedor retidos; telefone e morada do comprador em privado. |
+| `20261101171000_pedidos_mediados_correcao.sql` | Correção: os contactos privados dos pedidos só são lidos pela equipa. |
 
 Todas já estão aplicadas no projeto `pewymvkowbdizdiyjmao`.

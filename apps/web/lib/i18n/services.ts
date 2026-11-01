@@ -1172,7 +1172,7 @@ export const SV_INFO_PAGES: Record<"en" | "zh", Record<string, InfoPageText>> = 
           "Your email, phone, WhatsApp and location (address, directions and map point) are not shown to other users. Only the Huambo Online team (administrators and moderators) can see them. Other users contact you through Messages.",
           "Businesses, fuel stations, hotels, restaurants and events only show their location (address and map), so they can be found. Their phone and WhatsApp are also kept only for the team. You can delete your WhatsApp number at any time."] },
         { title: "4. What is private", paragraphs: [
-          "Messages always go through the Huambo Online team (administrators and moderators), who read them and forward them to the other party: users do not talk to each other directly. Offers, orders and service requests are only seen by the people involved and the team.",
+          "Messages always go through the Huambo Online team (administrators and moderators), who read them and forward them to the other party: users do not talk to each other directly. Orders, bookings, tickets, offers, rentals and service requests also go to the team first, who forward them to whoever will handle them. Your phone and address are only shared when needed for delivery or the service.",
           "Verification documents are kept in a private space: only you and the administration can open them, through a temporary link."] },
         { title: "5. Where the data is kept and who helps us", paragraphs: [
           "The database and files are on Supabase, on servers in the European Union (Germany, Frankfurt).",
@@ -1311,7 +1311,7 @@ export const SV_INFO_PAGES: Record<"en" | "zh", Record<string, InfoPageText>> = 
           "您的电子邮箱、电话、WhatsApp 和位置（地址、路线说明和地图位置）不会向其他用户显示。只有 Huambo Online 团队（管理员和版主）可以看到。其他用户通过站内消息与您联系。",
           "企业、加油站、酒店、餐厅和活动只显示位置（地址和地图），以便被人找到。它们的电话和 WhatsApp 也仅供团队查看。您可以随时删除您的 WhatsApp 号码。"] },
         { title: "4. 哪些是私密的", paragraphs: [
-          "所有消息都会先经过 Huambo Online 团队（管理员和版主），由团队阅读后转发给对方：用户之间不会直接交流。报价、订单和服务请求只有相关当事人和团队可以查看。",
+          "所有消息都会先经过 Huambo Online 团队（管理员和版主），由团队阅读后转发给对方：用户之间不会直接交流。订单、预订、门票、报价、租赁和服务请求也会先到达团队，由团队转发给处理方。只有在配送或服务需要时，才会共享您的电话和地址。",
           "验证证件保存在私密空间：只有您本人和管理员可以通过临时链接打开。"] },
         { title: "5. 数据存放在哪里，谁在协助我们", paragraphs: [
           "数据库和文件存放在 Supabase，服务器位于欧盟（德国法兰克福）。",

@@ -12,6 +12,7 @@ export * from "./commerce";
 export * from "./reviews";
 export { unsaveItem, followBusiness, unfollowBusiness, followProvider, unfollowProvider } from "./favorites";
 export * from "./messaging";
+export * from "./team-requests";
 export * from "./auctions";
 export * from "./auction-lifecycle";
 export * from "./delivery";
