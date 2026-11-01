@@ -29,3 +29,13 @@ describe("Pedidos mediados pela equipa", () => {
     expect((await listTeamRequests(client)).data[0]).toMatchObject({ amount: 1500, ref_no: 1001, delivery_lat: null });
   });
 });
+
+import { listMyTeamRequestStates, teamRequestTarget } from "./team-requests";
+describe("Estado dos pedidos para o cliente", () => {
+  it("lê os pedidos à espera e tira o prefixo do título", async () => {
+    const client = { rpc: () => Promise.resolve({ data: [{ kind: "fuel_orders", id: "f1", amount: "6000", ref_no: null, state: "pending" }], error: null }) } as any;
+    expect((await listMyTeamRequestStates(client)).data[0]).toMatchObject({ amount: 6000, state: "pending" });
+    expect(teamRequestTarget("Posto: Sonangol Cidade Alta")).toBe("Sonangol Cidade Alta");
+    expect(teamRequestTarget("Encomenda da Loja")).toBe("");
+  });
+});

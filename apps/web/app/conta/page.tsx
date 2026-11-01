@@ -1,4 +1,5 @@
 "use client";
+import { TeamRequestStatus } from "../../components/TeamRequestStatus";
 import { useEffect, useState } from "react";
 import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, changeCurrentUserPassword, deleteCurrentUserAccount, friendlyError, getMyAdminRole, canModerate, uploadAvatar, AVATAR_MAX_BYTES, AVATAR_MAX_SIDE, PHOTO_RAW_MAX_BYTES } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
@@ -57,6 +58,7 @@ export default function ContaPage() {
   return <main className="stack" style={{ maxWidth: 640 }}>
     <a href="/">← Huambo Online</a>
     <h1>{t("acct.yours")}</h1>
+    <TeamRequestStatus />
     <div className="row">
       {avatar ? <img src={avatar} alt={t("acct.photo")} style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover" }} /> : <div aria-hidden style={{ width: 96, height: 96, borderRadius: "50%", background: "var(--placeholder)" }} />}
       <label>{t("acct.photo")}<input type="file" accept="image/*" disabled={busy} onChange={async e => {

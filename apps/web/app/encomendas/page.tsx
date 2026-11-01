@@ -1,4 +1,5 @@
 "use client";
+import { TeamRequestStatus } from "../../components/TeamRequestStatus";
 import { OrderPoint } from "../../components/Place";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -52,6 +53,7 @@ function Encomendas() {
   return <main className="stack">
     <a href="/loja">← {t("nav.shop")}</a>
     <h1>{t("sh.orders")}</h1>
+    <TeamRequestStatus />
     <div className="row" role="tablist">
       <button role="tab" aria-selected={role === "buyer"} className={role === "buyer" ? "" : "secondary"} onClick={() => setRole("buyer")}>{t("sh.ord.my_purchases")}</button>
       <button role="tab" aria-selected={role === "seller"} className={role === "seller" ? "" : "secondary"} onClick={() => setRole("seller")}>{t("sh.my_sales")}</button>

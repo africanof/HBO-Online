@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { TeamRequestStatus } from "../components/TeamRequestStatus";
 import { Link, useRouter } from "expo-router";
 import { Image, ScrollView, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -57,6 +58,7 @@ export default function Conta() {
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/" style={ui.link}>← Huambo Online</Link>
     <Text style={ui.h1}>{t("account.title")}</Text>
+    <TeamRequestStatus />
     {avatar ? <Image source={{ uri: avatar }} style={{ width: 96, height: 96, borderRadius: 48 }} accessibilityLabel={t("account.photo")} /> : <View style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: C.placeholder }} />}
     <Button title={t("account.change_photo")} variant="secondary" disabled={busy} onPress={async () => {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();

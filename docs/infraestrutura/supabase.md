@@ -34,5 +34,6 @@ Schema, RLS, Auth, Storage, Edge Functions e demais recursos só são alterados 
 | `20261101160000_permissoes_sequencias.sql` | Correção: repõe a permissão de uso dos contadores (`ref_no`), perdida na cópia. |
 | `20261101170000_pedidos_mediados.sql` | Encomendas, reservas, bilhetes, pedidos de serviço, propostas e alugueres ficam à espera da equipa (painel → Pedidos) até serem reencaminhados; avisos ao vendedor retidos; telefone e morada do comprador em privado. |
 | `20261101171000_pedidos_mediados_correcao.sql` | Correção: os contactos privados dos pedidos só são lidos pela equipa. |
+| `20261101180000_estado_pedidos_cliente.sql` | O cliente vê os seus pedidos «à espera da equipa» ou recusados (com o motivo) em «Encomendas» e «A sua conta». |
 
 Todas já estão aplicadas no projeto `pewymvkowbdizdiyjmao`.

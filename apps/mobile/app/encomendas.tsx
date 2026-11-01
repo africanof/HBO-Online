@@ -1,4 +1,5 @@
 import { OrderPoint } from "../components/Place";
+import { TeamRequestStatus } from "../components/TeamRequestStatus";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Alert, Linking, ScrollView, Text, View } from "react-native";
@@ -46,6 +47,7 @@ export default function Encomendas() {
   return <ScrollView contentContainerStyle={ui.screen}>
     <Link href={"/loja" as any} style={ui.link}>{"← " + t("nav.shop")}</Link>
     <Text style={ui.h1}>{t("sh.orders")}</Text>
+    <TeamRequestStatus />
     <Chips options={[{ value: "buyer" as const, label: t("sh.my_purchases") }, { value: "seller" as const, label: t("sh.my_sales") }]} value={role} onChange={v => { setRole(v); void load(v); }} />
     <Message error={error} ok={notice} />
     {items.length === 0 && <Text style={ui.text}>{t("sh.no_orders")}</Text>}
