@@ -2,6 +2,7 @@
   "expo": {
     "name": "Huambo Online",
     "slug": "huambo-online",
+    "owner": "africanofestos-team",
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "huamboonline",
