@@ -3,7 +3,7 @@ import { Suspense, useEffect, useState } from "react";
 import { createSupabaseClient } from "@huambo-online/supabase";
 import { useSearchParams } from "next/navigation";
 import { listConversations, listMessages, sendMessage, markConversationRead, subscribeToConversationMessages, subscribeToUserConversationMessages, conversationFromParticipantRow,
-  isConversationUnread, listConversationPartners, friendlyErrorIn, messagePreview, CHAT_KIND_LABELS, chatMediaUrls, type ChatMessage } from "@huambo-online/core";
+  isConversationUnread, listConversationPartners, conversationAllowsDocuments, friendlyErrorIn, messagePreview, CHAT_KIND_LABELS, chatMediaUrls, type ChatMessage } from "@huambo-online/core";
 import { ConversationSafety } from "../../components/Safety";
 import { ChatAttachButtons, MessageAttachment } from "../../components/ChatMedia";
 import { useT } from "../../lib/i18n";
@@ -19,7 +19,7 @@ function MensagensContent() {
   const preview = (m: any) => { let s = messagePreview(m); if (m?.attachment_kind) { const l = CHAT_KIND_LABELS[m.attachment_kind as keyof typeof CHAT_KIND_LABELS]; if (l && s.startsWith(l)) s = tc(l) + s.slice(l.length); } return s; };
   const [items, setItems] = useState<any[]>([]); const [previews, setPreviews] = useState<Record<string, any>>({}); const [selected, setSelected] = useState<any>(null);
   const [msgs, setMsgs] = useState<ChatMessage[]>([]); const [media, setMedia] = useState<Record<string, string>>({}); const [body, setBody] = useState(""); const [uid, setUid] = useState("");
-  const [partners, setPartners] = useState<Record<string, any>>({}); const [sendError, setSendError] = useState(""); const [sending, setSending] = useState(false);
+  const [partners, setPartners] = useState<Record<string, any>>({}); const [allowDocs, setAllowDocs] = useState(false); const [sendError, setSendError] = useState(""); const [sending, setSending] = useState(false);
   const client = () => createSupabaseClient(url, key);
 
   async function load() {
@@ -36,7 +36,8 @@ function MensagensContent() {
     if (paths.length) { const urls = await chatMediaUrls(c, paths); setMedia(old => ({ ...old, ...urls })); }
   }
   async function open(x: any) {
-    setSelected(x); setSendError(""); const c = client();
+    setSelected(x); setSendError(""); const c = client(); setAllowDocs(false);
+    void conversationAllowsDocuments(c, x).then(setAllowDocs);
     await showMessages(c, x.id); if (uid) await markConversationRead(c, x.id, uid);
   }
   useEffect(() => { void load(); }, []);
@@ -79,7 +80,7 @@ function MensagensContent() {
           <textarea aria-label={t("ls.write_message")} value={body} onChange={e => setBody(e.target.value)} rows={4} placeholder={t("ls.write_message")} style={{ width: "100%" }} />
           {sendError && <p className="error" role="alert">{sendError}</p>}
           <button onClick={send} disabled={sending} style={{ justifySelf: "start" }}>{sending ? t("ls.sending") : t("common.send")}</button>
-          <ChatAttachButtons conversationId={selected.id} uid={uid} caption={body} onSent={() => { setBody(""); void showMessages(client(), selected.id); }} />
+          <ChatAttachButtons conversationId={selected.id} uid={uid} caption={body} allowDocuments={allowDocs} onSent={() => { setBody(""); void showMessages(client(), selected.id); }} />
         </div>}
       </article>
     </section>

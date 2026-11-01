@@ -558,6 +558,7 @@ export const CORE_LABEL_ROWS: CoreRow[] = [
 
   // --- Chat (chat-media.ts) ---
   ["📷 Fotografia", "📷 Photo", "📷 照片"],
+  ["📄 Documento", "📄 Document", "📄 文件"],
   ["🎤 Mensagem de voz", "🎤 Voice message", "🎤 语音消息"],
 
   // --- Combustível e gás (fuel.ts) ---

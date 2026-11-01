@@ -8,7 +8,9 @@ describe("chat: fotos, vídeos e voz", () => {
     expect(chatAttachmentKind("audio/webm;codecs=opus")).toBe("audio");
     expect(chatAttachmentKind("image/jpeg")).toBe("image");
     expect(chatAttachmentKind("video/quicktime")).toBe("video");
-    expect(chatAttachmentKind("application/pdf")).toBeNull();
+    expect(chatAttachmentKind("application/pdf")).toBe("document");
+    expect(chatAttachmentKind("application/vnd.openxmlformats-officedocument.wordprocessingml.document")).toBe("document");
+    expect(chatAttachmentKind("application/zip")).toBeNull();
     expect(chatFileExt("audio/mp4")).toBe("m4a"); expect(chatFileExt("video/quicktime")).toBe("mov");
     expect(formatSeconds(7)).toBe("0:07"); expect(formatSeconds(90)).toBe("1:30"); expect(formatSeconds(null)).toBe("0:00");
   });
@@ -46,5 +48,22 @@ describe("chat: fotos, vídeos e voz", () => {
     expect(await chatMediaUrls(client, [])).toEqual({});
     await listMessages(client, "c");
     expect(selected).toContain("attachment_kind,attachment_path,attachment_seconds");
+  });
+});
+
+import { documentTypeFromName, conversationAllowsDocuments, validateChatFile as vcf, chatFileExt as ext } from "./chat-media";
+describe("documentos (vagas de emprego)", () => {
+  it("reconhece PDF e Word e limita a 10 MB", () => {
+    expect(documentTypeFromName("CV Ana.PDF")).toBe("application/pdf");
+    expect(documentTypeFromName("carta.docx")).toMatch(/wordprocessingml/);
+    expect(documentTypeFromName("foto.png")).toBeNull();
+    expect(ext("application/msword")).toBe("doc");
+    expect(vcf({ type: "application/pdf", size: 2_000_000 })).toBeNull();
+    expect(vcf({ type: "application/pdf", size: 11 * 1024 * 1024 })).toMatch(/10 MB/);
+  });
+  it("só deixa documentos em conversas de vagas", async () => {
+    const yes = { rpc: async () => ({ data: true, error: null }) } as any;
+    expect(await conversationAllowsDocuments(yes, { classified_listing_id: "l1" })).toBe(true);
+    expect(await conversationAllowsDocuments(yes, { classified_listing_id: null })).toBe(false);
   });
 });

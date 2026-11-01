@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { PHOTO_MAX_SIDE, PHOTO_QUALITY, uploadChatFile, sendAttachmentMessage, validateChatFile, chatAttachmentKind, formatSeconds, friendlyErrorIn, CHAT_LIMITS, CHAT_KIND_LABELS,
+import { PHOTO_MAX_SIDE, PHOTO_QUALITY, uploadChatFile, sendAttachmentMessage, validateChatFile, chatAttachmentKind, documentTypeFromName, formatSeconds, friendlyErrorIn, CHAT_LIMITS, CHAT_KIND_LABELS,
   type ChatAttachmentKind, type ChatMessage } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { useDataSaver } from "../lib/dataSaver";
@@ -32,15 +32,16 @@ function recorderType(): string {
   return "";
 }
 
-type Draft = { kind: ChatAttachmentKind; blob: Blob; type: string; seconds: number | null; preview: string };
+type Draft = { kind: ChatAttachmentKind; blob: Blob; type: string; seconds: number | null; preview: string; name?: string };
 
 /** Botões «📷 Fotografia», «🎬 Vídeo» e «🎤 Voz» por baixo da caixa de texto do chat. */
-export function ChatAttachButtons({ conversationId, uid, caption, onSent }: { conversationId: string; uid: string; caption: string; onSent: () => void }) {
+/** Com allowDocuments (vagas de emprego e estágios) aparece também «📄 Documento» para enviar CV em Word ou PDF. */
+export function ChatAttachButtons({ conversationId, uid, caption, onSent, allowDocuments = false }: { conversationId: string; uid: string; caption: string; onSent: () => void; allowDocuments?: boolean }) {
   const { lang, t, tc } = useT();
   const [draft, setDraft] = useState<Draft | null>(null); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const [recording, setRecording] = useState(false); const [elapsed, setElapsed] = useState(0);
   const rec = useRef<MediaRecorder | null>(null); const chunks = useRef<Blob[]>([]); const started = useRef(0); const timer = useRef<ReturnType<typeof setInterval> | null>(null);
-  const photo = useRef<HTMLInputElement>(null); const video = useRef<HTMLInputElement>(null);
+  const photo = useRef<HTMLInputElement>(null); const video = useRef<HTMLInputElement>(null); const doc = useRef<HTMLInputElement>(null);
   useEffect(() => () => { if (timer.current) clearInterval(timer.current); rec.current?.stream.getTracks().forEach(t => t.stop()); }, []);
   useEffect(() => () => { if (draft) URL.revokeObjectURL(draft.preview); }, [draft]);
 
@@ -53,6 +54,13 @@ export function ChatAttachButtons({ conversationId, uid, caption, onSent }: { co
     const type = blob === file ? file.type : "image/jpeg";
     const bad = validateChatFile({ type, size: blob.size, seconds }); if (bad) { setError(tc(bad)); return; }
     setDraft({ kind, blob, type, seconds, preview: URL.createObjectURL(blob) });
+  }
+  function chooseDocument(file: File | undefined) {
+    if (!file) return; setError("");
+    const type = chatAttachmentKind(file.type) === "document" ? file.type : documentTypeFromName(file.name);
+    if (!type) { setError(t("ls.chat_pick_document")); return; }
+    const bad = validateChatFile({ type, size: file.size }); if (bad) { setError(tc(bad)); return; }
+    setDraft({ kind: "document", blob: file, type, seconds: null, preview: URL.createObjectURL(file), name: file.name });
   }
   async function startRecording() {
     setError("");
@@ -96,6 +104,8 @@ export function ChatAttachButtons({ conversationId, uid, caption, onSent }: { co
       <button type="button" className="secondary" onClick={() => photo.current?.click()}>📷 {t("ls.photo")}</button>
       <button type="button" className="secondary" onClick={() => video.current?.click()}>🎬 {t("promo.video")}</button>
       <button type="button" className="secondary" onClick={() => void startRecording()}>🎤 {t("ls.voice_msg")}</button>
+      {allowDocuments && <button type="button" className="secondary" onClick={() => doc.current?.click()}>📄 {t("ls.document_cv")}</button>}
+      {allowDocuments && <input ref={doc} type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden aria-hidden tabIndex={-1} onChange={e => { chooseDocument(e.target.files?.[0]); e.target.value = ""; }} />}
       <input ref={photo} type="file" accept="image/jpeg,image/png,image/webp" hidden aria-hidden tabIndex={-1} onChange={e => { void choose(e.target.files?.[0], "image"); e.target.value = ""; }} />
       <input ref={video} type="file" accept="video/mp4,video/quicktime,video/webm,video/3gpp" hidden aria-hidden tabIndex={-1} onChange={e => { void choose(e.target.files?.[0], "video"); e.target.value = ""; }} />
     </div>}
@@ -109,6 +119,7 @@ export function ChatAttachButtons({ conversationId, uid, caption, onSent }: { co
       {draft.kind === "image" && <img src={draft.preview} alt={t("ls.photo_chosen")} style={{ maxWidth: 260, maxHeight: 260, borderRadius: 12 }} />}
       {draft.kind === "video" && <video src={draft.preview} controls playsInline style={{ maxWidth: 320, borderRadius: 12, background: "#000" }} aria-label={t("ls.video_chosen")} />}
       {draft.kind === "audio" && <audio src={draft.preview} controls aria-label={t("ls.listen_recorded")} />}
+      {draft.kind === "document" && <span>📄 {draft.name}</span>}
       <small>{t("ls.caption_goes")}</small>
       <div className="row"><button type="button" disabled={busy} onClick={() => void send()}>{busy ? t("ls.sending") : t("common.send")}</button><button type="button" className="secondary" disabled={busy} onClick={() => setDraft(null)}>{t("common.cancel")}</button></div>
     </div>}
@@ -121,6 +132,7 @@ export function MessageAttachment({ m, url }: { m: ChatMessage; url?: string }) 
   const lite = useDataSaver(); const [show, setShow] = useState(false); const { t, tc } = useT();
   if (!m.attachment_kind) return null;
   if (!url) return <small className="muted">{tc(CHAT_KIND_LABELS[m.attachment_kind])} ({t("ls.loading_lc")})</small>;
+  if (m.attachment_kind === "document") return <a className="btn secondary" href={url} target="_blank" rel="noopener" download>📄 {t("ls.open_document")}</a>;
   if (m.attachment_kind === "audio") return <audio src={url} controls preload="none" aria-label={t("ls.voice_msg_dur", { d: formatSeconds(m.attachment_seconds) })} style={{ maxWidth: "100%" }} />;
   if (m.attachment_kind === "video") return <video src={url} controls preload="none" playsInline aria-label={t("ls.video_sent")} style={{ maxWidth: "100%", width: 320, borderRadius: 12, background: "#000" }} />;
   if (lite && !show) return <button type="button" className="secondary" onClick={() => setShow(true)}>📷 {t("ls.see_photo_data")}</button>;

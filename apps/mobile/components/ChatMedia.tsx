@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Image, Linking, Pressable, Text, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import { useAudioRecorder, useAudioRecorderState, useAudioPlayer, useAudioPlayerStatus, requestRecordingPermissionsAsync, setAudioModeAsync, RecordingPresets,
   type RecordingOptions } from "expo-audio";
-import { uploadChatFile, sendAttachmentMessage, validateChatFile, formatSeconds, friendlyErrorIn, base64ToArrayBuffer, CHAT_LIMITS, CHAT_KIND_LABELS,
+import { uploadChatFile, sendAttachmentMessage, validateChatFile, chatAttachmentKind, documentTypeFromName, CHAT_DOCUMENT_TYPES, formatSeconds, friendlyErrorIn, base64ToArrayBuffer, CHAT_LIMITS, CHAT_KIND_LABELS,
   type ChatAttachmentKind, type ChatMessage } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { shrinkAsset } from "../lib/image";
@@ -16,9 +17,10 @@ import { useT } from "../lib/i18n";
 /** Voz: AAC (m4a), mono e leve — 3 minutos ≈ 0,7 MB. Toca no Android, no iPhone e no Site. */
 const VOICE: RecordingOptions = { ...RecordingPresets.HIGH_QUALITY, sampleRate: 22050, numberOfChannels: 1, bitRate: 32000 };
 
-type Draft = { kind: ChatAttachmentKind; uri: string; base64?: string | null; type: string; seconds: number | null; size?: number | null };
+type Draft = { kind: ChatAttachmentKind; uri: string; base64?: string | null; type: string; seconds: number | null; size?: number | null; name?: string };
 
-export function ChatAttachButtons({ conversationId, uid, caption, onSent }: { conversationId: string; uid: string; caption: string; onSent: () => void }) {
+/** Com allowDocuments (vagas de emprego e estágios) aparece também «📄 Documento» para enviar CV em Word ou PDF. */
+export function ChatAttachButtons({ conversationId, uid, caption, onSent, allowDocuments = false }: { conversationId: string; uid: string; caption: string; onSent: () => void; allowDocuments?: boolean }) {
   const { t, tc, lang } = useT();
   const [draft, setDraft] = useState<Draft | null>(null); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const recorder = useAudioRecorder(VOICE); const rec = useAudioRecorderState(recorder, 250);
@@ -43,6 +45,16 @@ export function ChatAttachButtons({ conversationId, uid, caption, onSent }: { co
       const bad = validateChatFile({ type, size: a.fileSize ?? null, seconds: secs }); if (bad) { setError(tc(bad)); return; }
       setDraft({ kind, uri: a.uri, type, seconds: secs, size: a.fileSize ?? null });
     }
+  }
+  async function pickDocument() {
+    setError("");
+    const r = await DocumentPicker.getDocumentAsync({ type: [...CHAT_DOCUMENT_TYPES], copyToCacheDirectory: true, multiple: false });
+    if (r.canceled || !r.assets?.[0]) return;
+    const a = r.assets[0];
+    const type = chatAttachmentKind(a.mimeType) === "document" ? a.mimeType! : documentTypeFromName(a.name);
+    if (!type) { setError(t("ls.chat_pick_document")); return; }
+    const bad = validateChatFile({ type, size: a.size ?? null }); if (bad) { setError(tc(bad)); return; }
+    setDraft({ kind: "document", uri: a.uri, type, seconds: null, size: a.size ?? null, name: a.name });
   }
   async function record() {
     setError("");
@@ -79,6 +91,7 @@ export function ChatAttachButtons({ conversationId, uid, caption, onSent }: { co
       <Button title={t("ls.cm.gallery")} variant="secondary" onPress={() => void pick("image", false)} />
       <Button title={t("ls.cm.video")} variant="secondary" onPress={() => void pick("video", false)} />
       <Button title={t("ls.cm.voice")} variant="secondary" onPress={() => void record()} />
+      {allowDocuments && <Button title={"📄 " + t("ls.document_cv")} variant="secondary" onPress={() => void pickDocument()} />}
     </View>}
     {rec.isRecording && <View style={[ui.card, { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}>
       <Text accessibilityLiveRegion="polite" style={{ color: C.red, fontWeight: "800", fontSize: 17 }}>{t("ls.cm.recording", { time: formatSeconds(seconds), max: formatSeconds(CHAT_LIMITS.audio.seconds) })}</Text>
@@ -88,6 +101,7 @@ export function ChatAttachButtons({ conversationId, uid, caption, onSent }: { co
       <Text style={ui.label}>{tc(CHAT_KIND_LABELS[draft.kind])}{draft.seconds ? ` · ${formatSeconds(draft.seconds)}` : ""}</Text>
       {draft.kind === "image" && <Image source={{ uri: draft.uri }} style={{ width: 200, height: 200, borderRadius: 12 }} accessibilityLabel={t("ls.cm.chosen")} />}
       {draft.kind === "audio" && <VoicePlayer url={draft.uri} seconds={draft.seconds} />}
+      {draft.kind === "document" && <Text style={ui.text}>📄 {draft.name}</Text>}
       <Text style={ui.muted}>{t("ls.cm.caption")}</Text>
       <Button title={busy ? t("ls.sending") : t("common.send")} disabled={busy} onPress={() => void send()} />
       <Button title={t("common.cancel")} variant="secondary" disabled={busy} onPress={() => setDraft(null)} />
@@ -120,6 +134,7 @@ export function MessageAttachment({ m, url }: { m: ChatMessage; url?: string }) 
   const { on: lite } = useDataSaver(); const { t, tc } = useT(); const [show, setShow] = useState(false);
   if (!m.attachment_kind) return null;
   if (!url) return <Text style={ui.muted}>{tc(CHAT_KIND_LABELS[m.attachment_kind])} {t("ls.cm.loading")}</Text>;
+  if (m.attachment_kind === "document") return <Button title={"📄 " + t("ls.open_document")} variant="secondary" onPress={() => void Linking.openURL(url)} />;
   if (m.attachment_kind === "audio") return <VoicePlayer url={url} seconds={m.attachment_seconds} />;
   if (m.attachment_kind === "video") return <VideoPlayer url={url} />;
   if (lite && !show) return <Pressable accessibilityRole="button" onPress={() => setShow(true)} style={[ui.chip, { alignSelf: "flex-start" }]}><Text style={ui.chipText}>{t("ls.cm.see_photo")}</Text></Pressable>;

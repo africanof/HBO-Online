@@ -218,6 +218,9 @@ export const DICT_LISTINGS: Dictionary = {
   "ls.chat.unread": { pt: "● Não lida", en: "● Unread", zh: "● 未读" },
   "ls.chat.back": { pt: "← Conversas", en: "← Conversations", zh: "← 对话列表" },
   "ls.chat.mediated_note": { pt: "🛡️ As mensagens passam pela Equipa Huambo Online: lemos e reencaminhamos à outra parte. Não partilhe telefone, morada nem dados bancários aqui.", en: "🛡️ Messages go through the Huambo Online Team: we read them and forward them to the other party. Do not share phone numbers, addresses or bank details here.", zh: "🛡️ 消息会先经过 Huambo Online 团队：我们阅读后转发给对方。请勿在此分享电话、地址或银行信息。" },
+  "ls.document_cv": { pt: "Documento (CV)", en: "Document (CV)", zh: "文件（简历）" },
+  "ls.open_document": { pt: "Abrir documento", en: "Open document", zh: "打开文件" },
+  "ls.chat_pick_document": { pt: "Escolha um documento PDF ou Word (.pdf, .doc, .docx).", en: "Choose a PDF or Word document (.pdf, .doc, .docx).", zh: "请选择 PDF 或 Word 文件（.pdf、.doc、.docx）。" },
   "ls.chat.you": { pt: "Você", en: "You", zh: "您" },
   "ls.chat.write": { pt: "Escreva uma mensagem", en: "Write a message", zh: "输入消息" },
 

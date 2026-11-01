@@ -295,6 +295,8 @@ export const CORE_ERROR_ROWS: CoreRow[] = [
   ["Não percebi as coordenadas. Copie do Google Maps (ex.: -12.7765, 15.7398).", "I couldn't understand the coordinates. Copy them from Google Maps (e.g. -12.7765, 15.7398).", "无法识别坐标。请从 Google 地图复制（例如：-12.7765, 15.7398）。"],
 
   // --- Ficheiros do chat e vídeos (chat-media.ts, videos.ts) ---
+  ["O documento é grande demais (máximo 10 MB).", "The document is too large (maximum 10 MB).", "文件太大（最大 10 MB）。"],
+  ["Só pode enviar documentos nas conversas sobre vagas de emprego e estágios.", "You can only send documents in conversations about jobs and internships.", "只能在关于工作和实习的对话中发送文件。"],
   ["Este tipo de ficheiro não pode ser enviado. Envie uma fotografia, um vídeo ou uma mensagem de voz.", "This file type can't be sent. Send a photo, a video or a voice message.", "无法发送此类文件。请发送照片、视频或语音消息。"],
   ["A fotografia é grande demais (máximo 5 MB).", "The photo is too large (maximum 5 MB).", "照片太大（最大5 MB）。"],
   ["O vídeo é grande demais (máximo 30 MB). Grave um vídeo mais curto.", "The video is too large (maximum 30 MB). Record a shorter video.", "视频太大（最大30 MB）。请录制更短的视频。"],
