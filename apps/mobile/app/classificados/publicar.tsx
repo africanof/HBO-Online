@@ -7,7 +7,7 @@ import { ui } from "../../lib/ui";
 import { useT } from "../../lib/i18n";
 
 export default function Publicar() {
-  const params = useLocalSearchParams<{ finalidade?: string; modo?: string; campo?: string; agente?: string }>();
+  const params = useLocalSearchParams<{ finalidade?: string; modo?: string; campo?: string; agente?: string; categoria?: string }>();
   const wanted = params.finalidade === "wanted"; const { t } = useT();
   const [user, setUser] = useState<string | null | undefined>(undefined);
   useEffect(() => { void currentUserId().then(setUser).catch(() => setUser(null)); }, []);
@@ -17,6 +17,6 @@ export default function Publicar() {
     {!wanted && <Link href={"/classificados/publicar?finalidade=wanted" as any} style={ui.link}>{t("ls.publish.want_buy")}</Link>}
     {user === undefined && <Text style={ui.text}>{t("common.loading")}</Text>}
     {user === null && <View style={{ gap: 10 }}><Text style={ui.text}>{t("ls.publish.sign_in")}</Text><Link href="/login" style={ui.link}>{t("auth.login")}</Link><Link href="/criar-conta" style={ui.link}>{t("auth.signup")}</Link></View>}
-    {!!user && <ListingForm key={(wanted ? "w" : "s") + (params.modo ?? "") + (params.campo ? "c" : "")} initialPurpose={wanted ? "wanted" : undefined} initialSaleMode={params.modo} initialAgro={!!params.campo} initialAgent={params.agente} />}
+    {!!user && <ListingForm key={(wanted ? "w" : "s") + (params.modo ?? "") + (params.campo ? "c" : "") + (params.categoria ?? "")} initialCategorySlug={params.categoria} initialPurpose={wanted ? "wanted" : undefined} initialSaleMode={params.modo} initialAgro={!!params.campo} initialAgent={params.agente} />}
   </ScrollView>;
 }

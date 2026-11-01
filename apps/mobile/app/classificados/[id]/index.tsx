@@ -6,7 +6,7 @@ import { WantedHelpers } from "../../../components/WantedHelpers";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
-  reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatRef, formatPrice, friendlyErrorIn, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary } from "@huambo-online/core";
+  reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatRef, formatPrice, friendlyErrorIn, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary, jobCategoryOf, salaryLabel, type JobCategory } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { ui, C } from "../../../lib/ui";
 import { Button, Message } from "../../../components/Ui";
@@ -26,6 +26,9 @@ export default function ClassifiedDetail() {
   const { width } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [item, setItem] = useState<any>(null);
+  const [job, setJob] = useState<JobCategory | null>(null);
+  // Vaga de emprego ou estágio: o preço é o salário e o CV vai pelas Mensagens.
+  useEffect(() => { void jobCategoryOf(supabase(), item?.category_id).then(setJob).catch(() => setJob(null)); }, [item?.category_id]);
   const [place, setPlace] = useState("");
   const [seller, setSeller] = useState("");
   const [uid, setUid] = useState<string | null>(null);
@@ -122,7 +125,9 @@ export default function ClassifiedDetail() {
     {isFeatured(item) && <Text style={[ui.label, { alignSelf: "flex-start", backgroundColor: "#FFF4D6", color: "#4A3700", borderColor: "#E0B100", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2 }]}>{t("card.featured")}</Text>}
     <Text style={ui.h1}>{item.title}</Text>
     {!!item.ref_no && <Text style={ui.muted}>{t("ls.detail.ref", { ref: formatRef("listing", item.ref_no) })}</Text>}
-    {item.purpose === "wanted" ? <Text style={ui.price}>{t("home.budget")} {tc(coreText(listingPriceLabel(item), t) ?? "")}</Text> : <Text style={ui.price}>{tc(coreText(listingPriceLabel(item), t) ?? "")}</Text>}
+    {item.purpose === "wanted" ? <Text style={ui.price}>{t("home.budget")} {tc(coreText(listingPriceLabel(item), t) ?? "")}</Text> : job ? <Text style={ui.price}>{t("job.salary")}: {tc(salaryLabel(item.price, job.slug, item.currency))}</Text>
+      : <Text style={ui.price}>{tc(coreText(listingPriceLabel(item), t) ?? "")}</Text>}
+    {!!job && <Text style={ui.text}>{t("job.detail_hint")}</Text>}
     {badges.length > 0 && <View style={ui.row}>{badges.map(b => <Text key={b} style={{ backgroundColor: C.blueSoft, color: C.blueText, fontWeight: "800", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 }}>{tc(coreText(b, t) ?? b)}</Text>)}</View>}
     {!!mode && !!SALE_MODE_INFO[mode] && <Text style={ui.muted}>{SALE_MODE_INFO[mode].icon} {tc(SALE_MODE_INFO[mode].label)}</Text>}
     {!!item.trade_wants && <Text style={ui.text}>{t("ls.detail.trade_for")} <Text style={ui.label}>{item.trade_wants}</Text></Text>}

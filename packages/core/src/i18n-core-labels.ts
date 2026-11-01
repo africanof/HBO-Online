@@ -140,6 +140,8 @@ export const CORE_LABEL_ROWS: CoreRow[] = [
   ["Campo", "Farming", "农业"],
   ["Fábricas", "Factories", "工厂"],
   ["Emprego", "Jobs", "招聘"],
+  ["Salário a combinar", "Salary to be agreed", "薪资面议"],
+  ["Não remunerado", "Unpaid", "无薪"],
   ["Emprego e recrutamento", "Jobs and recruitment", "就业与招聘"],
   ["Estágios remunerados", "Paid internships", "带薪实习"],
   ["Estágios não remunerados", "Unpaid internships", "无薪实习"],

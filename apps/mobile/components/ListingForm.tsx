@@ -7,7 +7,7 @@ import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice,
   createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, normalizeAgentCode, pointFrom, type GeoPoint, friendlyErrorIn, listingTerritory, categoryLabelIn, base64ToArrayBuffer,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice,
   saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS,
-  loadListingDraft, saveListingDraft, clearListingDraft, draftAgeText, isOfflineError, OFFLINE_PUBLISH_MESSAGE, type ListingDraftFields, type ListingDraftPhoto } from "@huambo-online/core";
+  loadListingDraft, saveListingDraft, isJobCategorySlug, clearListingDraft, draftAgeText, isOfflineError, OFFLINE_PUBLISH_MESSAGE, type ListingDraftFields, type ListingDraftPhoto } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
@@ -25,11 +25,11 @@ import { useT } from "../lib/i18n";
 const DRAFT_DIR = (FileSystem.documentDirectory ?? "") + "rascunho-anuncio/";
 async function dropDraftFiles() { try { await FileSystem.deleteAsync(DRAFT_DIR, { idempotent: true }); } catch { /* nada */ } }
 
-type Option = { id: string; name: string };
+type Option = { id: string; name: string; slug?: string };
 type Photo = { key: string; uri: string; base64?: string | null; mimeType?: string; remote?: boolean };
 
 
-export function ListingForm({ listing, initialPurpose, initialSaleMode, initialAgro, initialAgent }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string; initialAgro?: boolean; initialAgent?: string }) {
+export function ListingForm({ listing, initialPurpose, initialSaleMode, initialAgro, initialAgent, initialCategorySlug }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string; initialAgro?: boolean; initialAgent?: string; initialCategorySlug?: string }) {
   const router = useRouter(); const { t, tc, lang } = useT();
   const typeOptions = Object.entries(LISTING_TYPE_LABELS).map(([value, label]) => ({ value: value as ClassifiedListingType, label: tc(label) }));
   const purposeOptions = PUBLISHABLE_PURPOSES.map(value => ({ value, label: tc(PURPOSE_LABELS[value]) }));
@@ -71,6 +71,8 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, uri: u, remote: true })));
   const [removed, setRemoved] = useState<string[]>([]);
   const [categories, setCategories] = useState<Option[]>([]);
+  /** Vaga de emprego ou estágio: o preço é o salário e não há «como vende». */
+  const isJob = isJobCategorySlug(categories.find(c => c.id === categoryId)?.slug);
   const [provinces, setProvinces] = useState<Option[]>([]);
   const [municipalities, setMunicipalities] = useState<Option[]>([]);
   const [busy, setBusy] = useState(false);
@@ -126,7 +128,12 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
 
   useEffect(() => {
     const c = supabase();
-    void c.from("categories").select("id,name").eq("active", true).order("name").then(({ data }) => setCategories(data ?? []));
+    void c.from("categories").select("id,name,slug").eq("active", true).order("name").then(({ data }) => {
+      const list = (data ?? []) as Option[]; setCategories(list);
+      // «?categoria=emprego»: a categoria vem escolhida; nas vagas de emprego o anúncio é um «Serviço».
+      const pre = !listing && initialCategorySlug ? list.find(x => x.slug === initialCategorySlug) : undefined;
+      if (pre) { setCategoryId(pre.id); if (isJobCategorySlug(pre.slug)) { setListingType("classified"); setPurpose("service"); } }
+    });
     void listProvinces(c).then(({ data }) => {
       const list = (data ?? []) as Option[];
       setProvinces(list);
@@ -257,7 +264,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
       <View style={{ flex: 1, gap: 6 }}><Text style={ui.label}>{t("ls.form.budget_from")}</Text><TextInput style={ui.input} keyboardType="decimal-pad" value={budgetMin} onChangeText={setBudgetMin} placeholder="20 000" /></View>
       <View style={{ flex: 1, gap: 6 }}><Text style={ui.label}>{t("ls.form.budget_to")}</Text><TextInput style={ui.input} keyboardType="decimal-pad" value={budgetMax} onChangeText={setBudgetMax} placeholder="25 000" /></View>
     </View> : <>
-      {modes.length > 0 && <View style={{ gap: 8 }}>
+      {modes.length > 0 && !isJob && <View style={{ gap: 8 }}>
         <Text style={ui.h2}>{t("ls.form.how_sell")}</Text>
         {modes.map(m => <Pressable key={m} accessibilityRole="radio" accessibilityState={{ checked: saleMode === m }} onPress={() => setSaleMode(m)}
           style={{ borderWidth: 2, borderColor: saleMode === m ? C.blue : C.line, backgroundColor: saleMode === m ? C.blueSoft : C.white, borderRadius: 14, padding: 12, gap: 2 }}>
@@ -266,7 +273,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
         </Pressable>)}
       </View>}
       {lockedAuction && <Text style={ui.label}>{t("ls.form.in_auction")}</Text>}
-      <Text style={ui.label}>{saleMode === "auction" ? t("ls.form.price_auction") : saleMode === "offers" || saleMode === "trade" ? t("ls.form.price_ref") : useAgro ? t("ls.form.price_per", { unit: agroUnitInfo(agroUnit)?.short ? tc(agroUnitInfo(agroUnit)!.short) : t("ls.form.unit") }) : t("ls.form.price")}</Text>
+      <Text style={ui.label}>{isJob ? t("job.salary_field") : saleMode === "auction" ? t("ls.form.price_auction") : saleMode === "offers" || saleMode === "trade" ? t("ls.form.price_ref") : useAgro ? t("ls.form.price_per", { unit: agroUnitInfo(agroUnit)?.short ? tc(agroUnitInfo(agroUnit)!.short) : t("ls.form.unit") }) : t("ls.form.price")}</Text>
       <TextInput style={ui.input} keyboardType="decimal-pad" value={price} onChangeText={setPrice} placeholder={saleMode === "fixed" || saleMode === "negotiable" || saleMode === "auction" ? t("ls.form.ph_price") : t("ls.form.ph_price_empty")} />
       {saleMode === "auction" && !lockedAuction && <><Text style={ui.label}>{t("ls.form.auction_length")}</Text>
         <Chips options={["1", "3", "5", "7", "10", "14"].map(d => ({ value: d, label: d === "1" ? t("ls.form.day") : t("ls.form.days", { n: d }) }))} value={auctionDays} onChange={setAuctionDays} /></>}

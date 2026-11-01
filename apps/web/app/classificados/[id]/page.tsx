@@ -15,7 +15,7 @@ import { ShareButton, SellerWhatsApp, useRecordView, browserStore } from "../../
 import { OfflineBanner } from "../../../components/Offline";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
 import { MarketFact } from "../../../components/MarketPicker";
-import { AUCTIONABLE_TYPES, formatRef } from "@huambo-online/core";
+import { AUCTIONABLE_TYPES, formatRef, jobCategoryOf, salaryLabel, type JobCategory } from "@huambo-online/core";
 import { SellerBadge } from "../../../components/Reputation";
 import { OfferBox, OffersList } from "../../../components/Offers";
 
@@ -23,6 +23,7 @@ export default function ClassifiedDetail() {
   const { id } = useParams<{ id: string }>();
   const { lang, t, tc } = useT();
   const [item, setItem] = useState<any>(null);
+  const [job, setJob] = useState<JobCategory | null>(null);
   const [place, setPlace] = useState("");
   const [seller, setSeller] = useState("");
   const [uid, setUid] = useState<string | null>(null);
@@ -35,6 +36,8 @@ export default function ClassifiedDetail() {
   const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
   const [reason, setReason] = useState("");
 
+  // Vaga de emprego ou estágio: o preço é o salário e o CV vai pelas Mensagens.
+  useEffect(() => { void jobCategoryOf(supabase(), item?.category_id).then(setJob).catch(() => setJob(null)); }, [item?.category_id]);
   useEffect(() => {
     if (!id) return;
     void (async () => {
@@ -125,7 +128,9 @@ export default function ClassifiedDetail() {
         {isFeatured(item) && <span className="badge" style={{ justifySelf: "start", background: "var(--yellow-soft)", borderColor: "var(--yellow-line)", color: "var(--yellow-text)" }}>⭐ {t("ls.featured")}</span>}
         <h1>{item.title}</h1>
         {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>👤</span><span>{item.purpose === "wanted" ? t("ls.buyer") : t("ls.advertiser")}: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a> <SellerBadge userId={item.owner_id} /><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>{t("ls.see_other_listings")}</a></span></div>}
-        {item.purpose === "wanted" ? <div><span className="muted">{t("ls.budget")}</span><div className="big-price">{tc(listingPriceLabel(item))}</div></div> : <div className="big-price">{tc(listingPriceLabel(item))}</div>}
+        {item.purpose === "wanted" ? <div><span className="muted">{t("ls.budget")}</span><div className="big-price">{tc(listingPriceLabel(item))}</div></div> : job ? <div><span className="muted">{t("job.salary")}</span><div className="big-price">{tc(salaryLabel(item.price, job.slug, item.currency))}</div></div>
+          : <div className="big-price">{tc(listingPriceLabel(item))}</div>}
+        {job && <p className="scam-warn" style={{ margin: 0 }}>{t("job.detail_hint")}</p>}
         {badges.length > 0 && <div className="row">{badges.map(b => <span key={b} className="mode-badge">{tc(b)}</span>)}</div>}
         {item.trade_wants && <p style={{ margin: 0 }}>🔁 {t("ls.accepts_trade")} <strong>{item.trade_wants}</strong></p>}
         <dl className="facts">

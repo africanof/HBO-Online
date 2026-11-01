@@ -62,7 +62,7 @@ export const HOME_CATEGORIES: { label: string; icon: string; href: string }[] = 
   { label: "Viaturas", icon: "🚗", href: "/explorar?tipo=vehicle" },
   { label: "Campo", icon: "🌾", href: "/agricultura" },
   { label: "Fábricas", icon: "🏭", href: "/empresas?categoria=fabricas" },
-  { label: "Emprego", icon: "💼", href: "/explorar?categoria=emprego" },
+  { label: "Emprego", icon: "💼", href: "/emprego" },
   { label: "Combustível e gás", icon: "⛽", href: "/combustivel" },
   { label: "Hotéis", icon: "🏨", href: "/reservas?tipo=hoteis" },
   { label: "Restaurantes", icon: "🍽️", href: "/reservas?tipo=restaurantes" },

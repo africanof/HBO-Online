@@ -6,7 +6,7 @@ import { ConformityCheck } from "./Conformity";
 import { VideoField } from "./Video";
 import { AgentCodeField, agentCodeFromUrl } from "./Agents";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
-  createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, pointFrom, type GeoPoint, friendlyErrorIn, categoryLabelIn, listingTerritory,
+  createAndPublishClassifiedListing, updateClassifiedListing, isJobCategorySlug, setListingAgent, pointFrom, type GeoPoint, friendlyErrorIn, categoryLabelIn, listingTerritory,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES, validateBudget, budgetPrice,
   saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS,
   loadListingDraft, saveListingDraft, clearListingDraft, draftAgeText, isOfflineError, OFFLINE_PUBLISH_MESSAGE, type ListingDraftFields } from "@huambo-online/core";
@@ -16,10 +16,10 @@ import { supabase } from "../lib/supabase";
 import { compressPhoto } from "../lib/image";
 import { useT } from "../lib/i18n";
 
-type Option = { id: string; name: string };
+type Option = { id: string; name: string; slug?: string };
 type Photo = { key: string; src: string; file?: File };
 
-export function ListingForm({ listing, initialPurpose, initialSaleMode }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string }) {
+export function ListingForm({ listing, initialPurpose, initialSaleMode, initialCategorySlug }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string; initialCategorySlug?: string }) {
   const { lang, t, tc } = useT();
   const editing = Boolean(listing);
   const territory = listingTerritory(listing);
@@ -61,6 +61,8 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, src: u })));
   const [removed, setRemoved] = useState<string[]>([]);
   const [categories, setCategories] = useState<Option[]>([]);
+  /** Vaga de emprego ou estágio: o preço é o salário e não há «como vende». */
+  const isJob = isJobCategorySlug(categories.find(c => c.id === categoryId)?.slug);
   const [provinces, setProvinces] = useState<Option[]>([]);
   const [municipalities, setMunicipalities] = useState<Option[]>([]);
   const [busy, setBusy] = useState(false);
@@ -92,7 +94,12 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
 
   useEffect(() => {
     const c = supabase();
-    void c.from("categories").select("id,name").eq("active", true).order("name").then(({ data }) => setCategories(data ?? []));
+    void c.from("categories").select("id,name,slug").eq("active", true).order("name").then(({ data }) => {
+      const list = (data ?? []) as Option[]; setCategories(list);
+      // «?categoria=emprego»: a categoria vem escolhida; nas vagas de emprego o anúncio é um «Serviço».
+      const pre = !listing && initialCategorySlug ? list.find(x => x.slug === initialCategorySlug) : undefined;
+      if (pre) { setCategoryId(pre.id); if (isJobCategorySlug(pre.slug)) { setListingType("classified"); setPurpose("service"); } }
+    });
     void listProvinces(c).then(({ data }) => {
       const list = (data ?? []) as Option[];
       setProvinces(list);
@@ -227,7 +234,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
         <label style={{ flex: 1 }}>{t("ls.budget_from")}<input value={budgetMin} onChange={e => setBudgetMin(e.target.value)} inputMode="decimal" placeholder={t("ls.ex_20000")} /></label>
         <label style={{ flex: 1 }}>{t("ls.budget_to")}<input value={budgetMax} onChange={e => setBudgetMax(e.target.value)} inputMode="decimal" placeholder={t("ls.ex_25000")} /></label>
       </div> : <>
-        {modes.length > 0 && <fieldset className="stack sale-modes">
+        {modes.length > 0 && !isJob && <fieldset className="stack sale-modes">
           <legend>{t("ls.how_sell")}</legend>
           {modes.map(m => <label key={m} className={"mode" + (saleMode === m ? " on" : "")}>
             <input type="radio" name="sale_mode" value={m} checked={saleMode === m} onChange={() => setSaleMode(m)} />
@@ -235,7 +242,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode }: { list
           </label>)}
         </fieldset>}
         {lockedAuction && <p className="badge">🔨 {t("ls.in_auction")}</p>}
-        <label>{saleMode === "auction" ? t("ls.price_auction_start") : saleMode === "offers" || saleMode === "trade" ? t("ls.price_reference") : useAgro ? t("ls.price_per", { unit: agroUnitInfo(agroUnit)?.short ? tc(agroUnitInfo(agroUnit)!.short) : t("ls.unit") }) : t("ls.price_kz")}
+        <label>{isJob ? t("job.salary_field") : saleMode === "auction" ? t("ls.price_auction_start") : saleMode === "offers" || saleMode === "trade" ? t("ls.price_reference") : useAgro ? t("ls.price_per", { unit: agroUnitInfo(agroUnit)?.short ? tc(agroUnitInfo(agroUnit)!.short) : t("ls.unit") }) : t("ls.price_kz")}
           <input value={price} onChange={e => setPrice(e.target.value)} inputMode="decimal" placeholder={saleMode === "fixed" || saleMode === "negotiable" || saleMode === "auction" ? t("ls.ex_85000") : t("ls.ph_price_empty")} /></label>
         {saleMode === "auction" && !lockedAuction && <label>{t("ls.auction_duration")}
           <select value={auctionDays} onChange={e => setAuctionDays(e.target.value)}>{[1, 3, 5, 7, 10, 14].map(d => <option key={d} value={d}>{t("ls.n_days_s", { n: d })}</option>)}</select></label>}
