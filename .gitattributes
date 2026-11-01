@@ -1,0 +1,12 @@
+# Finais de linha consistentes em todos os sistemas
+* text=auto eol=lf
+
+# Binários
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+
+# Ficheiros gerados: não aparecem nas estatísticas nem nos diffs do GitHub
+pnpm-lock.yaml linguist-generated=true -diff

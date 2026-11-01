@@ -2,12 +2,25 @@
   "name": "huambo-online",
   "private": true,
   "version": "0.1.0",
+  "description": "Plataforma digital de comércio, serviços e negócios do Huambo — Site (Next.js) e APP (Expo).",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/africanof/HBO-Online.git"
+  },
   "packageManager": "pnpm@10.17.1",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
   "scripts": {
     "dev:web": "pnpm --filter @huambo-online/web dev",
     "dev:mobile": "pnpm --filter @huambo-online/mobile start",
     "build:web": "pnpm --filter @huambo-online/web build",
+    "start:web": "pnpm --filter @huambo-online/web start",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r --if-present test"
+    "test": "pnpm -r --if-present test",
+    "check": "pnpm typecheck && pnpm test",
+    "smoke:site": "node scripts/smoke-site.mjs",
+    "a11y:site": "node scripts/a11y-site.mjs"
   }
 }

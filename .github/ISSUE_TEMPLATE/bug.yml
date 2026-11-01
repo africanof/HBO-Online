@@ -1,0 +1,34 @@
+name: Erro
+description: Algo não funciona como devia
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: onde
+    attributes:
+      label: Onde acontece?
+      multiple: true
+      options: [Site, APP Android, APP iOS, Outro]
+    validations:
+      required: true
+  - type: textarea
+    id: descricao
+    attributes:
+      label: O que aconteceu?
+      description: Descreva o erro e o que esperava que acontecesse.
+    validations:
+      required: true
+  - type: textarea
+    id: passos
+    attributes:
+      label: Passos para reproduzir
+      placeholder: |
+        1. Abrir a página...
+        2. Carregar em...
+        3. Aparece...
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Capturas de ecrã ou informação extra
+      description: Telemóvel, navegador, língua escolhida, etc.

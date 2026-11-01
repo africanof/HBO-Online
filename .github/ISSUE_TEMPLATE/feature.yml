@@ -1,0 +1,24 @@
+name: Nova funcionalidade
+description: Sugerir uma melhoria ou funcionalidade
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Que problema resolve?
+      description: Quem precisa disto e porquê.
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Proposta
+      description: Como imagina que funcione.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      multiple: true
+      options: [Descoberta, Comércio, Serviços, Confiança, Pagamentos, Logística, Comunicação, Administração, Outra]

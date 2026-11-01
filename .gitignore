@@ -1,13 +1,27 @@
+# Dependências
 node_modules
 .pnpm-store
+
+# Builds e caches
 .expo
 .next
 dist
 build
 coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# Supabase local
+supabase/.temp
+supabase/.branches
+
+# Ambiente (nunca commitar segredos)
 .env
 .env.*
 !.env.example
+
+# Sistema e editores
 .DS_Store
-next-env.d.ts
-*.tsbuildinfo
+Thumbs.db
+.idea
+*.log
