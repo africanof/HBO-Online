@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { MarketPicker } from "./MarketPicker";
+import { DetailFields } from "./ListingDetails";
 import { PlaceFields } from "./Place";
 import { ConformityCheck } from "./Conformity";
 import { VideoField } from "./Video";
 import { AgentCodeField, agentCodeFromUrl } from "./Agents";
 import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice, uploadClassifiedMedia, removeClassifiedMedia,
-  createAndPublishClassifiedListing, updateClassifiedListing, isJobCategorySlug, setListingAgent, pointFrom, type GeoPoint, friendlyErrorIn, categoryLabelIn, listingTerritory,
+  createAndPublishClassifiedListing, updateClassifiedListing, isJobCategorySlug, detailValuesFrom, validateDetails, buildDetailAttributes, withoutDetailKeys, setListingAgent, pointFrom, type GeoPoint, friendlyErrorIn, categoryLabelIn, listingTerritory,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES, validateBudget, budgetPrice,
   saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS,
   loadListingDraft, saveListingDraft, clearListingDraft, draftAgeText, isOfflineError, OFFLINE_PUBLISH_MESSAGE, type ListingDraftFields } from "@huambo-online/core";
@@ -61,6 +62,8 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, src: u })));
   const [removed, setRemoved] = useState<string[]>([]);
   const [categories, setCategories] = useState<Option[]>([]);
+  /** Viaturas e imóveis: marca, modelo, ano… / tipo, área, quartos… */
+  const [details, setDetails] = useState<Record<string, string>>(detailValuesFrom(listing?.attributes));
   /** Vaga de emprego ou estágio: o preço é o salário e não há «como vende». */
   const isJob = isJobCategorySlug(categories.find(c => c.id === categoryId)?.slug);
   const [provinces, setProvinces] = useState<Option[]>([]);
@@ -94,7 +97,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
 
   useEffect(() => {
     const c = supabase();
-    void c.from("categories").select("id,name,slug").eq("active", true).order("name").then(({ data }) => {
+    void c.from("categories").select("id,name,slug").eq("type", "classified").eq("active", true).order("name").then(({ data }) => {
       const list = (data ?? []) as Option[]; setCategories(list);
       // «?categoria=emprego»: a categoria vem escolhida; nas vagas de emprego o anúncio é um «Serviço».
       const pre = !listing && initialCategorySlug ? list.find(x => x.slug === initialCategorySlug) : undefined;
@@ -151,6 +154,8 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
     if (invalid) { setError(tc(invalid)); return; }
     const agroInvalid = useAgro ? validateAgro({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom }) : null;
     if (agroInvalid) { setError(tc(agroInvalid)); return; }
+    const detailsInvalid = !wanted ? validateDetails(listingType, details) : null;
+    if (detailsInvalid) { setError(t(detailsInvalid)); return; }
     const mode = modes.length ? (saleMode || undefined) as SaleMode | undefined : undefined;
     const sale = lockedAuction ? { saleMode: "auction" as const, acceptsTrade: false } : { saleMode: mode, acceptsTrade: mode === "trade" || (canAlsoTrade(purpose, saleMode) && acceptsTrade), tradeWants };
     setBusy(true);
@@ -170,7 +175,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
       setStatus(editing ? t("recover.saving") : t("ls.publishing"));
       // Mantém outros atributos já guardados; os do campo só ficam se «Produto do campo» estiver ligado.
       const keep = Object.fromEntries(Object.entries((listing?.attributes ?? {}) as Record<string, unknown>).filter(([k]) => !["agro", "agroCategory", "unit", "quantity", "availableFrom", "provinceId", "municipalityId"].includes(k)));
-      const attributes = { ...keep, ...(useAgro ? agroAttributes({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom }) : {}) };
+      const attributes = { ...withoutDetailKeys(keep), ...(!wanted ? buildDetailAttributes(listingType, details) : {}), ...(useAgro ? agroAttributes({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom }) : {}) };
       const input = { attributes, listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale, directions, point, conformity: purpose !== "wanted" && conform };
       // O leilão começa logo depois de publicar (ou de guardar, ao mudar para leilão).
       const startAuction = async (id: string) => {
@@ -220,6 +225,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
       {wanted && <p className="ok" style={{ margin: 0 }}>🔎 {t("ls.wanted_intro")}</p>}
       <label>{wanted ? t("ls.what_looking") : t("ls.title")}<input value={title} maxLength={140} onChange={e => setTitle(e.target.value)} placeholder={wanted ? (listingType === "service" ? t("ls.ph_wanted_service") : t("ls.ph_wanted_item")) : t("ls.ph_title")} /></label>
       <label>{t("ls.description")}<textarea value={description} onChange={e => setDescription(e.target.value)} rows={6} placeholder={wanted ? t("ls.ph_wanted_desc") : t("ls.ph_desc")} /></label>
+      {!wanted && <DetailFields listingType={listingType} values={details} onChange={setDetails} />}
       {agroAllowed && <fieldset className="stack" style={{ border: "2px solid var(--line)", borderRadius: 12, padding: 14 }}>
         <legend style={{ fontWeight: 700 }}>🌾 {t("ft.farming")}</legend>
         <label className="check"><input type="checkbox" checked={isAgro} onChange={e => setIsAgro(e.target.checked)} /> {t("ls.is_agro")}</label>

@@ -15,6 +15,7 @@ import { ShareButton, SellerWhatsApp, useRecordView, browserStore } from "../../
 import { OfflineBanner } from "../../../components/Offline";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
 import { MarketFact } from "../../../components/MarketPicker";
+import { DetailFacts } from "../../../components/ListingDetails";
 import { AUCTIONABLE_TYPES, formatRef, jobCategoryOf, salaryLabel, type JobCategory } from "@huambo-online/core";
 import { SellerBadge } from "../../../components/Reputation";
 import { OfferBox, OffersList } from "../../../components/Offers";
@@ -134,6 +135,7 @@ export default function ClassifiedDetail() {
         {badges.length > 0 && <div className="row">{badges.map(b => <span key={b} className="mode-badge">{tc(b)}</span>)}</div>}
         {item.trade_wants && <p style={{ margin: 0 }}>🔁 {t("ls.accepts_trade")} <strong>{item.trade_wants}</strong></p>}
         <dl className="facts">
+          <DetailFacts listingType={item.listing_type} attributes={item.attributes} />
           {item.ref_no && <><dt>{t("ls.listing_no")}</dt><dd><strong>{formatRef("listing", item.ref_no)}</strong></dd></>}
           <dt>{t("ls.type")}</dt><dd>{typeLabel}</dd>
           {readAgro(item.attributes) && <><dt>{t("ls.from_farm")}</dt><dd><a href="/agricultura">{tc(agroSummary(readAgro(item.attributes)!))}</a></dd></>}

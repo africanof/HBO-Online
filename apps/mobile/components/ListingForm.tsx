@@ -7,11 +7,12 @@ import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice,
   createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, normalizeAgentCode, pointFrom, type GeoPoint, friendlyErrorIn, listingTerritory, categoryLabelIn, base64ToArrayBuffer,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice,
   saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS,
-  loadListingDraft, saveListingDraft, isJobCategorySlug, clearListingDraft, draftAgeText, isOfflineError, OFFLINE_PUBLISH_MESSAGE, type ListingDraftFields, type ListingDraftPhoto } from "@huambo-online/core";
+  loadListingDraft, saveListingDraft, isJobCategorySlug, detailValuesFrom, validateDetails, buildDetailAttributes, withoutDetailKeys, clearListingDraft, draftAgeText, isOfflineError, OFFLINE_PUBLISH_MESSAGE, type ListingDraftFields, type ListingDraftPhoto } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
 import { MarketPicker } from "./MarketPicker";
+import { DetailFields } from "./ListingDetails";
 import { PlaceFields } from "./Place";
 import { ConformityCheck } from "./Conformity";
 import { VideoField } from "./Video";
@@ -71,6 +72,8 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, uri: u, remote: true })));
   const [removed, setRemoved] = useState<string[]>([]);
   const [categories, setCategories] = useState<Option[]>([]);
+  /** Viaturas e imóveis: marca, modelo, ano… / tipo, área, quartos… */
+  const [details, setDetails] = useState<Record<string, string>>(detailValuesFrom(listing?.attributes));
   /** Vaga de emprego ou estágio: o preço é o salário e não há «como vende». */
   const isJob = isJobCategorySlug(categories.find(c => c.id === categoryId)?.slug);
   const [provinces, setProvinces] = useState<Option[]>([]);
@@ -121,14 +124,14 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
   useEffect(() => { if (editing || !draftReady) return; const t = setTimeout(() => void persistDraft(), 700); return () => clearTimeout(t); }, [draftSnapshot, draftReady]);
   async function discardDraft() {
     await clearListingDraft(deviceStore).catch(() => {}); await dropDraftFiles(); copied.current.clear();
-    setTitle(""); setDescription(""); setPrice(""); setBudgetMin(""); setBudgetMax(""); setTradeWants(""); setDirections(""); setVideoUrl(""); setPoint(null); setPhotos([]);
+    setTitle(""); setDescription(""); setPrice(""); setDetails({}); setBudgetMin(""); setBudgetMax(""); setTradeWants(""); setDirections(""); setVideoUrl(""); setPoint(null); setPhotos([]);
     setDraftNote("");
   }
   async function draftDone() { await clearListingDraft(deviceStore).catch(() => {}); await dropDraftFiles(); }
 
   useEffect(() => {
     const c = supabase();
-    void c.from("categories").select("id,name,slug").eq("active", true).order("name").then(({ data }) => {
+    void c.from("categories").select("id,name,slug").eq("type", "classified").eq("active", true).order("name").then(({ data }) => {
       const list = (data ?? []) as Option[]; setCategories(list);
       // «?categoria=emprego»: a categoria vem escolhida; nas vagas de emprego o anúncio é um «Serviço».
       const pre = !listing && initialCategorySlug ? list.find(x => x.slug === initialCategorySlug) : undefined;
@@ -180,6 +183,8 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
     if (invalid) { setError(tc(invalid)); return; }
     const agroInvalid = useAgro ? validateAgro({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom.trim() || null }) : null;
     if (agroInvalid) { setError(tc(agroInvalid)); return; }
+    const detailsInvalid = !wanted ? validateDetails(listingType, details) : null;
+    if (detailsInvalid) { setError(t(detailsInvalid)); return; }
     const mode = modes.length ? (saleMode || undefined) as SaleMode | undefined : undefined;
     const sale = lockedAuction ? { saleMode: "auction" as const, acceptsTrade: false } : { saleMode: mode, acceptsTrade: mode === "trade" || (canAlsoTrade(purpose, saleMode) && acceptsTrade), tradeWants };
     setBusy(true);
@@ -200,7 +205,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
       }
       setStatus(editing ? t("recover.saving") : t("ls.form.publishing"));
       const keep = Object.fromEntries(Object.entries((listing?.attributes ?? {}) as Record<string, unknown>).filter(([k]) => !["agro", "agroCategory", "unit", "quantity", "availableFrom", "provinceId", "municipalityId"].includes(k)));
-      const attributes = { ...keep, ...(useAgro ? agroAttributes({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom.trim() || null }) : {}) };
+      const attributes = { ...withoutDetailKeys(keep), ...(!wanted ? buildDetailAttributes(listingType, details) : {}), ...(useAgro ? agroAttributes({ category: agroCat, unit: agroUnit, quantity: agroQty, availableFrom: agroFrom.trim() || null }) : {}) };
       const input = { attributes, listingType, purpose, title, description, price: priceValue, categoryId: categoryId || undefined, provinceId, municipalityId, marketId: marketId || undefined, videoUrl: videoUrl || undefined, budgetMin: minValue, budgetMax: maxValue, media, ...sale, directions, point, conformity: purpose !== "wanted" && conform };
       // O leilão começa logo depois de publicar (ou de guardar, ao mudar para leilão).
       const startAuction = async (id: string) => {
@@ -245,6 +250,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
     <TextInput style={ui.input} value={title} maxLength={140} onChangeText={setTitle} placeholder={wanted ? (listingType === "service" ? t("ls.form.ph_wanted_service") : t("ls.form.ph_wanted")) : t("ls.form.ph_title")} />
     <Text style={ui.label}>{t("ls.form.description")}</Text>
     <TextInput style={[ui.input, ui.area]} multiline value={description} onChangeText={setDescription} placeholder={wanted ? t("ls.form.ph_desc_wanted") : t("ls.form.ph_desc")} />
+    {!wanted && <DetailFields listingType={listingType} values={details} onChange={setDetails} />}
     {agroAllowed && <View style={[ui.card, { gap: 8 }]}>
       <Text style={ui.h2}>🌾 {t("more.agri")}</Text>
       <Chips options={[{ value: "yes" as const, label: t("ls.form.is_agro") }, { value: "no" as const, label: t("ls.no") }]} value={isAgro ? "yes" : "no"} onChange={v => setIsAgro(v === "yes")} />

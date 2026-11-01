@@ -28,7 +28,7 @@ export default function ExplorarPage() {
     const p = new URLSearchParams(window.location.search);
     const fromUrl = readExploreParams(k => p.get(k));
     // «?categoria=emprego» escolhe logo essa categoria (as categorias carregam primeiro).
-    void c.from("categories").select("id,name,slug").eq("active", true).order("name").then(({ data }) => {
+    void c.from("categories").select("id,name,slug").eq("type", "classified").eq("active", true).order("name").then(({ data }) => {
       const list = (data ?? []) as (Option & { slug?: string })[]; setCategories(list);
       const categoryId = fromUrl.categorySlug ? list.find(x => x.slug === fromUrl.categorySlug)?.id ?? "" : "";
       const start = { ...EMPTY, q: fromUrl.query, type: fromUrl.listingType, purpose: fromUrl.purpose, mode: fromUrl.saleMode, categoryId };

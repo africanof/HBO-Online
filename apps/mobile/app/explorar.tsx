@@ -32,7 +32,7 @@ export default function Explorar() {
     const c = supabase();
     void listProvinces(c).then(({ data }) => setProvinces((data ?? []) as Option[]));
     // «?categoria=emprego» escolhe logo essa categoria (as categorias carregam primeiro).
-    void c.from("categories").select("id,name,slug").eq("active", true).order("name").then(({ data }) => {
+    void c.from("categories").select("id,name,slug").eq("type", "classified").eq("active", true).order("name").then(({ data }) => {
       const list = (data ?? []) as (Option & { slug?: string })[]; setCategories(list);
       const fromUrl = initial.categorySlug ? list.find(x => x.slug === initial.categorySlug)?.id ?? "" : "";
       if (fromUrl) { setCategoryId(fromUrl); void search({ categoryId: fromUrl }); } else void search();
