@@ -1,11 +1,10 @@
-// Pesquisa por fotografia: o Claude Haiku 5.5 olha para a fotografia e devolve palavras de
+// Pesquisa por fotografia: o OpenAI gpt-4o-mini olha para a fotografia e devolve palavras de
 // pesquisa em português. Só para quem tem sessão iniciada, no máximo 20 por dia (contadas na
-// base de dados). A fotografia não é guardada. A chave ANTHROPIC_API_KEY só existe aqui
-// (segredo das Edge Functions do Supabase), nunca no Site nem na APP.
-import Anthropic from "npm:@anthropic-ai/sdk@0.128.0";
+// base de dados). A fotografia não é guardada. A chave OPENAI_API_KEY (a mesma do «Melhorar
+// com IA») só existe aqui (segredo das Edge Functions do Supabase), nunca no Site nem na APP.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const MODEL = "claude-haiku-5-5";
+const MODEL = "gpt-4o-mini";
 const MAX_BASE64 = 2_000_000; // ~1,5 MB de imagem (a APP e o Site reduzem para 1024 px antes de enviar)
 const TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 type ImageType = (typeof TYPES)[number];
@@ -43,7 +42,7 @@ Deno.serve(async req => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return reply({ error: "METHOD_NOT_ALLOWED" }, 405);
 
-  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
+  const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) return reply({ error: "PHOTO_SEARCH_NOT_CONFIGURED" }, 503);
 
   // Quem está a pedir (sessão iniciada obrigatória).
@@ -68,30 +67,34 @@ Deno.serve(async req => {
   }
   const remaining = quota.data as number;
 
-  const client = new Anthropic({ apiKey });
   try {
-    const msg = await client.messages.create({
-      model: MODEL,
-      max_tokens: 1024,
-      system: SYSTEM,
-      output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
-      messages: [{
-        role: "user",
-        content: [
-          { type: "image", source: { type: "base64", media_type: mediaType, data: image } },
-          { type: "text", text: "O que é o artigo desta fotografia? Dá as palavras de pesquisa." }
-        ]
-      }]
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: MODEL, temperature: 0.2, max_tokens: 300,
+        messages: [
+          { role: "system", content: SYSTEM },
+          { role: "user", content: [
+            { type: "image_url", image_url: { url: `data:${mediaType};base64,${image}`, detail: "low" } },
+            { type: "text", text: "O que é o artigo desta fotografia? Dá as palavras de pesquisa." }
+          ] }
+        ],
+        response_format: { type: "json_schema", json_schema: { name: "pesquisa", strict: true, schema: SCHEMA } }
+      }),
+      signal: AbortSignal.timeout(25_000)
     });
-    if (msg.stop_reason === "refusal") return reply({ found: false, label: "", keywords: [], listing_type: "none", remaining });
-    const text = msg.content.find(b => b.type === "text");
-    if (!text || text.type !== "text") return reply({ error: "PHOTO_SEARCH_FAILED", remaining }, 502);
-    const out = JSON.parse(text.text) as { found: boolean; label: string; keywords: string[]; listing_type: string };
+    if (!r.ok) { console.error("photo-search", r.status, (await r.text()).slice(0, 300)); return reply({ error: "PHOTO_SEARCH_FAILED", remaining }, 502); }
+    const data = await r.json();
+    const message = data.choices?.[0]?.message;
+    if (message?.refusal) return reply({ found: false, label: "", keywords: [], listing_type: "none", remaining });
+    if (!message?.content) return reply({ error: "PHOTO_SEARCH_FAILED", remaining }, 502);
+    const out = JSON.parse(message.content) as { found: boolean; label: string; keywords: string[]; listing_type: string };
     const keywords = [...new Set((out.keywords ?? []).map(k => String(k).trim()).filter(Boolean))].slice(0, 5);
     return reply({ found: !!out.found && keywords.length > 0, label: String(out.label ?? "").slice(0, 80), keywords,
       listing_type: LISTING_TYPES.includes(out.listing_type) ? out.listing_type : "none", remaining });
   } catch (e) {
-    console.error("photo-search", e instanceof Anthropic.APIError ? `${e.status} ${e.message}` : String(e));
+    console.error("photo-search", String(e));
     return reply({ error: "PHOTO_SEARCH_FAILED", remaining }, 502);
   }
 });

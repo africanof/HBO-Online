@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { searchClassifiedListings } from "./classified-search";
 import { listProducts } from "./shop";
 
-/** Pesquisa por fotografia (Claude Haiku 5.5 no servidor): só com sessão iniciada, 20 por dia. */
+/** Pesquisa por fotografia (OpenAI gpt-4o-mini no servidor): só com sessão iniciada, 20 por dia. */
 export const PHOTO_SEARCH_DAILY_LIMIT = 20;
 /** Lado maior da fotografia enviada (poupa dados e custa menos). */
 export const PHOTO_SEARCH_MAX_SIDE = 1024;

@@ -17,7 +17,7 @@ Chaves secretas/service-role nunca devem entrar no repositório nem no cliente W
 ## Segredos das Edge Functions (painel do Supabase → Edge Functions → Secrets)
 | Segredo | Para quê |
 | --- | --- |
-| `ANTHROPIC_API_KEY` | Pesquisa por fotografia |
+| `OPENAI_API_KEY` | Pesquisa por fotografia e «Melhorar com IA» (gpt-4o-mini) |
 | `PROXYPAY_API_KEY`, `PROXYPAY_ENV` | Pagamento protegido com referências Multicaixa |
 
 ## Regra de alterações

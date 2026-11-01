@@ -1178,7 +1178,8 @@ export const SV_INFO_PAGES: Record<"en" | "zh", Record<string, InfoPageText>> = 
         { title: "5. Where the data is kept and who helps us", paragraphs: [
           "The database and files are on Supabase, on servers in the European Union (Germany, Frankfurt).",
           "The Site is hosted on Vercel. The APP is built with Expo.",
-          "Photo search (when active): the photo is sent to Claude (Anthropic) to tell what the item is, and we don't keep it."] },
+          "Photo search (when active): the photo is sent to OpenAI to tell what the item is, and we don't keep it.",
+          "Improve with AI (only when you tap the button): the listing's title, description and details are sent to OpenAI to suggest better text, and are not stored by us."] },
         { title: "6. How long we keep it", paragraphs: [
           "As long as the account exists. Videos of closed or sold listings are deleted automatically after 7 days, and those of hidden products after 30 days.",
           "When you delete your account, your data is deleted. Some of the provider's backup copies may last a little longer until they are replaced."] },
@@ -1318,7 +1319,8 @@ export const SV_INFO_PAGES: Record<"en" | "zh", Record<string, InfoPageText>> = 
         { title: "5. 数据存放在哪里，谁在协助我们", paragraphs: [
           "数据库和文件存放在 Supabase，服务器位于欧盟（德国法兰克福）。",
           "网站托管在 Vercel。APP 使用 Expo 开发。",
-          "以图搜索（启用时）：照片会发送给 Claude（Anthropic）以识别物品，我们不会保存该照片。"] },
+          "以图搜索（启用时）：照片会发送给 OpenAI 以识别物品，我们不会保存该照片。",
+          "AI 优化（仅在您点击按钮时）：信息的标题、描述和详情会发送给 OpenAI 以建议更好的文字，我们不会保存。"] },
         { title: "6. 我们保存多长时间", paragraphs: [
           "只要账户存在就会保存。已关闭或已售出广告的视频会在 7 天后自动删除，已隐藏商品的视频在 30 天后删除。",
           "删除账户后，您的数据会被删除。服务商的部分备份副本可能会多保留一段时间，直至被替换。"] },

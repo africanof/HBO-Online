@@ -19,7 +19,7 @@ describe("páginas de informação", () => {
     const txt = privacyPage().sections.flatMap(s => s.paragraphs).join(" ");
     expect(txt).toMatch(/União Europeia/);       // Supabase eu-central-1
     expect(txt).toMatch(/7 dias/); expect(txt).toMatch(/30 dias/); // limpeza automática dos vídeos
-    expect(txt).toMatch(/Anthropic/);            // pesquisa por fotografia
+    expect(txt).toMatch(/OpenAI/);               // pesquisa por fotografia e «Melhorar com IA»
     expect(txt).toMatch(/Lei n\.º 22\/11|Protecção de Dados/);
   });
   it("a ajuda cobre as funções principais", () => {
