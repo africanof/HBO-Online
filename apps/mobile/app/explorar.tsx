@@ -9,6 +9,7 @@ import { Button, Chips, Message } from "../components/Ui";
 import { SearchBar } from "../components/Brand";
 import { ItemCard, Grid, LISTING_ICON } from "../components/ItemCard";
 import { OfflineBanner } from "../components/Offline";
+import { SmartSearchButton } from "../components/AiTools";
 import { deviceStore } from "../components/Engage";
 import { getPublic } from "../lib/public-api";
 import { classifiedsCached } from "@huambo-online/core";
@@ -43,11 +44,11 @@ export default function Explorar() {
     void listMunicipalities(supabase(), provinceId).then(({ data }) => setMunicipalities((data ?? []) as Option[]));
   }, [provinceId]);
 
-  function filters(o: { q?: string; purpose?: string; mode?: string; categoryId?: string } = {}): ClassifiedSearchFilters {
-    return { query: o.q ?? q, purpose: ((o.purpose ?? purpose) || undefined) as any, listingType: (type || undefined) as any, categoryId: (o.categoryId ?? categoryId) || undefined, attributes: attributeFilters(type, categories.find(c => c.id === (o.categoryId ?? categoryId))?.slug, attrs),
-      provinceId: provinceId || undefined, municipalityId: municipalityId || undefined, minPrice: parsePrice(min), maxPrice: parsePrice(max), saleMode: ((o.mode ?? mode) || undefined) as ClassifiedSearchFilters["saleMode"] };
+  function filters(o: { q?: string; purpose?: string; mode?: string; categoryId?: string; type?: string; min?: string; max?: string; attrs?: Record<string, string> } = {}): ClassifiedSearchFilters {
+    return { query: o.q ?? q, purpose: ((o.purpose ?? purpose) || undefined) as any, listingType: ((o.type ?? type) || undefined) as any, categoryId: (o.categoryId ?? categoryId) || undefined, attributes: attributeFilters(o.type ?? type, categories.find(c => c.id === (o.categoryId ?? categoryId))?.slug, o.attrs ?? attrs),
+      provinceId: provinceId || undefined, municipalityId: municipalityId || undefined, minPrice: parsePrice(o.min ?? min), maxPrice: parsePrice(o.max ?? max), saleMode: ((o.mode ?? mode) || undefined) as ClassifiedSearchFilters["saleMode"] };
   }
-  async function search(o: { q?: string; purpose?: string; mode?: string; categoryId?: string } = {}) {
+  async function search(o: { q?: string; purpose?: string; mode?: string; categoryId?: string; type?: string; min?: string; max?: string; attrs?: Record<string, string> } = {}) {
     setError(""); setNotice(""); setBusy(true);
     const f = filters(o);
     void trackSearch(supabase(), { query: f.query, categoryId: f.categoryId, listingType: f.listingType });
@@ -70,6 +71,11 @@ export default function Explorar() {
 
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <SearchBar initial={q} onSearch={v => { setQ(v); void search({ q: v }); }} />
+    <SmartSearchButton categories={categories.map(c => ({ slug: c.slug, name: c.name }))} onApply={x => {
+      const cat = x.categorySlug ? categories.find(c => c.slug === x.categorySlug)?.id ?? "" : "";
+      setQ(x.query); setType(x.listingType); setPurpose(x.purpose); setMode(""); setCategoryId(cat); setMin(x.minPrice); setMax(x.maxPrice); setAttrs(x.attributes);
+      void search({ q: x.query, type: x.listingType, purpose: x.purpose, mode: "", categoryId: cat, min: x.minPrice, max: x.maxPrice, attrs: x.attributes });
+    }} />
     <Text style={ui.h1}>{q ? `«${q}»` : type ? tc(LISTING_TYPE_LABELS[type as keyof typeof LISTING_TYPE_LABELS]) : purpose ? tc(PURPOSE_LABELS[purpose as keyof typeof PURPOSE_LABELS]) : t("ls.explore.title")}</Text>
     <ScrollView horizontal showsHorizontalScrollIndicator={false}><Chips options={[{ value: "", label: t("ls.explore.everything") }, ...Object.entries(PURPOSE_LABELS).map(([v, l]) => ({ value: v, label: tc(l) }))]} value={purpose} onChange={v => { setPurpose(v); void search({ purpose: v }); }} /></ScrollView>
     <ScrollView horizontal showsHorizontalScrollIndicator={false}><Chips options={[{ value: "", label: t("ls.explore.mode_all") }, ...SALE_MODE_FILTERS.map(o => ({ ...o, label: tc(o.label) }))]} value={mode} onChange={v => { setMode(v); void search({ mode: v }); }} /></ScrollView>

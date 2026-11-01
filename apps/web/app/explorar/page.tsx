@@ -10,6 +10,7 @@ import { OfflineBanner } from "../../components/Offline";
 import { browserStore } from "../../components/Engage";
 import { getPublic } from "../../lib/public-api";
 import { classifiedsCached } from "@huambo-online/core";
+import { SmartSearchButton } from "../../components/AiTools";
 
 type Option = { id: string; name: string };
 type F = { q: string; purpose: string; type: string; categoryId: string; provinceId: string; municipalityId: string; min: string; max: string; mode: string; attrs: Record<string, string> };
@@ -82,6 +83,11 @@ export default function ExplorarPage() {
       <form className="filters card" onSubmit={e => { e.preventDefault(); void search(); }}>
         <div className="row" style={{ justifyContent: "space-between" }}><h2>{t("ls.filters")}</h2><button type="button" className="secondary" onClick={() => setShowFilters(!showFilters)} style={{ minHeight: 40, padding: "4px 14px" }} aria-expanded={showFilters}>{showFilters ? t("ls.less") : t("ls.more")}</button></div>
         <label>{t("nav.search")}<input value={f.q} onChange={set("q")} placeholder={t("ls.ph_search")} /></label>
+        <SmartSearchButton text={f.q} categories={categories.map(c => ({ slug: c.slug, name: c.name }))} onApply={x => {
+          const v: F = { ...f, q: x.query, type: x.listingType, purpose: x.purpose, mode: "", min: x.minPrice, max: x.maxPrice, attrs: x.attributes,
+            categoryId: x.categorySlug ? categories.find(c => c.slug === x.categorySlug)?.id ?? "" : "" };
+          setF(v); void search(v);
+        }} />
         <label>{t("ls.type")}<select value={f.type} onChange={e => setF({ ...f, type: e.target.value, attrs: {} })}><option value="">{t("ls.all")}</option>{Object.entries(LISTING_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{tc(l)}</option>)}</select></label>
         <label>{t("ls.category")}<select value={f.categoryId} onChange={e => setF({ ...f, categoryId: e.target.value, attrs: {} })}><option value="">{t("ls.all_f")}</option>{categories.map(c => <option key={c.id} value={c.id}>{categoryLabelIn(c.name, lang)}</option>)}</select></label>
         {/* Filtros da categoria ou do tipo: subcategoria, estado, combustível, tipo de imóvel… */}

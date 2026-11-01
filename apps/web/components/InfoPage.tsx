@@ -1,5 +1,6 @@
 "use client";
 import { HELP_FAQ, SAFETY_TIPS, SCAM_WARNING_TEXT, type InfoPage as Page } from "@huambo-online/core";
+import { HelpAssistant } from "./AiTools";
 import { useT, type TFunction } from "../lib/i18n";
 import { SV_INFO_PAGES, SV_HELP_FAQ, SV_SAFETY_TIPS, SV_SCAM_TEXT, type InfoPageText } from "../lib/i18n/services";
 import { CONTACT_EMAIL } from "../lib/contact";
@@ -49,6 +50,7 @@ export function HelpPageView() {
     <h1>❓ {t("nav.help")}</h1>
     <p style={{ fontSize: 19 }}>{t("sv.help_intro")}</p>
     <a className="btn secondary" href="/seguranca" style={{ justifySelf: "start" }}>🛡️ {t("sv.help_safety_btn")}</a>
+    <HelpAssistant />
     {faq.map(f => <details key={f.q} className="card faq"><summary><strong>{f.q}</strong></summary><p style={{ margin: 0, lineHeight: 1.6 }}>{f.a}</p></details>)}
     <section className="card"><h2 style={{ margin: 0 }}>{t("sv.help_more")}</h2><p style={{ margin: 0 }}>{contactLineIn(t)}</p></section>
     <nav className="row" aria-label={t("sv.info_more")}><a href="/termos">{t("nav.terms")}</a> · <a href="/privacidade">{t("nav.privacy")}</a> · <a href="/devolucoes">{t("sv.help_returns")}</a> · <a href="/apagar-conta">{t("sv.help_delete")}</a></nav>

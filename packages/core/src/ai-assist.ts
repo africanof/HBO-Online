@@ -60,6 +60,7 @@ export function aiCatalog(categories: CategoryRef[]): string {
   for (const [slug, fields] of Object.entries(CATEGORY_FIELDS)) lines.push(`${slug}: ${fields.map(fieldLine).join(", ")}`);
   return lines.join("\n");
 }
+const GENERIC_WORDS = new Set(["carro", "carros", "viatura", "viaturas", "automóvel", "automovel", "veículo", "veiculo", "casa", "casas", "imóvel", "imovel", "imóveis", "moradia", "terreno", "terrenos", "produto", "produtos", "artigo", "coisa", "serviço", "servico", "emprego", "trabalho", "vaga"]);
 const LISTING_TYPES = ["product", "vehicle", "real_estate", "service", "classified"] as const;
 const PURPOSES = ["sale", "rent", "lease", "wanted", "service", "auction"] as const;
 /** Fica só com os campos e valores válidos para o tipo e a categoria (a IA pode enganar-se). */
@@ -110,7 +111,10 @@ export function smartSearchFrom(d: any, categories: CategoryRef[]): SmartSearch 
     const v = d?.attributes?.[f.key];
     if (f.kind === "select" && typeof v === "string" && f.options!.includes(v)) attributes[f.key] = v;
   }
-  return { query: String(d?.keywords ?? "").trim().slice(0, 80), listingType, purpose, categorySlug, minPrice: price(d?.min_price), maxPrice: price(d?.max_price), attributes, remaining: Number(d?.remaining ?? 0) };
+  // Palavras genéricas («carro», «casa»…) não filtram o texto quando o tipo ou a categoria já dizem o mesmo.
+  let query = String(d?.keywords ?? "").trim().slice(0, 80);
+  if ((listingType || categorySlug) && GENERIC_WORDS.has(query.toLowerCase())) query = "";
+  return { query, listingType, purpose, categorySlug, minPrice: price(d?.min_price), maxPrice: price(d?.max_price), attributes, remaining: Number(d?.remaining ?? 0) };
 }
 
 // ---------------------------------------------------------------------------------------------

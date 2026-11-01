@@ -5,6 +5,7 @@ import { listMediatedConversations, listMessages, teamForwardMessage, teamSendMe
 import { supabase } from "../lib/supabase";
 import { useT, formatDateIn } from "../lib/i18n";
 import { MessageAttachment } from "./ChatMedia";
+import { TeamReplySuggest } from "./AiTools";
 
 /**
  * Mensagens mediadas: a equipa lê cada mensagem dos utilizadores e decide reencaminhá-la
@@ -76,6 +77,7 @@ export function AdminMessages() {
         </select>
       </label>
       <textarea rows={3} value={reply} onChange={e => setReply(e.target.value)} aria-label={t("ad.msg.write")} />
+      <TeamReplySuggest conversationId={open.conversation_id} audienceId={replyTo} subject={open.subject} onUse={setReply} />
       <button disabled={busy || !reply.trim()} style={{ justifySelf: "start" }}>{t("common.send")}</button>
     </form>
   </section>;

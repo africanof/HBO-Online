@@ -14,6 +14,7 @@ import { C, ui } from "../lib/ui";
 import { MarketPicker } from "./MarketPicker";
 import { DetailFields } from "./ListingDetails";
 import { AiImprove } from "./AiImprove";
+import { PhotoFillButton, PriceHintNote } from "./AiTools";
 import { PlaceFields } from "./Place";
 import { ConformityCheck } from "./Conformity";
 import { VideoField } from "./Video";
@@ -285,6 +286,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
       {lockedAuction && <Text style={ui.label}>{t("ls.form.in_auction")}</Text>}
       <Text style={ui.label}>{isJob ? t("job.salary_field") : saleMode === "auction" ? t("ls.form.price_auction") : saleMode === "offers" || saleMode === "trade" ? t("ls.form.price_ref") : useAgro ? t("ls.form.price_per", { unit: agroUnitInfo(agroUnit)?.short ? tc(agroUnitInfo(agroUnit)!.short) : t("ls.form.unit") }) : t("ls.form.price")}</Text>
       <TextInput style={ui.input} keyboardType="decimal-pad" value={price} onChangeText={setPrice} placeholder={saleMode === "fixed" || saleMode === "negotiable" || saleMode === "auction" ? t("ls.form.ph_price") : t("ls.form.ph_price_empty")} />
+      {!isJob && !useAgro && <PriceHintNote categoryId={categoryId} listingType={listingType} purpose={purpose} />}
       {saleMode === "auction" && !lockedAuction && <><Text style={ui.label}>{t("ls.form.auction_length")}</Text>
         <Chips options={["1", "3", "5", "7", "10", "14"].map(d => ({ value: d, label: d === "1" ? t("ls.form.day") : t("ls.form.days", { n: d }) }))} value={auctionDays} onChange={setAuctionDays} /></>}
       {canAlsoTrade(purpose, saleMode) && <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: acceptsTrade }} onPress={() => setAcceptsTrade(!acceptsTrade)} style={[ui.row, { alignItems: "center" }]}>
@@ -306,6 +308,15 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
     {purpose !== "wanted" && <ConformityCheck checked={conform} onChange={setConform} />}
     <Text style={ui.label}>{t("ls.form.photos", { n: photos.length, max: CLASSIFIED_MAX_PHOTOS })}</Text>
     <Button title={t("ls.form.pick_photos")} variant="secondary" onPress={() => void pickPhotos()} disabled={busy || photos.length >= CLASSIFIED_MAX_PHOTOS} />
+    {!wanted && photos.length > 0 && <PhotoFillButton photoUri={photos[0]?.uri ?? null} categories={categories.map(c => ({ slug: c.slug, name: c.name }))}
+      onApply={f => {
+        if (!title.trim()) setTitle(f.title);
+        if (!description.trim()) setDescription(f.description);
+        if (f.listingType && !editing) setListingType(f.listingType as ClassifiedListingType);
+        const cat = f.categorySlug ? categories.find(c => c.slug === f.categorySlug) : null;
+        if (cat && !categoryId) setCategoryId(cat.id);
+        setDetails(d => ({ ...f.details, ...Object.fromEntries(Object.entries(d).filter(([, v]) => v)) }));
+      }} />}
     <View style={ui.row}>
       {photos.map((p, i) => <View key={p.key} style={{ width: 104, gap: 6 }}>
         <Image source={{ uri: p.uri }} style={{ width: 104, height: 104, borderRadius: 8, backgroundColor: C.surface }} accessibilityLabel={t("ls.form.photo_n", { n: i + 1 })} />

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { DisputeSummary } from "./AiTools";
 import { disputeActions, disputeNextStep, platformRefunds, setDisputeRefundAccount, disputeEventLabel, disputeAction, disputePhotoUrls, uploadDisputePhoto, listDisputesForAdmin, decideDispute,
   formatPrice, friendlyErrorIn, LANG_TAGS, DISPUTE_STATUS_LABELS, DISPUTE_OUTCOME_LABELS, DISPUTE_REASON_LABELS, DISPUTE_REQUEST_LABELS, DISPUTE_ACTION_LABELS,
   DISPUTE_DECISION_LABELS, DISPUTE_MAX_PHOTOS, PAYMENT_LABELS, ORDER_STATUS_LABELS,
@@ -161,6 +162,7 @@ export function AdminDisputes() {
         <button className="secondary" onClick={() => refundStep(d, "confirm_refund")}>✔ {t("sh.ad.close")}</button>
       </div>}
       <DisputeTimeline events={d.events} />
+      {d.status !== "resolved" && <DisputeSummary disputeId={d.id} />}
       {d.status !== "resolved" && <div className="row">
         {(Object.keys(DISPUTE_DECISION_LABELS) as DisputeDecision[]).map(k => <button key={k} className={k === "reject" ? "danger" : k === "refund" ? "" : "secondary"} onClick={() => decide(d, k)}>{tc(DISPUTE_DECISION_LABELS[k])}</button>)}
         <button className="secondary" onClick={() => comment(d)}>💬 {t("sh.dc.message")}</button>

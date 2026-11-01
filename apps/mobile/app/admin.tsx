@@ -13,6 +13,7 @@ import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
 import { AdminCouriers } from "../components/AdminCouriers";
 import { AdminMessages } from "../components/AdminMessages";
+import { AdminAiFlags } from "../components/AiTools";
 import { AdminRequests } from "../components/AdminRequests";
 import { AdminMarkets } from "../components/AdminMarkets";
 import { AdminVerifications, AdminAudit } from "../components/AdminTrust";
@@ -85,6 +86,7 @@ export default function Admin() {
     <Message error={error} ok={notice} />
 
     {tab === "requests" && <AdminRequests />}
+    {tab === "listings" && <AdminAiFlags />}
     {tab === "messages" && <AdminMessages />}
     {tab === "couriers" && <AdminCouriers />}
     {tab === "markets" && <AdminMarkets />}

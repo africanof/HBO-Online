@@ -27,6 +27,8 @@ describe("ai-assist", () => {
   });
   it("pesquisa inteligente → filtros válidos", () => {
     const s = smartSearchFrom({ keywords: "Hilux", listing_type: "vehicle", purpose: "sale", category_slug: "nada", min_price: null, max_price: 5000000, attributes: { fuel: "gasoleo", transmission: "x" }, remaining: 29 }, CATS);
+    expect(smartSearchFrom({ keywords: "carro", listing_type: "vehicle" }, CATS).query).toBe("");
+    expect(smartSearchFrom({ keywords: "carro" }, CATS).query).toBe("carro");
     expect(s).toMatchObject({ query: "Hilux", listingType: "vehicle", purpose: "sale", categorySlug: "", maxPrice: "5000000", minPrice: "", attributes: { fuel: "gasoleo" } });
   });
   it("exige sessão e texto", async () => {

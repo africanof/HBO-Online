@@ -1,4 +1,5 @@
 import { ListingGuarantee } from "../../../components/Conformity";
+import { TranslateListing } from "../../../components/AiTools";
 import { PlaceView } from "../../../components/Place";
 import { useEffect, useState } from "react";
 import { VideoPlayer } from "../../../components/Video";
@@ -27,6 +28,7 @@ export default function ClassifiedDetail() {
   const { width } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [item, setItem] = useState<any>(null);
+  const [tr, setTr] = useState<{ title: string; description: string | null } | null>(null);
   const [job, setJob] = useState<JobCategory | null>(null); const [catSlug, setCatSlug] = useState<string | undefined>();
   // Vaga de emprego ou estágio: o preço é o salário e o CV vai pelas Mensagens.
   useEffect(() => { void categoryOf(supabase(), item?.category_id).then(c => { setCatSlug(c?.slug); setJob(c && isJobCategorySlug(c.slug) ? (c as JobCategory) : null); }).catch(() => setJob(null)); }, [item?.category_id]);
@@ -125,7 +127,8 @@ export default function ClassifiedDetail() {
     {item.status !== "published" && <Text style={ui.error}>{t("ls.detail.only_you", { status: tc(STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] ?? item.status) })}</Text>}
     {item.purpose === "wanted" && <Text style={[ui.label, { backgroundColor: C.yellowSoft, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }]}>{t("ls.detail.wanted_badge")}</Text>}
     {isFeatured(item) && <Text style={[ui.label, { alignSelf: "flex-start", backgroundColor: "#FFF4D6", color: "#4A3700", borderColor: "#E0B100", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2 }]}>{t("card.featured")}</Text>}
-    <Text style={ui.h1}>{item.title}</Text>
+    <Text style={ui.h1}>{tr?.title ?? item.title}</Text>
+    {item.status === "published" && <TranslateListing listingId={item.id} onTranslated={setTr} />}
     {!!item.ref_no && <Text style={ui.muted}>{t("ls.detail.ref", { ref: formatRef("listing", item.ref_no) })}</Text>}
     {item.purpose === "wanted" ? <Text style={ui.price}>{t("home.budget")} {tc(coreText(listingPriceLabel(item), t) ?? "")}</Text> : job ? <Text style={ui.price}>{t("job.salary")}: {tc(salaryLabel(item.price, job.slug, item.currency))}</Text>
       : <Text style={ui.price}>{tc(coreText(listingPriceLabel(item), t) ?? "")}</Text>}
@@ -142,7 +145,7 @@ export default function ClassifiedDetail() {
     <PhotoGallery media={media} icon={item.purpose === "wanted" ? "🔎" : "🏷️"} />
     {!!item.video_url && <VideoPlayer url={item.video_url} />}
     {item.purpose === "wanted" && item.status === "published" && <WantedHelpers title={item.title} mine={mine} />}
-    {!!item.description && <Text style={ui.text}>{item.description}</Text>}
+    {!!item.description && <Text style={ui.text}>{tr?.description ?? item.description}</Text>}
     <PlaceView directions={item.directions} lat={item.geo_lat} lng={item.geo_lng} approximate />
     {item.purpose !== "wanted" && <DeliveryPolicyBox sellerId={item.owner_id} />}
     <ListingGuarantee listingId={id} uid={uid} mine={mine} wanted={item.purpose === "wanted"} />

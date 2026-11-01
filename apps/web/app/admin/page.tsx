@@ -11,6 +11,7 @@ import { useT, formatDateIn } from "../../lib/i18n";
 import { AdminCouriers } from "../../components/AdminCouriers";
 import { AdminMessages } from "../../components/AdminMessages";
 import { AdminRequests } from "../../components/AdminRequests";
+import { AdminAiFlags } from "../../components/AiTools";
 import { AdminMarkets } from "../../components/AdminMarkets";
 import { AdminVerifications, AdminAudit } from "../../components/AdminTrust";
 import { AdminDisputes } from "../../components/Disputes";
@@ -130,6 +131,7 @@ function AdminContent() {
       </article>)}
     </section>}
 
+    {tab === "listings" && <AdminAiFlags />}
     {tab === "listings" && <section className="stack">
       <form className="row" onSubmit={e => { e.preventDefault(); void load("listings"); }}>
         <input value={listingQuery} onChange={e => setListingQuery(e.target.value)} placeholder={tr("ad.search_title")} style={{ maxWidth: 300 }} />

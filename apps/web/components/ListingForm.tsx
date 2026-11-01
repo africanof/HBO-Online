@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { MarketPicker } from "./MarketPicker";
 import { DetailFields } from "./ListingDetails";
 import { AiImprove } from "./AiImprove";
+import { PhotoFillButton, PriceHintNote } from "./AiTools";
 import { PlaceFields } from "./Place";
 import { ConformityCheck } from "./Conformity";
 import { VideoField } from "./Video";
@@ -254,6 +255,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
         {lockedAuction && <p className="badge">🔨 {t("ls.in_auction")}</p>}
         <label>{isJob ? t("job.salary_field") : saleMode === "auction" ? t("ls.price_auction_start") : saleMode === "offers" || saleMode === "trade" ? t("ls.price_reference") : useAgro ? t("ls.price_per", { unit: agroUnitInfo(agroUnit)?.short ? tc(agroUnitInfo(agroUnit)!.short) : t("ls.unit") }) : t("ls.price_kz")}
           <input value={price} onChange={e => setPrice(e.target.value)} inputMode="decimal" placeholder={saleMode === "fixed" || saleMode === "negotiable" || saleMode === "auction" ? t("ls.ex_85000") : t("ls.ph_price_empty")} /></label>
+        {!isJob && !useAgro && <PriceHintNote categoryId={categoryId} listingType={listingType} purpose={purpose} />}
         {saleMode === "auction" && !lockedAuction && <label>{t("ls.auction_duration")}
           <select value={auctionDays} onChange={e => setAuctionDays(e.target.value)}>{[1, 3, 5, 7, 10, 14].map(d => <option key={d} value={d}>{t("ls.n_days_s", { n: d })}</option>)}</select></label>}
         {canAlsoTrade(purpose, saleMode) && <label className="check"><input type="checkbox" checked={acceptsTrade} onChange={e => setAcceptsTrade(e.target.checked)} /> 🔁 {t("ls.also_trade")}</label>}
@@ -282,6 +284,16 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
       <fieldset className="stack" style={{ border: "2px solid #ddd", borderRadius: 12, padding: 14 }}>
         <legend style={{ fontWeight: 700 }}>{t("ls.photos_count", { n: photos.length, max: CLASSIFIED_MAX_PHOTOS })}</legend>
         <input type="file" accept="image/*" multiple disabled={photos.length >= CLASSIFIED_MAX_PHOTOS} onChange={e => { addFiles(e.target.files); e.target.value = ""; }} aria-label={t("ls.select_photos")} />
+        {!wanted && photos.length > 0 && <PhotoFillButton categories={categories.map(c => ({ slug: (c as any).slug, name: c.name }))}
+          getImage={async () => { const p0 = photos[0]; if (!p0) return null; return p0.file ?? await fetch(p0.src).then(r => r.blob()); }}
+          onApply={f => {
+            if (!title.trim()) setTitle(f.title);
+            if (!description.trim()) setDescription(f.description);
+            if (f.listingType && !editing) setListingType(f.listingType as ClassifiedListingType);
+            const cat = f.categorySlug ? categories.find(c => (c as any).slug === f.categorySlug) : null;
+            if (cat && !categoryId) setCategoryId(cat.id);
+            setDetails(d => ({ ...f.details, ...Object.fromEntries(Object.entries(d).filter(([, v]) => v)) }));
+          }} />}
         <div className="row">
           {photos.map((p, i) => (
             <div key={p.key} style={{ display: "grid", gap: 6, width: 120 }}>

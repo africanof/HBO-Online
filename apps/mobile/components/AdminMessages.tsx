@@ -7,6 +7,7 @@ import { formatDateTimeIn, useT } from "../lib/i18n";
 import { ui, C } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
 import { MessageAttachment } from "./ChatMedia";
+import { TeamReplySuggest } from "./AiTools";
 
 /**
  * Mensagens mediadas: a equipa lê cada mensagem dos utilizadores e decide reencaminhá-la
@@ -74,6 +75,7 @@ export function AdminMessages() {
       <Chips options={[...open.participants.map(p => ({ value: p.user_id, label: `${p.name} (${roleLabel(p.role)})` })), { value: "both", label: t("ad.msg.both") }]}
         value={replyTo || "both"} onChange={v => setReplyTo(v === "both" ? "" : v)} />
       <TextInput style={ui.input} multiline value={reply} onChangeText={setReply} accessibilityLabel={t("ad.msg.write")} />
+      <TeamReplySuggest conversationId={open.conversation_id} audienceId={replyTo} subject={open.subject} onUse={setReply} />
       <Button title={t("common.send")} disabled={busy || !reply.trim()}
         onPress={() => void run(() => teamSendMessage(supabase(), open.conversation_id, replyTo || null, reply), t("ad.msg.ok_sent")).then(() => setReply(""))} />
     </View>

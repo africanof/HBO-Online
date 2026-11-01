@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Gallery } from "../../../components/Video";
+import { TranslateListing } from "../../../components/AiTools";
 import { WantedHelpers } from "../../../components/WantedHelpers";
 import { useParams } from "next/navigation";
 import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
@@ -24,6 +25,7 @@ export default function ClassifiedDetail() {
   const { id } = useParams<{ id: string }>();
   const { lang, t, tc } = useT();
   const [item, setItem] = useState<any>(null);
+  const [tr, setTr] = useState<{ title: string; description: string | null } | null>(null);
   const [job, setJob] = useState<JobCategory | null>(null); const [catSlug, setCatSlug] = useState<string | undefined>();
   const [place, setPlace] = useState("");
   const [seller, setSeller] = useState("");
@@ -128,7 +130,8 @@ export default function ClassifiedDetail() {
       <section className="buybox">
         {item.purpose === "wanted" && <span className="badge" style={{ justifySelf: "start", background: "var(--yellow-soft)", borderColor: "var(--yellow-line)", color: "var(--yellow-text)" }}>🔎 {t("home.wanted_badge")} — {t("ls.buyer_request")}</span>}
         {isFeatured(item) && <span className="badge" style={{ justifySelf: "start", background: "var(--yellow-soft)", borderColor: "var(--yellow-line)", color: "var(--yellow-text)" }}>⭐ {t("ls.featured")}</span>}
-        <h1>{item.title}</h1>
+        <h1>{tr?.title ?? item.title}</h1>
+        {item.status === "published" && <TranslateListing listingId={item.id} onTranslated={setTr} />}
         {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>👤</span><span>{item.purpose === "wanted" ? t("ls.buyer") : t("ls.advertiser")}: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a> <SellerBadge userId={item.owner_id} /><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>{t("ls.see_other_listings")}</a></span></div>}
         {item.purpose === "wanted" ? <div><span className="muted">{t("ls.budget")}</span><div className="big-price">{tc(listingPriceLabel(item))}</div></div> : job ? <div><span className="muted">{t("job.salary")}</span><div className="big-price">{tc(salaryLabel(item.price, job.slug, item.currency))}</div></div>
           : <div className="big-price">{tc(listingPriceLabel(item))}</div>}
@@ -167,7 +170,7 @@ export default function ClassifiedDetail() {
       </section>
     </div>
     {item.purpose === "wanted" && item.status === "published" && <WantedHelpers title={item.title} mine={mine} />}
-    {item.description && <section className="card"><h2 style={{ margin: 0 }}>{t("ls.description")}</h2><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{item.description}</p></section>}
+    {item.description && <section className="card"><h2 style={{ margin: 0 }}>{t("ls.description")}</h2><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{tr?.description ?? item.description}</p></section>}
     <PlaceView directions={item.directions} lat={item.geo_lat} lng={item.geo_lng} approximate />
     <ListingGuarantee listingId={id} uid={uid} mine={mine} wanted={item.purpose === "wanted"} />
     {mine && item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} />}

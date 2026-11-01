@@ -9,6 +9,7 @@ import { supabase } from "../lib/supabase";
 import { shrinkAsset } from "../lib/image";
 import { C, ui } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
+import { DisputeSummary } from "./AiTools";
 import { useT, formatDateTimeIn, type TFn } from "../lib/i18n";
 
 export type Evidence = { uri: string; base64?: string | null; mimeType: string };
@@ -172,6 +173,7 @@ export function AdminDisputes() {
         <Text style={ui.muted}>{t("sh.write_ref_below")}</Text>
       </>}
       <DisputeTimeline events={d.events} />
+      {d.status !== "resolved" && <DisputeSummary disputeId={d.id} />}
       {d.status !== "resolved" && (editing === d.id ? <>
         <Chips options={(Object.keys(DISPUTE_DECISION_LABELS) as DisputeDecision[]).map(k => ({ value: k, label: tc(DISPUTE_DECISION_LABELS[k]) }))} value={decision} onChange={setDecision} />
         {(decision === "refund" || decision === "return_refund") && <TextInput style={ui.input} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} accessibilityLabel={t("sh.refund_value_a11y")} placeholder={t("sh.refund_value_ph", { n: Number(d.amount ?? d.order_total) })} placeholderTextColor={C.muted} />}
