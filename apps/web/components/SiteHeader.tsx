@@ -22,7 +22,7 @@ export function Logo({ size }: { size?: number }) {
 const SCOPE_BY_PATH: [string, SearchScope][] = [["/loja", "loja"], ["/pracas", "pracas"], ["/profissionais", "profissionais"], ["/empresas", "empresas"]];
 /** [ícone, chave do texto, endereço] */
 const CATEGORY_LINKS: [string, string, string][] = [
-  ["", "nav.home", "/"], ["", "scope.classificados", "/explorar"], ["", "cat.Imóveis", "/explorar?tipo=real_estate"], ["", "cat.Viaturas", "/explorar?tipo=vehicle"], ["🌾", "cat.Campo", "/agricultura"], ["🏭", "cat.Fábricas", "/empresas?categoria=fabricas"], ["🎟️", "cat.Eventos", "/eventos"], ["⛽", "web.fuel", "/combustivel"], ["🛎️", "nav.bookings", "/reservas"], ["🎬", "web.videos", "/videos"],
+  ["", "nav.home", "/"], ["", "scope.classificados", "/explorar"], ["", "cat.Imóveis", "/explorar?tipo=real_estate"], ["", "cat.Viaturas", "/explorar?tipo=vehicle"], ["🌾", "cat.Campo", "/agricultura"], ["🏭", "cat.Fábricas", "/empresas?categoria=fabricas"], ["💼", "cat.Emprego", "/explorar?categoria=emprego"], ["🎟️", "cat.Eventos", "/eventos"], ["⛽", "web.fuel", "/combustivel"], ["🛎️", "nav.bookings", "/reservas"], ["🎬", "web.videos", "/videos"],
   ["", "cat.Arrendar", "/explorar?finalidade=rent"], ["", "cat.Leilões", "/explorar?finalidade=auction"], ["", "cat.Procura-se", "/procura-se"], ["", "cat.Trocas", "/trocas"], ["", "cat.Praças", "/pracas"], ["", "web.events_tickets", "/eventos"], ["", "cat.Loja", "/loja"],
   ["", "cat.Profissionais", "/profissionais"], ["", "cat.Empresas", "/empresas"], ["", "web.recent", "/historico"]
 ];

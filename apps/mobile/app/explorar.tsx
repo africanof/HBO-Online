@@ -17,7 +17,7 @@ import { useT, coreText, timeAgoIn } from "../lib/i18n";
 type Option = { id: string; name: string };
 
 export default function Explorar() {
-  const params = useLocalSearchParams<{ q?: string; tipo?: string; finalidade?: string; modo?: string }>();
+  const params = useLocalSearchParams<{ q?: string; tipo?: string; finalidade?: string; modo?: string; categoria?: string }>();
   const initial = readExploreParams(k => (params as any)[k] ?? null);
   const { t, tc, lang } = useT();
   const { width } = useWindowDimensions(); const cardW = (width - 32 - 14) / 2;
@@ -30,20 +30,24 @@ export default function Explorar() {
 
   useEffect(() => {
     const c = supabase();
-    void c.from("categories").select("id,name").eq("active", true).order("name").then(({ data }) => setCategories(data ?? []));
     void listProvinces(c).then(({ data }) => setProvinces((data ?? []) as Option[]));
-    void search();
+    // «?categoria=emprego» escolhe logo essa categoria (as categorias carregam primeiro).
+    void c.from("categories").select("id,name,slug").eq("active", true).order("name").then(({ data }) => {
+      const list = (data ?? []) as (Option & { slug?: string })[]; setCategories(list);
+      const fromUrl = initial.categorySlug ? list.find(x => x.slug === initial.categorySlug)?.id ?? "" : "";
+      if (fromUrl) { setCategoryId(fromUrl); void search({ categoryId: fromUrl }); } else void search();
+    });
   }, []);
   useEffect(() => {
     if (!provinceId) { setMunicipalities([]); return; }
     void listMunicipalities(supabase(), provinceId).then(({ data }) => setMunicipalities((data ?? []) as Option[]));
   }, [provinceId]);
 
-  function filters(o: { q?: string; purpose?: string; mode?: string } = {}): ClassifiedSearchFilters {
-    return { query: o.q ?? q, purpose: ((o.purpose ?? purpose) || undefined) as any, listingType: (type || undefined) as any, categoryId: categoryId || undefined,
+  function filters(o: { q?: string; purpose?: string; mode?: string; categoryId?: string } = {}): ClassifiedSearchFilters {
+    return { query: o.q ?? q, purpose: ((o.purpose ?? purpose) || undefined) as any, listingType: (type || undefined) as any, categoryId: (o.categoryId ?? categoryId) || undefined,
       provinceId: provinceId || undefined, municipalityId: municipalityId || undefined, minPrice: parsePrice(min), maxPrice: parsePrice(max), saleMode: ((o.mode ?? mode) || undefined) as ClassifiedSearchFilters["saleMode"] };
   }
-  async function search(o: { q?: string; purpose?: string; mode?: string } = {}) {
+  async function search(o: { q?: string; purpose?: string; mode?: string; categoryId?: string } = {}) {
     setError(""); setNotice(""); setBusy(true);
     const f = filters(o);
     // Guarda a última pesquisa de cada filtro para a mostrar sem internet.

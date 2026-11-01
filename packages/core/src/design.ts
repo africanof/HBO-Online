@@ -51,7 +51,9 @@ export function readExploreParams(get: (key: string) => string | null | undefine
   const PURPOSES = ["sale", "rent", "lease", "wanted", "service", "auction"];
   const modo = get("modo") ?? "";
   const MODES = ["fixed", "negotiable", "offers", "auction", "trade"];
-  return { query: (get("q") ?? "").trim(), listingType: TYPES.includes(tipo) ? tipo : "", purpose: PURPOSES.includes(finalidade) ? finalidade : "", saleMode: MODES.includes(modo) ? modo : "" };
+  const categoria = (get("categoria") ?? "").trim().toLowerCase();
+  return { query: (get("q") ?? "").trim(), listingType: TYPES.includes(tipo) ? tipo : "", purpose: PURPOSES.includes(finalidade) ? finalidade : "", saleMode: MODES.includes(modo) ? modo : "",
+    categorySlug: /^[a-z0-9-]{1,60}$/.test(categoria) ? categoria : "" };
 }
 
 /** Categorias redondas da página inicial. */
@@ -60,6 +62,7 @@ export const HOME_CATEGORIES: { label: string; icon: string; href: string }[] = 
   { label: "Viaturas", icon: "🚗", href: "/explorar?tipo=vehicle" },
   { label: "Campo", icon: "🌾", href: "/agricultura" },
   { label: "Fábricas", icon: "🏭", href: "/empresas?categoria=fabricas" },
+  { label: "Emprego", icon: "💼", href: "/explorar?categoria=emprego" },
   { label: "Combustível e gás", icon: "⛽", href: "/combustivel" },
   { label: "Hotéis", icon: "🏨", href: "/reservas?tipo=hoteis" },
   { label: "Restaurantes", icon: "🍽️", href: "/reservas?tipo=restaurantes" },

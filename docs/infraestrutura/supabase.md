@@ -36,5 +36,6 @@ Schema, RLS, Auth, Storage, Edge Functions e demais recursos só são alterados 
 | `20261101171000_pedidos_mediados_correcao.sql` | Correção: os contactos privados dos pedidos só são lidos pela equipa. |
 | `20261101180000_estado_pedidos_cliente.sql` | O cliente vê os seus pedidos «à espera da equipa» ou recusados (com o motivo) em «Encomendas» e «A sua conta». |
 | `20261101181000_pedidos_aprovados_cliente.sql` | O cliente também vê os pedidos aprovados (reencaminhados) e recebe um aviso quando a equipa aprova. |
+| `20261101190000_categorias_emprego.sql` | Categorias de anúncios «Emprego e recrutamento», «Estágios remunerados» e «Estágios não remunerados». |
 
 Todas já estão aplicadas no projeto `pewymvkowbdizdiyjmao`.

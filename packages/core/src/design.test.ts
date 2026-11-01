@@ -12,9 +12,12 @@ describe("design", () => {
   });
   it("lê os filtros da página Explorar e ignora valores estranhos", () => {
     const p = new URLSearchParams("q=%20hilux%20&tipo=vehicle&finalidade=auction");
-    expect(readExploreParams(k => p.get(k))).toEqual({ query: "hilux", listingType: "vehicle", purpose: "auction", saleMode: "" });
+    expect(readExploreParams(k => p.get(k))).toEqual({ query: "hilux", listingType: "vehicle", purpose: "auction", saleMode: "", categorySlug: "" });
     const bad = new URLSearchParams("tipo=nave&finalidade=x");
-    expect(readExploreParams(k => bad.get(k))).toEqual({ query: "", listingType: "", purpose: "", saleMode: "" });
+    expect(readExploreParams(k => bad.get(k))).toEqual({ query: "", listingType: "", purpose: "", saleMode: "", categorySlug: "" });
+    expect(readExploreParams(k => new URLSearchParams("categoria=Estagios-Remunerados").get(k)).categorySlug).toBe("estagios-remunerados");
+    expect(readExploreParams(k => new URLSearchParams("categoria=a;drop").get(k)).categorySlug).toBe("");
+    expect(HOME_CATEGORIES.find(c => c.label === "Emprego")?.href).toBe("/explorar?categoria=emprego");
   });
   it("as categorias da página inicial apontam para páginas existentes", () => {
     for (const c of HOME_CATEGORIES) expect(c.href).toMatch(/^\/(explorar|loja|pracas|procura-se|trocas|profissionais|empresas|agricultura|eventos|combustivel|reservas)(\?|$)/);
