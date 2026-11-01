@@ -8,6 +8,7 @@ import { OfflineBanner } from "../components/Offline";
 import { browserStore } from "../components/Engage";
 import { LiteImg } from "../components/LiteImg";
 import { PromoCard } from "../components/Promo";
+import { recommendedListings } from "@huambo-online/core";
 
 type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[]; events?: any[]; promos?: any[] };
 
@@ -22,6 +23,13 @@ export default function Home() {
   const rating = (r: unknown, n: unknown) => { const l = ratingLabel(r as number, n as number); return l === "Sem avaliações" ? t("rating.none") : l; };
   const [s, setS] = useState<Shelf | null>(null);
   const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
+  // «Para si»: só com sessão iniciada (com base no que a pessoa viu, pesquisou e guardou).
+  const [recs, setRecs] = useState<any[]>([]);
+  useEffect(() => {
+    if (!supabaseConfigured) return;
+    const c = supabase();
+    void c.auth.getUser().then(({ data }) => { if (data.user) void recommendedListings(c, 12).then(r => setRecs(r.data)); });
+  }, []);
   useEffect(() => {
     if (!supabaseConfigured) { setS({ listings: [], auctions: [], rentals: [], products: [], providers: [], markets: [], wanted: [] }); return; }
     const c = supabase();
@@ -63,6 +71,8 @@ export default function Home() {
     </nav>
 
     {s === null && <p className="muted" style={{ marginTop: 28 }}>{t("home.loading")}</p>}
+
+    {!!recs.length && <><ShelfHead title={"✨ " + t("home.for_you")} href="/explorar" /><div className="shelf">{recs.map(listingCard)}</div></>}
 
     {!!s?.promos?.length && <><ShelfHead title={"🎬 " + t("home.videos")} href="/videos" /><div className="shelf">{s.promos.map(x => <PromoCard key={x.id} p={x} />)}</div></>}
 

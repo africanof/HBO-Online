@@ -15,6 +15,7 @@ export * from "./messaging";
 export * from "./team-requests";
 export * from "./jobs";
 export * from "./listing-details";
+export * from "./recommendations";
 export * from "./auctions";
 export * from "./auction-lifecycle";
 export * from "./delivery";

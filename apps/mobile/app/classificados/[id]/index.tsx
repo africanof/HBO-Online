@@ -6,7 +6,7 @@ import { WantedHelpers } from "../../../components/WantedHelpers";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
-  reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatRef, formatPrice, friendlyErrorIn, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary, categoryOf, isJobCategorySlug, salaryLabel, type JobCategory } from "@huambo-online/core";
+  reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatRef, formatPrice, friendlyErrorIn, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary, categoryOf, isJobCategorySlug, trackListingView, salaryLabel, type JobCategory } from "@huambo-online/core";
 import { DetailFacts } from "../../../components/ListingDetails";
 import { supabase } from "../../../lib/supabase";
 import { ui, C } from "../../../lib/ui";
@@ -54,6 +54,7 @@ export default function ClassifiedDetail() {
       if (!r.data) { setError(t("ls.detail.not_found")); return; }
       setItem(r.data);
       if (r.fromCache) return;
+      if (r.data.status === "published") void trackListingView(c, id); // recomendações «Para si»
       const terr = listingTerritory(r.data);
       if (terr.municipalityId) {
         const m = await c.from("municipalities").select("name,provinces(name)").eq("id", terr.municipalityId).maybeSingle();

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { searchClassifiedListings, filterFieldsFor, attributeFilters, detailFacts, listingPriceLabel, isFeatured, friendlyErrorIn, PURPOSE_LABELS } from "@huambo-online/core";
+import { searchClassifiedListings, trackSearch, filterFieldsFor, attributeFilters, detailFacts, listingPriceLabel, isFeatured, friendlyErrorIn, PURPOSE_LABELS } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ItemCard } from "./ItemCard";
 import { useT, timeAgoIn } from "../lib/i18n";
@@ -20,6 +20,7 @@ export function TypeHub({ kind }: { kind: Kind }) {
   async function load(p = purpose, a = attrs, query = q) {
     setError(""); setItems(null);
     const attributes = attributeFilters(kind, null, a);
+    void trackSearch(supabase(), { query, listingType: kind });
     const r = await searchClassifiedListings(supabase(), { listingType: kind, purpose: (p || undefined) as any, query, ...(Object.keys(attributes).length ? { attributes } : {}), limit: 60 });
     if (r.error) setError(friendlyErrorIn(r.error, lang)); else setItems((r.data ?? []) as any[]);
   }

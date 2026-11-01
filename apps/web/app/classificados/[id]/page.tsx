@@ -16,7 +16,7 @@ import { OfflineBanner } from "../../../components/Offline";
 import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtras";
 import { MarketFact } from "../../../components/MarketPicker";
 import { DetailFacts } from "../../../components/ListingDetails";
-import { AUCTIONABLE_TYPES, formatRef, categoryOf, isJobCategorySlug, salaryLabel, type JobCategory } from "@huambo-online/core";
+import { AUCTIONABLE_TYPES, formatRef, categoryOf, isJobCategorySlug, trackListingView, salaryLabel, type JobCategory } from "@huambo-online/core";
 import { SellerBadge } from "../../../components/Reputation";
 import { OfferBox, OffersList } from "../../../components/Offers";
 
@@ -50,6 +50,7 @@ export default function ClassifiedDetail() {
       if (!r.data) { setError(t("ls.listing_not_found")); return; }
       setItem(r.data);
       if (r.fromCache) return;
+      if (r.data.status === "published") void trackListingView(c, id); // recomendações «Para si»
       const terr = listingTerritory(r.data);
       if (terr.municipalityId) {
         const m = await c.from("municipalities").select("name,provinces(name)").eq("id", terr.municipalityId).maybeSingle();

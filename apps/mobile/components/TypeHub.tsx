@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useWindowDimensions, ScrollView, Text, TextInput, View } from "react-native";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import { searchClassifiedListings, filterFieldsFor, attributeFilters, detailFacts, listingPriceLabel, isFeatured, friendlyErrorIn, PURPOSE_LABELS } from "@huambo-online/core";
+import { searchClassifiedListings, trackSearch, filterFieldsFor, attributeFilters, detailFacts, listingPriceLabel, isFeatured, friendlyErrorIn, PURPOSE_LABELS } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
@@ -26,6 +26,7 @@ export function TypeHub({ kind }: { kind: Kind }) {
   async function load(p = purpose, a = attrs, query = q) {
     setError(""); setItems(null);
     const attributes = attributeFilters(kind, null, a);
+    void trackSearch(supabase(), { query, listingType: kind });
     const r = await searchClassifiedListings(supabase(), { listingType: kind, purpose: (p === "all" ? undefined : p) as any, query, ...(Object.keys(attributes).length ? { attributes } : {}), limit: 60 });
     if (r.error) setError(friendlyErrorIn(r.error, lang)); else setItems((r.data ?? []) as any[]);
   }

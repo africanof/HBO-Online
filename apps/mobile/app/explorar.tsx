@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams } from "expo-router";
 import { ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { SALE_MODE_FILTERS, cardSaleTag, loadWithCache, isOfflineError, searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyErrorIn, parsePrice,
-  LISTING_TYPE_LABELS, PURPOSE_LABELS, readExploreParams, filterFieldsFor, attributeFilters, type ClassifiedSearchFilters, listingPriceLabel, isFeatured, categoryLabelIn } from "@huambo-online/core";
+  LISTING_TYPE_LABELS, PURPOSE_LABELS, readExploreParams, filterFieldsFor, attributeFilters, trackSearch, type ClassifiedSearchFilters, listingPriceLabel, isFeatured, categoryLabelIn } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
@@ -50,6 +50,7 @@ export default function Explorar() {
   async function search(o: { q?: string; purpose?: string; mode?: string; categoryId?: string } = {}) {
     setError(""); setNotice(""); setBusy(true);
     const f = filters(o);
+    void trackSearch(supabase(), { query: f.query, categoryId: f.categoryId, listingType: f.listingType });
     // Guarda a última pesquisa de cada filtro para a mostrar sem internet.
     const key = JSON.stringify(f);
     const r = await loadWithCache<{ key: string; items: any[] }>(deviceStore, "explorar", async () => { const x = await classifiedsCached(getPublic, () => searchClassifiedListings(supabase(), f), f as Record<string, unknown>); return { data: x.data ? { key, items: x.data as any[] } : null, error: x.error }; });

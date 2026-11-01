@@ -97,6 +97,7 @@ export const WEB_DICT: Dictionary = {
   "home.videos": { pt: "Vídeos e lives", en: "Videos and live streams", zh: "视频与直播" },
   "home.auctions": { pt: "Leilões a decorrer", en: "Ongoing auctions", zh: "进行中的拍卖" },
   "home.markets": { pt: "Praças do Huambo", en: "Huambo markets", zh: "万博市场" },
+  "home.for_you": { pt: "Recomendados para si", en: "Recommended for you", zh: "为您推荐" },
   "home.new_listings": { pt: "Novidades nos classificados", en: "New in classifieds", zh: "分类信息新品" },
   "home.wanted_title": { pt: "Procura-se — compradores à procura", en: "Wanted — buyers looking for items", zh: "求购——买家正在寻找" },
   "home.wanted_badge": { pt: "PROCURA-SE", en: "WANTED", zh: "求购" },

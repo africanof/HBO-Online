@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { filterFieldsFor, attributeFilters } from "@huambo-online/core";
+import { filterFieldsFor, attributeFilters, trackSearch } from "@huambo-online/core";
 import { loadWithCache, isOfflineError, searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyErrorIn, parsePrice, readExploreParams, categoryLabelIn,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, type ClassifiedSearchFilters, listingPriceLabel, SALE_MODE_FILTERS, cardSaleTag, isFeatured } from "@huambo-online/core";
 import { supabase } from "../../lib/supabase";
@@ -49,6 +49,7 @@ export default function ExplorarPage() {
   async function search(v = f) {
     setError(""); setNotice(""); setBusy(true);
     const fl = toFilters(v); const key = JSON.stringify(fl);
+    void trackSearch(supabase(), { query: fl.query, categoryId: fl.categoryId, listingType: fl.listingType });
     // Guarda a última pesquisa para a mostrar quando a rede falhar.
     const r = await loadWithCache<{ key: string; items: any[] }>(browserStore, "explorar", async () => { const x = await classifiedsCached(getPublic, () => searchClassifiedListings(supabase(), fl), fl as Record<string, unknown>); return { data: x.data ? { key, items: x.data as any[] } : null, error: x.error }; });
     const usable = r.data && r.data.key === key ? r.data.items : null;

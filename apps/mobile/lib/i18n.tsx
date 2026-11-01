@@ -96,6 +96,7 @@ export const APP_DICT: Dictionary = {
   "home.videos": { pt: "🎬 Vídeos e lives", en: "🎬 Videos and live streams", zh: "🎬 视频和直播" },
   "home.auctions": { pt: "🔨 Leilões a decorrer", en: "🔨 Ongoing auctions", zh: "🔨 进行中的拍卖" },
   "home.markets": { pt: "🧺 Praças do Huambo", en: "🧺 Huambo markets", zh: "🧺 万博市场" },
+  "home.for_you": { pt: "Recomendados para si", en: "Recommended for you", zh: "为您推荐" },
   "home.new": { pt: "Novidades", en: "New listings", zh: "最新信息" },
   "home.wanted_badge": { pt: "🔎 PROCURA-SE", en: "🔎 WANTED", zh: "🔎 求购" },
   "home.budget": { pt: "Orçamento:", en: "Budget:", zh: "预算：" },

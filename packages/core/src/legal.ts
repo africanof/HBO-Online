@@ -86,6 +86,7 @@ export function privacyPage(email?: string | null): InfoPage {
         "Empresas, postos de combustível, hotéis, restaurantes e eventos mostram só a localização (morada e mapa), para poderem ser encontrados. O telefone e o WhatsApp deles também ficam só para a equipa. Pode apagar o seu número de WhatsApp quando quiser."] },
       { title: "4. O que é privado", paragraphs: [
         "As mensagens passam sempre pela equipa do Huambo Online (administração e moderadores), que as lê e as reencaminha à outra parte: os utilizadores não falam diretamente entre si. Encomendas, reservas, bilhetes, propostas, alugueres e pedidos de serviço também chegam primeiro à equipa, que os reencaminha a quem os vai tratar. O seu telefone e a sua morada só são partilhados quando forem precisos para a entrega ou o serviço.",
+        "Recomendações: para lhe sugerir anúncios, usamos os anúncios que vê, as pesquisas que faz e o que guarda (sem inteligência artificial). Só você vê este histórico; pode apagá-lo em «A sua conta» e é apagado sozinho ao fim de 90 dias.",
         "Os documentos de verificação ficam num espaço privado: só o próprio e a administração os podem abrir, através de uma ligação temporária."] },
       { title: "5. Onde ficam os dados e quem nos ajuda", paragraphs: [
         "A base de dados e os ficheiros estão no Supabase, em servidores na União Europeia (Alemanha, Frankfurt).",

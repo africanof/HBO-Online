@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { searchClassifiedListings, listProducts, listProviders, listMarkets, formatPrice, ratingLabel, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted, listTrades, cardSaleTag, loadWithCache, isOfflineError, isFeatured, listEvents, priceFromText, categoryLabelIn } from "@huambo-online/core";
+import { recommendedListings, searchClassifiedListings, listProducts, listProviders, listMarkets, formatPrice, ratingLabel, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted, listTrades, cardSaleTag, loadWithCache, isOfflineError, isFeatured, listEvents, priceFromText, categoryLabelIn } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ui, C, themed } from "../lib/ui";
 import { Button } from "../components/Ui";
@@ -28,12 +28,13 @@ const MORE: [string, string, string][] = [
 export default function Home() {
   const router = useRouter(); const { t, lang } = useT();
   const [s, setS] = useState<Shelves | null>(null);
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null); const [recs, setRecs] = useState<any[]>([]);
   const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
   useFocusEffect(useCallback(() => {
     if (!supabaseConfigured) { setS({ listings: [], auctions: [], rentals: [], products: [], providers: [], markets: [], wanted: [] }); return; }
     const c = supabase();
-    void c.auth.getUser().then(({ data }) => setSignedIn(!!data.user));
+    // «Para si»: só com sessão iniciada (com base no que a pessoa viu, pesquisou e guardou).
+    void c.auth.getUser().then(({ data }) => { setSignedIn(!!data.user); if (data.user) void recommendedListings(c, 12).then(r => setRecs(r.data)); else setRecs([]); });
     // Guarda a página inicial para a mostrar quando não houver internet.
     void loadWithCache<Shelves>(deviceStore, "inicio", async () => {
       const all = await Promise.all([
@@ -88,6 +89,7 @@ export default function Home() {
     </ScrollView>
 
     {s === null && <Text style={ui.muted}>{t("home.loading")}</Text>}
+    {!!recs.length && <Shelf title={"✨ " + t("home.for_you")} href="/explorar">{recs.map(listing)}</Shelf>}
     <PromoShelf title={t("home.videos")} />
     {!!s?.events?.length && <Shelf title={"🎟️ " + t("home.events")} href="/eventos">{s.events.map(e => <ItemCard key={e.id} href={"/eventos/" + e.id} media={e.cover_url ? [e.cover_url] : null} icon="🎟️"
       title={e.title} price={coreText(priceFromText(e.price_from), t) ?? ""} featured={e.featured} meta={`📅 ${formatDateTimeIn(e.starts_at, lang)}`} />)}</Shelf>}
