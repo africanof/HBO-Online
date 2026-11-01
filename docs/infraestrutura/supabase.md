@@ -41,5 +41,6 @@ Schema, RLS, Auth, Storage, Edge Functions e demais recursos só são alterados 
 | `20261101210000_mais_categorias.sql` | 59 categorias novas: anúncios, Loja, profissionais, serviços e empresas. |
 | `20261101220000_arrendamento_imoveis_gratis.sql` | Arrendamento e aluguer de imóveis sem comissão (`listing_commission_free`). |
 | `20261101230000_recomendacoes.sql` | Recomendações «Para si»: histórico `user_interests` (vistas, pesquisas, guardados; 90 dias) e `recommended_listings`. |
+| `20261101240000_ia_anuncios.sql` | «✨ Melhorar com IA»: limite de 15 usos por dia (`ai_writer_usage`, `consume_ai_writer`) para a Edge Function `generate-ad` (OpenAI gpt-4o-mini; segredo `OPENAI_API_KEY`). |
 
 Todas já estão aplicadas no projeto `pewymvkowbdizdiyjmao`.

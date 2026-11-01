@@ -91,7 +91,8 @@ export function privacyPage(email?: string | null): InfoPage {
       { title: "5. Onde ficam os dados e quem nos ajuda", paragraphs: [
         "A base de dados e os ficheiros estão no Supabase, em servidores na União Europeia (Alemanha, Frankfurt).",
         "O Site está alojado na Vercel. A APP é feita com Expo.",
-        "Pesquisa por fotografia (quando estiver ativa): a fotografia é enviada ao Claude (Anthropic) para dizer o que é o artigo, e não é guardada por nós."] },
+        "Pesquisa por fotografia (quando estiver ativa): a fotografia é enviada ao Claude (Anthropic) para dizer o que é o artigo, e não é guardada por nós.",
+        "Melhorar com IA (só quando carrega no botão): o título, a descrição e os dados do anúncio são enviados à OpenAI para propor um texto melhor, e não são guardados por nós."] },
       { title: "6. Quanto tempo guardamos", paragraphs: [
         "Enquanto a conta existir. Os vídeos de anúncios fechados ou vendidos são apagados automaticamente depois de 7 dias, e os de produtos escondidos depois de 30 dias.",
         "Quando apaga a conta, os seus dados são apagados. Algumas cópias de segurança do fornecedor podem durar mais algum tempo até serem substituídas."] },

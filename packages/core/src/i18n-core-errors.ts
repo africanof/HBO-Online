@@ -288,6 +288,13 @@ export const CORE_ERROR_ROWS: CoreRow[] = [
   ["Não conseguimos analisar a fotografia agora. Tente de novo.", "We couldn't analyse the photo right now. Try again.", "我们暂时无法分析该照片。请重试。"],
   ["Sem ligação à internet. Verifique os dados móveis ou o Wi-Fi.", "No internet connection. Check your mobile data or Wi-Fi.", "没有网络连接。请检查移动数据或 Wi-Fi。"],
 
+  // --- Melhorar com IA (ai-writer.ts) ---
+  ["Inicie sessão para melhorar o anúncio com IA.", "Sign in to improve your listing with AI.", "请登录后使用 AI 优化信息。"],
+  ["Já usou as 15 melhorias com IA de hoje. Volte amanhã.", "You've used today's 15 AI improvements. Come back tomorrow.", "您今天的15次 AI 优化已用完。请明天再来。"],
+  ["A melhoria com IA ainda não está ativa. Tente mais tarde.", "AI improvement isn't active yet. Try later.", "AI 优化尚未开通。请稍后再试。"],
+  ["Escreva primeiro um título ou uma pequena descrição.", "First write a title or a short description.", "请先填写标题或简短描述。"],
+  ["Não conseguimos melhorar o texto agora. Tente de novo.", "We couldn't improve the text right now. Try again.", "我们暂时无法优化文字。请重试。"],
+
   // --- Localização (places.ts) ---
   ["Autorize a localização para marcar o ponto (ou cole as coordenadas do Google Maps).", "Allow location access to mark the point (or paste the coordinates from Google Maps).", "请允许定位以标记位置（或粘贴 Google 地图的坐标）。"],
   ["O GPS demorou demasiado. Tente outra vez num lugar aberto.", "The GPS took too long. Try again in an open place.", "GPS 定位超时。请在空旷处重试。"],

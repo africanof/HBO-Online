@@ -13,6 +13,7 @@ import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
 import { MarketPicker } from "./MarketPicker";
 import { DetailFields } from "./ListingDetails";
+import { AiImprove } from "./AiImprove";
 import { PlaceFields } from "./Place";
 import { ConformityCheck } from "./Conformity";
 import { VideoField } from "./Video";
@@ -251,6 +252,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
     <TextInput style={ui.input} value={title} maxLength={140} onChangeText={setTitle} placeholder={wanted ? (listingType === "service" ? t("ls.form.ph_wanted_service") : t("ls.form.ph_wanted")) : t("ls.form.ph_title")} />
     <Text style={ui.label}>{t("ls.form.description")}</Text>
     <TextInput style={[ui.input, ui.area]} multiline value={description} onChangeText={setDescription} placeholder={wanted ? t("ls.form.ph_desc_wanted") : t("ls.form.ph_desc")} />
+    {!wanted && <AiImprove input={{ title, description, listingType, purpose, category: categories.find(c => c.id === categoryId)?.name, details }} onApply={(nt, nd) => { setTitle(nt); setDescription(nd); }} />}
     {listingType === "real_estate" && (purpose === "rent" || purpose === "lease") && <Text style={ui.label}>{t("ls.rent_free_badge")}</Text>}
     {!wanted && <DetailFields listingType={listingType} categorySlug={catSlug} values={details} onChange={setDetails} />}
     {agroAllowed && <View style={[ui.card, { gap: 8 }]}>
