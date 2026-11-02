@@ -308,6 +308,17 @@ export const CORE_ERROR_ROWS: CoreRow[] = [
   ["Só a equipa (administração e moderadores) pode usar isto.", "Only the team (administrators and moderators) can use this.", "只有团队（管理员和版主）可以使用此功能。", "Seule l'équipe (administrateurs et modérateurs) peut utiliser ceci."],
   ["Não encontrámos o que procura. Atualize a página.", "We couldn't find what you're looking for. Refresh the page.", "未找到您要的内容。请刷新页面。", "Nous n'avons pas trouvé ce que vous cherchez. Actualisez la page."],
 
+  // --- Fundo branco nas fotografias (photo-background.ts) ---
+  ["Inicie sessão para pôr o fundo branco nas fotografias.", "Sign in to put a white background on your photos.", "请登录后为照片换成白色背景。", "Connectez-vous pour mettre un fond blanc sur vos photos."],
+  ["A sua conta está suspensa. Contacte a administração.", "Your account is suspended. Contact the administration.", "您的账户已被暂停。请联系管理员。", "Votre compte est suspendu. Contactez l'administration."],
+  ["Já tratou as 40 fotografias permitidas hoje. Volte amanhã.", "You've already edited today's 40 photos. Come back tomorrow.", "您今天已处理40张照片，已达上限。请明天再来。", "Vous avez déjà traité les 40 photos permises aujourd'hui. Revenez demain."],
+  ["A fotografia é grande demais (máximo 8 MB).", "The photo is too large (maximum 8 MB).", "照片太大（最大 8 MB）。", "La photo est trop volumineuse (8 Mo maximum)."],
+  ["Não encontrámos um artigo nesta fotografia. Tire-a mais perto, com o artigo ao centro.", "We couldn't find an item in this photo. Take it closer, with the item in the middle.", "我们在这张照片中找不到物品。请靠近一点拍摄，并把物品放在中间。", "Nous n'avons pas trouvé d'article sur cette photo. Prenez-la de plus près, avec l'article au centre."],
+  ["O fundo branco ainda não está ativo. Tente mais tarde.", "The white background isn't active yet. Try later.", "白色背景功能尚未开通。请稍后再试。", "Le fond blanc n'est pas encore actif. Réessayez plus tard."],
+  ["Não conseguimos tratar a fotografia agora. Tente de novo.", "We couldn't edit the photo right now. Try again.", "我们暂时无法处理这张照片。请重试。", "Nous n'avons pas pu traiter la photo maintenant. Réessayez."],
+  ["Fundo branco", "White background", "白色背景", "Fond blanc"],
+  ["Fundo Huambo Online", "Huambo Online background", "Huambo Online 背景", "Fond Huambo Online"],
+
   // --- Localização (places.ts) ---
   ["Autorize a localização para marcar o ponto (ou cole as coordenadas do Google Maps).", "Allow location access to mark the point (or paste the coordinates from Google Maps).", "请允许定位以标记位置（或粘贴 Google 地图的坐标）。", "Autorisez l'accès à la localisation pour marquer le point (ou collez les coordonnées de Google Maps)."],
   ["O GPS demorou demasiado. Tente outra vez num lugar aberto.", "The GPS took too long. Try again in an open place.", "GPS 定位超时。请在空旷处重试。", "Le GPS a mis trop de temps. Réessayez dans un endroit dégagé."],

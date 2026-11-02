@@ -2,10 +2,11 @@
 
 POST /api/fundo?estilo=branco|marca
   Authorization: Bearer <sessão do utilizador no Supabase>
-  corpo: a imagem (JPG, PNG ou WEBP, até 8 MB)
-Responde com a foto pronta em JPG. Usa o modelo «silueta» do rembg (U²-Net, código aberto),
+  corpo: a imagem (JPG, PNG ou WEBP, até 8 MB) — ou JSON {"image": "<base64>", "estilo": "..."} (APP)
+Responde com a foto pronta em JPG (ou JSON {"image": "<base64>", "remaining": n} quando o pedido é JSON). Usa o modelo «silueta» do rembg (U²-Net, código aberto),
 que corre aqui mesmo: não há custo por foto. Cada pessoa tem um limite diário (consume_ai('bg_remove')).
 """
+import base64
 import hashlib
 import io
 import json
@@ -167,7 +168,19 @@ class handler(BaseHTTPRequestHandler):
         self._json(STATUS.get(code, 500), {"error": code})
 
     def do_GET(self):
-        self._json(200, {"ok": True})
+        # ?verificar=1 carrega o modelo e trata uma imagem pequena de teste (diagnóstico, sem dados de ninguém).
+        if "verificar" not in (parse_qs(urlparse(self.path).query) or {}):
+            return self._json(200, {"ok": True})
+        import time
+        t = time.time()
+        try:
+            img = Image.new("RGB", (200, 200), (30, 120, 200))
+            ImageDraw.Draw(img).ellipse((50, 50, 150, 150), fill=(240, 200, 40))
+            m = object_mask(img)
+            out = compose(img, m, "marca")
+            return self._json(200, {"ok": True, "model": True, "found": out is not None, "seconds": round(time.time() - t, 2)})
+        except Exception as e:
+            return self._json(500, {"ok": False, "error": type(e).__name__})
 
     def do_POST(self):
         auth = self.headers.get("Authorization") or ""
@@ -183,6 +196,17 @@ class handler(BaseHTTPRequestHandler):
         if length > MAX_BYTES:
             return self._error("TOO_LARGE")
         data = self.rfile.read(length)
+        as_json = (self.headers.get("Content-Type") or "").startswith("application/json")
+        style = (parse_qs(urlparse(self.path).query).get("estilo") or ["branco"])[0]
+        if as_json:
+            try:
+                payload = json.loads(data)
+                data = base64.b64decode(str(payload.get("image") or ""), validate=False)
+                style = str(payload.get("estilo") or style)
+            except Exception:
+                return self._error("INVALID_IMAGE")
+            if not data:
+                return self._error("INVALID_IMAGE")
         try:
             img = Image.open(io.BytesIO(data))
             if img.format not in ("JPEG", "PNG", "WEBP", "MPO"):
@@ -203,7 +227,6 @@ class handler(BaseHTTPRequestHandler):
         if err:
             return self._error(err)
 
-        style = (parse_qs(urlparse(self.path).query).get("estilo") or ["branco"])[0]
         style = "marca" if style == "marca" else "branco"
         try:
             out = compose(img, object_mask(img), style)
@@ -214,6 +237,8 @@ class handler(BaseHTTPRequestHandler):
         buf = io.BytesIO()
         out.save(buf, "JPEG", quality=88, optimize=True)
         body = buf.getvalue()
+        if as_json:
+            return self._json(200, {"image": base64.b64encode(body).decode(), "remaining": remaining})
         self.send_response(200)
         self.send_header("Content-Type", "image/jpeg")
         self.send_header("Cache-Control", "no-store")
