@@ -5,7 +5,7 @@ import { TranslateListing } from "../../../components/AiTools";
 import { WantedHelpers } from "../../../components/WantedHelpers";
 import { useParams } from "next/navigation";
 import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
-  reportClassifiedListing, getPublicProfile, formatPrice, friendlyErrorIn, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary } from "@huambo-online/core";
+  reportClassifiedListing, getPublicProfile, formatPrice, friendlyErrorIn, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary, idFromParam } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { useT } from "../../../lib/i18n";
 import { SafetyTipsBox } from "../../../components/Safety";
@@ -22,7 +22,9 @@ import { SellerBadge } from "../../../components/Reputation";
 import { OfferBox, OffersList } from "../../../components/Offers";
 
 export default function ClassifiedDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  // Aceita também o endereço com o nome do artigo: «/…/<id>-nome-do-artigo».
+  const id = idFromParam(rawId);
   const { lang, t, tc } = useT();
   const [item, setItem] = useState<any>(null);
   const [tr, setTr] = useState<{ title: string; description: string | null } | null>(null);

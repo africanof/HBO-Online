@@ -34,3 +34,25 @@ describe("SEO e partilhas", () => {
     expect((await fetchSeo(client, "product", "abc")).noindex).toBe(true);
   });
 });
+
+describe("endereços com nome e dados estruturados", () => {
+  it("cria o endereço legível e recupera o id", async () => {
+    const { urlSlug: slugify, prettyPath, idFromParam } = await import("./seo");
+    const id = "5029be45-f7a3-4d86-8f14-73c96ee83b82";
+    expect(slugify("Casa T3 no Bairro Académico — Huambo!")).toBe("casa-t3-no-bairro-academico-huambo");
+    expect(prettyPath("/classificados/", id, "Toyota Hilux 2018")).toBe(`/classificados/${id}-toyota-hilux-2018`);
+    expect(prettyPath("/classificados/", id, "")).toBe(`/classificados/${id}`);
+    expect(idFromParam(`${id}-toyota-hilux-2018`)).toBe(id);
+    expect(idFromParam(id)).toBe(id);
+    expect(slugify("a".repeat(100)).length).toBeLessThanOrEqual(60);
+  });
+  it("diz ao Google o preço, o evento e a empresa", () => {
+    const l = buildSeo("listing", { title: "Toyota Hilux", price: 9500000, currency: "AOA", purpose: "sale", media: [img], status: "published" });
+    expect(l.slug).toBe("toyota-hilux");
+    expect(l.jsonLd).toMatchObject({ "@type": "Product", name: "Toyota Hilux", offers: { price: 9500000, priceCurrency: "AOA", availability: "https://schema.org/InStock" } });
+    expect(buildSeo("listing", { title: "Preciso de casa", purpose: "wanted", budget_min: 1, currency: "AOA", status: "published" }).jsonLd).toBeUndefined();
+    expect(buildSeo("event", { title: "Festa", venue: "Cine Ruacaná", starts_at: "2026-10-18T19:00:00Z", status: "published" }).jsonLd)
+      .toMatchObject({ "@type": "Event", startDate: "2026-10-18T19:00:00Z", location: { name: "Cine Ruacaná" } });
+    expect(buildSeo("business", { name: "Farmácia", active: true }).jsonLd).toMatchObject({ "@type": "LocalBusiness", address: { addressLocality: "Huambo" } });
+  });
+});

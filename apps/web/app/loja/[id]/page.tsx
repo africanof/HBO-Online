@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Gallery } from "../../../components/Video";
 import { useParams } from "next/navigation";
-import { getProduct, addToMyCart, formatRef, getPublicProfile, formatPrice, friendlyErrorIn } from "@huambo-online/core";
+import { getProduct, addToMyCart, formatRef, getPublicProfile, formatPrice, friendlyErrorIn, idFromParam } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { SaveButton, ShareButton, SellerWhatsApp, FollowButton, useRecordView } from "../../../components/Engage";
 import { SellerBadge } from "../../../components/Reputation";
@@ -11,7 +11,9 @@ import { DeliveryPolicyBox } from "../../../components/SellerDelivery";
 import { useT } from "../../../lib/i18n";
 
 export default function Produto() {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  // Aceita também o endereço com o nome do artigo: «/…/<id>-nome-do-artigo».
+  const id = idFromParam(rawId);
   const { lang, t } = useT();
   const [p, setP] = useState<any>(null); const [seller, setSeller] = useState(""); const [uid, setUid] = useState<string | null>(null);
   const [qty, setQty] = useState(1); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);

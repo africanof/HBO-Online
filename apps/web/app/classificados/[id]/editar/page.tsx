@@ -1,13 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { getClassifiedListing, friendlyErrorIn } from "@huambo-online/core";
+import { getClassifiedListing, friendlyErrorIn, idFromParam } from "@huambo-online/core";
 import { ListingForm } from "../../../../components/ListingForm";
 import { supabase, currentUserId } from "../../../../lib/supabase";
 import { useT } from "../../../../lib/i18n";
 
 export default function EditarAnuncio() {
-  const { id } = useParams<{ id: string }>();
+  const { id: rawId } = useParams<{ id: string }>();
+  // Aceita também o endereço com o nome do artigo: «/…/<id>-nome-do-artigo».
+  const id = idFromParam(rawId);
   const { lang, t } = useT();
   const [listing, setListing] = useState<any>(null);
   const [error, setError] = useState("");
