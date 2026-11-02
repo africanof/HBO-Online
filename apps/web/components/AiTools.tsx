@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { fillFromPhoto, smartSearch, askHelp, translateListing, priceHint, suggestTeamReply, summarizeDispute, listAiFlags, dismissAiFlag, moderateListing,
-  aiMessage, formatPrice, friendlyErrorIn, type CategoryRef, type PhotoFill, type SmartSearch, type PriceHint, type HelpTurn, type AiFlag } from "@huambo-online/core";
+  aiMessage, formatPrice, friendlyErrorIn, removePhotoBackground, photoBackgroundMessage, PHOTO_BACKGROUND_STYLES, type PhotoBackgroundStyle, type CategoryRef, type PhotoFill, type SmartSearch, type PriceHint, type HelpTurn, type AiFlag } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { useT, formatDateIn } from "../lib/i18n";
 
@@ -37,6 +37,41 @@ export function PhotoFillButton({ getImage, categories, onApply }: { getImage: (
     {err && <p className="error" role="alert" style={{ margin: 0 }}>{err}</p>}
     {ok && <p className="ok" role="status" style={{ margin: 0 }}>{ok}</p>}
   </div>;
+}
+
+/** Escolha do fundo para «🪄 Fundo branco» (branco ou o fundo claro da Huambo Online). */
+export function BackgroundStylePicker({ value, onChange }: { value: PhotoBackgroundStyle; onChange: (v: PhotoBackgroundStyle) => void }) {
+  const { t, tc } = useT();
+  return <div className="stack" style={{ gap: 4 }}>
+    <label className="row" style={{ gap: 8, alignItems: "center" }}>{t("ai.bg.style")}
+      <select value={value} onChange={e => onChange(e.target.value as PhotoBackgroundStyle)}>
+        {PHOTO_BACKGROUND_STYLES.map(s => <option key={s.value} value={s.value}>{tc(s.label)}</option>)}
+      </select>
+    </label>
+    <small>{t("ai.bg.hint")}</small>
+  </div>;
+}
+
+/** «🪄 Fundo branco» numa fotografia: tira o fundo (função /api/fundo do Site) e devolve a nova fotografia. */
+export function BackgroundButton({ getImage, style, onDone }: { getImage: () => Promise<Blob | null>; style: PhotoBackgroundStyle; onDone: (file: File) => void }) {
+  const { t, tc } = useT();
+  const [busy, setBusy] = useState(false); const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  async function run() {
+    setBusy(true); setMsg(null);
+    try {
+      const blob = await getImage();
+      if (!blob) { setMsg({ ok: false, text: tc(photoBackgroundMessage("INVALID_IMAGE")) }); return; }
+      const { data: s } = await supabase().auth.getSession();
+      const r = await removePhotoBackground(fetch as any, { siteUrl: window.location.origin, token: s.session?.access_token, image: blob, style });
+      if (r.error || !r.data) { setMsg({ ok: false, text: tc(photoBackgroundMessage(r.error)) }); return; }
+      onDone(new File([r.data.image], `fundo-${Date.now()}.jpg`, { type: "image/jpeg" }));
+      setMsg({ ok: true, text: t("ai.bg.done", { n: r.data.remaining }) });
+    } catch { setMsg({ ok: false, text: tc(photoBackgroundMessage("SERVER_ERROR")) }); } finally { setBusy(false); }
+  }
+  return <>
+    <button type="button" className="secondary" disabled={busy} onClick={() => void run()}>{busy ? t("ai.bg.working") : t("ai.bg.button")}</button>
+    {msg && <small className={msg.ok ? "ok" : "error"} role={msg.ok ? "status" : "alert"}>{msg.text}</small>}
+  </>;
 }
 
 /** «💡 Anúncios parecidos custam…» (sem IA: preços dos últimos 6 meses). */

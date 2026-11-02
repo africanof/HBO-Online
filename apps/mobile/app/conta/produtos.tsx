@@ -4,11 +4,12 @@ import { Link, useRouter } from "expo-router";
 import { Alert, Image, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { listMyProducts, saveProduct, deleteProduct, listProductCategories, uploadClassifiedMedia, removeClassifiedMedia, base64ToArrayBuffer,
-  parsePrice, formatPrice, friendlyErrorIn, MAX_PRODUCT_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, formatRef, getPublicSeller } from "@huambo-online/core";
+  parsePrice, formatPrice, friendlyErrorIn, MAX_PRODUCT_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, formatRef, getPublicSeller, type PhotoBackgroundStyle } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { ui } from "../../lib/ui";
 import { MarketPicker } from "../../components/MarketPicker";
 import { VideoField } from "../../components/Video";
+import { BackgroundButton, BackgroundStylePicker } from "../../components/AiTools";
 import { Button, Chips, Message } from "../../components/Ui";
 import { PlanBanner } from "../../components/Plans";
 import { ProfileQr } from "../../components/ProfileQr";
@@ -17,13 +18,18 @@ import { shrinkAsset } from "../../lib/image";
 import { useT } from "../../lib/i18n";
 
 type Option = { id: string; name: string };
-type Photo = { key: string; uri: string; base64?: string | null; mimeType?: string; remote?: boolean };
+type Photo = { key: string; uri: string; base64?: string | null; mimeType?: string; remote?: boolean; original?: Photo };
 const empty = { name: "", description: "", price: "", stock: "1", categoryId: "", municipalityId: "", marketId: "", videoUrl: "", active: true };
 
 export default function MeusProdutos() {
   const router = useRouter(); const scroll = useRef<ScrollView>(null); const { t, lang } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined);
   const [items, setItems] = useState<any[]>([]); const [form, setForm] = useState(empty); const [photos, setPhotos] = useState<Photo[]>([]); const [removed, setRemoved] = useState<string[]>([]);
+  const [bgStyle, setBgStyle] = useState<PhotoBackgroundStyle>("branco");
+  const addRemoved = (u: string) => setRemoved(r => r.includes(u) ? r : [...r, u]);
+  /** «🪄 Fundo branco»: troca a fotografia e guarda a original para «Desfazer». */
+  const replaceBg = (i: number, n: { uri: string; base64: string; mimeType: string }) => setPhotos(x => x.map((ph, j) => { if (j !== i) return ph; const original = ph.original ?? ph; if (original.remote) addRemoved(original.uri); return { key: ph.key, ...n, original }; }));
+  const undoBg = (i: number) => setPhotos(x => x.map((ph, j) => { if (j !== i || !ph.original) return ph; const o = ph.original; if (o.remote) setRemoved(r => r.filter(u => u !== o.uri)); return o; }));
   const [editing, setEditing] = useState<string | null>(null);
   const [categories, setCategories] = useState<Option[]>([]); const { provinces, municipalities, provinceId, setProvinceId } = useTerritory();
   const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
@@ -108,9 +114,12 @@ export default function MeusProdutos() {
       <VideoField value={form.videoUrl} onChange={v => setForm(f => ({ ...f, videoUrl: v }))} />
       <Text style={ui.label}>{t("sh.photos_n", { n: photos.length, max: MAX_PRODUCT_PHOTOS })}</Text>
       <Button title={t("sh.select_photos")} variant="secondary" disabled={photos.length >= MAX_PRODUCT_PHOTOS} onPress={() => void pick()} />
+      {photos.length > 0 && <BackgroundStylePicker value={bgStyle} onChange={setBgStyle} />}
       <View style={ui.row}>{photos.map((p, i) => <View key={p.key} style={{ width: 100, gap: 6 }}>
         <Image source={{ uri: p.uri }} style={{ width: 100, height: 100, borderRadius: 8 }} />
-        <Pressable accessibilityRole="button" onPress={() => { if (p.remote) setRemoved(r => [...r, p.uri]); setPhotos(x => x.filter((_, j) => j !== i)); }} style={[ui.buttonSecondary, { minHeight: 40 }]}><Text style={ui.buttonSecondaryText}>{t("sh.remove")}</Text></Pressable>
+        {p.original ? <Pressable accessibilityRole="button" onPress={() => undoBg(i)} style={[ui.buttonSecondary, { minHeight: 40 }]}><Text style={ui.buttonSecondaryText}>{t("ai.bg.undo")}</Text></Pressable>
+          : <BackgroundButton photoUri={p.uri} style={bgStyle} onDone={n => replaceBg(i, n)} />}
+        <Pressable accessibilityRole="button" onPress={() => { if (p.remote) addRemoved(p.uri); if (p.original?.remote) addRemoved(p.original.uri); setPhotos(x => x.filter((_, j) => j !== i)); }} style={[ui.buttonSecondary, { minHeight: 40 }]}><Text style={ui.buttonSecondaryText}>{t("sh.remove")}</Text></Pressable>
       </View>)}</View>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}><Text style={ui.label}>{t("sh.visible_in_shop")}</Text><Switch value={form.active} onValueChange={v => setForm(f => ({ ...f, active: v }))} /></View>
       <ConformityCheck checked={conform} onChange={setConform} />

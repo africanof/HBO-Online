@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { MarketPicker } from "./MarketPicker";
 import { DetailFields } from "./ListingDetails";
 import { AiImprove } from "./AiImprove";
-import { PhotoFillButton, PriceHintNote } from "./AiTools";
+import { PhotoFillButton, PriceHintNote, BackgroundButton, BackgroundStylePicker } from "./AiTools";
 import { PlaceFields } from "./Place";
 import { ConformityCheck } from "./Conformity";
 import { VideoField } from "./Video";
@@ -12,7 +12,7 @@ import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice,
   createAndPublishClassifiedListing, updateClassifiedListing, isJobCategorySlug, detailValuesFrom, validateDetails, buildDetailAttributes, withoutDetailKeys, setListingAgent, pointFrom, type GeoPoint, friendlyErrorIn, categoryLabelIn, listingTerritory,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES, validateBudget, budgetPrice,
   saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS,
-  loadListingDraft, saveListingDraft, clearListingDraft, draftAgeText, isOfflineError, OFFLINE_PUBLISH_MESSAGE, type ListingDraftFields } from "@huambo-online/core";
+  loadListingDraft, saveListingDraft, clearListingDraft, draftAgeText, isOfflineError, OFFLINE_PUBLISH_MESSAGE, type ListingDraftFields, type PhotoBackgroundStyle } from "@huambo-online/core";
 import { browserStore } from "./Engage";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
@@ -20,7 +20,7 @@ import { compressPhoto } from "../lib/image";
 import { useT } from "../lib/i18n";
 
 type Option = { id: string; name: string; slug?: string };
-type Photo = { key: string; src: string; file?: File };
+type Photo = { key: string; src: string; file?: File; original?: Photo };
 
 export function ListingForm({ listing, initialPurpose, initialSaleMode, initialCategorySlug, initialListingType }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string; initialCategorySlug?: string; initialListingType?: ClassifiedListingType }) {
   const { lang, t, tc } = useT();
@@ -63,6 +63,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
   useEffect(() => { if (!listing) { const c = agentCodeFromUrl(); if (c) setAgentCode(c); } }, []);
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, src: u })));
   const [removed, setRemoved] = useState<string[]>([]);
+  const [bgStyle, setBgStyle] = useState<PhotoBackgroundStyle>("branco");
   const [categories, setCategories] = useState<Option[]>([]);
   /** Viaturas e imóveis: marca, modelo, ano… / tipo, área, quartos… */
   const [details, setDetails] = useState<Record<string, string>>(detailValuesFrom(listing?.attributes));
@@ -139,8 +140,32 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
     setPhotos(p => {
       const photo = p[i];
       if (photo.file) URL.revokeObjectURL(photo.src); else setRemoved(r => [...r, photo.src]);
+      // A fotografia original (antes do «Fundo branco») também sai.
+      const orig = photo.original;
+      if (orig) { if (orig.file) URL.revokeObjectURL(orig.src); else setRemoved(r => r.includes(orig.src) ? r : [...r, orig.src]); }
       return p.filter((_, j) => j !== i);
     });
+  }
+
+  /** Troca a fotografia pela versão com fundo limpo (guarda a original para «Desfazer»). */
+  function replaceBackground(i: number, file: File) {
+    setPhotos(p => p.map((ph, j) => {
+      if (j !== i) return ph;
+      const original = ph.original ?? ph;
+      if (ph.original && ph.file) URL.revokeObjectURL(ph.src);
+      if (!original.file) setRemoved(r => r.includes(original.src) ? r : [...r, original.src]);
+      return { key: ph.key, src: URL.createObjectURL(file), file, original };
+    }));
+  }
+
+  function undoBackground(i: number) {
+    setPhotos(p => p.map((ph, j) => {
+      if (j !== i || !ph.original) return ph;
+      if (ph.file) URL.revokeObjectURL(ph.src);
+      const original = ph.original;
+      if (!original.file) setRemoved(r => r.filter(x => x !== original.src));
+      return original;
+    }));
   }
 
   async function submit(e: React.FormEvent) {
@@ -294,10 +319,14 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
             if (cat && !categoryId) setCategoryId(cat.id);
             setDetails(d => ({ ...f.details, ...Object.fromEntries(Object.entries(d).filter(([, v]) => v)) }));
           }} />}
+        {!wanted && photos.length > 0 && <BackgroundStylePicker value={bgStyle} onChange={setBgStyle} />}
         <div className="row">
           {photos.map((p, i) => (
             <div key={p.key} style={{ display: "grid", gap: 6, width: 120 }}>
               <img src={p.src} alt={t("ls.photo_n", { n: i + 1 })} style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8 }} />
+              {!wanted && (p.original
+                ? <button type="button" className="secondary" onClick={() => undoBackground(i)}>{t("ai.bg.undo")}</button>
+                : <BackgroundButton style={bgStyle} getImage={async () => p.file ?? await fetch(p.src).then(r => r.blob())} onDone={f => replaceBackground(i, f)} />)}
               <button type="button" className="secondary" onClick={() => removePhoto(i)}>{t("ls.remove")}</button>
             </div>
           ))}

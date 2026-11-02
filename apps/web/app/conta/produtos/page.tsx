@@ -2,6 +2,8 @@
 import { ConformityCheck } from "../../../components/Conformity";
 import { MarketPicker } from "../../../components/MarketPicker";
 import { VideoField } from "../../../components/Video";
+import { BackgroundButton, BackgroundStylePicker } from "../../../components/AiTools";
+import type { PhotoBackgroundStyle } from "@huambo-online/core";
 import { useEffect, useState } from "react";
 import { listMyProducts, saveProduct, deleteProduct, listProductCategories, uploadClassifiedMedia, removeClassifiedMedia, parsePrice, formatPrice, friendlyErrorIn,
   MAX_PRODUCT_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, PHOTO_RAW_MAX_BYTES, formatRef, getPublicSeller } from "@huambo-online/core";
@@ -13,13 +15,18 @@ import { PlanBanner } from "../../../components/Plans";
 import { useT } from "../../../lib/i18n";
 
 type Option = { id: string; name: string };
-type Photo = { key: string; src: string; file?: File };
+type Photo = { key: string; src: string; file?: File; original?: Photo };
 const empty = { name: "", description: "", price: "", stock: "1", categoryId: "", municipalityId: "", marketId: "", videoUrl: "", active: true };
 
 export default function MeusProdutos() {
   const { lang, t } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined);
   const [items, setItems] = useState<any[]>([]); const [form, setForm] = useState(empty); const [photos, setPhotos] = useState<Photo[]>([]); const [removed, setRemoved] = useState<string[]>([]);
+  const [bgStyle, setBgStyle] = useState<PhotoBackgroundStyle>("branco");
+  const addRemoved = (u: string) => setRemoved(r => r.includes(u) ? r : [...r, u]);
+  /** «🪄 Fundo branco»: troca a fotografia e guarda a original para «Desfazer». */
+  const replaceBg = (i: number, file: File) => setPhotos(x => x.map((ph, j) => { if (j !== i) return ph; const original = ph.original ?? ph; if (!original.file) addRemoved(original.src); return { key: ph.key, src: URL.createObjectURL(file), file, original }; }));
+  const undoBg = (i: number) => setPhotos(x => x.map((ph, j) => { if (j !== i || !ph.original) return ph; const o = ph.original; if (!o.file) setRemoved(r => r.filter(u => u !== o.src)); return o; }));
   const [editing, setEditing] = useState<string | null>(null);
   const [categories, setCategories] = useState<Option[]>([]); const { provinces, municipalities, provinceId, setProvinceId } = useTerritory();
   const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
@@ -100,7 +107,11 @@ export default function MeusProdutos() {
       <MarketPicker value={form.marketId} onChange={v => setForm({ ...form, marketId: v })} />
       <label>{t("sh.my.photos", { n: photos.length, max: MAX_PRODUCT_PHOTOS })}<input type="file" accept="image/*" multiple disabled={photos.length >= MAX_PRODUCT_PHOTOS} onChange={e => { addFiles(e.target.files); e.target.value = ""; }} /></label>
       <VideoField value={form.videoUrl} onChange={v => setForm({ ...form, videoUrl: v })} />
-      <div className="row">{photos.map((p, i) => <div key={p.key} style={{ display: "grid", gap: 6, width: 110 }}><img src={p.src} alt="" style={{ width: 110, height: 110, objectFit: "cover", borderRadius: 8 }} /><button type="button" className="secondary" onClick={() => { if (!p.file) setRemoved(r => [...r, p.src]); setPhotos(x => x.filter((_, j) => j !== i)); }}>{t("sh.remove")}</button></div>)}</div>
+      {photos.length > 0 && <BackgroundStylePicker value={bgStyle} onChange={setBgStyle} />}
+      <div className="row">{photos.map((p, i) => <div key={p.key} style={{ display: "grid", gap: 6, width: 110 }}><img src={p.src} alt="" style={{ width: 110, height: 110, objectFit: "cover", borderRadius: 8 }} />
+        {p.original ? <button type="button" className="secondary" onClick={() => undoBg(i)}>{t("ai.bg.undo")}</button>
+          : <BackgroundButton style={bgStyle} getImage={async () => p.file ?? await fetch(p.src).then(r => r.blob())} onDone={f => replaceBg(i, f)} />}
+        <button type="button" className="secondary" onClick={() => { if (!p.file) addRemoved(p.src); if (p.original && !p.original.file) addRemoved(p.original.src); setPhotos(x => x.filter((_, j) => j !== i)); }}>{t("sh.remove")}</button></div>)}</div>
       <label style={{ display: "flex", gap: 10, alignItems: "center" }}><input type="checkbox" checked={form.active} onChange={e => setForm({ ...form, active: e.target.checked })} style={{ width: 24, height: 24 }} /> {t("sh.my.visible")}</label>
       <ConformityCheck checked={conform} onChange={setConform} />
       <div className="row"><button disabled={busy}>{busy ? t("sh.saving") : editing ? t("common.save") : t("sh.my.publish")}</button>{editing && <button type="button" className="secondary" onClick={reset}>{t("common.cancel")}</button>}</div>

@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Alert, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import * as FileSystem from "expo-file-system/legacy";
 import { useRouter } from "expo-router";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { fillFromPhoto, smartSearch, askHelp, translateListing, priceHint, suggestTeamReply, summarizeDispute, listAiFlags, dismissAiFlag, moderateListing,
-  aiMessage, formatPrice, friendlyErrorIn, type CategoryRef, type PhotoFill, type SmartSearch, type PriceHint, type HelpTurn, type AiFlag } from "@huambo-online/core";
-import { supabase } from "../lib/supabase";
+  aiMessage, formatPrice, friendlyErrorIn, removePhotoBackgroundBase64, photoBackgroundMessage, PHOTO_BACKGROUND_STYLES, type PhotoBackgroundStyle, type CategoryRef, type PhotoFill, type SmartSearch, type PriceHint, type HelpTurn, type AiFlag } from "@huambo-online/core";
+import { supabase, siteUrl } from "../lib/supabase";
 import { formatDateTimeIn, useT } from "../lib/i18n";
 import { ui, C } from "../lib/ui";
 import { Button, Message } from "./Ui";
@@ -30,6 +31,42 @@ export function PhotoFillButton({ photoUri, categories, onApply }: { photoUri: s
     <Text style={ui.muted}>{t("ai.fill.hint")}</Text>
     <Message error={err} ok={ok} />
   </View>;
+}
+
+/** Escolha do fundo para «🪄 Fundo branco» (branco ou o fundo claro da Huambo Online). */
+export function BackgroundStylePicker({ value, onChange }: { value: PhotoBackgroundStyle; onChange: (v: PhotoBackgroundStyle) => void }) {
+  const { t, tc } = useT();
+  return <View style={{ gap: 6 }}>
+    <Text style={ui.label}>{t("ai.bg.style")}</Text>
+    <View style={ui.row}>{PHOTO_BACKGROUND_STYLES.map(s => <Pressable key={s.value} accessibilityRole="radio" accessibilityState={{ checked: value === s.value }} onPress={() => onChange(s.value)}
+      style={[value === s.value ? ui.button : ui.buttonSecondary, { minHeight: 40, paddingHorizontal: 12 }]}>
+      <Text style={value === s.value ? ui.buttonText : ui.buttonSecondaryText}>{tc(s.label)}</Text></Pressable>)}</View>
+    <Text style={ui.muted}>{t("ai.bg.hint")}</Text>
+  </View>;
+}
+
+/** «🪄 Fundo branco» numa fotografia: tira o fundo (função /api/fundo do Site) e devolve a nova fotografia. */
+export function BackgroundButton({ photoUri, style, onDone }: { photoUri: string; style: PhotoBackgroundStyle; onDone: (p: { uri: string; base64: string; mimeType: string }) => void }) {
+  const { t, tc } = useT();
+  const [busy, setBusy] = useState(false);
+  async function run() {
+    setBusy(true);
+    try {
+      // Fotografias já publicadas: primeiro descarregadas para o telemóvel.
+      const local = /^https?:/i.test(photoUri) ? (await FileSystem.downloadAsync(photoUri, `${FileSystem.cacheDirectory ?? ""}orig-${Date.now()}.jpg`)).uri : photoUri;
+      const src = await manipulateAsync(local, [], { compress: 0.85, format: SaveFormat.JPEG, base64: true });
+      const { data: s } = await supabase().auth.getSession();
+      const r = await removePhotoBackgroundBase64(fetch as any, { siteUrl, token: s.session?.access_token, base64: src.base64 ?? "", style });
+      if (r.error || !r.data) { Alert.alert(t("ai.bg.button"), tc(photoBackgroundMessage(r.error))); return; }
+      const uri = `${FileSystem.cacheDirectory ?? ""}fundo-${Date.now()}.jpg`;
+      await FileSystem.writeAsStringAsync(uri, r.data.base64, { encoding: FileSystem.EncodingType.Base64 });
+      onDone({ uri, base64: r.data.base64, mimeType: "image/jpeg" });
+      Alert.alert(t("ai.bg.button"), t("ai.bg.done", { n: r.data.remaining }));
+    } catch { Alert.alert(t("ai.bg.button"), tc(photoBackgroundMessage("SERVER_ERROR"))); } finally { setBusy(false); }
+  }
+  return <Pressable accessibilityRole="button" disabled={busy} onPress={() => void run()} style={[ui.buttonSecondary, { minHeight: 40, opacity: busy ? 0.6 : 1 }]}>
+    <Text style={ui.buttonSecondaryText}>{busy ? t("ai.bg.working") : t("ai.bg.button")}</Text>
+  </Pressable>;
 }
 
 /** «💡 Anúncios parecidos custam…» (sem IA: preços dos últimos 6 meses). */

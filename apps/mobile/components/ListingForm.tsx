@@ -7,14 +7,14 @@ import { listMunicipalities, listProvinces, validateClassifiedDraft, parsePrice,
   createAndPublishClassifiedListing, updateClassifiedListing, setListingAgent, normalizeAgentCode, pointFrom, type GeoPoint, friendlyErrorIn, listingTerritory, categoryLabelIn, base64ToArrayBuffer,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, PUBLISHABLE_PURPOSES, CLASSIFIED_MAX_PHOTOS, CLASSIFIED_MAX_PHOTO_BYTES, validateBudget, budgetPrice,
   saleModesFor, saleModeFromParam, canAlsoTrade, validateSaleMode, startListingAuction, SALE_MODE_INFO, type SaleMode, readAgro, validateAgro, agroAttributes, agroUnitInfo, AGRO_CATEGORIES, AGRO_UNITS,
-  loadListingDraft, saveListingDraft, isJobCategorySlug, detailValuesFrom, validateDetails, buildDetailAttributes, withoutDetailKeys, clearListingDraft, draftAgeText, isOfflineError, OFFLINE_PUBLISH_MESSAGE, type ListingDraftFields, type ListingDraftPhoto } from "@huambo-online/core";
+  loadListingDraft, saveListingDraft, isJobCategorySlug, detailValuesFrom, validateDetails, buildDetailAttributes, withoutDetailKeys, clearListingDraft, draftAgeText, isOfflineError, OFFLINE_PUBLISH_MESSAGE, type ListingDraftFields, type ListingDraftPhoto, type PhotoBackgroundStyle } from "@huambo-online/core";
 import type { ClassifiedListingType, ClassifiedPurpose } from "@huambo-online/types";
 import { supabase } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
 import { MarketPicker } from "./MarketPicker";
 import { DetailFields } from "./ListingDetails";
 import { AiImprove } from "./AiImprove";
-import { PhotoFillButton, PriceHintNote } from "./AiTools";
+import { PhotoFillButton, PriceHintNote, BackgroundButton, BackgroundStylePicker } from "./AiTools";
 import { PlaceFields } from "./Place";
 import { ConformityCheck } from "./Conformity";
 import { VideoField } from "./Video";
@@ -29,7 +29,7 @@ const DRAFT_DIR = (FileSystem.documentDirectory ?? "") + "rascunho-anuncio/";
 async function dropDraftFiles() { try { await FileSystem.deleteAsync(DRAFT_DIR, { idempotent: true }); } catch { /* nada */ } }
 
 type Option = { id: string; name: string; slug?: string };
-type Photo = { key: string; uri: string; base64?: string | null; mimeType?: string; remote?: boolean };
+type Photo = { key: string; uri: string; base64?: string | null; mimeType?: string; remote?: boolean; original?: Photo };
 
 
 export function ListingForm({ listing, initialPurpose, initialSaleMode, initialAgro, initialAgent, initialCategorySlug, initialListingType }: { listing?: any; initialPurpose?: ClassifiedPurpose; initialSaleMode?: string; initialAgro?: boolean; initialAgent?: string; initialCategorySlug?: string; initialListingType?: ClassifiedListingType }) {
@@ -71,6 +71,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
   const [directions, setDirections] = useState<string>(listing?.directions ?? "");
   const [conform, setConform] = useState<boolean>(!!listing?.conformity_accepted_at);
   const [point, setPoint] = useState<GeoPoint | null>(pointFrom(listing?.geo_lat, listing?.geo_lng));
+  const [bgStyle, setBgStyle] = useState<PhotoBackgroundStyle>("branco");
   const [photos, setPhotos] = useState<Photo[]>(() => (Array.isArray(listing?.media) ? listing.media : []).map((u: string) => ({ key: u, uri: u, remote: true })));
   const [removed, setRemoved] = useState<string[]>([]);
   const [categories, setCategories] = useState<Option[]>([]);
@@ -169,8 +170,28 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
 
   function removePhoto(i: number) {
     const photo = photos[i];
-    if (photo.remote) setRemoved(r => [...r, photo.uri]);
+    if (photo.remote) addRemoved(photo.uri);
+    if (photo.original?.remote) addRemoved(photo.original.uri);
     setPhotos(p => p.filter((_, j) => j !== i));
+  }
+  const addRemoved = (u: string) => setRemoved(r => r.includes(u) ? r : [...r, u]);
+
+  /** «🪄 Fundo branco»: troca a fotografia e guarda a original para «Desfazer». */
+  function replaceBackground(i: number, n: { uri: string; base64: string; mimeType: string }) {
+    setPhotos(p => p.map((ph, j) => {
+      if (j !== i) return ph;
+      const original = ph.original ?? ph;
+      if (original.remote) addRemoved(original.uri);
+      return { key: ph.key, ...n, original };
+    }));
+  }
+  function undoBackground(i: number) {
+    setPhotos(p => p.map((ph, j) => {
+      if (j !== i || !ph.original) return ph;
+      const o = ph.original;
+      if (o.remote) setRemoved(r => r.filter(u => u !== o.uri));
+      return o;
+    }));
   }
 
   async function submit() {
@@ -317,9 +338,13 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
         if (cat && !categoryId) setCategoryId(cat.id);
         setDetails(d => ({ ...f.details, ...Object.fromEntries(Object.entries(d).filter(([, v]) => v)) }));
       }} />}
+    {!wanted && photos.length > 0 && <BackgroundStylePicker value={bgStyle} onChange={setBgStyle} />}
     <View style={ui.row}>
       {photos.map((p, i) => <View key={p.key} style={{ width: 104, gap: 6 }}>
         <Image source={{ uri: p.uri }} style={{ width: 104, height: 104, borderRadius: 8, backgroundColor: C.surface }} accessibilityLabel={t("ls.form.photo_n", { n: i + 1 })} />
+        {!wanted && (p.original
+          ? <Pressable accessibilityRole="button" onPress={() => undoBackground(i)} style={[ui.buttonSecondary, { minHeight: 40 }]}><Text style={ui.buttonSecondaryText}>{t("ai.bg.undo")}</Text></Pressable>
+          : <BackgroundButton photoUri={p.uri} style={bgStyle} onDone={n => replaceBackground(i, n)} />)}
         <Pressable accessibilityRole="button" onPress={() => removePhoto(i)} style={[ui.buttonSecondary, { minHeight: 40 }]}><Text style={ui.buttonSecondaryText}>{t("ls.remove")}</Text></Pressable>
       </View>)}
     </View>

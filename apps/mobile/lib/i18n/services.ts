@@ -1347,6 +1347,7 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
           "The website is hosted on Vercel. The app is built with Expo.",
           "Search by photo (when active): the photo is sent to OpenAI to say what the item is, and is not stored by us.",
           "Improve with AI (only when you tap the button): the listing's title, description and details are sent to OpenAI to suggest better text, and are not stored by us.",
+          "White background (only when you tap the button): the photo is processed on our own server (Vercel), without being sent to other companies, and is not stored; only the final photo is kept, if you publish it.",
           "AI assistant (only when you use it): photos used to fill in a listing, what you type in smart search and questions to the help assistant are sent to OpenAI to answer, and are not stored by us. Published listings can be translated automatically into English, French and Chinese (the translations are stored).",
           "Safety: published listings are checked automatically by AI (OpenAI) to help the team find scams, prohibited items and hidden contact details. The team can also use AI to suggest replies in Messages and to summarise disputes. AI only flags and suggests: a person on the team always makes the decision.",
           "Payment proofs: the receipts you send are read by AI (OpenAI) to help the team check the amount, date and destination account. The payment is always confirmed by a person on the team."] },
@@ -1387,6 +1388,7 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
           "网站托管在 Vercel。应用使用 Expo 开发。",
           "以图搜索（启用时）：照片会发送给 OpenAI 以识别物品，我们不会保存该照片。",
           "AI 优化（仅在您点击按钮时）：信息的标题、描述和详情会发送给 OpenAI 以建议更好的文字，我们不会保存。",
+          "白色背景（仅在您点击按钮时）：照片在我们自己的服务器（Vercel）上处理，不会发送给其他公司，也不会被保存；只有在您发布时才会保留最终照片。",
           "AI 助手（仅在您使用时）：用于填写信息的照片、您在智能搜索中输入的内容以及向帮助助手提出的问题会发送给 OpenAI 以生成回答，我们不会保存。已发布的信息可能会被自动翻译成英文、法文和中文（译文会被保存）。",
           "安全：已发布的信息会由 AI（OpenAI）自动检查，帮助团队发现诈骗、违禁物品和隐藏的联系方式。团队也可以使用 AI 在消息中建议回复并总结纠纷。AI 只负责标记和建议：最终决定始终由团队成员作出。",
           "付款凭证：您上传的收据会由 AI（OpenAI）读取，帮助团队核对金额、日期和收款账户。付款始终由团队成员确认。"] },
@@ -1445,6 +1447,7 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
             "Le Site est hébergé sur Vercel. L'APP est construite avec Expo.",
             "Recherche par photo (quand elle est active) : la photo est envoyée à OpenAI pour reconnaître l'article, et nous ne la conservons pas.",
             "Améliorer avec l'IA (uniquement quand vous touchez le bouton) : le titre, la description et les détails de l'annonce sont envoyés à OpenAI pour suggérer un meilleur texte, et ne sont pas conservés par nous.",
+            "Fond blanc (uniquement quand vous touchez le bouton) : la photo est traitée sur notre propre serveur (Vercel), sans être envoyée à d'autres entreprises, et n'est pas conservée ; seule la photo finale est gardée, si vous la publiez.",
             "Assistant IA (uniquement quand vous l'utilisez) : les photos utilisées pour remplir une annonce, ce que vous écrivez dans la recherche intelligente et les questions à l'assistant d'aide sont envoyés à OpenAI pour répondre, et ne sont pas conservés par nous. Les annonces publiées peuvent être traduites automatiquement en anglais, en français et en chinois (les traductions sont conservées).",
             "Sécurité : les annonces publiées sont vérifiées automatiquement par l'IA (OpenAI) pour aider l'équipe à trouver les arnaques, les articles interdits et les contacts cachés. L'équipe peut aussi utiliser l'IA pour suggérer des réponses dans Messages et résumer les litiges. L'IA se contente de signaler et de suggérer : c'est toujours une personne de l'équipe qui décide.",
             "Justificatifs de paiement : les reçus que vous envoyez sont lus par l'IA (OpenAI) pour aider l'équipe à vérifier le montant, la date et le compte de destination. Le paiement est toujours confirmé par une personne de l'équipe."
