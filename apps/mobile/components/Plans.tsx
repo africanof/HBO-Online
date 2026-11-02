@@ -30,6 +30,8 @@ export function PaymentDetails({ s }: { s: PlatformSettings | null }) {
     {!!s.express_number && <Text style={ui.text} selectable>Multicaixa Express: <Text style={ui.label}>{s.express_number}</Text></Text>}
     {!!s.payment_note && <Text style={ui.muted}>{s.payment_note}</Text>}
     <Text style={ui.muted}>{t("sh.hold_to_copy")}</Text>
+    <Text style={ui.muted}>{t("sh.pd.tip")}</Text>
+    <Link href="/ajuda" style={ui.link}>{t("sh.pd.help")}</Link>
   </View>;
 }
 

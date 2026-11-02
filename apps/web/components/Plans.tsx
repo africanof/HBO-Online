@@ -22,6 +22,8 @@ export function PaymentDetails({ s }: { s: PlatformSettings | null }) {
     </dl>)}
     {s!.express_number && <dl className="facts card" style={{ margin: 0 }}><dt>Multicaixa Express</dt><dd><strong>{s!.express_number}</strong> <CopyButton text={s!.express_number} /></dd></dl>}
     {s!.payment_note && <span>{s!.payment_note}</span>}
+    <small>{t("sh.pd.tip")}</small>
+    <a href="/ajuda#assistente" style={{ fontWeight: 700 }}>{t("sh.pd.help")}</a>
   </div>;
 }
 function CopyButton({ text }: { text: string }) {

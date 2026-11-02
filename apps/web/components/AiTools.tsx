@@ -99,7 +99,7 @@ export function HelpAssistant() {
     setTurns(x => [...x, { role: "user" as const, content: question }, { role: "assistant" as const, content: r.data!.answer || t("ai.help.handoff") }].slice(-12));
     setHandoff(r.data.handoff); setQ("");
   }
-  return <section className="card stack" aria-label={t("ai.help.title")}>
+  return <section id="assistente" className="card stack" aria-label={t("ai.help.title")}>
     <h2 style={{ margin: 0 }}>{t("ai.help.title")}</h2>
     {signedIn === false ? <p style={{ margin: 0 }}><a href="/conta/login?voltar=/ajuda">{t("ai.help.login")}</a></p> : <>
       {turns.map((m, i) => <p key={i} style={{ margin: 0, whiteSpace: "pre-wrap", padding: 10, borderRadius: 10, background: m.role === "user" ? "var(--accent-soft)" : "var(--card)", border: "1px solid var(--line)" }}>

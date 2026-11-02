@@ -16,6 +16,7 @@ import { AdminMessages } from "../components/AdminMessages";
 import { AdminAiFlags } from "../components/AiTools";
 import { TeamWhatsappSettings } from "../components/Engage";
 import { AdminRequests } from "../components/AdminRequests";
+import { AdminProofs } from "../components/AdminProofs";
 import { AdminMarkets } from "../components/AdminMarkets";
 import { AdminVerifications, AdminAudit } from "../components/AdminTrust";
 import { AdminDisputes } from "../components/Disputes";
@@ -31,8 +32,8 @@ import { AdminVenues } from "../components/Venues";
 import { AdminInspections } from "../components/Inspection";
 import { MfaPrompt, useMfaCheck } from "../components/Mfa";
 
-type Tab = "stats" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
-const TABS: Tab[] = ["stats", "requests", "messages", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "inspections", "disputes", "verifications", "listings",
+type Tab = "stats" | "proofs" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+const TABS: Tab[] = ["stats", "proofs", "requests", "messages", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "inspections", "disputes", "verifications", "listings",
   "users", "categories", "couriers", "markets", "audit"];
 
 export default function Admin() {
@@ -86,6 +87,7 @@ export default function Admin() {
     <Chips options={tabOptions} value={tab} onChange={setTab} />
     <Message error={error} ok={notice} />
 
+    {tab === "proofs" && <AdminProofs />}
     {tab === "requests" && <AdminRequests />}
     {tab === "listings" && <AdminAiFlags />}
     {tab === "messages" && <AdminMessages />}

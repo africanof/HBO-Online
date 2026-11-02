@@ -1261,7 +1261,8 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
           "Search by photo (when active): the photo is sent to OpenAI to say what the item is, and is not stored by us.",
           "Improve with AI (only when you tap the button): the listing's title, description and details are sent to OpenAI to suggest better text, and are not stored by us.",
           "AI assistant (only when you use it): photos used to fill in a listing, what you type in smart search and questions to the help assistant are sent to OpenAI to answer, and are not stored by us. Published listings can be translated automatically into English and Chinese (the translations are stored).",
-          "Safety: published listings are checked automatically by AI (OpenAI) to help the team find scams, prohibited items and hidden contact details. The team can also use AI to suggest replies in Messages and to summarise disputes. AI only flags and suggests: a person on the team always makes the decision."] },
+          "Safety: published listings are checked automatically by AI (OpenAI) to help the team find scams, prohibited items and hidden contact details. The team can also use AI to suggest replies in Messages and to summarise disputes. AI only flags and suggests: a person on the team always makes the decision.",
+          "Payment proofs: the receipts you send are read by AI (OpenAI) to help the team check the amount, date and destination account. The payment is always confirmed by a person on the team."] },
         { title: "6. How long we keep it", paragraphs: [
           "For as long as the account exists. Videos of closed or sold listings are deleted automatically after 7 days, and those of hidden products after 30 days.",
           "When you delete your account, your data is deleted. Some of the provider's backups may last a little longer until they are replaced."] },
@@ -1300,7 +1301,8 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
           "以图搜索（启用时）：照片会发送给 OpenAI 以识别物品，我们不会保存该照片。",
           "AI 优化（仅在您点击按钮时）：信息的标题、描述和详情会发送给 OpenAI 以建议更好的文字，我们不会保存。",
           "AI 助手（仅在您使用时）：用于填写信息的照片、您在智能搜索中输入的内容以及向帮助助手提出的问题会发送给 OpenAI 以生成回答，我们不会保存。已发布的信息可能会被自动翻译成英文和中文（译文会被保存）。",
-          "安全：已发布的信息会由 AI（OpenAI）自动检查，帮助团队发现诈骗、违禁物品和隐藏的联系方式。团队也可以使用 AI 在消息中建议回复并总结纠纷。AI 只负责标记和建议：最终决定始终由团队成员作出。"] },
+          "安全：已发布的信息会由 AI（OpenAI）自动检查，帮助团队发现诈骗、违禁物品和隐藏的联系方式。团队也可以使用 AI 在消息中建议回复并总结纠纷。AI 只负责标记和建议：最终决定始终由团队成员作出。",
+          "付款凭证：您上传的收据会由 AI（OpenAI）读取，帮助团队核对金额、日期和收款账户。付款始终由团队成员确认。"] },
         { title: "6. 我们保存多长时间", paragraphs: [
           "在账户存在期间一直保存。已关闭或已售出信息的视频会在 7 天后自动删除，已隐藏商品的视频在 30 天后删除。",
           "删除账户后，您的数据会被删除。服务商的部分备份可能会多保留一段时间，直到被替换。"] },
@@ -1344,6 +1346,8 @@ export const HELP_FAQ_I18N: Record<"en" | "zh", { q: string; a: string }[]> = {
     { q: "How do I request a return or refund?", a: "In “Orders”, choose the order and tap “Request return or refund” (up to 14 days after delivery). Explain the problem and add photos. If the seller refuses or does not reply, you can call in the admins. See “Returns and refunds”." },
     { q: "How do I use less data?", a: "Turn on “📉 Data saver” at the top of the website, on the app's home page or in “Your account”. Photos in lists stop loading (an icon appears) and, in listings, they only load when you tap “See the photos”. Videos only load when you press ▶. On the website, “Automatic” turns on by itself when the phone is in data saver mode." },
     { q: "Can I use it without internet?", a: "You can see the home page, your last search and the last listings you opened. To publish, send messages or offers you need a connection." },
+    { q: "How do I pay by bank transfer or Multicaixa Express?", a: "Use the payment details shown on the screen (IBAN or Multicaixa Express number) and pay the exact amount. Then, on the same screen, send a clear photo or screenshot of the whole receipt showing the amount, date, destination account and operation number. The team checks it against the bank statement, confirms it and you get a notification." },
+    { q: "My payment failed or was rejected. What should I do?", a: "If the money didn't leave your account, try again. If it did and the payment was rejected, see the reason in the notification: usually the receipt can't be read, the amount is wrong or it was paid to another account. Send the right receipt again, or talk to the team on WhatsApp or through Messages, giving the operation number. Never send your PIN or codes you receive by SMS." },
     { q: "What does the AI assistant do?", a: "It helps you post and find things faster: «📷 Fill in from photo» suggests the title, category and details of a listing from a photo; «✨ Improve with AI» rewrites the text; «✨ Smart search» understands requests like «diesel car up to 5 million»; and the Help assistant answers questions. Always review what the AI suggests. There is a daily usage limit." },
     { q: "How do I delete my account?", a: "In “Your account”, at the bottom of the page, type ELIMINAR and confirm. See the details in “How to delete my account”." }
   ],
@@ -1376,6 +1380,8 @@ export const HELP_FAQ_I18N: Record<"en" | "zh", { q: string; a: string }[]> = {
     { q: "如何申请退货或退款？", a: "在“订单”中选择订单并点击“申请退货或退款”（收货后 14 天内）。说明问题并附上照片。如果卖方拒绝或未答复，您可以请求管理员介入。参见“退货和退款”。" },
     { q: "如何节省流量？", a: "在网站顶部、应用首页或“您的账户”中开启“📉 节省流量”。列表中的照片不再加载（显示一个图标），在信息详情中只有点击“查看照片”才会加载。视频只在按下 ▶ 后加载。在网站上，当手机处于省流模式时，“自动”会自行开启。" },
     { q: "没有网络可以使用吗？", a: "可以查看首页、最近一次搜索和最近打开的信息。发布、发送消息或报价需要网络连接。" },
+    { q: "如何通过银行转账或 Multicaixa Express 付款？", a: "使用屏幕上显示的付款信息（IBAN 或 Multicaixa Express 号码）支付准确金额。然后在同一页面上传完整收据的清晰照片或截图，需显示金额、日期、收款账户和交易编号。团队会核对银行流水并确认，您会收到通知。" },
+    { q: "我的付款失败或被拒绝了，怎么办？", a: "如果钱没有从您的账户扣除，请重试。如果已扣款但付款被拒绝，请查看通知中的原因：通常是收据无法读取、金额错误或付到了其他账户。请重新上传正确的收据，或通过 WhatsApp 或站内消息联系团队并提供交易编号。切勿发送 PIN 或短信验证码。" },
     { q: "AI 助手能做什么？", a: "它能帮您更快地发布和查找：「📷 用照片填写」根据照片建议信息的标题、类别和详情；「✨ 用 AI 优化」重写文字；「✨ 智能搜索」能理解「500万以内的柴油车」之类的请求；帮助助手会回答您的问题。请始终检查 AI 的建议。每天有使用次数限制。" },
     { q: "如何删除我的账户？", a: "在“您的账户”页面底部输入 ELIMINAR 并确认。详情请参见“如何删除我的账户”。" }
   ]
