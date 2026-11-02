@@ -47,6 +47,9 @@ as $function$
 declare q record; op text := public.proof_clean(p_operation); dup record; fdup record; s public.platform_settings; auto_ok boolean := false; sys uuid; old_claims text; today_auto int; v text; amt_ok boolean; dest_ok boolean; d_ok boolean;
   flags text[] := coalesce(p_visual_flags[1:4], '{}'); notes text[] := '{}';
 begin
+  -- Registos vazios para poder perguntar «dup.payment_id is null» mesmo sem procura.
+  select null::text as kind, null::uuid as payment_id into dup;
+  select null::text as kind, null::uuid as payment_id into fdup;
   select * into q from public.pending_proof_payments() x where x.kind = p_kind and x.payment_id = p_payment_id;
   if not found then return 'gone'; end if;
   if op is not null and length(op) < 5 then op := null; end if;
