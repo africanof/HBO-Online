@@ -1,0 +1,78 @@
+name: APP Android (no GitHub, sem gastar créditos da Expo)
+
+# Compila a APP na máquina do GitHub com «eas build --local»: não gasta as compilações do plano grátis
+# da Expo. Usa a mesma chave de assinatura guardada na Expo (credenciais remotas), por isso o AAB serve
+# para atualizar a APP na Google Play. O ficheiro fica em «Artifacts» no fim da execução (guardado 30 dias).
+# Só corre quando o dono carrega em «Run workflow». Precisa do segredo EXPO_TOKEN.
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "preview = APK para instalar e testar · production = AAB para a Google Play"
+        required: true
+        default: production
+        type: choice
+        options: [preview, production]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Verificar o EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Falta o segredo EXPO_TOKEN."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Instalar
+        run: pnpm install --frozen-lockfile
+
+      - name: Verificar tipos e testes
+        run: pnpm typecheck && pnpm test
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Ligar ao projeto na conta Expo
+        working-directory: apps/mobile
+        run: eas init --non-interactive --force
+
+      - name: Compilar aqui (${{ inputs.profile }})
+        working-directory: apps/mobile
+        env:
+          EAS_LOCAL_BUILD_SKIP_CLEANUP: "1"
+        run: |
+          EXT=$([ "${{ inputs.profile }}" = "production" ] && echo aab || echo apk)
+          eas build --platform android --profile ${{ inputs.profile }} --local --non-interactive --output "$GITHUB_WORKSPACE/huambo-online.$EXT"
+
+      - name: Guardar o ficheiro
+        uses: actions/upload-artifact@v4
+        with:
+          name: huambo-online-${{ inputs.profile }}
+          path: huambo-online.*
+          retention-days: 30
+          if-no-files-found: error
