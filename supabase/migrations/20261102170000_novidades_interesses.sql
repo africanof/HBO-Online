@@ -117,7 +117,7 @@ begin
       and coalesce(np.interests_frequency, 'daily') <> 'off' and coalesce(np.enabled, true)
   loop
     select max(created_at) into last_sent from public.notifications where notifications.user_id = u.uid and type = 'interests';
-    if last_sent is not null and last_sent > now() - case when u.freq = 'weekly' then interval '6 days 12 hours' else interval '20 hours' end then continue; end if;
+    if last_sent is not null and last_sent > now() - (case when u.freq = 'weekly' then interval '6 days 12 hours' else interval '20 hours' end) then continue; end if;
     -- Sem resposta: os 3 últimos avisos ficaram por ler → pausa até a pessoa ler um.
     if (select count(*) from (select read_at from public.notifications where notifications.user_id = u.uid and type = 'interests' order by created_at desc limit 3) x where x.read_at is null) >= 3 then continue; end if;
     since := greatest(coalesce(last_sent, '-infinity'), now() - case when u.freq = 'weekly' then interval '7 days' else interval '2 days' end);
