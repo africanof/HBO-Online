@@ -1,4 +1,5 @@
 import { OrderPoint } from "../components/Place";
+import { CourierLocationShare } from "../components/OrderTracking";
 import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { Alert, Linking, ScrollView, Text, TextInput, View } from "react-native";
@@ -83,6 +84,7 @@ export default function Entregas() {
           {!!d.notes && <Text style={ui.text}>{t("sh.note", { text: d.notes })}</Text>}
           <OrderPoint orderId={d.order_id} canEdit={false} />
           {!!d.contact_phone && <Button title={t("sh.call_customer", { phone: d.contact_phone })} variant="secondary" onPress={() => void Linking.openURL("tel:" + d.contact_phone.replace(/\s/g, ""))} />}
+          {["assigned", "accepted", "picked_up", "in_transit"].includes(d.status) && <CourierLocationShare deliveryId={d.id} />}
           {nextCourierSteps(d.status).map((s: CourierStep) => <Button key={s} title={tc(STEP_LABELS[s])} variant={s === "released" ? "secondary" : "primary"} disabled={busy}
             onPress={() => s === "released" ? Alert.alert(t("sh.give_up_q"), "", [{ text: t("sh.no"), style: "cancel" }, { text: t("sh.give_up"), onPress: () => void act(() => updateDeliveryStatus(supabase(), d.id, s), t("sh.delivery_returned")) }]) : void act(() => updateDeliveryStatus(supabase(), d.id, s), t("sh.delivery_updated"))} />)}
         </View>)}

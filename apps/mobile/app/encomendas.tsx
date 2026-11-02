@@ -12,6 +12,7 @@ import { supabase, currentUserId } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
 import { OrderEscrowPanel } from "../components/ProtectedPayment";
+import { OrderTrackingPanel } from "../components/OrderTracking";
 import { useT, formatDateTimeIn } from "../lib/i18n";
 
 export default function Encomendas() {
@@ -62,6 +63,7 @@ export default function Encomendas() {
         <Text style={ui.muted}>{formatDateTimeIn(o.created_at, lang)} · {tc(FULFILLMENT_LABELS[o.fulfillment_type as Fulfillment] ?? "")} · {o.protected ? t("sh.protected_tag") : tc(PAYMENT_LABELS[o.payment_method as PaymentMethod] ?? o.payment_method)}</Text>
         <OrderEscrowPanel order={o} role={role} uid={uid} settings={settings} provider={provider} hasActiveDispute={!!lastDispute[o.id] && isActiveDispute(lastDispute[o.id].status)}
           onChanged={(m, bad) => { if (bad) { setError(m); setNotice(""); } else { setError(""); setNotice(m); void load(); } }} />
+        <OrderTrackingPanel orderId={o.id} role={role} />
         {(o.items ?? []).map((it: any, i: number) => <Text key={i} style={ui.text}>• {it.quantity} × {it.name} — {formatPrice(it.line_total)}</Text>)}
         {!!o.delivery_text && <Text style={ui.text}>{t("sh.delivery_text", { text: o.delivery_text })}</Text>}
         {o.fulfillment_type === "delivery" && <OrderPoint orderId={o.id} canEdit={role === "buyer" && o.status !== "completed" && o.status !== "cancelled"} />}

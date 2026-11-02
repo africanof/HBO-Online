@@ -10,6 +10,7 @@ import { listOrdersV4, changeOrderStatus, formatPrice, friendlyErrorIn, LANG_TAG
   type OrderStatus, type PaymentMethod, type Fulfillment, type DeliveryStatus } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { OrderEscrowPanel } from "../../components/ProtectedPayment";
+import { OrderTrackingPanel } from "../../components/OrderTracking";
 import { useT } from "../../lib/i18n";
 
 function Encomendas() {
@@ -28,6 +29,7 @@ function Encomendas() {
     setDisputes(ds.data);
   }
   const lastDispute = latestDisputeByOrder(disputes);
+  const [openId] = useState(() => typeof window !== "undefined" ? window.location.hash.replace(/^#encomenda-/, "") : "");
   // aberto pelo número (E-1001): mostra a encomenda certa, nas compras ou nas vendas
   useEffect(() => {
     const id = window.location.hash.replace(/^#encomenda-/, "");
@@ -70,6 +72,7 @@ function Encomendas() {
         <span>{o.fulfillment_type === "pickup" ? "🏪 " : "🚚 "}{tc(FULFILLMENT_LABELS[o.fulfillment_type as Fulfillment])} · {o.protected ? "🛡️ " + t("sh.protected") : tc(PAYMENT_LABELS[o.payment_method as PaymentMethod] ?? o.payment_method)}</span>
         <OrderEscrowPanel order={o} role={role} uid={uid} settings={settings} provider={provider} hasActiveDispute={!!lastDispute[o.id] && isActiveDispute(lastDispute[o.id].status)}
           onChanged={(m, bad) => { if (bad) { setError(m); setNotice(""); } else { setError(""); setNotice(m); void load(); } }} />
+        {o.status !== "cancelled" || role === "buyer" ? <OrderTrackingPanel orderId={o.id} role={role} defaultOpen={role === "buyer" && openId === o.id} /> : null}
         <ul style={{ margin: 0 }}>{(o.items ?? []).map((it: any, i: number) => <li key={i}>{it.quantity} × {it.name} — {formatPrice(it.line_total)}</li>)}</ul>
         {o.delivery_text && <span>{t("sh.delivery")}: {o.delivery_text}</span>}
         {o.fulfillment_type === "delivery" && <OrderPoint orderId={o.id} canEdit={role === "buyer" && o.status !== "completed" && o.status !== "cancelled"} />}

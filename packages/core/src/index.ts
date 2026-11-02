@@ -61,6 +61,7 @@ export * from "./photo-search";
 export * from "./ai-writer";
 export * from "./ai-assist";
 export * from "./proof-checks";
+export * from "./tracking";
 export * from "./wanted";
 export * from "./deal-reviews";
 export * from "./trust";

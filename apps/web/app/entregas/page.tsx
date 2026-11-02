@@ -1,5 +1,6 @@
 "use client";
 import { OrderPoint } from "../../components/Place";
+import { CourierLocationShare } from "../../components/OrderTracking";
 import { useEffect, useState } from "react";
 import { getMyCourier, registerCourier, setCourierAvailable, listAvailableDeliveries, claimDelivery, updateDeliveryStatus, listMyDeliveries,
   nextCourierSteps, isActiveDelivery, formatPrice, friendlyErrorIn, LANG_TAGS, DELIVERY_STATUS_LABELS, COURIER_STATUS_LABELS, VEHICLE_LABELS, STEP_LABELS,
@@ -77,6 +78,7 @@ export default function Entregas() {
           <OrderPoint orderId={d.order_id} canEdit={false} />
           {d.contact_phone && <span>{t("sh.del.customer_phone")}: <a href={"tel:" + d.contact_phone.replace(/\s/g, "")}>{d.contact_phone}</a></span>}
           {d.notes && <span>{t("sh.note")}: {d.notes}</span>}
+          {["assigned", "accepted", "picked_up", "in_transit"].includes(d.status) && <CourierLocationShare deliveryId={d.id} />}
           <div className="row">{nextCourierSteps(d.status).map((s: CourierStep) => <button key={s} disabled={busy} className={s === "released" ? "secondary" : ""} onClick={() => { if (s !== "released" || confirm(t("sh.del.release_q"))) void act(() => updateDeliveryStatus(supabase(), d.id, s), t("sh.del.updated")); }}>{tc(STEP_LABELS[s])}</button>)}</div>
         </article>)}
         <h2>{t("sh.del.available_list")}</h2>
