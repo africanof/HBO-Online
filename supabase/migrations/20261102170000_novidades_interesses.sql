@@ -106,7 +106,6 @@ create or replace function public.interest_digest_queue(p_limit integer default 
  stable security definer
  set search_path to 'public'
 as $function$
-#variable_conflict use_column
 declare u record; since timestamptz; last_sent timestamptz; cands jsonb; n int := 0; lim int := greatest(1, least(coalesce(p_limit, 100), 500));
 begin
   for u in
