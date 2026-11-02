@@ -25,7 +25,7 @@ describe("QR dos perfis", () => {
     expect(font).toBeLessThan(26); expect(50 * font * 0.62).toBeLessThanOrEqual(width);
   });
   it("PNG válido, com os quadradinhos do QR", () => {
-    const url = profileUrl("https://huambo-online.vercel.app", "empresas", ID);
+    const url = profileUrl("https://huamboonline.com", "empresas", ID);
     const png = qrPng(url, 4);
     expect([...png.slice(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
     const dv = new DataView(png.buffer); const w = dv.getUint32(16); const n = qrMatrix(url).length;

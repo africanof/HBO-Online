@@ -56,7 +56,7 @@ Deno.serve(async req => {
   // Sem domínio próprio: remetente de teste do Resend (só entrega no email da conta do Resend).
   const from = Deno.env.get("EMAIL_FROM") || "Huambo Online <onboarding@resend.dev>";
   if (!apiKey) return reply({ error: "EMAIL_NOT_CONFIGURED" }, 503);
-  const site = (Deno.env.get("SITE_URL") || "https://huambo-online.vercel.app").replace(/\/+$/, "");
+  const site = (Deno.env.get("SITE_URL") || "https://huamboonline.com").replace(/\/+$/, "");
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
   const { data: queue, error } = await admin.rpc("email_digest_queue", { p_limit: 90 });
   if (error) { console.error("email-digest queue", error.message); return reply({ error: "QUEUE_FAILED" }, 500); }

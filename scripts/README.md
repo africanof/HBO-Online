@@ -14,11 +14,11 @@ npm install --no-save playwright@1 axe-core@4
 ```
 
 ```bash
-SITE_URL=https://huambo-online.vercel.app pnpm smoke:site
+SITE_URL=https://huamboonline.com pnpm smoke:site
 ```
 
 ```bash
-SITE_URL=https://huambo-online.vercel.app pnpm a11y:site
+SITE_URL=https://huamboonline.com pnpm a11y:site
 ```
 
 Também podem ser corridos no GitHub: **Actions → «Teste do site publicado» → Run workflow**.

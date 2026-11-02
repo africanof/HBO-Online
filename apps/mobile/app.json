@@ -22,37 +22,37 @@
           "data": [
             {
               "scheme": "https",
-              "host": "huambo-online.vercel.app",
+              "host": "huamboonline.com",
               "pathPrefix": "/reservas/"
             },
             {
               "scheme": "https",
-              "host": "huambo-online.vercel.app",
+              "host": "huamboonline.com",
               "pathPrefix": "/combustivel/"
             },
             {
               "scheme": "https",
-              "host": "huambo-online.vercel.app",
+              "host": "huamboonline.com",
               "pathPrefix": "/eventos/bilhete/"
             },
             {
               "scheme": "https",
-              "host": "huambo-online.vercel.app",
+              "host": "huamboonline.com",
               "pathPrefix": "/profissionais/"
             },
             {
               "scheme": "https",
-              "host": "huambo-online.vercel.app",
+              "host": "huamboonline.com",
               "pathPrefix": "/empresas/"
             },
             {
               "scheme": "https",
-              "host": "huambo-online.vercel.app",
+              "host": "huamboonline.com",
               "pathPrefix": "/vendedor/"
             },
             {
               "scheme": "https",
-              "host": "huambo-online.vercel.app",
+              "host": "huamboonline.com",
               "pathPrefix": "/pracas/"
             }
           ],

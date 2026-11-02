@@ -4,7 +4,7 @@
 
 Plataforma digital de comércio, serviços e negócios do Huambo — um único produto com **Site** e **APP** (Android/iOS) a partilhar as mesmas regras e a mesma base de dados.
 
-🌐 **Site publicado:** <https://huambo-online.vercel.app> — alojado na **Vercel** ([guia](docs/guias/publicar-site-vercel.md))
+🌐 **Site publicado:** <https://huamboonline.com> — alojado na **Vercel** ([guia](docs/guias/publicar-site-vercel.md))
 
 ## Índice
 
