@@ -135,10 +135,10 @@ begin
 
   if not coalesce(p_readable, false) or p_amount is null then v := 'unreadable'; notes := array['Não foi possível ler o valor no comprovativo.'];
   else
-    if dup.payment_id is not null then notes := notes || 'Este n.º de operação já foi usado noutro pagamento (talão repetido).'; end if;
+    if dup.payment_id is not null then notes := notes || 'Este n.º de operação já foi usado noutro pagamento (talão repetido).'::text; end if;
     if amt_ok = false then notes := notes || format('Valor no talão: %s Kz; esperado: %s Kz.', p_amount, q.amount); end if;
-    if dest_ok = false then notes := notes || 'A conta de destino não é nenhuma das contas da plataforma.'; end if;
-    if d_ok = false then notes := notes || 'A data do talão não bate com a data do pedido.'; end if;
+    if dest_ok = false then notes := notes || 'A conta de destino não é nenhuma das contas da plataforma.'::text; end if;
+    if d_ok = false then notes := notes || 'A data do talão não bate com a data do pedido.'::text; end if;
     if cardinality(flags) > 0 then notes := notes || ('Sinais visuais: ' || array_to_string(flags, '; ')); end if;
     v := case
       when dup.payment_id is not null or dest_ok = false or (amt_ok = false and p_amount < q.amount) then 'suspicious'

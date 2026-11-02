@@ -46,5 +46,6 @@ Schema, RLS, Auth, Storage, Edge Functions e demais recursos só são alterados 
 | `20261101251000_ia_traducoes_funcoes.sql` | Traduções pela Edge Function só através de funções (`ai_listing_text`, `ai_cached_translation`, `ai_save_translation`): o `service_role` deste projeto não lê nem escreve tabelas diretamente. |
 | `20261101260000_whatsapp_equipa.sql` | WhatsApp da equipa: `platform_settings.team_whatsapp` (público) e `admin_set_team_whatsapp`; `my_team_request_states` passa a devolver `link` (página do anúncio/pedido). |
 | `20261102100000_comprovativos_ia.sql` | Comprovativos lidos pela IA (`ai-proof-check`, cron a cada 5 min): `payment_proof_checks`, conferência fixa (valor, conta de destino, data, talão repetido) e `admin_list_proof_checks`. A equipa confirma sempre. |
+| `20261102101000_comprovativos_ia_correcao.sql` | Correção dos avisos de texto em `ai_save_proof_check`. |
 
 Todas já estão aplicadas no projeto `pewymvkowbdizdiyjmao`.
