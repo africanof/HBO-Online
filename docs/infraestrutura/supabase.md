@@ -53,5 +53,6 @@ Schema, RLS, Auth, Storage, Edge Functions e demais recursos só são alterados 
 | `20261102130000_municipios_angola.sql` | Municípios das 20 outras províncias (DPA 2024: 326 no total, com o Huambo); províncias continuam bloqueadas até a equipa as desbloquear. |
 | `20261102140000_rastreio_encomendas.sql` | Rastreio de encomendas: histórico `order_tracking_events` (gatilhos em encomendas e entregas), posição do estafeta (`courier_share_location`, só durante a entrega, apagada no fim) e `order_tracking(id)` para comprador, vendedor e equipa. |
 | `20261102150000_frances.sql` | Francês: traduções de anúncios também em `fr`. |
+| `20261102160000_fundo_branco.sql` | Fundo branco nas fotos: limite de 40 fotos por pessoa e por dia (`consume_ai('bg_remove')`), usado pela função Python `/api/fundo` do Site. |
 
 Todas já estão aplicadas no projeto `pewymvkowbdizdiyjmao`.

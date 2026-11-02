@@ -1,0 +1,4 @@
+# Só para a função Python apps/web/api/fundo.py (tirar o fundo das fotos com o modelo «silueta» do rembg).
+onnxruntime>=1.20,<2
+numpy>=2,<3
+pillow>=11,<14
