@@ -52,5 +52,6 @@ Schema, RLS, Auth, Storage, Edge Functions e demais recursos só são alterados 
 | `20261102120000_provincias_desbloquear.sql` | Províncias: a equipa liga/desliga províncias (exige municípios; nunca a última) e gere os municípios (`admin_list_provinces`, `admin_set_province_active`, `admin_add_municipalities`, `admin_rename_municipality`, `admin_delete_municipality` só se ninguém o usar); registo no `admin_audit_log`. |
 | `20261102130000_municipios_angola.sql` | Municípios das 20 outras províncias (DPA 2024: 326 no total, com o Huambo); províncias continuam bloqueadas até a equipa as desbloquear. |
 | `20261102140000_rastreio_encomendas.sql` | Rastreio de encomendas: histórico `order_tracking_events` (gatilhos em encomendas e entregas), posição do estafeta (`courier_share_location`, só durante a entrega, apagada no fim) e `order_tracking(id)` para comprador, vendedor e equipa. |
+| `20261102150000_frances.sql` | Francês: traduções de anúncios também em `fr`. |
 
 Todas já estão aplicadas no projeto `pewymvkowbdizdiyjmao`.

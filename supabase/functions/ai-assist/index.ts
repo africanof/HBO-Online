@@ -19,7 +19,7 @@ const reply = (body: unknown, status = 200) => Response.json(body, { status, hea
 const clip = (v: unknown, n: number) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, n);
 const text = (v: unknown, n: number) => String(v ?? "").trim().slice(0, n);
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const LANG_NAMES: Record<string, string> = { pt: "português de Angola", en: "English", zh: "简体中文 (Simplified Chinese)" };
+const LANG_NAMES: Record<string, string> = { pt: "português de Angola", en: "English", zh: "简体中文 (Simplified Chinese)", fr: "français" };
 
 /** Tira contactos (telefones, e-mails, links) — os contactos fazem-se pelas Mensagens. */
 function stripContacts(s: string): string {

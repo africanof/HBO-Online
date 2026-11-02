@@ -14,7 +14,7 @@ function contactLineIn(t: TFunction): string {
 
 /** Página traduzida, ou null se não houver tradução que bata certo com a do core (fica em português). */
 function translatedPage(page: Page, lang: string, t: TFunction): InfoPageText | null {
-  if (lang !== "en" && lang !== "zh") return null;
+  if (lang !== "en" && lang !== "zh" && lang !== "fr") return null;
   const tr = SV_INFO_PAGES[lang][page.slug];
   if (!tr || tr.sections.length !== page.sections.length) return null;
   const contact = contactLineIn(t);
@@ -44,7 +44,7 @@ export function InfoPageView({ page }: { page: Page }) {
 /** Página «Ajuda»: perguntas frequentes. */
 export function HelpPageView() {
   const { lang, t } = useT();
-  const faq = HELP_FAQ.map(f => (lang === "en" || lang === "zh" ? SV_HELP_FAQ[lang][f.q] : undefined) ?? f);
+  const faq = HELP_FAQ.map(f => (lang === "en" || lang === "zh" || lang === "fr" ? SV_HELP_FAQ[lang][f.q] : undefined) ?? f);
   return <main className="stack" style={{ maxWidth: 820 }}>
     <a href="/">← {t("nav.home")}</a>
     <h1>❓ {t("nav.help")}</h1>
@@ -60,8 +60,8 @@ export function HelpPageView() {
 /** Página «Segurança»: regras de ouro, pontos de encontro e sinais de burla. */
 export function SafetyPageView() {
   const { lang, t, tc } = useT();
-  const tips = SAFETY_TIPS.map(x => (lang === "en" || lang === "zh" ? SV_SAFETY_TIPS[lang][x] : undefined) ?? tc(x));
-  const scams = Object.entries(SCAM_WARNING_TEXT).map(([k, x]) => (lang === "en" || lang === "zh" ? SV_SCAM_TEXT[lang][k] : undefined) ?? tc(x));
+  const tips = SAFETY_TIPS.map(x => (lang === "en" || lang === "zh" || lang === "fr" ? SV_SAFETY_TIPS[lang][x] : undefined) ?? tc(x));
+  const scams = Object.entries(SCAM_WARNING_TEXT).map(([k, x]) => (lang === "en" || lang === "zh" || lang === "fr" ? SV_SCAM_TEXT[lang][k] : undefined) ?? tc(x));
   return <main className="stack" style={{ maxWidth: 820 }}>
     <a href="/ajuda">← {t("nav.help")}</a>
     <h1>🛡️ {t("sv.sf_title")}</h1>

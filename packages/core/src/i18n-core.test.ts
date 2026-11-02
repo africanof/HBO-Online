@@ -63,6 +63,7 @@ describe("tc — etiquetas e listas exportadas pelo core", () => {
     expect(list.length).toBeGreaterThan(100);
     expect(checkTranslated(list)).toEqual([]);
     expect(tc(core.contactLine("apoio@exemplo.ao"), "en")).toBe("You can contact us by email at apoio@exemplo.ao.");
+    expect(tc(core.contactLine("apoio@exemplo.ao"), "fr")).toBe("Vous pouvez nous contacter par e-mail à apoio@exemplo.ao.");
   });
 
   it("devolve o texto como está em português, para null/vazio e para textos desconhecidos", () => {
@@ -73,19 +74,28 @@ describe("tc — etiquetas e listas exportadas pelo core", () => {
     expect(tc("Casa T3 no Bairro Académico", "en")).toBe("Casa T3 no Bairro Académico");
     expect(tc(core.STATUS_LABELS.sold, "en")).toBe("Sold");
     expect(tc(core.STATUS_LABELS.sold, "zh")).toBe("已售出");
+    expect(tc(core.STATUS_LABELS.sold, "fr")).toBe("Vendu");
+    expect(tc(core.timeAgo(new Date(Date.now() - 180 * 60000).toISOString()), "fr")).toBe("il y a 3 h");
+    expect(tc(core.memberSince("2026-10-01T00:00:00Z"), "fr")).toBe("Membre depuis oct. 2026");
   });
 
   it("as traduções não estão vazias e mantêm emojis e valores em Kz", () => {
     for (const [pt, t] of Object.entries(CORE_TEXT)) {
       expect(t.en.trim(), pt).not.toBe("");
       expect(t.zh.trim(), pt).not.toBe("");
+      expect(t.fr?.trim(), `fr: ${pt}`).toBeTruthy();
       for (const m of pt.match(/\p{Extended_Pictographic}/gu) ?? []) {
         expect(t.en, pt).toContain(m);
         expect(t.zh, pt).toContain(m);
+        expect(t.fr, pt).toContain(m);
       }
-      for (const kz of pt.match(/\d[\d ]* Kz/g) ?? []) expect(t.en, pt).toContain(kz);
+      for (const kz of pt.match(/\d[\d ]* Kz/g) ?? []) { expect(t.en, pt).toContain(kz); expect(t.fr, pt).toContain(kz); }
     }
-    for (const p of CORE_PATTERNS) expect(p.re.source.startsWith("^") && p.re.source.endsWith("$"), String(p.re)).toBe(true);
+    for (const p of CORE_PATTERNS) {
+      expect(p.re.source.startsWith("^") && p.re.source.endsWith("$"), String(p.re)).toBe(true);
+      expect(p.fr?.trim(), `fr: ${p.re}`).toBeTruthy();
+      expect([...(p.fr ?? "").matchAll(/\$\d/g)].map(m => m[0]).sort(), `fr: ${p.re}`).toEqual([...p.en.matchAll(/\$\d/g)].map(m => m[0]).sort());
+    }
   });
 });
 

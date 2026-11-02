@@ -6,7 +6,7 @@
 export type InfoSection = { title: string; paragraphs: string[] };
 export type InfoPage = { slug: string; title: string; intro: string; updated: string; sections: InfoSection[] };
 
-export const LEGAL_UPDATED = "2026-11-01";
+export const LEGAL_UPDATED = "2026-11-02";
 /** E-mail de contacto público (opcional). Sem e-mail, as páginas indicam a Conta e as Mensagens. */
 export function contactLine(email?: string | null): string {
   const e = (email ?? "").trim();
@@ -93,7 +93,7 @@ export function privacyPage(email?: string | null): InfoPage {
         "O Site está alojado na Vercel. A APP é feita com Expo.",
         "Pesquisa por fotografia (quando estiver ativa): a fotografia é enviada à OpenAI para dizer o que é o artigo, e não é guardada por nós.",
         "Melhorar com IA (só quando carrega no botão): o título, a descrição e os dados do anúncio são enviados à OpenAI para propor um texto melhor, e não são guardados por nós.",
-        "Assistente de IA (só quando o usa): as fotografias para preencher um anúncio, o que escreve na pesquisa inteligente e as perguntas ao assistente de ajuda são enviadas à OpenAI para responder, e não são guardadas por nós. Os anúncios publicados podem ser traduzidos automaticamente para inglês e chinês (as traduções ficam guardadas).",
+        "Assistente de IA (só quando o usa): as fotografias para preencher um anúncio, o que escreve na pesquisa inteligente e as perguntas ao assistente de ajuda são enviadas à OpenAI para responder, e não são guardadas por nós. Os anúncios publicados podem ser traduzidos automaticamente para inglês, francês e chinês (as traduções ficam guardadas).",
         "Segurança: os anúncios publicados são analisados automaticamente pela IA (OpenAI) para ajudar a equipa a encontrar burlas, artigos proibidos e contactos escondidos. A equipa também pode usar a IA para sugerir respostas nas Mensagens e resumir disputas. A IA só assinala e sugere: quem decide é sempre uma pessoa da equipa.",
         "Comprovativos de pagamento: os talões que envia são lidos pela IA (OpenAI) para ajudar a equipa a conferir o valor, a data e a conta de destino. A confirmação do pagamento é sempre feita por uma pessoa da equipa."] },
       { title: "6. Quanto tempo guardamos", paragraphs: [

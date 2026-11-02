@@ -27,7 +27,7 @@ export function DetailFacts({ listingType, attributes, categorySlug }: { listing
   const { t, lang } = useT();
   const facts = detailFacts(listingType, attributes, categorySlug);
   if (!facts.length) return null;
-  const num = (v: string) => Number(v).toLocaleString(lang === "zh" ? "zh-CN" : lang === "en" ? "en-GB" : "pt-PT");
+  const num = (v: string) => Number(v).toLocaleString(lang === "zh" ? "zh-CN" : lang === "en" ? "en-GB" : lang === "fr" ? "fr-FR" : "pt-PT");
   return <View style={[ui.card, { gap: 4 }]}>
     {facts.map(f => <Text key={f.key} style={ui.text}><Text style={ui.label}>{t("attr." + f.key)}: </Text>
       {f.option ? t(`attr.${f.key}.${f.value}`) : /^\d+(\.\d+)?$/.test(f.value) && f.key !== "year" ? num(f.value) : f.value}{f.unit ? " " + t("attr.unit." + f.unit) : ""}</Text>)}

@@ -14,14 +14,14 @@ import { CORE_DELIVERY_ROWS, CORE_DELIVERY_PATTERNS, CORE_PROFILE_QR_ROWS, CORE_
  * Tradução dos textos que o core devolve em português (etiquetas, estados, validações e mensagens de erro).
  * A chave é o próprio texto em português; os textos com partes variáveis usam CORE_PATTERNS ($1, $2… = partes apanhadas).
  */
-export type CoreText = Record<string, { en: string; zh: string }>;
+export type CoreText = Record<string, { en: string; zh: string; fr?: string }>;
 function rowsToText(...groups: CoreRow[][]): CoreText {
   const out: CoreText = {};
-  for (const rows of groups) for (const [pt, en, zh] of rows) out[pt] = { en, zh };
+  for (const rows of groups) for (const [pt, en, zh, fr] of rows) out[pt] = { en, zh, fr };
   return out;
 }
 export const CORE_TEXT: CoreText = rowsToText(CORE_LABEL_ROWS, CORE_MESSAGE_ROWS, CORE_ERROR_ROWS, CORE_LEGAL_ROWS, CORE_NOTIFICATION_ROWS, CORE_PATTERN_WORD_ROWS, CORE_DELIVERY_ROWS, CORE_PROFILE_QR_ROWS);
-export const CORE_PATTERNS: { re: RegExp; en: string; zh: string }[] = [...CORE_PROFILE_QR_PATTERNS, ...CORE_DELIVERY_PATTERNS, ...CORE_NOTIFICATION_PATTERNS, ...CORE_PATTERNS_LIST];
+export const CORE_PATTERNS: { re: RegExp; en: string; zh: string; fr?: string }[] = [...CORE_PROFILE_QR_PATTERNS, ...CORE_DELIVERY_PATTERNS, ...CORE_NOTIFICATION_PATTERNS, ...CORE_PATTERNS_LIST];
 
 /** Traduz um texto vindo do core; se não o conhecer, devolve-o como está. */
 export function tc(text: string, lang: Lang): string;
@@ -29,10 +29,10 @@ export function tc(text: string | null | undefined, lang: Lang): string | null |
 export function tc(text: string | null | undefined, lang: Lang): string | null | undefined {
   if (text == null || lang === "pt" || text === "") return text;
   const hit = CORE_TEXT[text];
-  if (hit) return hit[lang];
+  if (hit) return hit[lang] ?? hit.en;
   for (const p of CORE_PATTERNS) {
     const m = p.re.exec(text);
-    if (m) return p[lang].replace(/\$(\d)/g, (_, i) => tc(m[Number(i)] ?? "", lang) ?? "");
+    if (m) return (p[lang] ?? p.en).replace(/\$(\d)/g, (_, i) => tc(m[Number(i)] ?? "", lang) ?? "");
   }
   return text;
 }

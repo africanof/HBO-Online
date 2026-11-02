@@ -11,9 +11,9 @@ describe("várias línguas", () => {
     expect(categoryLabelIn("Hotéis", "en")).toBe("Hotels"); expect(categoryLabelIn("Desconhecida", "en")).toBe("Desconhecida");
   });
   it("deteta a língua do navegador/telemóvel", () => {
-    expect(detectLang("en-GB,en;q=0.9")).toBe("en"); expect(detectLang("zh-CN,zh;q=0.8")).toBe("zh"); expect(detectLang(["fr-FR", "pt-PT"])).toBe("pt");
-    expect(detectLang("fr")).toBe("pt"); expect(detectLang(undefined)).toBe("pt");
-    expect(isLang("zh")).toBe(true); expect(isLang("fr")).toBe(false);
+    expect(detectLang("en-GB,en;q=0.9")).toBe("en"); expect(detectLang("zh-CN,zh;q=0.8")).toBe("zh"); expect(detectLang(["fr-FR", "pt-PT"])).toBe("fr"); expect(detectLang(["de-DE", "pt-PT"])).toBe("pt");
+    expect(detectLang("fr")).toBe("fr"); expect(detectLang("de")).toBe("pt"); expect(detectLang(undefined)).toBe("pt");
+    expect(isLang("zh")).toBe(true); expect(isLang("fr")).toBe(true); expect(isLang("de")).toBe(false);
   });
   it("traduz, troca valores e cai para português", () => {
     expect(translate(COMMON_DICT, "zh", "auth.hello_name", { name: "Ana" })).toBe("您好，Ana");
