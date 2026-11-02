@@ -17,3 +17,15 @@ describe("«✨ Novidades para si»", () => {
     expect(r.data?.interests_frequency).toBe("weekly");
   });
 });
+
+describe("emails", () => {
+  it("cancela só com um código válido", async () => {
+    const { unsubscribeEmail, setEmailDigest } = await import("./notification-preferences");
+    const rpc = vi.fn(async () => ({ data: true, error: null }));
+    expect(await unsubscribeEmail({ rpc } as any, "nao-e-codigo")).toEqual({ ok: false });
+    expect(rpc).not.toHaveBeenCalled();
+    expect(await unsubscribeEmail({ rpc } as any, "5029be45-f7a3-4d86-8f14-73c96ee83b82")).toEqual({ ok: true });
+    await setEmailDigest({ rpc } as any, false);
+    expect(rpc).toHaveBeenLastCalledWith("set_email_digest", { p_enabled: false });
+  });
+});

@@ -1342,6 +1342,7 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
           "Messages always go through the Huambo Online team (administrators and moderators), who read them and forward them to the other party: users do not talk to each other directly. Orders, bookings, tickets, offers, rentals and service requests also go to the team first, who forward them to whoever will handle them. Your phone and address are only shared when needed for delivery or the service.",
           "Recommendations: to suggest listings, we use the listings you view, your searches and what you save (no artificial intelligence). Only you can see this history; you can delete it in “Your account”, and it is deleted automatically after 90 days.",
           "«✨ New for you» notices: with the same history, we let you know when new listings you may like appear (at most one notice a day, or a week). To choose the listings, the categories, searched words and titles of the listings you viewed are sent to OpenAI (never your name, contact details or messages). You can change the frequency or turn it off in “Notification preferences”.",
+          "Email summary: once a day, if you have unread notices, we send one email with the latest ones through Resend (your email address and the text of the notices go through this service only to send it). You can turn it off in “Notification preferences” or with the link in each email.",
           "Verification documents are kept in a private space: only you and the admins can open them, through a temporary link."] },
         { title: "5. Where the data is kept and who helps us", paragraphs: [
           "The database and files are on Supabase, on servers in the European Union (Germany, Frankfurt).",
@@ -1384,6 +1385,7 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
           "所有消息都会先经过 Huambo Online 团队（管理员和版主），由团队阅读后转发给对方：用户之间不会直接交流。订单、预订、门票、报价、租赁和服务请求也会先到达团队，由团队转发给处理方。只有在配送或服务需要时，才会共享您的电话和地址。",
           "推荐：为向您推荐信息，我们会使用您浏览的信息、搜索记录和收藏内容（不使用人工智能）。只有您能看到这些记录；您可以在“您的账户”中删除，记录也会在 90 天后自动删除。",
           "“✨ 为您推荐的新内容”通知：根据同样的记录，出现您可能喜欢的新信息时我们会通知您（每天或每周最多一条）。为挑选信息，您浏览过的类别、搜索词和信息标题会发送给 OpenAI（绝不包括您的姓名、联系方式或消息）。您可以在“通知偏好”中更改频率或关闭。",
+          "邮件摘要：如果您有未读通知，我们每天最多通过 Resend 发送一封包含最新通知的邮件（您的邮箱地址和通知内容仅为发送而经过该服务）。您可以在“通知偏好”中或通过每封邮件中的链接关闭。",
           "认证证件保存在私密空间：只有您本人和管理员可以通过临时链接打开。"] },
         { title: "5. 数据存放在哪里以及谁为我们提供帮助", paragraphs: [
           "数据库和文件存放在 Supabase 上，服务器位于欧盟（德国法兰克福）。",
@@ -1440,6 +1442,7 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
             "Les messages passent toujours par l'équipe de Huambo Online (administrateurs et modérateurs), qui les lit et les transmet à l'autre partie : les utilisateurs ne se parlent pas directement. Les commandes, réservations, billets, offres, locations et demandes de service passent aussi d'abord par l'équipe, qui les transmet à qui va les traiter. Votre téléphone et votre adresse ne sont partagés que lorsque c'est nécessaire pour la livraison ou le service.",
             "Recommandations : pour suggérer des annonces, nous utilisons les annonces que vous consultez, vos recherches et ce que vous enregistrez (sans intelligence artificielle). Vous seul voyez cet historique ; vous pouvez le supprimer dans « Votre compte », et il est supprimé automatiquement après 90 jours.",
             "Avis « ✨ Nouveautés pour vous » : avec le même historique, nous vous prévenons quand de nouvelles annonces qui pourraient vous plaire apparaissent (au maximum un avis par jour, ou par semaine). Pour choisir les annonces, les catégories, les mots recherchés et les titres des annonces consultées sont envoyés à OpenAI (jamais votre nom, vos coordonnées ni vos messages). Vous pouvez changer la fréquence ou désactiver dans « Préférences de notification ».",
+            "Résumé par e-mail : une fois par jour, si vous avez des avis non lus, nous envoyons un e-mail avec les plus récents via Resend (votre adresse e-mail et le texte des avis passent par ce service uniquement pour l'envoi). Vous pouvez le désactiver dans « Préférences de notification » ou par le lien présent dans chaque e-mail.",
             "Les documents de vérification sont conservés dans un espace privé : seuls vous et l'administration pouvez les ouvrir, via un lien temporaire."
           ]
         },
