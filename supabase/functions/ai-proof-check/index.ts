@@ -1,7 +1,8 @@
 // Leitura de comprovativos de pagamento (talões de transferência e de Multicaixa Express) com
 // OpenAI gpt-4o-mini. Chamada pelo servidor a cada 5 minutos (pg_cron) quando há comprovativos
 // novos. A IA só LÊ o talão; a base de dados confere com regras fixas (ai_save_proof_check) e a
-// equipa decide. Só trabalha sobre a fila, por isso pode ser chamada com a chave pública.
+// equipa decide (só taxas pequenas que batem certo são aprovadas sozinhas: ver a migração
+// 20261102110000_comprovativos_automaticos.sql). Só trabalha sobre a fila: pode usar a chave pública.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const MODEL = "gpt-4o-mini";
@@ -56,22 +57,25 @@ Deno.serve(async req => {
 
   const results: Record<string, number> = {};
   for (const q of queue ?? []) {
+    let fileHash: string | null = null;
     const save = (o: Record<string, unknown>) => admin.rpc("ai_save_proof_check", {
       p_kind: q.kind, p_payment_id: q.payment_id, p_proof_path: q.proof_path, p_readable: !!o.readable,
       p_amount: typeof o.amount === "number" && Number.isFinite(o.amount) ? o.amount : null,
       p_date: typeof o.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(o.date) ? o.date : null,
       p_operation: clip(o.operation_id, 60), p_destination: clip(o.destination, 60), p_beneficiary: clip(o.beneficiary, 120),
       p_bank: clip(o.bank, 60), p_method: clip(o.method, 40),
-      p_visual_flags: Array.isArray(o.visual_flags) ? o.visual_flags.slice(0, 4).map(x => clip(x, 160)).filter(Boolean) : []
+      p_visual_flags: Array.isArray(o.visual_flags) ? o.visual_flags.slice(0, 4).map(x => clip(x, 160)).filter(Boolean) : [],
+      p_file_hash: fileHash
     });
     try {
-      const ext = String(q.proof_path).split(".").pop()?.toLowerCase() ?? "";
-      const mediaType = IMAGE_TYPES[ext];
-      if (!mediaType) { await save({ readable: false }); results.unreadable = (results.unreadable ?? 0) + 1; continue; } // PDF ou outro: a equipa vê à mão
+      // Impressão digital do ficheiro (o mesmo ficheiro noutro pagamento = talão repetido).
       const file = await admin.storage.from(BUCKET).download(q.proof_path);
       if (file.error || !file.data) { console.error("ai-proof-check download", q.proof_path, file.error?.message); continue; }
       const bytes = new Uint8Array(await file.data.arrayBuffer());
-      if (bytes.length > 6_000_000) { await save({ readable: false }); continue; }
+      fileHash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)), b => b.toString(16).padStart(2, "0")).join("");
+      const ext = String(q.proof_path).split(".").pop()?.toLowerCase() ?? "";
+      const mediaType = IMAGE_TYPES[ext];
+      if (!mediaType || bytes.length > 6_000_000) { await save({ readable: false }); results.unreadable = (results.unreadable ?? 0) + 1; continue; } // PDF ou outro: a equipa vê à mão
       const r = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },

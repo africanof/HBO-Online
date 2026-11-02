@@ -40,3 +40,21 @@ export const PROOF_VERDICT_ICON: Record<ProofVerdict, string> = { match: "✅", 
 
 /** ✔/✖/? para cada conferência. */
 export function proofMark(ok: boolean | null | undefined): string { return ok === true ? "✔" : ok === false ? "✖" : "?"; }
+
+// Aprovação automática (só taxas pequenas da plataforma; nunca o pagamento protegido)
+export type AutoConfirmed = { kind: ProofKind; payment_id: string; label: string | null; amount: number; payer_id: string | null; payer_name: string | null;
+  read_operation: string | null; read_bank: string | null; read_date: string | null; proof_path: string; auto_confirmed_at: string };
+export async function listAutoConfirmed(client: SupabaseClient, days = 7) {
+  const r = await client.rpc("admin_list_auto_confirmed", { p_days: days });
+  return { data: ((r.data ?? []) as any[]).map(x => ({ ...x, amount: Number(x.amount) })) as AutoConfirmed[], error: r.error };
+}
+/** Valor máximo (Kz) aprovado sozinho; 0 = desligado. */
+export async function getProofAutoMax(client: SupabaseClient): Promise<number> {
+  const r = await client.from("platform_settings").select("proof_auto_max_kz").eq("id", 1).maybeSingle();
+  return Number((r.data as { proof_auto_max_kz?: number } | null)?.proof_auto_max_kz ?? 0);
+}
+export const PROOF_AUTO_MAX_LIMIT = 50000;
+export function setProofAutoMax(client: SupabaseClient, value: number) {
+  if (!Number.isFinite(value) || value < 0 || value > PROOF_AUTO_MAX_LIMIT) return Promise.resolve({ data: null, error: new Error("INVALID_INPUT") });
+  return client.from("platform_settings").update({ proof_auto_max_kz: Math.round(value), updated_at: new Date().toISOString() }).eq("id", 1);
+}

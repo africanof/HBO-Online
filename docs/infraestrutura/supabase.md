@@ -47,5 +47,6 @@ Schema, RLS, Auth, Storage, Edge Functions e demais recursos só são alterados 
 | `20261101260000_whatsapp_equipa.sql` | WhatsApp da equipa: `platform_settings.team_whatsapp` (público) e `admin_set_team_whatsapp`; `my_team_request_states` passa a devolver `link` (página do anúncio/pedido). |
 | `20261102100000_comprovativos_ia.sql` | Comprovativos lidos pela IA (`ai-proof-check`, cron a cada 5 min): `payment_proof_checks`, conferência fixa (valor, conta de destino, data, talão repetido) e `admin_list_proof_checks`. A equipa confirma sempre. |
 | `20261102101000_comprovativos_ia_correcao.sql` | Correção dos avisos de texto em `ai_save_proof_check`. |
+| `20261102110000_comprovativos_automaticos.sql` | Impressão digital (SHA-256) dos comprovativos (mesmo ficheiro = repetido) e aprovação automática só de taxas pequenas da plataforma (`platform_settings.proof_auto_max_kz`, 1 000 Kz; 0 desliga; máx. 3 por pessoa/24 h; nunca encomendas), em nome da conta interna «Verificação automática (IA)». |
 
 Todas já estão aplicadas no projeto `pewymvkowbdizdiyjmao`.

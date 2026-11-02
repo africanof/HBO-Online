@@ -19,3 +19,15 @@ describe("comprovativos", () => {
   });
   it("marcas", () => { expect(proofMark(true)).toBe("✔"); expect(proofMark(false)).toBe("✖"); expect(proofMark(null)).toBe("?"); expect(PROOF_VERDICT_ICON.suspicious).toBe("🚩"); });
 });
+describe("aprovação automática", () => {
+  it("valor máximo", async () => {
+    const { getProofAutoMax, setProofAutoMax } = await import("./proof-checks");
+    const q: any = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: { proof_auto_max_kz: "1000" } }) };
+    expect(await getProofAutoMax({ from: () => q } as any)).toBe(1000);
+    expect((await setProofAutoMax({} as any, -1)).error).toBeTruthy();
+    expect((await setProofAutoMax({} as any, 60000)).error).toBeTruthy();
+    const upd = vi.fn(() => ({ eq: async () => ({ error: null }) }));
+    await setProofAutoMax({ from: () => ({ update: upd }) } as any, 1500.4);
+    expect((upd.mock.calls[0] as any)[0].proof_auto_max_kz).toBe(1500);
+  });
+});

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { listProofChecks, decideProofPayment, paymentProofUrl, formatPrice, friendlyErrorIn, proofMark, PROOF_VERDICT_ICON, type ProofCheck } from "@huambo-online/core";
+import { listAutoConfirmed, getProofAutoMax, setProofAutoMax, type AutoConfirmed, listProofChecks, decideProofPayment, paymentProofUrl, formatPrice, friendlyErrorIn, proofMark, PROOF_VERDICT_ICON, type ProofCheck } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { useT, formatDateIn } from "../lib/i18n";
 
@@ -27,6 +27,7 @@ export function AdminProofs() {
   }
   return <section className="stack">
     <p style={{ margin: 0 }}>{t("pf.intro")}</p>
+    <AutoApproval onView={view} />
     {err && <p className="error" role="alert">{err}</p>}
     {ok && <p className="ok" role="status">{ok}</p>}
     {!list.length && <p>{t("pf.none")}</p>}
@@ -48,3 +49,31 @@ export function AdminProofs() {
   </section>;
 }
 const confirm_ = (q: string) => window.confirm(q);
+
+/** Valor máximo aprovado sozinho e lista das aprovações automáticas (para conferir com o extrato). */
+function AutoApproval({ onView }: { onView: (path: string) => void }) {
+  const { lang, t } = useT();
+  const [max, setMax] = useState(""); const [list, setList] = useState<AutoConfirmed[]>([]); const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
+  useEffect(() => { void getProofAutoMax(supabase()).then(v => setMax(String(v))); void listAutoConfirmed(supabase()).then(r => setList(r.data)); }, []);
+  async function save(e: React.FormEvent) {
+    e.preventDefault(); setMsg(""); setErr("");
+    const r = await setProofAutoMax(supabase(), Number(max.replace(/\s/g, "").replace(",", ".")));
+    if (r.error) setErr(friendlyErrorIn(r.error, lang)); else setMsg(t("pf.auto_saved"));
+  }
+  return <details className="card">
+    <summary><strong>{t("pf.auto_title")}</strong>{max ? ` · ${Number(max) > 0 ? "≤ " + formatPrice(Number(max)) : "OFF"}` : ""} · {list.length}</summary>
+    <form className="stack" onSubmit={save} style={{ marginTop: 8 }}>
+      <small>{t("pf.auto_text")}</small>
+      <label style={{ maxWidth: 260 }}>{t("pf.auto_max")}<input inputMode="numeric" value={max} onChange={e => setMax(e.target.value)} /></label>
+      {msg && <p className="ok" role="status" style={{ margin: 0 }}>{msg}</p>}
+      {err && <p className="error" role="alert" style={{ margin: 0 }}>{err}</p>}
+      <button style={{ justifySelf: "start" }}>{t("common.save")}</button>
+    </form>
+    <h3>{t("pf.auto_list")}</h3>
+    {!list.length && <p style={{ margin: 0 }}>{t("pf.auto_none")}</p>}
+    {list.map(a => <div key={a.kind + a.payment_id} className="row" style={{ borderTop: "1px solid var(--line)", paddingTop: 6, gap: 8, alignItems: "center" }}>
+      <span>✅ {a.label ?? a.kind} · <strong>{formatPrice(a.amount)}</strong> · {a.payer_name ?? "—"} · {t("pf.operation")} {a.read_operation ?? "—"}{a.read_bank ? " · " + a.read_bank : ""} · {formatDateIn(a.auto_confirmed_at, lang)}</span>
+      <button type="button" className="secondary" style={{ minHeight: 36, padding: "4px 12px" }} onClick={() => onView(a.proof_path)}>🧾</button>
+    </div>)}
+  </details>;
+}

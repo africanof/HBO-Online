@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Alert, Linking, Text, TextInput, View } from "react-native";
-import { listProofChecks, decideProofPayment, paymentProofUrl, formatPrice, friendlyErrorIn, proofMark, PROOF_VERDICT_ICON, type ProofCheck } from "@huambo-online/core";
+import { listAutoConfirmed, getProofAutoMax, setProofAutoMax, type AutoConfirmed, listProofChecks, decideProofPayment, paymentProofUrl, formatPrice, friendlyErrorIn, proofMark, PROOF_VERDICT_ICON, type ProofCheck } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { formatDateTimeIn, useT } from "../lib/i18n";
 import { C, ui } from "../lib/ui";
@@ -27,6 +27,7 @@ export function AdminProofs() {
   }
   return <View style={{ gap: 12 }}>
     <Text style={ui.text}>{t("pf.intro")}</Text>
+    <AutoApproval onView={view} />
     <Message error={err} ok={ok} />
     {!list.length && <Text style={ui.muted}>{t("pf.none")}</Text>}
     {list.map(p => {
@@ -56,5 +57,35 @@ function ReasonInput({ value, placeholder, onChange, onSubmit, label }: { value:
   return <View style={{ gap: 6 }}>
     <TextInput style={ui.input} value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={C.muted} accessibilityLabel={placeholder} multiline />
     <Button title={label} variant="danger" disabled={!value.trim()} onPress={onSubmit} />
+  </View>;
+}
+
+/** Valor máximo aprovado sozinho e lista das aprovações automáticas (para conferir com o extrato). */
+function AutoApproval({ onView }: { onView: (path: string) => void }) {
+  const { lang, t } = useT();
+  const [open, setOpen] = useState(false);
+  const [max, setMax] = useState(""); const [list, setList] = useState<AutoConfirmed[]>([]); const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
+  useEffect(() => { void getProofAutoMax(supabase()).then(v => setMax(String(v))); void listAutoConfirmed(supabase()).then(r => setList(r.data)); }, []);
+  async function save() {
+    setMsg(""); setErr("");
+    const r = await setProofAutoMax(supabase(), Number(max.replace(/\s/g, "").replace(",", ".")));
+    if (r.error) setErr(friendlyErrorIn(r.error, lang)); else setMsg(t("pf.auto_saved"));
+  }
+  return <View style={ui.card}>
+    <Button title={`${t("pf.auto_title")} · ${Number(max) > 0 ? "≤ " + formatPrice(Number(max)) : "OFF"} · ${list.length}`} variant="secondary" onPress={() => setOpen(!open)} />
+    {open && <>
+      <Text style={ui.muted}>{t("pf.auto_text")}</Text>
+      <Text style={ui.label}>{t("pf.auto_max")}</Text>
+      <TextInput style={ui.input} keyboardType="numeric" value={max} onChangeText={setMax} accessibilityLabel={t("pf.auto_max")} />
+      <Message error={err} ok={msg} />
+      <Button title={t("common.save")} onPress={() => void save()} />
+      <Text style={ui.label}>{t("pf.auto_list")}</Text>
+      {!list.length && <Text style={ui.muted}>{t("pf.auto_none")}</Text>}
+      {list.map(a => <View key={a.kind + a.payment_id} style={{ gap: 4, borderTopWidth: 1, borderTopColor: C.line, paddingTop: 6 }}>
+        <Text style={ui.text}>✅ {a.label ?? a.kind} · {formatPrice(a.amount)} · {a.payer_name ?? "—"}</Text>
+        <Text style={ui.muted}>{t("pf.operation")} {a.read_operation ?? "—"}{a.read_bank ? " · " + a.read_bank : ""} · {formatDateTimeIn(a.auto_confirmed_at, lang)}</Text>
+        <Button title={"🧾 " + t("pf.view")} variant="secondary" onPress={() => onView(a.proof_path)} />
+      </View>)}
+    </>}
   </View>;
 }
