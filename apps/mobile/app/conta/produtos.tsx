@@ -41,14 +41,15 @@ export default function MeusProdutos() {
   useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) void load(id); }); void listProductCategories(supabase()).then(({ data }) => setCategories(data ?? [])); }, []);
   const set = (k: keyof typeof empty) => (v: string) => setForm(f => ({ ...f, [k]: v }));
 
-  async function pick() {
+  async function pick(camera = false) {
     const room = MAX_PRODUCT_PHOTOS - photos.length; if (room <= 0) return;
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { setError(t("sh.allow_photos")); return; }
-    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, selectionLimit: room, quality: 0.9 });
+    const perm = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) { setError(camera ? t("ls.camera_perm") : t("sh.allow_photos")); return; }
+    const r = camera ? await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.9 })
+      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, selectionLimit: room, quality: 0.9 });
     if (r.canceled) return;
     // Fotografias mais leves: reduzidas no telemóvel antes de enviar (poupa dados).
-    const ready = await Promise.all(r.assets.slice(0, room).map(async a => ({ key: a.assetId ?? a.uri, ...(await shrinkAsset(a)) })));
+    const ready = await Promise.all(r.assets.slice(0, room).map(async a => ({ key: a.assetId ?? `${a.uri}-${Date.now()}`, ...(await shrinkAsset(a)) })));
     setPhotos(p => [...p, ...ready]);
   }
   function edit(p: any) {
@@ -113,7 +114,10 @@ export default function MeusProdutos() {
       <MarketPicker value={form.marketId} onChange={v => setForm({ ...form, marketId: v })} />
       <VideoField value={form.videoUrl} onChange={v => setForm(f => ({ ...f, videoUrl: v }))} />
       <Text style={ui.label}>{t("sh.photos_n", { n: photos.length, max: MAX_PRODUCT_PHOTOS })}</Text>
-      <Button title={t("sh.select_photos")} variant="secondary" disabled={photos.length >= MAX_PRODUCT_PHOTOS} onPress={() => void pick()} />
+      <View style={ui.row}>
+        <View style={{ flex: 1 }}><Button title={t("ls.from_gallery")} variant="secondary" disabled={photos.length >= MAX_PRODUCT_PHOTOS} onPress={() => void pick(false)} /></View>
+        <View style={{ flex: 1 }}><Button title={t("ls.take_photo")} variant="secondary" disabled={photos.length >= MAX_PRODUCT_PHOTOS} onPress={() => void pick(true)} /></View>
+      </View>
       {photos.length > 0 && <BackgroundStylePicker value={bgStyle} onChange={setBgStyle} />}
       <View style={ui.row}>{photos.map((p, i) => <View key={p.key} style={{ width: 100, gap: 6 }}>
         <Image source={{ uri: p.uri }} style={{ width: 100, height: 100, borderRadius: 8 }} />

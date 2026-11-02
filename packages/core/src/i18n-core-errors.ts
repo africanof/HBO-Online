@@ -317,6 +317,8 @@ export const CORE_ERROR_ROWS: CoreRow[] = [
   ["O fundo branco ainda não está ativo. Tente mais tarde.", "The white background isn't active yet. Try later.", "白色背景功能尚未开通。请稍后再试。", "Le fond blanc n'est pas encore actif. Réessayez plus tard."],
   ["Não conseguimos tratar a fotografia agora. Tente de novo.", "We couldn't edit the photo right now. Try again.", "我们暂时无法处理这张照片。请重试。", "Nous n'avons pas pu traiter la photo maintenant. Réessayez."],
   ["Fundo branco", "White background", "白色背景", "Fond blanc"],
+  ["Fotografia do artigo", "Photo of the item", "物品照片", "Photo de l'article"],
+  ["Ponha o artigo ao centro, com boa luz e um fundo simples. Pode tirar várias seguidas.", "Put the item in the middle, with good light and a plain background. You can take several in a row.", "把物品放在中间，光线充足、背景简洁。可以连续拍多张。", "Placez l'article au centre, avec une bonne lumière et un fond simple. Vous pouvez en prendre plusieurs à la suite."],
   ["Fundo Huambo Online", "Huambo Online background", "Huambo Online 背景", "Fond Huambo Online"],
 
   // --- Localização (places.ts) ---

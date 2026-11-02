@@ -5,6 +5,7 @@ import { DetailFields } from "./ListingDetails";
 import { AiImprove } from "./AiImprove";
 import { PhotoFillButton, PriceHintNote, BackgroundButton, BackgroundStylePicker } from "./AiTools";
 import { PlaceFields } from "./Place";
+import { PhotoPicker } from "./PhotoPicker";
 import { ConformityCheck } from "./Conformity";
 import { VideoField } from "./Video";
 import { AgentCodeField, agentCodeFromUrl } from "./Agents";
@@ -119,7 +120,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
     void listMunicipalities(supabase(), provinceId).then(({ data }) => setMunicipalities((data ?? []) as Option[]));
   }, [provinceId]);
 
-  async function addFiles(files: FileList | null) {
+  async function addFiles(files: FileList | File[] | null) {
     setError("");
     const chosen = Array.from(files ?? []);
     const images = chosen.filter(f => f.type.startsWith("image/"));
@@ -308,7 +309,7 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialC
       {purpose !== "wanted" && <PlaceFields directions={directions} point={point} onDirections={setDirections} onPoint={setPoint} approximate />}
       <fieldset className="stack" style={{ border: "2px solid #ddd", borderRadius: 12, padding: 14 }}>
         <legend style={{ fontWeight: 700 }}>{t("ls.photos_count", { n: photos.length, max: CLASSIFIED_MAX_PHOTOS })}</legend>
-        <input type="file" accept="image/*" multiple disabled={photos.length >= CLASSIFIED_MAX_PHOTOS} onChange={e => { addFiles(e.target.files); e.target.value = ""; }} aria-label={t("ls.select_photos")} />
+        <PhotoPicker disabled={photos.length >= CLASSIFIED_MAX_PHOTOS} onFiles={f => void addFiles(f)} />
         {!wanted && photos.length > 0 && <PhotoFillButton categories={categories.map(c => ({ slug: (c as any).slug, name: c.name }))}
           getImage={async () => { const p0 = photos[0]; if (!p0) return null; return p0.file ?? await fetch(p0.src).then(r => r.blob()); }}
           onApply={f => {

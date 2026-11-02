@@ -3,6 +3,7 @@ import { ConformityCheck } from "../../../components/Conformity";
 import { MarketPicker } from "../../../components/MarketPicker";
 import { VideoField } from "../../../components/Video";
 import { BackgroundButton, BackgroundStylePicker } from "../../../components/AiTools";
+import { PhotoPicker } from "../../../components/PhotoPicker";
 import type { PhotoBackgroundStyle } from "@huambo-online/core";
 import { useEffect, useState } from "react";
 import { listMyProducts, saveProduct, deleteProduct, listProductCategories, uploadClassifiedMedia, removeClassifiedMedia, parsePrice, formatPrice, friendlyErrorIn,
@@ -36,7 +37,7 @@ export default function MeusProdutos() {
   useEffect(() => { void currentUserId().then(id => { setUid(id); if (id) { void load(id); void getPublicSeller(supabase(), id).then(({ data }) => setShopName(data?.full_name ?? "")); } }); void listProductCategories(supabase()).then(({ data }) => setCategories(data ?? [])); }, []);
   const set = (k: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setForm({ ...form, [k]: e.target.value });
 
-  async function addFiles(files: FileList | null) {
+  async function addFiles(files: FileList | File[] | null) {
     const chosen = Array.from(files ?? []);
     // Fotografias mais leves: reduzidas antes de enviar (poupa dados).
     const ready = await Promise.all(chosen.filter(f => f.type.startsWith("image/") && f.size <= PHOTO_RAW_MAX_BYTES).slice(0, MAX_PRODUCT_PHOTOS - photos.length).map(f => compressPhoto(f)));
@@ -105,7 +106,7 @@ export default function MeusProdutos() {
       <label>{t("sh.province")}<select value={provinceId} onChange={e => { setProvinceId(e.target.value); setForm({ ...form, municipalityId: "" }); }}><option value="">{t("sh.choose")}</option>{provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
       <label>{t("auth.municipality")}<select value={form.municipalityId} onChange={set("municipalityId")}><option value="">{t("sh.choose")}</option>{municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
       <MarketPicker value={form.marketId} onChange={v => setForm({ ...form, marketId: v })} />
-      <label>{t("sh.my.photos", { n: photos.length, max: MAX_PRODUCT_PHOTOS })}<input type="file" accept="image/*" multiple disabled={photos.length >= MAX_PRODUCT_PHOTOS} onChange={e => { addFiles(e.target.files); e.target.value = ""; }} /></label>
+      <div className="stack" style={{ gap: 6 }}><strong>{t("sh.my.photos", { n: photos.length, max: MAX_PRODUCT_PHOTOS })}</strong><PhotoPicker disabled={photos.length >= MAX_PRODUCT_PHOTOS} onFiles={f => void addFiles(f)} /></div>
       <VideoField value={form.videoUrl} onChange={v => setForm({ ...form, videoUrl: v })} />
       {photos.length > 0 && <BackgroundStylePicker value={bgStyle} onChange={setBgStyle} />}
       <div className="row">{photos.map((p, i) => <div key={p.key} style={{ display: "grid", gap: 6, width: 110 }}><img src={p.src} alt="" style={{ width: 110, height: 110, objectFit: "cover", borderRadius: 8 }} />

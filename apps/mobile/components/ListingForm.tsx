@@ -153,17 +153,19 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
     void listMunicipalities(supabase(), provinceId).then(({ data }) => setMunicipalities((data ?? []) as Option[]));
   }, [provinceId]);
 
-  async function pickPhotos() {
+  async function pickPhotos(camera = false) {
     setError("");
     const room = CLASSIFIED_MAX_PHOTOS - photos.length;
     if (room <= 0) { setError(t("ls.form.max_photos", { n: CLASSIFIED_MAX_PHOTOS })); return; }
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) { setError(t("ls.form.perm_photos")); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, selectionLimit: room, quality: 0.9 });
+    const perm = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) { setError(camera ? t("ls.camera_perm") : t("ls.form.perm_photos")); return; }
+    // Câmara: tira a fotografia na hora; galeria: escolhe várias de uma vez.
+    const result = camera ? await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.9 })
+      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, selectionLimit: room, quality: 0.9 });
     if (result.canceled) return;
     // Fotografias mais leves: reduzidas no telemóvel antes de enviar (poupa dados).
     setStatus(t("ls.form.preparing"));
-    const ready = await Promise.all(result.assets.slice(0, room).map(async a => ({ key: a.assetId ?? a.uri, ...(await shrinkAsset(a)) })));
+    const ready = await Promise.all(result.assets.slice(0, room).map(async a => ({ key: a.assetId ?? `${a.uri}-${Date.now()}`, ...(await shrinkAsset(a)) })));
     setStatus("");
     setPhotos(p => [...p, ...ready]);
   }
@@ -328,7 +330,10 @@ export function ListingForm({ listing, initialPurpose, initialSaleMode, initialA
     {purpose !== "wanted" && <AgentCodeField value={agentCode} onChange={setAgentCode} />}
     {purpose !== "wanted" && <ConformityCheck checked={conform} onChange={setConform} />}
     <Text style={ui.label}>{t("ls.form.photos", { n: photos.length, max: CLASSIFIED_MAX_PHOTOS })}</Text>
-    <Button title={t("ls.form.pick_photos")} variant="secondary" onPress={() => void pickPhotos()} disabled={busy || photos.length >= CLASSIFIED_MAX_PHOTOS} />
+    <View style={ui.row}>
+      <View style={{ flex: 1 }}><Button title={t("ls.from_gallery")} variant="secondary" onPress={() => void pickPhotos(false)} disabled={busy || photos.length >= CLASSIFIED_MAX_PHOTOS} /></View>
+      <View style={{ flex: 1 }}><Button title={t("ls.take_photo")} variant="secondary" onPress={() => void pickPhotos(true)} disabled={busy || photos.length >= CLASSIFIED_MAX_PHOTOS} /></View>
+    </View>
     {!wanted && photos.length > 0 && <PhotoFillButton photoUri={photos[0]?.uri ?? null} categories={categories.map(c => ({ slug: c.slug, name: c.name }))}
       onApply={f => {
         if (!title.trim()) setTitle(f.title);

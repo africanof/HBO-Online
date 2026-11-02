@@ -79,3 +79,10 @@ export async function removePhotoBackgroundBase64(fetchFn: FetchFn, opts: { site
     return { data: { base64: String(j.image), remaining: Number(j.remaining ?? 0) }, error: null };
   } catch { return { data: null, error: "NETWORK" }; }
 }
+
+/** Câmara ao publicar (anúncios e produtos): tirar a fotografia na hora, sem passar pela galeria. */
+export const LISTING_PHOTO_SHOT = {
+  key: "listing", camera: "back" as const, guide: false,
+  title: "Fotografia do artigo",
+  hint: "Ponha o artigo ao centro, com boa luz e um fundo simples. Pode tirar várias seguidas."
+};

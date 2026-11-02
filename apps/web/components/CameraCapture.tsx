@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import type { IDENTITY_SHOTS } from "@huambo-online/core";
 import { useT } from "../lib/i18n";
 
-type Shot = (typeof IDENTITY_SHOTS)[number];
+/** O que fotografar. «guide: false» tira a moldura do BI (fotografias de artigos). */
+type Shot = { key: string; title: string; hint: string; camera: "back" | "front"; guide?: boolean };
 
 export const CAMERA_ERROR = "Não foi possível abrir a câmara. Autorize a câmara no navegador, ou use a APP / um telemóvel com câmara.";
 const MAX_SIDE = 1600;
@@ -27,7 +27,7 @@ function cameraErrorKey(e: unknown): string {
  * Fotografia tirada na hora com a câmara (sem galeria nem ficheiros).
  * A selfie aparece espelhada no ecrã (como num espelho), mas a fotografia guardada não é espelhada.
  */
-export function CameraCapture({ shot, onUse, onCancel }: { shot: Shot; onUse: (photo: Blob) => void; onCancel?: () => void }) {
+export function CameraCapture({ shot, onUse, onCancel, autoStart }: { shot: Shot; onUse: (photo: Blob) => void; onCancel?: () => void; autoStart?: boolean }) {
   const { t, tc } = useT();
   const title = tc(shot.title);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -46,7 +46,7 @@ export function CameraCapture({ shot, onUse, onCancel }: { shot: Shot; onUse: (p
   useEffect(() => () => stop(), []);
   useEffect(() => () => { if (photo) URL.revokeObjectURL(photo.url); }, [photo]);
   // Mudou de passo (frente → verso → selfie): começa de novo.
-  useEffect(() => { stop(); setPhoto(null); setError(""); setPhase("off"); }, [shot.key]);
+  useEffect(() => { stop(); setPhoto(null); setError(""); setPhase("off"); if (autoStart) void start(); }, [shot.key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function start() {
     setError(""); setPhoto(null);
@@ -80,7 +80,7 @@ export function CameraCapture({ shot, onUse, onCancel }: { shot: Shot; onUse: (p
     setPhoto({ blob, url: URL.createObjectURL(blob) }); setPhase("preview");
   }
 
-  const guide = <div className="camera-guide" aria-hidden><span className={selfie ? "guide-face" : "guide-card"} /></div>;
+  const guide = shot.guide === false ? null : <div className="camera-guide" aria-hidden><span className={selfie ? "guide-face" : "guide-card"} /></div>;
   return <section className="card" aria-labelledby={`shot-${shot.key}`}>
     <h3 id={`shot-${shot.key}`} style={{ margin: 0 }}>{title}</h3>
     <p style={{ margin: 0 }}>{tc(shot.hint)}</p>
@@ -88,7 +88,7 @@ export function CameraCapture({ shot, onUse, onCancel }: { shot: Shot; onUse: (p
       <div className="camera">
         <video ref={videoRef} className={selfie ? "mirror" : undefined} playsInline muted autoPlay aria-label={t("sv.cam_view", { title })} />
         {guide}
-        <p className="camera-tip">{selfie ? t("sv.cam_tip_selfie") : t("sv.cam_tip_card")}</p>
+        {shot.guide !== false && <p className="camera-tip">{selfie ? t("sv.cam_tip_selfie") : t("sv.cam_tip_card")}</p>}
       </div>
       <div className="row">
         <button type="button" onClick={take} disabled={phase !== "live"}>📸 {t("sv.cam_take")}</button>
