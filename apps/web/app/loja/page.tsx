@@ -27,6 +27,14 @@ export default function Loja() {
     <a href="/">← {t("nav.home")}</a>
     <div className="results-bar"><h1 style={{ margin: 0 }}>{q ? t("sh.shop.title_q", { q }) : t("nav.shop")}</h1>
       <div className="row"><a className="btn" href="/carrinho">🛒 {t("sh.cart")}</a><a className="btn secondary" href="/encomendas">📦 {t("sh.orders")}</a><a className="btn secondary" href="/conta/produtos">{t("sh.shop.sell_products")}</a></div></div>
+    <section className="stack" style={{ gap: 6 }} aria-label={t("sh.shop.about")}>
+      <p style={{ margin: 0 }}>{t("sh.shop.intro")}</p>
+      <ul style={{ margin: 0, paddingLeft: 20 }}>
+        <li>{t("sh.shop.point_delivery")}</li>
+        <li>{t("sh.shop.point_protected")}</li>
+        <li>{t("sh.shop.point_sellers")}</li>
+      </ul>
+    </section>
     {categories.length > 0 && <nav className="chips" aria-label={t("sh.shop.categories")}>
       {[{ id: "", name: t("sh.shop.all") }, ...categories].map(c => <button key={c.id} type="button" className={"chip" + (categoryId === c.id ? " on" : "")} aria-pressed={categoryId === c.id} onClick={() => { setCategoryId(c.id); void search(undefined, { categoryId: c.id }); }}>{c.name}</button>)}
     </nav>}

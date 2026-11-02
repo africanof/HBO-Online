@@ -267,8 +267,12 @@ function readCookie(): string | null {
 export function readStoredLang(): Lang {
   const c = readCookie(); if (isLang(c)) return c;
   try { const s = localStorage.getItem(LANG_STORAGE_KEY); if (isLang(s)) return s; } catch { /* sem armazenamento */ }
+  // Robôs de pesquisa (Google, Bing…) veem sempre o português: é a língua oficial do Site.
+  try { if (BOT_UA.test(navigator.userAgent)) return DEFAULT_LANG; } catch { /* sem navigator */ }
   try { return detectLang(navigator.languages?.length ? navigator.languages : navigator.language); } catch { return DEFAULT_LANG; }
 }
+/** Robôs de pesquisa e de pré-visualização de ligações. */
+export const BOT_UA = /bot|crawl|spider|slurp|google-inspectiontool|lighthouse|facebookexternalhit|whatsapp|bingpreview/i;
 
 let current: Lang | null = null;
 const listeners = new Set<() => void>();
