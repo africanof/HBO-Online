@@ -2,7 +2,8 @@
 // Para cada pessoa com notificações por ler (email_digest_queue) envia UM email com as últimas (até 10)
 // e marca-as como enviadas (email_digest_mark). Cada email traz a ligação para cancelar.
 // Nunca passa do plano grátis do Resend: no máximo 90 emails por dia e 2 700 por mês (email_quota_take).
-// Precisa dos segredos RESEND_API_KEY e EMAIL_FROM (ex.: «Huambo Online <avisos@o-seu-dominio.ao>»);
+// Precisa do segredo RESEND_API_KEY; EMAIL_FROM (ex.: «Huambo Online <avisos@o-seu-dominio.ao>») é preciso
+// para entregar a toda a gente — sem ele usa o remetente de teste do Resend;
 // SITE_URL é opcional. Sem a chave não envia nada. Só trabalha sobre a fila, por isso pode ser chamada
 // com a chave pública sem custos extra.
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -51,8 +52,10 @@ export function renderDigest(site: string, name: string | null, items: Item[], t
 
 Deno.serve(async req => {
   if (req.method !== "POST") return reply({ error: "METHOD_NOT_ALLOWED" }, 405);
-  const apiKey = Deno.env.get("RESEND_API_KEY"); const from = Deno.env.get("EMAIL_FROM");
-  if (!apiKey || !from) return reply({ error: "EMAIL_NOT_CONFIGURED" }, 503);
+  const apiKey = Deno.env.get("RESEND_API_KEY");
+  // Sem domínio próprio: remetente de teste do Resend (só entrega no email da conta do Resend).
+  const from = Deno.env.get("EMAIL_FROM") || "Huambo Online <onboarding@resend.dev>";
+  if (!apiKey) return reply({ error: "EMAIL_NOT_CONFIGURED" }, 503);
   const site = (Deno.env.get("SITE_URL") || "https://huambo-online.vercel.app").replace(/\/+$/, "");
   const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
   const { data: queue, error } = await admin.rpc("email_digest_queue", { p_limit: 90 });
