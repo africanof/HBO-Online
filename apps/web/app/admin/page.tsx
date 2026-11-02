@@ -12,6 +12,7 @@ import { AdminCouriers } from "../../components/AdminCouriers";
 import { AdminMessages } from "../../components/AdminMessages";
 import { AdminRequests } from "../../components/AdminRequests";
 import { AdminProofs } from "../../components/AdminProofs";
+import { AdminProvinces } from "../../components/AdminProvinces";
 import { AdminAiFlags } from "../../components/AiTools";
 import { TeamWhatsappSettings } from "../../components/Engage";
 import { AdminMarkets } from "../../components/AdminMarkets";
@@ -29,9 +30,9 @@ import { AdminVenues } from "../../components/Venues";
 import { AdminInspections } from "../../components/Inspection";
 import { MfaGate } from "../../components/Mfa";
 
-type Tab = "stats" | "proofs" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+type Tab = "stats" | "proofs" | "provinces" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
 /** Separadores (o texto vem do dicionário: ad.tab.<separador>). */
-const tabs: Tab[] = ["stats", "proofs", "requests", "messages", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "inspections", "disputes", "verifications", "listings", "users", "categories", "couriers", "markets", "audit"];
+const tabs: Tab[] = ["stats", "proofs", "provinces", "requests", "messages", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "inspections", "disputes", "verifications", "listings", "users", "categories", "couriers", "markets", "audit"];
 
 // Com a entrada em dois passos ligada, as funções da administração só respondem depois do código (sessão aal2).
 export default function AdminPage() {
@@ -93,6 +94,7 @@ function AdminContent() {
     {notice && <p className="ok" role="status">{notice}</p>}
 
     {tab === "proofs" && <AdminProofs />}
+    {tab === "provinces" && <AdminProvinces />}
     {tab === "requests" && <AdminRequests />}
     {tab === "messages" && <AdminMessages />}
     {tab === "couriers" && <AdminCouriers />}
