@@ -54,5 +54,6 @@ Schema, RLS, Auth, Storage, Edge Functions e demais recursos só são alterados 
 | `20261102140000_rastreio_encomendas.sql` | Rastreio de encomendas: histórico `order_tracking_events` (gatilhos em encomendas e entregas), posição do estafeta (`courier_share_location`, só durante a entrega, apagada no fim) e `order_tracking(id)` para comprador, vendedor e equipa. |
 | `20261102150000_frances.sql` | Francês: traduções de anúncios também em `fr`. |
 | `20261102160000_fundo_branco.sql` | Fundo branco nas fotos: limite de 40 fotos por pessoa e por dia (`consume_ai('bg_remove')`), usado pela função Python `/api/fundo` do Site. |
+| `20261102170000_novidades_interesses.sql` | «✨ Novidades para si»: avisos diários/semanais (ou desligados) com anúncios novos pelos interesses de cada pessoa; candidatos por regras (`interest_digest_queue`), escolha final pela Edge Function `ai-interests` (GPT, com regras de reserva), `send_interest_digest`, `interest_notified`; cron às 18:30–20:30 de Angola. |
 
 Todas já estão aplicadas no projeto `pewymvkowbdizdiyjmao`.

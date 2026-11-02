@@ -6,6 +6,10 @@ import type { CorePattern } from "./i18n-core-patterns";
  * Os textos do corpo levam nomes, preços e datas: ficam em português (a não ser os mais comuns, abaixo).
  */
 export const CORE_NOTIFICATION_ROWS: CoreRow[] = [
+  // «✨ Novidades para si» (notification-preferences.ts, avisos pelos interesses)
+  ["✨ Novidades para si", "✨ New for you", "✨ 为您推荐的新内容", "✨ Nouveautés pour vous"],
+  ["No máximo um aviso por dia", "At most one notice a day", "每天最多一条通知", "Au maximum un avis par jour"],
+  ["Uma vez por semana", "Once a week", "每周一次", "Une fois par semaine"],
   ["Novo anúncio encontrado", "New listing found", "发现新信息", "Nouvelle annonce trouvée"],
   ["Um novo anúncio corresponde à sua pesquisa guardada.", "A new listing matches your saved search.", "有一条新信息符合您保存的搜索。", "Une nouvelle annonce correspond à votre recherche enregistrée."],
   ["Nova mensagem", "New message", "新消息", "Nouveau message"],
@@ -158,6 +162,8 @@ export const CORE_NOTIFICATION_ROWS: CoreRow[] = [
 
 const pn = (re: string, en: string, zh: string, fr: string): CorePattern => ({ re: new RegExp(re), en, zh, fr });
 export const CORE_NOTIFICATION_PATTERNS: CorePattern[] = [
+  pn("^Um anúncio novo de que pode gostar: (.+)$", "A new listing you may like: $1", "您可能喜欢的新信息：$1", "Une nouvelle annonce qui pourrait vous plaire : $1"),
+  pn("^(\\d+) anúncios novos de que pode gostar, como (.+)\\.$", "$1 new listings you may like, such as $2.", "有$1条您可能喜欢的新信息，例如$2。", "$1 nouvelles annonces qui pourraient vous plaire, comme $2."),
   pn("^(\\d+) novos anúncios encontrados$", "$1 new listings found", "发现$1条新信息", "$1 nouvelles annonces trouvées"),
   pn("^(\\d+) novos anúncios correspondem à sua pesquisa guardada\\.$", "$1 new listings match your saved search.", "有$1条新信息符合您保存的搜索。", "$1 nouvelles annonces correspondent à votre recherche enregistrée."),
   pn("^Nova licitação de (.+)$", "New bid of $1", "新出价：$1", "Nouvelle enchère de $1"),
