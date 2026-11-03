@@ -1,0 +1,50 @@
+name: Cópia no GitLab
+
+# Sempre que algo é enviado para o GitHub, envia o mesmo para o repositório do GitLab
+# (todos os ramos e etiquetas). Assim o GitLab fica sempre igual, sem migrar outra vez.
+# Precisa de dois segredos no GitHub (Settings → Secrets and variables → Actions):
+#   GITLAB_REPO  — o caminho do projeto no GitLab, ex.: «utilizador/hbo-online»
+#   GITLAB_TOKEN — um token de acesso do GitLab com a permissão «write_repository»
+# Sem os segredos não faz nada (não falha).
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: espelho-gitlab
+  cancel-in-progress: false
+
+jobs:
+  copiar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ver se está configurado
+        id: cfg
+        env:
+          GITLAB_REPO: ${{ secrets.GITLAB_REPO }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+        run: |
+          if [ -z "$GITLAB_REPO" ] || [ -z "$GITLAB_TOKEN" ]; then
+            echo "Faltam os segredos GITLAB_REPO e/ou GITLAB_TOKEN: nada a copiar."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.ok == 'true'
+        with:
+          fetch-depth: 0
+
+      - name: Enviar para o GitLab
+        if: steps.cfg.outputs.ok == 'true'
+        env:
+          GITLAB_REPO: ${{ secrets.GITLAB_REPO }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+        run: |
+          git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*' '+refs/tags/*:refs/tags/*'
+          git remote set-head origin -d 2>/dev/null || true
+          git remote add gitlab "https://oauth2:${GITLAB_TOKEN}@gitlab.com/${GITLAB_REPO}.git"
+          # Todos os ramos do GitHub e todas as etiquetas (só acrescenta: não apaga nada no GitLab).
+          git push gitlab 'refs/remotes/origin/*:refs/heads/*' 'refs/tags/*:refs/tags/*'
+          echo "GitLab atualizado: https://gitlab.com/${GITLAB_REPO}"
