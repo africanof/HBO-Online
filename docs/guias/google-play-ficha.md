@@ -61,7 +61,7 @@ Site: https://huamboonline.com
 | Pergunta | Resposta |
 |---|---|
 | Política de privacidade | `https://huamboonline.com/privacidade` |
-| Anúncios (publicidade de terceiros) | **Não**, a app não contém anúncios |
+| Anúncios | **Sim** — sem redes de publicidade, mas há destaques pagos e vídeos promocionais de vendedores e empresas (contam como anúncios para a Google) |
 | Acesso à app | **Algumas funcionalidades precisam de sessão** → criar uma conta de teste e indicar o email e a palavra-passe (ver 2.1) |
 | Classificação de conteúdo | ver secção 3 |
 | Público-alvo | **18 anos ou mais** (conta exige 18 anos, ver Termos) |
