@@ -42,9 +42,35 @@ jobs:
           GITLAB_REPO: ${{ secrets.GITLAB_REPO }}
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
+          # Limpa o que costuma vir colado por engano: espaços, «https://gitlab.com/», «.git», «/» no fim.
+          TOKEN="$(printf '%s' "$GITLAB_TOKEN" | tr -d '[:space:]')"
+          REPO="$(printf '%s' "$GITLAB_REPO" | tr -d '[:space:]' | sed -E 's#^https?://##; s#^gitlab\.com/##; s#\.git$##; s#/+$##')"
+          echo "::add-mask::$TOKEN"
+          echo "Projeto no GitLab: $REPO"
+
+          # 1) O token é válido?
+          code=$(curl -s -o /tmp/user.json -w '%{http_code}' -H "PRIVATE-TOKEN: $TOKEN" https://gitlab.com/api/v4/user)
+          if [ "$code" != "200" ]; then
+            echo "::error::O GitLab não aceitou o GITLAB_TOKEN (HTTP $code): o token está errado, expirou ou foi revogado."
+            exit 1
+          fi
+          echo "Token válido (conta: $(sed -E 's/.*"username":"([^"]*)".*/\1/' /tmp/user.json))."
+
+          # 2) O token vê o projeto?
+          enc=$(printf '%s' "$REPO" | sed 's#/#%2F#g')
+          code=$(curl -s -o /tmp/proj.json -w '%{http_code}' -H "PRIVATE-TOKEN: $TOKEN" "https://gitlab.com/api/v4/projects/$enc")
+          if [ "$code" != "200" ]; then
+            echo "::error::O token não encontra o projeto «$REPO» (HTTP $code). Confirme o caminho em GITLAB_REPO (o que vem depois de gitlab.com/ no endereço do projeto)."
+            exit 1
+          fi
+          echo "Projeto encontrado."
+
           git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*' '+refs/tags/*:refs/tags/*'
           git remote set-head origin -d 2>/dev/null || true
-          git remote add gitlab "https://oauth2:${GITLAB_TOKEN}@gitlab.com/${GITLAB_REPO}.git"
+          git remote add gitlab "https://oauth2:${TOKEN}@gitlab.com/${REPO}.git"
           # Todos os ramos do GitHub e todas as etiquetas (só acrescenta: não apaga nada no GitLab).
-          git push gitlab 'refs/remotes/origin/*:refs/heads/*' 'refs/tags/*:refs/tags/*'
-          echo "GitLab atualizado: https://gitlab.com/${GITLAB_REPO}"
+          if ! git push gitlab 'refs/remotes/origin/*:refs/heads/*' 'refs/tags/*:refs/tags/*'; then
+            echo "::error::O GitLab recusou o envio. Se o erro for 403: o token não tem permissão de escrita (scope «write_repository», ou no token novo «Repository: read and write»). Se for «protected branch»: o ramo está protegido contra alterações vindas de fora."
+            exit 1
+          fi
+          echo "GitLab atualizado: https://gitlab.com/${REPO}"
