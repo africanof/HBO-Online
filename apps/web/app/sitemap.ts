@@ -1,16 +1,18 @@
 import type { MetadataRoute } from "next";
 import { createSupabaseClient } from "@huambo-online/supabase";
 import { SITE_URL } from "../lib/site";
-import { prettyPath } from "@huambo-online/core";
+import { prettyPath, allLocalPaths } from "@huambo-online/core";
 
 export const revalidate = 3600; // atualiza o mapa do site de hora a hora
 
-const STATIC = ["/", "/explorar", "/loja", "/profissionais", "/empresas", "/pracas", "/procura-se", "/trocas", "/classificados/publicar", "/ajuda", "/seguranca", "/agente", "/agricultura", "/emprego", "/viaturas", "/imoveis", "/eventos", "/videos", "/combustivel", "/reservas", "/termos", "/privacidade", "/devolucoes", "/apagar-conta"];
+const STATIC = ["/", "/explorar", "/loja", "/profissionais", "/empresas", "/pracas", "/procura-se", "/trocas", "/classificados/publicar", "/ajuda", "/seguranca", "/agente", "/agricultura", "/emprego", "/viaturas", "/imoveis", "/eventos", "/videos", "/combustivel", "/reservas", "/termos", "/privacidade", "/devolucoes", "/apagar-conta", "/sobre"];
 
 /** Mapa do site para o Google: páginas principais + anúncios, produtos, profissionais, empresas e praças públicos. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const out: MetadataRoute.Sitemap = STATIC.map(p => ({ url: SITE_URL + p, lastModified: now, changeFrequency: "daily", priority: p === "/" ? 1 : 0.8 }));
+  // Páginas locais: «Casas à venda na Caála», «Emprego no Bailundo»…
+  for (const p of allLocalPaths()) out.push({ url: SITE_URL + p, lastModified: now, changeFrequency: "daily", priority: p.split("/").length <= 3 ? 0.8 : 0.7 });
   const url = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").trim(); const key = (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "").trim();
   if (!url || !key) return out;
   try {

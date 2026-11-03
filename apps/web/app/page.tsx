@@ -8,7 +8,7 @@ import { OfflineBanner } from "../components/Offline";
 import { browserStore } from "../components/Engage";
 import { LiteImg } from "../components/LiteImg";
 import { PromoCard } from "../components/Promo";
-import { recommendedListings } from "@huambo-online/core";
+import { recommendedListings, HUAMBO_MUNICIPALITIES } from "@huambo-online/core";
 
 type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[]; events?: any[]; promos?: any[] };
 
@@ -128,6 +128,12 @@ export default function Home() {
       <p style={{ margin: 0 }}>{t("home.first_text")}</p>
       <a className="btn" href="/classificados/publicar" style={{ justifySelf: "start" }}>{t("ft.post_ad")}</a>
     </section>}
+
+    <section className="stack" style={{ marginTop: 32, gap: 8 }} aria-label={t("home.by_municipality")}>
+      <div className="shelf-head"><h2>{t("home.by_municipality")}</h2><a href="/huambo">{t("common.see_all")} →</a></div>
+      <p style={{ margin: 0 }}>{t("home.by_municipality_text")} <a href="/sobre">{t("ft.about")}</a></p>
+      <div className="row">{HUAMBO_MUNICIPALITIES.map(m => <a key={m.slug} className="chip" href={"/huambo/" + m.slug}>{m.name}</a>)}</div>
+    </section>
 
     <section className="banner green" style={{ marginTop: 32 }}>
       <div><h2>{t("home.pro_title")}</h2><p>{t("home.pro_text")}</p></div>

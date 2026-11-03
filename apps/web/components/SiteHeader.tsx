@@ -104,6 +104,8 @@ export function SiteFooter() {
     [t("nav.sell"), [[t("ft.post_ad"), "/classificados/publicar"], [t("ft.my_ads"), "/meus-anuncios"], [t("ft.sell_products"), "/conta/produtos"], [t("ft.rentals"), "/alugueres"]]],
     [t("nav.services"), [[t("cat.Profissionais"), "/profissionais"], [t("nav.businesses"), "/empresas"], [t("ft.be_pro"), "/conta/profissional"], [t("ft.be_courier"), "/entregas"], [t("ft.be_agent"), "/agente"], [t("ft.organize_event"), "/eventos/meus"], [t("ft.post_video"), "/videos/meus"], [t("ft.register_fuel"), "/combustivel/meus"], [t("ft.register_venue"), "/reservas/painel"], [t("ft.invite"), "/convidar"]]],
     [t("nav.account"), [[t("nav.account_short"), "/conta"], [t("nav.messages"), "/mensagens"], [t("nav.notifications"), "/notificacoes"], [t("nav.saved"), "/guardados"], [t("ft.my_bids"), "/licitacoes"], [t("ft.saved_searches"), "/pesquisas-guardadas"]]],
+    [t("ft.local"), [[t("ft.about"), "/sobre"], [t("ft.all_municipalities"), "/huambo"], [t("ft.houses_sale"), "/huambo/huambo/casas-a-venda"], [t("ft.houses_rent"), "/huambo/huambo/casas-para-arrendar"],
+      [t("ft.land_sale"), "/huambo/huambo/terrenos-a-venda"], [t("ft.cars_sale"), "/huambo/huambo/carros-a-venda"], [t("ft.jobs_local"), "/huambo/huambo/emprego"], ["Caála", "/huambo/caala"], ["Bailundo", "/huambo/bailundo"]]],
     [t("ft.help_info"), INFO_LINKS.map(l => [infoLabel(l.href, l.label, t), l.href] as [string, string])]
   ];
   return <footer className="footer"><div className="footer-in">
