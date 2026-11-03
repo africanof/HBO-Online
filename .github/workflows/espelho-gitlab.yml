@@ -48,22 +48,16 @@ jobs:
           echo "::add-mask::$TOKEN"
           echo "Projeto no GitLab: $REPO"
 
-          # 1) O token é válido?
-          code=$(curl -s -o /tmp/user.json -w '%{http_code}' -H "PRIVATE-TOKEN: $TOKEN" https://gitlab.com/api/v4/user)
-          if [ "$code" != "200" ]; then
-            echo "::error::O GitLab não aceitou o GITLAB_TOKEN (HTTP $code): o token está errado, expirou ou foi revogado."
-            exit 1
-          fi
-          echo "Token válido (conta: $(sed -E 's/.*"username":"([^"]*)".*/\1/' /tmp/user.json))."
+          case "$REPO" in
+            github.com/*|*github*) echo "::error::GITLAB_REPO tem um endereço do GitHub («$REPO»). Tem de ser o caminho do projeto NO GITLAB (o que vem depois de gitlab.com/)."; exit 1;;
+          esac
 
-          # 2) O token vê o projeto?
-          enc=$(printf '%s' "$REPO" | sed 's#/#%2F#g')
-          code=$(curl -s -o /tmp/proj.json -w '%{http_code}' -H "PRIVATE-TOKEN: $TOKEN" "https://gitlab.com/api/v4/projects/$enc")
-          if [ "$code" != "200" ]; then
-            echo "::error::O token não encontra o projeto «$REPO» (HTTP $code). Confirme o caminho em GITLAB_REPO (o que vem depois de gitlab.com/ no endereço do projeto)."
+          # O token chega ao projeto? (um token só com «write_repository» não pode usar a API, por isso testamos com o próprio git)
+          if ! git ls-remote "https://oauth2:${TOKEN}@gitlab.com/${REPO}.git" >/dev/null 2>/tmp/ls.err; then
+            echo "::error::O GitLab recusou o acesso a «$REPO»: $(tr -d '\n' </tmp/ls.err | sed "s#${TOKEN}#***#g"). Confirme que o projeto existe nesse caminho e que o token tem «write_repository» (ou «Repository: read and write»)."
             exit 1
           fi
-          echo "Projeto encontrado."
+          echo "Acesso ao projeto confirmado."
 
           git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*' '+refs/tags/*:refs/tags/*'
           git remote set-head origin -d 2>/dev/null || true
