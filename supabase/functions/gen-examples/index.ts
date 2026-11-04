@@ -1,4 +1,4 @@
-// Gera (uma única vez) as fotografias ilustrativas dos exemplos com IA (OpenAI gpt-image-1) e guarda-as em
+// Gera (uma única vez) as fotografias ilustrativas dos exemplos com IA (OpenAI gpt-image-2; outro modelo com o segredo IMAGE_MODEL) e guarda-as em
 // classified-media/exemplos/<slug>.jpg. Só aceita os 18 nomes fixos abaixo e nunca gera uma imagem que já exista,
 // por isso o custo máximo é o destas 18 imagens. Pessoas com tom de pele negro (Huambo, Angola), sem marcas nem texto.
 // Uso: POST { "slug": "hilux" } → { url }. Depois de usada pode ser apagada.
@@ -41,7 +41,7 @@ Deno.serve(async req => {
   if (!key) return reply({ error: "AI_NOT_CONFIGURED" }, 503);
   const r = await fetch("https://api.openai.com/v1/images/generations", {
     method: "POST", headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "gpt-image-1", prompt: `${PROMPTS[slug]} ${STYLE}`, size: "1024x1024", quality: "medium",
+    body: JSON.stringify({ model: Deno.env.get("IMAGE_MODEL") || "gpt-image-2", prompt: `${PROMPTS[slug]} ${STYLE}`, size: "1024x1024", quality: "medium",
       output_format: "jpeg", output_compression: 82, n: 1 }),
     signal: AbortSignal.timeout(140_000)
   });
