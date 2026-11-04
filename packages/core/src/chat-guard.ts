@@ -13,6 +13,20 @@ export async function listChatSuspensions(client: SupabaseClient) {
 }
 export const liftChatSuspension = (client: SupabaseClient, userId: string) => client.rpc("admin_lift_chat_suspension", { p_user: userId });
 
+/** Nome público da própria conta: o nome verdadeiro (só a pessoa e a equipa o veem) e a alcunha escolhida. */
+export async function getMyPublicName(client: SupabaseClient, userId: string) {
+  const r = await client.from("profiles").select("full_name,public_name").eq("id", userId).maybeSingle();
+  return { data: (r.data ?? null) as { full_name: string | null; public_name: string | null } | null, error: r.error };
+}
+/** Grava a alcunha (vazio = volta a «Nome I.»); devolve o nome que os outros passam a ver. */
+export const setPublicName = (client: SupabaseClient, name: string) => client.rpc("set_public_name", { p_name: name.trim() });
+/** Como os outros veem a pessoa sem alcunha: «Adão Domingos Neto» → «Adão N.» (igual a public.shown_name). */
+export function shortPublicName(fullName: string | null | undefined): string {
+  const w = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
+  if (!w.length) return "Utilizador";
+  return w.length > 1 ? `${w[0]} ${w[w.length - 1][0].toLocaleUpperCase()}.` : w[0];
+}
+
 /** Chave do texto do motivo («cg.r.phone», …); os motivos da IA começam por «ai_». */
 export function chatBlockReasonKey(reason: string | null | undefined): string {
   const r = (reason ?? "").replace(/^ai_/, "");
@@ -36,6 +50,14 @@ export const CHAT_GUARD_DICT: Dictionary = {
   "cg.r.number": { pt: "número de conta", en: "account number", zh: "账号", fr: "numéro de compte" },
   "cg.r.split": { pt: "telefone partido em várias mensagens", en: "phone number split across messages", zh: "分成多条消息的电话", fr: "téléphone découpé en plusieurs messages" },
   "cg.r.offplatform": { pt: "pagamento fora da plataforma", en: "payment outside the platform", zh: "平台外付款", fr: "paiement hors plateforme" },
+  "pn.title": { pt: "🪪 Nome público", en: "🪪 Public name", zh: "🪪 公开名称", fr: "🪪 Nom public" },
+  "pn.text": { pt: "É o nome que os outros utilizadores veem nas mensagens, anúncios e avaliações. O seu nome completo e a sua fotografia só são vistos pela equipa do Huambo Online, para não ser procurado nas redes sociais.", en: "This is the name other users see in messages, listings and reviews. Your full name and photo are only seen by the Huambo Online team, so you cannot be looked up on social media.", zh: "这是其他用户在消息、信息和评价中看到的名称。您的全名和照片只有 Huambo Online 团队可以看到，以免在社交网络上被搜索到。", fr: "C'est le nom que les autres utilisateurs voient dans les messages, annonces et avis. Votre nom complet et votre photo ne sont vus que par l'équipe Huambo Online, pour qu'on ne puisse pas vous chercher sur les réseaux sociaux." },
+  "pn.now": { pt: "Os outros veem: {name}", en: "Others see: {name}", zh: "其他人看到：{name}", fr: "Les autres voient : {name}" },
+  "pn.label": { pt: "Alcunha (opcional, 3 a 30 letras)", en: "Nickname (optional, 3 to 30 letters)", zh: "昵称（可选，3 至 30 个字符）", fr: "Pseudo (facultatif, 3 à 30 lettres)" },
+  "pn.placeholder": { pt: "Ex.: Vendas do Bairro, Tia Rosa", en: "E.g. Neighbourhood Sales, Auntie Rosa", zh: "例如：街区小卖、罗莎阿姨", fr: "Ex. : Ventes du quartier, Tata Rosa" },
+  "pn.rules": { pt: "Sem telefones, @, redes sociais nem o seu apelido. A IA também revê o nome.", en: "No phone numbers, @, social media or your surname. AI also reviews the name.", zh: "不得包含电话、@、社交网络或您的姓氏。AI 也会审核该名称。", fr: "Pas de téléphone, de @, de réseaux sociaux ni votre nom de famille. L'IA vérifie aussi le nom." },
+  "pn.save": { pt: "Guardar nome público", en: "Save public name", zh: "保存公开名称", fr: "Enregistrer le nom public" },
+  "pn.saved": { pt: "Guardado. Os outros passam a ver: {name}", en: "Saved. Others now see: {name}", zh: "已保存。其他人现在看到：{name}", fr: "Enregistré. Les autres voient maintenant : {name}" },
   "cg.search": { pt: "Pesquisar conversas", en: "Search conversations", zh: "搜索对话", fr: "Rechercher des conversations" },
   "cg.view_listing": { pt: "Ver anúncio", en: "View listing", zh: "查看信息", fr: "Voir l'annonce" },
   "cg.back": { pt: "Voltar às conversas", en: "Back to conversations", zh: "返回对话列表", fr: "Retour aux conversations" },

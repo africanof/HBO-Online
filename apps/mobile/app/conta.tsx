@@ -10,7 +10,7 @@ import { ui, C } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
 import { shrinkAsset } from "../lib/image";
 import { ThemePicker } from "../components/ThemePicker";
-import { WhatsAppSettings } from "../components/Engage";
+import { PublicNameSettings, WhatsAppSettings } from "../components/Engage";
 import { DataSaverPicker } from "../components/DataSaver";
 import { LanguagePicker } from "../components/LanguagePicker";
 import { useT } from "../lib/i18n";
@@ -83,6 +83,7 @@ export default function Conta() {
     <LanguagePicker />
     <ThemePicker />
     <DataSaverPicker />
+    {!!uid && <PublicNameSettings uid={uid} />}
     {!!uid && <WhatsAppSettings uid={uid} />}
     <Message error={err} ok={msg} />
     {form && <View style={ui.card}>

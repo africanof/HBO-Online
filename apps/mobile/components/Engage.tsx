@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { Linking, Pressable, Share, Text, TextInput, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getMyPublicName, setPublicName, shortPublicName } from "@huambo-online/core";
 import { getTeamWhatsapp, setTeamWhatsapp, teamWhatsappMessage, teamWhatsappRequestMessage, teamWhatsappLink, findSaved, toggleSaved, recordView, shareMessage, whatsappShareUrl, sellerWhatsappMessage, getSellerWhatsapp, getMyWhatsapp, setMyWhatsapp, formatWhatsapp, whatsappLink,
   getFollowInfo, toggleFollow, recordItemView, recordItemEvent, followersText, followButtonLabel, type FollowKind,
   friendlyErrorIn, type SavedKind, type KeyValueStore, type ShareExtra } from "@huambo-online/core";
@@ -94,6 +95,30 @@ export function TeamWhatsappSettings() {
     <TextInput style={ui.input} keyboardType="phone-pad" value={number} onChangeText={setNumber} placeholder="923 000 000" placeholderTextColor={C.muted} accessibilityLabel={t("wa.number")} />
     <Message error={err} ok={msg} />
     <Button title={t("wa.save")} disabled={busy} onPress={() => void save()} />
+  </View>;
+}
+
+/** «A sua conta»: nome público (o que os outros veem; o nome completo fica para a equipa). */
+export function PublicNameSettings({ uid }: { uid: string }) {
+  const { t, lang } = useT();
+  const [full, setFull] = useState<string | null>(null); const [name, setName] = useState(""); const [shown, setShown] = useState("");
+  const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
+  useEffect(() => { void getMyPublicName(supabase(), uid).then(r => { setFull(r.data?.full_name ?? null); setName(r.data?.public_name ?? ""); setShown(r.data?.public_name || shortPublicName(r.data?.full_name)); }); }, [uid]);
+  async function save() {
+    setBusy(true); setMsg(""); setErr("");
+    const r = await setPublicName(supabase(), name); setBusy(false);
+    if (r.error) { setErr(friendlyErrorIn(r.error, lang)); return; }
+    const now = typeof r.data === "string" ? r.data : name.trim() || shortPublicName(full); setShown(now); setMsg(t("pn.saved", { name: now }));
+  }
+  return <View style={ui.card}>
+    <Text style={ui.h2}>{t("pn.title")}</Text>
+    <Text style={ui.text}>{t("pn.text")}</Text>
+    <Text style={ui.label}>{t("pn.now", { name: shown })}</Text>
+    <Text style={ui.label}>{t("pn.label")}</Text>
+    <TextInput style={ui.input} value={name} onChangeText={setName} maxLength={30} placeholder={t("pn.placeholder")} placeholderTextColor={C.muted} accessibilityLabel={t("pn.label")} autoCorrect={false} />
+    <Text style={ui.muted}>{t("pn.rules")}</Text>
+    <Message error={err} ok={msg} />
+    <Button title={t("pn.save")} disabled={busy} onPress={() => void save()} />
   </View>;
 }
 

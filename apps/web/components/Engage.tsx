@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { getMyPublicName, setPublicName, shortPublicName } from "@huambo-online/core";
 import { getTeamWhatsapp, setTeamWhatsapp, teamWhatsappMessage, teamWhatsappRequestMessage, teamWhatsappLink, findSaved, toggleSaved, recordView, shareMessage, whatsappShareUrl, sellerWhatsappMessage, getSellerWhatsapp, getMyWhatsapp, setMyWhatsapp, formatWhatsapp, whatsappLink, friendlyErrorIn,
   getFollowInfo, toggleFollow, recordItemView, recordItemEvent, followersText, followButtonLabel, type FollowKind,
   type SavedKind, type KeyValueStore, type ShareExtra } from "@huambo-online/core";
@@ -106,6 +107,30 @@ export function TeamWhatsappSettings() {
     {msg && <p className="ok" role="status">{msg}</p>}
     {err && <p className="error" role="alert">{err}</p>}
     <button disabled={busy} style={{ justifySelf: "start" }}>{t("wa.save")}</button>
+  </form>;
+}
+
+/** «A sua conta»: nome público (o que os outros veem; o nome completo fica para a equipa). */
+export function PublicNameSettings({ uid }: { uid: string }) {
+  const { lang, t } = useT();
+  const [full, setFull] = useState<string | null>(null); const [name, setName] = useState(""); const [shown, setShown] = useState("");
+  const [busy, setBusy] = useState(false); const [msg, setMsg] = useState(""); const [err, setErr] = useState("");
+  useEffect(() => { void getMyPublicName(supabase(), uid).then(r => { setFull(r.data?.full_name ?? null); setName(r.data?.public_name ?? ""); setShown(r.data?.public_name || shortPublicName(r.data?.full_name)); }); }, [uid]);
+  async function save(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true); setMsg(""); setErr("");
+    const r = await setPublicName(supabase(), name); setBusy(false);
+    if (r.error) { setErr(friendlyErrorIn(r.error, lang)); return; }
+    const now = typeof r.data === "string" ? r.data : name.trim() || shortPublicName(full); setShown(now); setMsg(t("pn.saved", { name: now }));
+  }
+  return <form className="stack card" onSubmit={save}>
+    <h2 style={{ margin: 0 }}>{t("pn.title")}</h2>
+    <p style={{ margin: 0 }}>{t("pn.text")}</p>
+    <strong>{t("pn.now", { name: shown })}</strong>
+    <label>{t("pn.label")}<input value={name} onChange={e => setName(e.target.value)} maxLength={30} placeholder={t("pn.placeholder")} autoComplete="off" /></label>
+    <small>{t("pn.rules")}</small>
+    {msg && <p className="ok" role="status">{msg}</p>}
+    {err && <p className="error" role="alert">{err}</p>}
+    <button disabled={busy} style={{ justifySelf: "start" }}>{t("pn.save")}</button>
   </form>;
 }
 

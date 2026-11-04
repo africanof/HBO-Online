@@ -6,7 +6,7 @@ import { getCurrentUserProfile, updateCurrentUserProfile, signOutCurrentUser, ch
 import { supabase } from "../../lib/supabase";
 import { compressPhoto } from "../../lib/image";
 import { ThemePicker } from "../../components/ThemePicker";
-import { WhatsAppSettings } from "../../components/Engage";
+import { PublicNameSettings, WhatsAppSettings } from "../../components/Engage";
 import { DataSaverPicker } from "../../components/DataSaver";
 import { LanguagePicker } from "../../components/LanguagePicker";
 import { useT } from "../../lib/i18n";
@@ -84,6 +84,7 @@ export default function ContaPage() {
       <label>{t("auth.municipality")}<input value={form.municipality} onChange={e => setForm({ ...form, municipality: e.target.value })} /></label>
       <button disabled={busy}>{t("acct.save_changes")}</button>
     </form>}
+    {uid && <PublicNameSettings uid={uid} />}
     {uid && <WhatsAppSettings uid={uid} />}
     <form className="stack card" onSubmit={async e => { e.preventDefault(); if (await run(() => changeCurrentUserPassword(supabase(), pw, pw2), t("acct.pw_changed"))) { setPw(""); setPw2(""); } }}>
       <h2 style={{ margin: 0 }}>{t("acct.security")}</h2>
