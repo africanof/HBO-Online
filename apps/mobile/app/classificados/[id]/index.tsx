@@ -20,6 +20,7 @@ import { MarketLink } from "../../../components/MarketPicker";
 import { SellerBadge } from "../../../components/Reputation";
 import { OfferBox, OffersList } from "../../../components/Offers";
 import { ProtectedBuyBox } from "../../../components/ProtectedBuy";
+import { isExampleName } from "@huambo-online/core";
 import { PhotoGallery } from "../../../components/PhotoGallery";
 import { DeliveryPolicyBox } from "../../../components/Delivery";
 import { useT, coreText } from "../../../lib/i18n";
@@ -118,6 +119,7 @@ export default function ClassifiedDetail() {
     {item.status !== "published" && <Text style={ui.error}>{t("ls.detail.only_you", { status: tc(STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] ?? item.status) })}</Text>}
     {item.purpose === "wanted" && <Text style={[ui.label, { backgroundColor: C.yellowSoft, alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 }]}>{t("ls.detail.wanted_badge")}</Text>}
     {isFeatured(item) && <Text style={[ui.label, { alignSelf: "flex-start", backgroundColor: "#FFF4D6", color: "#4A3700", borderColor: "#E0B100", borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 2 }]}>{t("card.featured")}</Text>}
+    {isExampleName(item.title) && <Text style={[ui.text, { fontWeight: "800", color: C.red }]}>{t("pp.example_note")}</Text>}
     <Text style={ui.h1}>{tr?.title ?? item.title}</Text>
     {item.status === "published" && <TranslateListing listingId={item.id} onTranslated={setTr} />}
     {!!item.ref_no && <Text style={ui.muted}>{t("ls.detail.ref", { ref: formatRef("listing", item.ref_no) })}</Text>}

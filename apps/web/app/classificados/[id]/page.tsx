@@ -21,6 +21,7 @@ import { AUCTIONABLE_TYPES, formatRef, categoryOf, isJobCategorySlug, trackListi
 import { SellerBadge } from "../../../components/Reputation";
 import { OfferBox, OffersList } from "../../../components/Offers";
 import { ProtectedBuyBox } from "../../../components/ProtectedBuy";
+import { isExampleName } from "@huambo-online/core";
 
 export default function ClassifiedDetail() {
   const { id: rawId } = useParams<{ id: string }>();
@@ -123,6 +124,7 @@ export default function ClassifiedDetail() {
       <section className="buybox">
         {item.purpose === "wanted" && <span className="badge" style={{ justifySelf: "start", background: "var(--yellow-soft)", borderColor: "var(--yellow-line)", color: "var(--yellow-text)" }}>🔎 {t("home.wanted_badge")} — {t("ls.buyer_request")}</span>}
         {isFeatured(item) && <span className="badge" style={{ justifySelf: "start", background: "var(--yellow-soft)", borderColor: "var(--yellow-line)", color: "var(--yellow-text)" }}>⭐ {t("ls.featured")}</span>}
+        {isExampleName(item.title) && <p className="scam-warn" style={{ margin: 0 }}>{t("pp.example_note")}</p>}
         <h1>{tr?.title ?? item.title}</h1>
         {item.status === "published" && <TranslateListing listingId={item.id} onTranslated={setTr} />}
         {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>👤</span><span>{item.purpose === "wanted" ? t("ls.buyer") : t("ls.advertiser")}: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a> <SellerBadge userId={item.owner_id} /><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>{t("ls.see_other_listings")}</a></span></div>}

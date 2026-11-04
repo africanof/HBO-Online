@@ -1,5 +1,5 @@
 "use client";
-import { firstPhoto } from "@huambo-online/core";
+import { firstPhoto, isExampleName } from "@huambo-online/core";
 import { LiteImg } from "./LiteImg";
 import { useT } from "../lib/i18n";
 
@@ -15,6 +15,7 @@ export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = 
       {tag && <span className={"item-tag" + (tagRed ? " red" : "")}>{tc(tag)}</span>}
       {video && <span className="item-video">▶ {t("promo.video")}</span>}
       {featured && <span className="item-feat">⭐ {t("ls.featured")}</span>}
+      {isExampleName(title) && <span className="item-example">{t("pp.example_badge")}</span>}
     </div>
     <span className="item-title">{title}</span>
     <span className="item-price">{tc(price)}</span>

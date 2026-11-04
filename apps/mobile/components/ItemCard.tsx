@@ -1,6 +1,6 @@
 import { Link } from "expo-router";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { firstPhoto } from "@huambo-online/core";
+import { firstPhoto, isExampleName } from "@huambo-online/core";
 import { C, themed } from "../lib/ui";
 import { LiteImage } from "./LiteImage";
 import { useT } from "../lib/i18n";
@@ -19,6 +19,7 @@ export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = 
         {!!tag && <View style={[s.tag, tagRed && { backgroundColor: C.red }]}><Text style={[s.tagText, tagRed && { color: C.onAccent }]}>{tag}</Text></View>}
         {!!video && <View style={s.video}><Text style={s.videoText}>{t("card.video")}</Text></View>}
         {!!featured && <View style={s.feat}><Text style={s.featText}>{t("card.featured")}</Text></View>}
+        {isExampleName(title) && <View style={s.example}><Text style={s.exampleText}>{t("pp.example_badge")}</Text></View>}
       </View>
       <Text style={s.title} numberOfLines={2}>{title}</Text>
       <Text style={s.price}>{price}</Text>
@@ -42,6 +43,8 @@ export function Grid({ children }: { children: React.ReactNode }) {
 }
 
 const s = themed(C => StyleSheet.create({
+  example: { position: "absolute", top: 8, right: 8, backgroundColor: "#c62828", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  exampleText: { color: "#fff", fontWeight: "900", fontSize: 12, letterSpacing: 1 },
   card: { width: 160, gap: 4 },
   img: { width: "100%", aspectRatio: 1, borderRadius: 16, backgroundColor: C.surface, overflow: "hidden", alignItems: "center", justifyContent: "center", marginBottom: 4 },
   tag: { position: "absolute", left: 8, top: 8, backgroundColor: C.card, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
