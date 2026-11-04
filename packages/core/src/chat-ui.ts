@@ -58,3 +58,11 @@ export function avatarColor(seed: string | null | undefined): string {
   let h = 0; for (const c of seed ?? "") h = (h * 31 + c.charCodeAt(0)) >>> 0;
   return AVATAR_COLORS[h % AVATAR_COLORS.length];
 }
+
+/** Assunto a mostrar na conversa: nas conversas com profissionais e empresas o assunto é o nome deles,
+ *  por isso mostra-se só o tipo («profissional», «empresa»); nas outras, o título do anúncio/produto. */
+export function conversationSubject(x: { subject?: string | null; context_type?: string | null } | null | undefined): string | null {
+  if (!x) return null;
+  if (["provider", "service", "business"].includes(String(x.context_type))) return null;
+  return x.subject?.trim() || null;
+}

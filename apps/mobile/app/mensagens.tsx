@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { BackHandler, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { listConversations, listMessages, sendMessage, markConversationRead, subscribeToConversationMessages, subscribeToUserConversationMessages, conversationFromParticipantRow,
   isConversationUnread, listConversationPartners, conversationAllowsDocuments, friendlyErrorIn, messagePreview, chatMediaUrls, chatListTime, chatDayLabel, chatClock,
-  groupChatMessages, initials, avatarColor } from "@huambo-online/core";
+  groupChatMessages, initials, avatarColor, conversationSubject } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { themed, C } from "../lib/ui";
 import { useT } from "../lib/i18n";
@@ -77,13 +77,14 @@ export default function Mensagens() {
     setBody(""); void showMessages(c, selected.id);
   }
   const partner = (id?: string) => partners[id ?? ""];
+  const ctxLabel = (v: string) => { const k = "cg.ctx." + v; const r = t(k); return r === k ? "" : r; };
   const rows = useMemo(() => groupChatMessages(msgs, uid), [msgs, uid]);
 
   // ───── Lista de conversas ─────
   if (!selected) {
     const visible = items.filter(row => {
       if (!query.trim()) return true; const x = conversationFromParticipantRow(row);
-      return ((partner(x.id)?.other_name ?? "") + " " + (x.subject ?? "")).toLowerCase().includes(query.trim().toLowerCase());
+      return ((partner(x.id)?.other_name ?? "") + " " + (conversationSubject(x) ?? "")).toLowerCase().includes(query.trim().toLowerCase());
     });
     return <ScrollView contentContainerStyle={s.listWrap} keyboardShouldPersistTaps="handled">
       <Text style={s.title}>{t("nav.messages")}</Text>
@@ -100,7 +101,7 @@ export default function Mensagens() {
               <Text style={[s.name, unread && s.strong]} numberOfLines={1}>{p?.other_name ?? t("ls.user")}</Text>
               <Text style={[s.time, unread && s.strong]}>{chatListTime(last?.created_at ?? x.updated_at, lang)}</Text>
             </View>
-            <Text style={s.sub} numberOfLines={1}>{x.subject || x.context_type}</Text>
+            <Text style={s.sub} numberOfLines={1}>{conversationSubject(x) || ctxLabel(x.context_type)}</Text>
             <Text style={[s.last, unread && s.strong]} numberOfLines={1}>{last ? (mine ? t("cg.you_prefix") : "") + tc(messagePreview(last)) : t("ls.chat.no_messages")}</Text>
           </View>
           {unread && <View style={s.dot} />}
@@ -117,7 +118,7 @@ export default function Mensagens() {
       <Avatar name={other?.other_name} src={other?.other_avatar} seed={other?.other_user_id} size={40} />
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={s.headName} numberOfLines={1}>{other?.other_name ?? t("ls.user")}</Text>
-        <Text style={s.sub} numberOfLines={1}>{selected.subject || selected.context_type}</Text>
+        <Text style={s.sub} numberOfLines={1}>{conversationSubject(selected) || ctxLabel(selected.context_type)}</Text>
       </View>
       {href && <Pressable onPress={() => router.push(href as any)} accessibilityRole="link" hitSlop={8}><Text style={s.link}>{t("cg.view_listing")}</Text></Pressable>}
       <Pressable onPress={() => setSafetyOpen(v => !v)} accessibilityRole="button" accessibilityLabel={t("cg.safety")} accessibilityState={{ expanded: safetyOpen }} hitSlop={8} style={s.back}><Text style={{ fontSize: 22 }}>🛡️</Text></Pressable>

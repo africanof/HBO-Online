@@ -26,3 +26,10 @@ describe("apresentação das mensagens", () => {
     expect(avatarColor("x")).toBe(avatarColor("x"));
   });
 });
+describe("assunto da conversa", () => {
+  it("esconde o nome nas conversas com profissionais e empresas", async () => {
+    const { conversationSubject } = await import("./chat-ui");
+    expect(conversationSubject({ subject: "Adão Neto", context_type: "provider" })).toBeNull();
+    expect(conversationSubject({ subject: "Toyota Hilux", context_type: "classified" })).toBe("Toyota Hilux");
+  });
+});

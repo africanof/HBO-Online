@@ -4,7 +4,7 @@ import { createSupabaseClient } from "@huambo-online/supabase";
 import { useSearchParams } from "next/navigation";
 import { listConversations, listMessages, sendMessage, markConversationRead, subscribeToConversationMessages, subscribeToUserConversationMessages, conversationFromParticipantRow,
   isConversationUnread, listConversationPartners, conversationAllowsDocuments, friendlyErrorIn, messagePreview, CHAT_KIND_LABELS, chatMediaUrls,
-  chatListTime, chatDayLabel, chatClock, groupChatMessages, initials, avatarColor, type ChatMessage } from "@huambo-online/core";
+  chatListTime, chatDayLabel, chatClock, groupChatMessages, initials, avatarColor, conversationSubject, type ChatMessage } from "@huambo-online/core";
 import { ConversationSafety } from "../../components/Safety";
 import { ChatAttachButtons, MessageAttachment } from "../../components/ChatMedia";
 import { useT } from "../../lib/i18n";
@@ -80,7 +80,7 @@ function MensagensContent() {
   const rows = useMemo(() => groupChatMessages(msgs, uid), [msgs, uid]);
   const visible = items.filter(row => {
     if (!query.trim()) return true; const x = conversationFromParticipantRow(row);
-    return ((partner(x.id)?.other_name ?? "") + " " + (x.subject ?? "")).toLowerCase().includes(query.trim().toLowerCase());
+    return ((partner(x.id)?.other_name ?? "") + " " + (conversationSubject(x) ?? "")).toLowerCase().includes(query.trim().toLowerCase());
   });
   const other = selected ? partner(selected.id) : null; const href = selected ? contextHref(selected) : null;
 
@@ -100,7 +100,7 @@ function MensagensContent() {
               <Avatar name={p?.other_name} src={p?.other_avatar} seed={p?.other_user_id} />
               <span className="chat-item-text">
                 <span className="chat-item-top"><strong>{p?.other_name ?? t("ls.user")}</strong><small>{chatListTime(last?.created_at ?? x.updated_at, lang)}</small></span>
-                <span className="chat-item-sub">{x.subject || ctx(x.context_type)}</span>
+                <span className="chat-item-sub">{conversationSubject(x) || ctx(x.context_type)}</span>
                 <span className="chat-item-last">{last ? (mine ? t("cg.you_prefix") : "") + preview(last) : t("ls.no_messages")}</span>
               </span>
               {unread && <span className="chat-dot" aria-label={t("ls.unread")} />}
@@ -116,7 +116,7 @@ function MensagensContent() {
             <Avatar name={other?.other_name} src={other?.other_avatar} seed={other?.other_user_id} size={40} />
             <div className="chat-head-text">
               <strong>{other?.other_name ?? t("ls.user")}</strong>
-              <small>{selected.subject || ctx(selected.context_type)}{href && <> · <a href={href}>{t("cg.view_listing")}</a></>}</small>
+              <small>{conversationSubject(selected) || ctx(selected.context_type)}{href && <> · <a href={href}>{t("cg.view_listing")}</a></>}</small>
             </div>
           </header>
           <details className="chat-safety">
