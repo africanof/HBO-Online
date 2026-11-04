@@ -65,6 +65,7 @@ export const CHAT_GUARD_DICT: Dictionary = {
   "cg.ctx.product": { pt: "produto", en: "product", zh: "商品", fr: "produit" },
   "cg.ctx.order": { pt: "encomenda", en: "order", zh: "订单", fr: "commande" },
   "cg.ctx.general": { pt: "conversa", en: "conversation", zh: "对话", fr: "conversation" },
+  "pn.pro_hint": { pt: "Use o primeiro nome ou um nome profissional (ex.: «Adão N.», «Adão Eletricista»). Não é permitido o apelido, telefones nem redes sociais: os clientes falam consigo pelas mensagens do Huambo Online.", en: "Use your first name or a trade name (e.g. «Adão N.», «Adão Electrician»). Surnames, phone numbers and social media are not allowed: customers contact you through Huambo Online messages.", zh: "请使用名字或职业名称（例如「Adão N.」「Adão 电工」）。不允许使用姓氏、电话或社交网络：客户会通过 Huambo Online 消息联系您。", fr: "Utilisez votre prénom ou un nom professionnel (ex. : « Adão N. », « Adão Électricien »). Le nom de famille, les téléphones et les réseaux sociaux ne sont pas autorisés : les clients vous contactent par les messages Huambo Online." },
   "cg.search": { pt: "Pesquisar conversas", en: "Search conversations", zh: "搜索对话", fr: "Rechercher des conversations" },
   "cg.view_listing": { pt: "Ver anúncio", en: "View listing", zh: "查看信息", fr: "Voir l'annonce" },
   "cg.back": { pt: "Voltar às conversas", en: "Back to conversations", zh: "返回对话列表", fr: "Retour aux conversations" },

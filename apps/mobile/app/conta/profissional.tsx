@@ -50,7 +50,7 @@ export default function PerfilProfissional() {
     {exists && <ProfileQr kind="profissionais" id={uid} name={form.displayName} hint={t("sv.qr.print_hint")} />}
     <Message error={error} ok={notice} />
     <View style={ui.card}>
-      <Text style={ui.label}>{t("sv.pro_name")}</Text><TextInput style={ui.input} value={form.displayName} onChangeText={set("displayName")} placeholder={t("sv.pro_name_ph")} />
+      <Text style={ui.label}>{t("sv.pro_name")}</Text><TextInput style={ui.input} value={form.displayName} onChangeText={set("displayName")} placeholder={t("sv.pro_name_ph")} /><Text style={ui.muted}>{t("pn.pro_hint")}</Text>
       <Text style={ui.label}>{t("sv.pro_headline")}</Text><TextInput style={ui.input} value={form.headline} onChangeText={set("headline")} placeholder={t("sv.pro_headline_ph")} />
       <Text style={ui.label}>{t("sv.pro_bio")}</Text><TextInput style={[ui.input, ui.area]} multiline value={form.bio} onChangeText={set("bio")} />
       <Text style={ui.label}>{t("sv.pro_area")}</Text><Chips options={[...categories.map(c => ({ value: c.id, label: c.name })), { value: OTHER_CATEGORY, label: t("sv.other_category") }]} value={form.categoryId} onChange={set("categoryId")} />

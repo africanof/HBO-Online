@@ -51,6 +51,7 @@ export default function PerfilProfissional() {
     {notice && <p className="ok" role="status">{notice}</p>}
     <form className="stack card" onSubmit={e => { e.preventDefault(); void run(() => saveMyProviderProfile(supabase(), uid, form), t("sv.pro_saved")); }}>
       <label>{t("sv.pro_name")}<input value={form.displayName} onChange={set("displayName")} placeholder={t("sv.pro_name_ph")} /></label>
+      <small>{t("pn.pro_hint")}</small>
       <label>{t("sv.pro_headline")}<input value={form.headline} onChange={set("headline")} placeholder={t("sv.pro_headline_ph")} /></label>
       <label>{t("sv.pro_bio")}<textarea rows={4} value={form.bio} onChange={set("bio")} placeholder={t("sv.pro_bio_ph")} /></label>
       <label>{t("sv.pro_area")}<select value={form.categoryId} onChange={set("categoryId")}><option value="">{t("sv.f_choose")}</option>{categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}<option value={OTHER_CATEGORY}>{t("sv.f_other_cat")}</option></select></label>
