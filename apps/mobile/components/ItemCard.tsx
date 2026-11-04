@@ -8,12 +8,14 @@ import { useT } from "../lib/i18n";
 export const LISTING_ICON: Record<string, string> = { real_estate: "🏠", vehicle: "🚗", product: "📦", service: "🛠️", classified: "🏷️" };
 
 /** Cartão de artigo ao estilo eBay: fotografia quadrada, título em duas linhas, preço forte. */
+// Estilo fixo (não função): dentro de <Link asChild> um estilo-função é ignorado e o cartão perdia a largura,
+// ficando do tamanho do ecrã com a fotografia ampliada e desfocada.
 export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = "📦", width, video, featured }: {
   href: string; media?: unknown; title: string; price: string; meta?: string; tag?: string; tagRed?: boolean; icon?: string; width?: number | `${number}%`; video?: boolean; featured?: boolean;
 }) {
   const photo = firstPhoto(media); const { t } = useT();
   return <Link href={href as any} asChild>
-    <Pressable accessibilityRole="link" accessibilityLabel={`${featured ? t("card.featured_a11y") : ""}${title}, ${price}`} style={({ pressed }) => [s.card, width !== undefined && { width }, pressed && { opacity: 0.85 }]}>
+    <Pressable accessibilityRole="link" accessibilityLabel={`${featured ? t("card.featured_a11y") : ""}${title}, ${price}`} style={[s.card, width !== undefined && { width }]} android_ripple={{ color: "rgba(0,0,0,0.08)", foreground: true }}>
       <View style={s.img}>
         {photo ? <LiteImage placeholder={icon} source={{ uri: photo }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : <Text style={{ fontSize: 44 }}>{icon}</Text>}
         {!!tag && <View style={[s.tag, tagRed && { backgroundColor: C.red }]}><Text style={[s.tagText, tagRed && { color: C.onAccent }]}>{tag}</Text></View>}
