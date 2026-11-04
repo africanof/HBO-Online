@@ -187,6 +187,7 @@ export const COMMON_DICT: Dictionary = {
   "cat.Bancos e câmbios": { pt: "Bancos e câmbios", en: "Banks and exchange", zh: "银行和兑换", fr: "Banques et bureaux de change" },
   "cat.Estágios não remunerados": { pt: "Estágios não remunerados", en: "Unpaid internships", zh: "无薪实习", fr: "Stages non rémunérés" },
   "cat.Armazéns": { pt: "Armazéns", en: "Wholesale", zh: "批发仓库", fr: "Vente en gros" },
+  "cat.Importação": { pt: "Importação", en: "Imports", zh: "进口代购", fr: "Importation" },
   "cat.Eventos": { pt: "Eventos", en: "Events", zh: "活动", fr: "Événements" },
   "cat.Praças": { pt: "Praças", en: "Markets", zh: "市场", fr: "Marchés" },
   "cat.Loja": { pt: "Loja", en: "Shop", zh: "商店", fr: "Boutique" },

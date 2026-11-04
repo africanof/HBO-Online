@@ -150,6 +150,7 @@ export const CORE_LABEL_ROWS: CoreRow[] = [
   ["Restaurantes", "Restaurants", "餐厅", "Restaurants"],
   ["Armazéns", "Wholesale", "批发仓库", "Vente en gros"],
   ["Eventos", "Events", "活动", "Événements"],
+  ["Importação", "Imports", "进口代购", "Importation"],
   ["Arrendar", "Rent", "租赁", "Louer"],
   ["Leilões", "Auctions", "拍卖", "Enchères"],
   ["Procura-se", "Wanted", "求购", "Recherche"],

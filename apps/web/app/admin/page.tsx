@@ -24,15 +24,16 @@ import { AdminProtected } from "../../components/ProtectedPayment";
 import { AdminSafeSpots } from "../../components/Safety";
 import { AdminAgents } from "../../components/Agents";
 import { AdminEvents, AdminTicketPayments } from "../../components/Events";
+import { AdminImports } from "../../components/Imports";
 import { AdminPromos } from "../../components/Promo";
 import { AdminFuel } from "../../components/Fuel";
 import { AdminVenues } from "../../components/Venues";
 import { AdminInspections } from "../../components/Inspection";
 import { MfaGate } from "../../components/Mfa";
 
-type Tab = "stats" | "proofs" | "provinces" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+type Tab = "stats" | "proofs" | "provinces" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "imports" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
 /** Separadores (o texto vem do dicionário: ad.tab.<separador>). */
-const tabs: Tab[] = ["stats", "proofs", "provinces", "requests", "messages", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "inspections", "disputes", "verifications", "listings", "users", "categories", "couriers", "markets", "audit"];
+const tabs: Tab[] = ["stats", "proofs", "provinces", "requests", "messages", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "imports", "inspections", "disputes", "verifications", "listings", "users", "categories", "couriers", "markets", "audit"];
 
 // Com a entrada em dois passos ligada, as funções da administração só respondem depois do código (sessão aal2).
 export default function AdminPage() {
@@ -67,7 +68,7 @@ function AdminContent() {
   async function load(t: Tab) {
     setError("");
     if (t === "messages" || t === "requests") return;
-    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "protected" || t === "plans" || t === "safety" || t === "agents" || t === "events" || t === "videos" || t === "fuel" || t === "venues" || t === "inspections" || t === "revenue" || t === "disputes") return;
+    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "protected" || t === "plans" || t === "safety" || t === "agents" || t === "events" || t === "videos" || t === "fuel" || t === "venues" || t === "imports" || t === "inspections" || t === "revenue" || t === "disputes") return;
     const c = supabase();
     const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReportsV2(c, reportFilter || undefined)
       : t === "listings" ? await listListingsForModeration(c, listingFilter, listingQuery) : t === "users" ? await listUsersForAdmin(c, userQuery) : await listAllCategories(c);
@@ -108,6 +109,7 @@ function AdminContent() {
     {tab === "events" && <><AdminTicketPayments /><AdminEvents /></>}
     {tab === "videos" && <AdminPromos />}
     {tab === "fuel" && <AdminFuel />}
+    {tab === "imports" && <AdminImports />}
     {tab === "venues" && <AdminVenues />}
     {tab === "inspections" && <AdminInspections />}
     {tab === "revenue" && <AdminRevenue />}

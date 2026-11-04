@@ -68,6 +68,7 @@ export const HOME_CATEGORIES: { label: string; icon: string; href: string }[] = 
   { label: "Restaurantes", icon: "🍽️", href: "/reservas?tipo=restaurantes" },
   { label: "Armazéns", icon: "🏬", href: "/reservas?tipo=armazens" },
   { label: "Eventos", icon: "🎟️", href: "/eventos" },
+  { label: "Importação", icon: "✈️", href: "/importacao" },
   { label: "Praças", icon: "🧺", href: "/pracas" },
   { label: "Loja", icon: "🛍️", href: "/loja" },
   { label: "Arrendar", icon: "🔑", href: "/explorar?finalidade=rent" },
