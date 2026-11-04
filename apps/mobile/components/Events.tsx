@@ -6,7 +6,7 @@ import { listEvents, getEvent, getEventTickets, getEventPaymentInfo, saveEvent, 
   cancelTicketOrder, checkInTicket, myTicketOrders, organizerPanel, submitEventPlatformPayment, listEventPaymentsForAdmin, decideEventPayment, listMyEvents,
   formatEventDate, isoToLocalInput, eventIsOver, eventRef, ticketOrderRef, priceFromText, ticketsLeftText, eventShareMessage, normalizeTicketCode, qrMatrix, ticketUsable,
   partsToLocalInput, localInputToParts, validateEvent, uploadClassifiedMedia, uploadPaymentProof, base64ToArrayBuffer, paymentProofUrl, getPlatformSettings, updatePlatformSettings,
-  formatPrice, formatDate, friendlyErrorIn, whatsappShareUrl, LANG_TAGS, pointFrom, EVENT_CATEGORY_LABELS, TICKET_ORDER_STATUS_LABELS, TICKET_METHOD_LABELS, CHECKIN_LABELS, PLAN_METHOD_LABELS,
+  formatPrice, formatDate, friendlyErrorIn, whatsappShareUrl, listTicketOrdersForAdmin, type AdminTicketOrder, LANG_TAGS, pointFrom, EVENT_CATEGORY_LABELS, TICKET_ORDER_STATUS_LABELS, TICKET_METHOD_LABELS, CHECKIN_LABELS, PLAN_METHOD_LABELS,
   type EventCategory, type EventSummary, type EventRow, type TicketTypeAvailability, type TicketTypeDraft, type EventPaymentInfo, type MyTicketOrder,
   type OrganizerPanel, type OrganizerOrder, type AdminEventPayment, type CheckInResult, type PaymentMethodPlan, type PlatformSettings, type GeoPoint } from "@huambo-online/core";
 import { supabase, currentUserId, siteUrl } from "../lib/supabase";
@@ -18,6 +18,7 @@ import { ItemCard, Grid } from "./ItemCard";
 import { LiteImage } from "./LiteImage";
 import { PlaceFields, PlaceView } from "./Place";
 import { PaymentDetails } from "./Plans";
+import { usePlatformCollects } from "../lib/platform";
 import { useTerritory } from "./Directory";
 import { QrScanButton } from "./QrScanner";
 import { useT, coreText, formatDateTimeIn } from "../lib/i18n";
@@ -277,6 +278,7 @@ function PlatformPayBox({ eventId, uid, kind, amount, settings, onDone, onClose 
 
 /** Painel do organizador. */
 export function EventManageScreen({ id }: { id: string }) {
+  const collects = usePlatformCollects();
   const router = useRouter();
   const { t: tr, tc, lang } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined); const [e, setE] = useState<EventRow | null>(null); const [p, setP] = useState<OrganizerPanel | null>(null);
@@ -334,7 +336,7 @@ export function EventManageScreen({ id }: { id: string }) {
     {waiting.map(o => <View key={o.id} style={ui.card}>
       <Text style={ui.label}>{o.buyer_name} — {o.quantity} × {o.type_name} = {formatPrice(o.total)}</Text>
       <Text style={ui.muted}>{ticketOrderRef(o.ref_no)} · {o.method ? tc(TICKET_METHOD_LABELS[o.method]) : ""}{tr("sv.ref_x", { ref: o.reference ?? "" })}{o.buyer_phone ? ` · 📞 ${o.buyer_phone}` : ""}</Text>
-      {reject === o.id ? <>
+      {collects ? <Text style={ui.muted}>{tr("pp.team_confirms")}</Text> : reject === o.id ? <>
         <TextInput style={[ui.input, ui.area]} multiline value={note} onChangeText={setNote} placeholder={tr("sv.ev_why_not_ph")} accessibilityLabel={tr("sv.reason_plain")} {...ph} />
         <Button title={tr("sv.ina_not_received")} variant="danger" onPress={() => void decide(o, false)} /><Button title={tr("common.back")} variant="secondary" onPress={() => setReject(null)} />
       </> : <>
@@ -399,6 +401,7 @@ export function MyTicketsScreen() {
   </ScrollView>;
 }
 function TicketOrderCard({ o, onDone, onError }: { o: MyTicketOrder; onDone: (m: string) => void; onError: (m: string) => void }) {
+  const collects = usePlatformCollects();
   const router = useRouter();
   const { t: tr, tc, lang } = useT();
   const [method, setMethod] = useState<PaymentMethodPlan>(o.pay_express ? "multicaixa_express" : "bank_transfer"); const [reference, setReference] = useState(""); const [busy, setBusy] = useState(false);
@@ -420,7 +423,7 @@ function TicketOrderCard({ o, onDone, onError }: { o: MyTicketOrder; onDone: (m:
         {!!o.pay_note && <Text style={ui.muted}>{o.pay_note}</Text>}
       </View>
       <Text style={ui.label}>{tr("sv.ev_say_paid")}</Text>
-      <Chips options={METHODS.map(k => ({ value: k, label: tc(TICKET_METHOD_LABELS[k]) }))} value={method} onChange={setMethod} />
+      <Chips options={METHODS.filter(k => !(collects && k === "cash")).map(k => ({ value: k, label: tc(TICKET_METHOD_LABELS[k]) }))} value={method} onChange={setMethod} />
       <TextInput style={ui.input} value={reference} onChangeText={setReference} maxLength={120} placeholder={tr("sv.pay_ref_ph")} accessibilityLabel={tr("sv.pay_ref_a11y")} {...ph} />
       <Button title={busy ? tr("sv.sending") : tr("sv.paid_plain")} disabled={busy} onPress={() => void pay()} />
       <Button title={tr("sv.ev_cancel_res")} variant="secondary" onPress={() => Alert.alert(tr("sv.ev_cancel_res_q"), "", [{ text: tr("sv.no"), style: "cancel" }, { text: tr("common.cancel"), onPress: () => void cancel() }])} />
@@ -515,4 +518,27 @@ export function TicketVerifyScreen({ code }: { code: string }) {
     {v.role === "organizer" && usable && <Button title={tr("sv.tv_let_in")} disabled={busy} onPress={() => void letIn()} />}
     <Button title={tr("sv.tv_see_event")} variant="secondary" onPress={() => router.push(("/eventos/" + v.event_id) as any)} />
   </ScrollView>;
+}
+
+/** Equipa: confirmar os pagamentos de bilhetes (pagamento protegido). */
+export function AdminTicketPayments() {
+  const { t: tr, lang } = useT();
+  const [items, setItems] = useState<AdminTicketOrder[]>([]); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
+  async function load() { const r = await listTicketOrdersForAdmin(supabase(), "submitted"); if (r.error) setError(friendlyErrorIn(r.error, lang)); setItems(r.data); }
+  useEffect(() => { void load(); }, []);
+  async function decide(id: string, ok: boolean) {
+    const r = await decideTicketOrder(supabase(), id, ok, ok ? undefined : tr("pp.reject_pay"));
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(tr("pp.decided")); void load(); }
+  }
+  return <View style={{ gap: 10 }}>
+    <Text style={ui.h2}>{tr("pp.admin_tickets")}</Text>
+    <Message error={error} ok={notice} />
+    {items.length === 0 && <Text style={ui.muted}>{tr("pp.none_pending")}</Text>}
+    {items.map(o => <View key={o.id} style={ui.card}>
+      <Text style={ui.label}>{formatPrice(o.total)} · {o.event_title} · {o.buyer_name}</Text>
+      <Text style={ui.muted}>{ticketOrderRef(o.ref_no)} · {o.quantity} ×{tr("sv.ref_x", { ref: o.reference ?? "" })}{o.buyer_phone ? " · 📞 " + o.buyer_phone : ""}</Text>
+      <Button title={tr("pp.confirm_pay")} onPress={() => void decide(o.id, true)} />
+      <Button title={tr("pp.reject_pay")} variant="danger" onPress={() => void decide(o.id, false)} />
+    </View>)}
+  </View>;
 }

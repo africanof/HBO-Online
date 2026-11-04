@@ -4,10 +4,11 @@ import { listEvents, getEvent, getEventTickets, getEventPaymentInfo, saveEvent, 
   cancelTicketOrder, checkInTicket, myTicketOrders, organizerPanel, submitEventPlatformPayment, listEventPaymentsForAdmin, decideEventPayment, listMyEvents,
   formatEventDate, isoToLocalInput, eventIsOver, eventRef, ticketOrderRef, priceFromText, ticketsLeftText, eventShareMessage, normalizeTicketCode, qrSvgPath, ticketUsable,
   validateEvent, uploadClassifiedMedia, uploadPaymentProof, validateDocument, paymentProofUrl, getPlatformSettings, updatePlatformSettings, formatPrice, friendlyErrorIn,
-  whatsappShareUrl, pointFrom, EVENT_CATEGORY_LABELS, TICKET_ORDER_STATUS_LABELS, TICKET_METHOD_LABELS, CHECKIN_LABELS, PLAN_METHOD_LABELS,
+  whatsappShareUrl, pointFrom, listTicketOrdersForAdmin, type AdminTicketOrder, EVENT_CATEGORY_LABELS, TICKET_ORDER_STATUS_LABELS, TICKET_METHOD_LABELS, CHECKIN_LABELS, PLAN_METHOD_LABELS,
   type EventCategory, type EventSummary, type EventRow, type TicketTypeAvailability, type TicketTypeDraft, type EventPaymentInfo, type MyTicketOrder,
   type OrganizerPanel, type OrganizerOrder, type AdminEventPayment, type CheckInResult, type PaymentMethodPlan, type PlatformSettings, type GeoPoint } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
+import { usePlatformCollects } from "../lib/platform";
 import { useT, eventDateIn, formatDateIn } from "../lib/i18n";
 import { SITE_URL } from "../lib/site";
 import { ticketVerifyUrl, ticketByCode, checkInTicket as checkInTicketFn, CHECKIN_LABELS as CHECKIN_TEXT, formatEventDate as fmtDate, type TicketView } from "@huambo-online/core";
@@ -23,7 +24,8 @@ const icon = (c: EventCategory) => EVENT_CATEGORY_LABELS[c].split(" ")[0];
 
 function MethodPicker({ value, onChange, labels = TICKET_METHOD_LABELS }: { value: PaymentMethodPlan; onChange: (m: PaymentMethodPlan) => void; labels?: Record<PaymentMethodPlan, string> }) {
   const { t, tc } = useT();
-  return <div className="row" role="radiogroup" aria-label={t("sv.how_paid")}>{METHODS.map(m =>
+  const collects = usePlatformCollects();
+  return <div className="row" role="radiogroup" aria-label={t("sv.how_paid")}>{METHODS.filter(m => !(collects && m === "cash")).map(m =>
     <button key={m} type="button" role="radio" aria-checked={value === m} className={value === m ? "" : "secondary"} onClick={() => onChange(m)}>{tc(labels[m])}</button>)}</div>;
 }
 
@@ -280,6 +282,7 @@ function PlatformPayBox({ eventId, uid, kind, amount, settings, onDone, onClose 
 
 /** Painel do organizador: vendas, pedidos por confirmar, entrada, comissão, destaque e cancelar. */
 export function EventManage({ id }: { id: string }) {
+  const collects = usePlatformCollects();
   const { lang, t, tc } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined); const [e, setE] = useState<EventRow | null>(null); const [p, setP] = useState<OrganizerPanel | null>(null);
   const [settings, setSettings] = useState<PlatformSettings | null>(null); const [open, setOpen] = useState<"" | "fee" | "boost" | "cancel">("");
@@ -350,7 +353,7 @@ export function EventManage({ id }: { id: string }) {
       {waiting.map(o => <article key={o.id} className="card" style={{ gap: 6 }}>
         <strong>{o.buyer_name} — {o.quantity} × {o.type_name} = {formatPrice(o.total)}</strong>
         <small>{ticketOrderRef(o.ref_no)} · {o.method ? tc(TICKET_METHOD_LABELS[o.method]) : ""} · {t("sv.reference")}: <strong>{o.reference}</strong>{o.buyer_phone ? ` · 📞 ${o.buyer_phone}` : ""}</small>
-        <div className="row"><button type="button" onClick={() => void decide(o, true)}>✅ {t("sv.got_money")}</button><button type="button" className="secondary" onClick={() => void decide(o, false)}>❌ {t("sv.not_received")}</button></div>
+        <div className="row">{collects ? <small>{t("pp.team_confirms")}</small> : <><button type="button" onClick={() => void decide(o, true)}>✅ {t("sv.got_money")}</button><button type="button" className="secondary" onClick={() => void decide(o, false)}>❌ {t("sv.not_received")}</button></>}</div>
       </article>)}
       {reserved.length > 0 && <details className="card"><summary><strong>⏳ {t("sv.ev_unpaid_res", { n: reserved.length })}</strong></summary>
         {reserved.map(o => <p key={o.id} style={{ margin: "6px 0" }}>{o.buyer_name} — {o.quantity} × {o.type_name} · {formatPrice(o.total)}{o.pay_by ? " · " + t("sv.ev_pay_by", { date: eventDateIn(o.pay_by, lang) }) : ""}</p>)}</details>}
@@ -541,4 +544,29 @@ export function TicketVerify({ code }: { code: string }) {
     </dl>}
     {(v.role === "organizer") && usable && <button type="button" disabled={busy} style={{ fontSize: 22, justifySelf: "start" }} onClick={() => void letIn()}>🚪 {t("sv.ev_let_in")}</button>}
   </main>;
+}
+
+/** Equipa: confirmar os pagamentos de bilhetes (pagamento protegido: o cliente paga ao Huambo Online). */
+export function AdminTicketPayments() {
+  const { lang, t } = useT();
+  const [items, setItems] = useState<AdminTicketOrder[]>([]); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
+  async function load() { const r = await listTicketOrdersForAdmin(supabase(), "submitted"); if (r.error) setError(friendlyErrorIn(r.error, lang)); setItems(r.data); }
+  useEffect(() => { void load(); }, []);
+  async function decide(id: string, ok: boolean) {
+    const note = ok ? "" : prompt(t("pp.reject_why")) ?? ""; if (!ok && !note.trim()) return;
+    const r = await decideTicketOrder(supabase(), id, ok, note);
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(t("pp.decided")); void load(); }
+  }
+  return <section className="stack" style={{ gap: 8 }}>
+    <h2 style={{ margin: 0 }}>{t("pp.admin_tickets")}</h2>
+    {error && <p className="error" role="alert">{error}</p>}
+    {notice && <p className="ok" role="status">{notice}</p>}
+    {items.length === 0 && <p className="muted" style={{ margin: 0 }}>{t("pp.none_pending")}</p>}
+    {items.map(o => <article key={o.id} className="card" style={{ gap: 6 }}>
+      <strong>{formatPrice(o.total)} · {o.event_title} · {o.buyer_name}</strong>
+      <small>{ticketOrderRef(o.ref_no)} · {o.quantity} × · {t("sv.reference")}: <strong>{o.reference}</strong>{o.buyer_phone ? " · 📞 " + o.buyer_phone : ""}</small>
+      <div className="row"><button type="button" onClick={() => void decide(o.id, true)}>{t("pp.confirm_pay")}</button>
+        <button type="button" className="danger" onClick={() => void decide(o.id, false)}>{t("pp.reject_pay")}</button></div>
+    </article>)}
+  </section>;
 }

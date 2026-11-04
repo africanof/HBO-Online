@@ -23,7 +23,7 @@ import { AdminPlans, AdminRevenue } from "../../components/Plans";
 import { AdminProtected } from "../../components/ProtectedPayment";
 import { AdminSafeSpots } from "../../components/Safety";
 import { AdminAgents } from "../../components/Agents";
-import { AdminEvents } from "../../components/Events";
+import { AdminEvents, AdminTicketPayments } from "../../components/Events";
 import { AdminPromos } from "../../components/Promo";
 import { AdminFuel } from "../../components/Fuel";
 import { AdminVenues } from "../../components/Venues";
@@ -105,7 +105,7 @@ function AdminContent() {
     {tab === "protected" && <AdminProtected />}
     {tab === "safety" && <AdminSafeSpots />}
     {tab === "agents" && <AdminAgents />}
-    {tab === "events" && <AdminEvents />}
+    {tab === "events" && <><AdminTicketPayments /><AdminEvents /></>}
     {tab === "videos" && <AdminPromos />}
     {tab === "fuel" && <AdminFuel />}
     {tab === "venues" && <AdminVenues />}

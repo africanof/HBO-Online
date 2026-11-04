@@ -49,6 +49,14 @@ export async function myListingOrder(client: SupabaseClient, listingId: string):
 export const orderHref = (orderId: string, pay = false) => `/encomendas${pay ? "?pagar=1" : ""}#encomenda-${orderId}`;
 
 export const LISTING_CHECKOUT_DICT: Dictionary = {
+  "pp.team_confirms": { pt: "🛡️ O pagamento é feito ao Huambo Online e confirmado pela equipa. O valor passa ao seu saldo quando ler o código do cliente (eventos: 1 dia depois do evento).", en: "🛡️ Payment is made to Huambo Online and confirmed by the team. The amount goes to your balance when you scan the customer's code (events: 1 day after the event).", zh: "🛡️ 款项支付给 Huambo Online，并由团队确认。扫描客户代码后金额将转入您的余额（活动：活动结束后 1 天）。", fr: "🛡️ Le paiement est fait à Huambo Online et confirmé par l'équipe. Le montant passe à votre solde quand vous scannez le code du client (événements : 1 jour après l'événement)." },
+  "pp.pay_platform": { pt: "🛡️ Paga adiantado ao Huambo Online (pagamento protegido). O dinheiro só chega ao vendedor depois de usar o código.", en: "🛡️ You pay Huambo Online in advance (protected payment). The money only reaches the seller after your code is used.", zh: "🛡️ 您预先付款给 Huambo Online（担保支付）。只有在使用您的代码后，款项才会转给卖家。", fr: "🛡️ Vous payez Huambo Online à l'avance (paiement protégé). L'argent n'arrive au vendeur qu'après l'utilisation de votre code." },
+  "pp.admin_tickets": { pt: "🎟️ Pagamentos de bilhetes para confirmar", en: "🎟️ Ticket payments to confirm", zh: "🎟️ 待确认的门票付款", fr: "🎟️ Paiements de billets à confirmer" },
+  "pp.confirm_pay": { pt: "✅ Pagamento recebido", en: "✅ Payment received", zh: "✅ 已收到付款", fr: "✅ Paiement reçu" },
+  "pp.reject_pay": { pt: "❌ Não recebido", en: "❌ Not received", zh: "❌ 未收到", fr: "❌ Non reçu" },
+  "pp.reject_why": { pt: "Porque não confirma? (o cliente vê esta nota)", en: "Why not confirm? (the customer sees this note)", zh: "为什么不确认？（客户会看到此备注）", fr: "Pourquoi ne pas confirmer ? (le client voit cette note)" },
+  "pp.none_pending": { pt: "Nada por confirmar.", en: "Nothing to confirm.", zh: "没有待确认的项目。", fr: "Rien à confirmer." },
+  "pp.decided": { pt: "Feito.", en: "Done.", zh: "完成。", fr: "Fait." },
   "sv.quote": { pt: "Orçamento", en: "Quote", zh: "报价", fr: "Devis" },
   "sv.quote_amount_q": { pt: "Valor do orçamento (Kz):", en: "Quote amount (Kz):", zh: "报价金额（Kz）：", fr: "Montant du devis (Kz) :" },
   "sv.quote_amount_ph": { pt: "Valor do orçamento (Kz)", en: "Quote amount (Kz)", zh: "报价金额（Kz）", fr: "Montant du devis (Kz)" },
@@ -80,3 +88,17 @@ export const LISTING_CHECKOUT_DICT: Dictionary = {
   "pp.err_phone": { pt: "Indique o seu telefone.", en: "Enter your phone number.", zh: "请输入您的电话。", fr: "Indiquez votre téléphone." },
   "pp.err_address": { pt: "Indique a morada ou o ponto de entrega.", en: "Enter the address or delivery point.", zh: "请输入地址或交付点。", fr: "Indiquez l'adresse ou le point de livraison." }
 };
+
+/** O Huambo Online recebe todos os pagamentos (pagamento protegido ligado)? Guardado durante a sessão. */
+let collectsCache: Promise<boolean> | null = null;
+export function platformCollects(client: SupabaseClient): Promise<boolean> {
+  if (!collectsCache) collectsCache = Promise.resolve(client.rpc("platform_collects")).then(r => r.data === true).catch(() => { collectsCache = null; return false; });
+  return collectsCache;
+}
+export type AdminTicketOrder = { id: string; ref_no: number; status: string; quantity: number; total: number | string; method: string | null; reference: string | null;
+  submitted_at: string | null; created_at: string; buyer_name: string; buyer_phone: string | null; escrow: string | null; event_title: string; starts_at: string };
+/** Pagamentos de bilhetes para a equipa confirmar (pagamento protegido). */
+export async function listTicketOrdersForAdmin(client: SupabaseClient, status = "submitted") {
+  const r = await client.rpc("admin_list_event_orders", { p_status: status || null });
+  return { data: (r.data ?? []) as AdminTicketOrder[], error: r.error };
+}

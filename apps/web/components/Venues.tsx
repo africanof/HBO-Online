@@ -12,6 +12,7 @@ import { venueFeed, venueDetail, myVenues, saveVenue, listVenueItems, saveVenueI
   type MyVenue, type MyVenueOrder, type VenueOrder, type VenuePanel, type VenueOrderView, type VenueCompleteResult, type AdminVenue, type AdminVenuePayment,
   type AdminVenueOrder, type VenueInput, type VenueItemInput, type VenueCartLine, type VenueReserveInput, type PlatformSettings, type PaymentMethodPlan } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
+import { usePlatformCollects } from "../lib/platform";
 import { useT } from "../lib/i18n";
 import { SITE_URL } from "../lib/site";
 import { compressPhoto } from "../lib/image";
@@ -196,8 +197,10 @@ function ItemCard({ i, kind, children }: { i: VenueItem; kind: VenueKind; childr
 
 function ReserveForm({ v, uid, kind, lines, from, to, nights, setRooms }: { v: VenueDetail; uid: string | null; kind: VenueOrderKind; lines: VenueCartLine[]; from: string; to: string; nights: number; setRooms: (n: number) => void }) {
   const { lang, t, tc } = useT();
-  const methods = (["at_place", "prepaid"] as VenueMethod[]).filter(m => m === "at_place" ? v.accepts_pay_at_place : v.accepts_prepay);
-  const [method, setMethod] = useState<VenueMethod>(methods[0] ?? "at_place"); const [name, setName] = useState(""); const [phone, setPhone] = useState(""); const [note, setNote] = useState("");
+  const collects = usePlatformCollects();
+  const methods = collects ? (["prepaid"] as VenueMethod[]) : (["at_place", "prepaid"] as VenueMethod[]).filter(m => m === "at_place" ? v.accepts_pay_at_place : v.accepts_prepay);
+  const [method, setMethod] = useState<VenueMethod>(methods[0] ?? "at_place");
+  useEffect(() => { if (collects) setMethod("prepaid"); }, [collects]); const [name, setName] = useState(""); const [phone, setPhone] = useState(""); const [note, setNote] = useState("");
   const [guests, setGuests] = useState(v.kind === "hotel" ? "1" : "2"); const [date, setDate] = useState(luandaToday()); const [time, setTime] = useState("");
   const [agree, setAgree] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   if (!uid) return <a className="btn" style={{ justifySelf: "start", fontSize: 20 }} href={"/conta/login?voltar=/reservas/" + v.id}>{t("sv.fu_login_reserve")}</a>;
@@ -412,6 +415,7 @@ export function VenueDashboard() {
 
 // --- Painel do dono -------------------------------------------------------------------------------
 export function VenueManage({ id }: { id: string }) {
+  const collects = usePlatformCollects();
   const { lang, t, tc } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined); const [venue, setVenue] = useState<MyVenue | null | undefined>(undefined);
   const [panel, setPanel] = useState<VenuePanel | null>(null); const [items, setItems] = useState<VenueItem[]>([]); const [settings, setSettings] = useState<PlatformSettings | null>(null);
@@ -479,7 +483,7 @@ export function VenueManage({ id }: { id: string }) {
         <span>{tc(venueOrderSummary(o))}</span>
         <small>{t("sv.ve_check_acc", { total: formatPrice(o.total), ref: venueOrderRef(o.ref_no), fee: formatPrice(o.client_fee) })}</small>
         <div className="row">{o.proof_path && <button type="button" className="secondary" onClick={() => void openProof(o.proof_path!, setError, t("sv.proof_open_fail"))}>📄 {t("sv.see_proof")}</button>}
-          <button type="button" onClick={() => void decide(o, true)}>✅ {t("sv.got_money")}</button><button type="button" className="secondary" onClick={() => void decide(o, false)}>❌ {t("sv.not_received")}</button></div>
+          {collects ? <small>{t("pp.team_confirms")}</small> : <><button type="button" onClick={() => void decide(o, true)}>✅ {t("sv.got_money")}</button><button type="button" className="secondary" onClick={() => void decide(o, false)}>❌ {t("sv.not_received")}</button></>}</div>
       </article>)}</section>}
 
     <section className="stack" style={{ gap: 8 }} aria-labelledby="pedidos">
@@ -641,6 +645,11 @@ export function AdminVenues() {
   const [status, setStatus] = useState<VenueStatus>("pending"); const [venues, setVenues] = useState<AdminVenue[]>([]); const [payments, setPayments] = useState<AdminVenuePayment[]>([]);
   const [orderStatus, setOrderStatus] = useState<VenueOrderStatus | "">("submitted"); const [orders, setOrders] = useState<AdminVenueOrder[]>([]);
   const [error, setError] = useState(""); const [notice, setNotice] = useState("");
+  async function decideOrder(id: string, ok: boolean) {
+    const note = ok ? "" : prompt(t("pp.reject_why")) ?? ""; if (!ok && !note.trim()) return;
+    const r = await decideVenuePayment(supabase(), id, ok, note);
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(t("pp.decided")); void load(); }
+  }
   async function load() {
     const [a, b, c] = await Promise.all([listVenuesForAdmin(supabase(), status), listVenuePaymentsForAdmin(supabase(), "pending"), listVenueOrdersForAdmin(supabase(), orderStatus)]);
     setVenues(a.data); setPayments(b.data); setOrders(c.data); if (a.error || b.error || c.error) setError(friendlyErrorIn(a.error ?? b.error ?? c.error, lang));
@@ -691,7 +700,9 @@ export function AdminVenues() {
       <strong>{formatPrice(o.total)} · {o.venue_name} · {o.buyer_name}</strong>
       <small>{venueOrderRef(o.ref_no)} · {venueRef(o.venue_ref)} · {tc(VENUE_ORDER_KIND_LABELS[o.kind])} · {t("sv.fee")} {formatPrice(o.client_fee + o.business_fee)}{o.reference ? " · " + t("sv.ref_short") + ": " + o.reference : ""} · {tc(VENUE_ORDER_STATUS_LABELS[o.status])}</small>
       <div className="row">{o.proof_path && <button type="button" className="secondary" onClick={() => void openProof(o.proof_path!, setError, t("sv.proof_open_fail"))}>📄 {t("sv.proof")}</button>}
-        <a className="btn secondary" href={"/reservas/v/" + o.qr_token}>🔳 {t("sv.see_by_qr")}</a></div>
+        <a className="btn secondary" href={"/reservas/v/" + o.qr_token}>🔳 {t("sv.see_by_qr")}</a>
+        {o.status === "submitted" && <><button type="button" onClick={() => void decideOrder(o.id, true)}>{t("pp.confirm_pay")}</button>
+          <button type="button" className="danger" onClick={() => void decideOrder(o.id, false)}>{t("pp.reject_pay")}</button></>}</div>
     </article>)}
   </section>;
 }

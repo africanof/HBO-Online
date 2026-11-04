@@ -9,6 +9,7 @@ import { fuelFeed, getStation, listMyStations, listStationProducts, getStationPa
   type FuelProduct, type FuelRow, type FuelStation, type FuelProductRow, type FuelKind, type FuelMethod, type FuelStatus, type FuelQueue, type MyFuelOrder,
   type StationPanel, type StationOrder, type FuelOrderView, type AdminFuelOrder, type FuelOrderStatus, type AdminFuelPayment, type FuelCollectResult, type PlatformSettings, type PaymentMethodPlan, type GeoPoint } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
+import { usePlatformCollects } from "../lib/platform";
 import { useT } from "../lib/i18n";
 import { SITE_URL } from "../lib/site";
 import { PlaceFields, PlaceView } from "./Place";
@@ -149,7 +150,9 @@ export function StationPage({ id }: { id: string }) {
 function ReserveForm({ r, uid, onClose }: { r: FuelRow; uid: string | null; onClose: () => void }) {
   const { lang, t, tc } = useT();
   const gas = FUEL_PRODUCTS[r.product].gas;
-  const [method, setMethod] = useState<FuelMethod>("at_station"); const [qty, setQty] = useState(gas ? "1" : "20"); const [name, setName] = useState(""); const [phone, setPhone] = useState("");
+  const collects = usePlatformCollects();
+  const [method, setMethod] = useState<FuelMethod>("at_station"); const [qty, setQty] = useState(gas ? "1" : "20");
+  useEffect(() => { if (collects) setMethod("prepaid"); }, [collects]); const [name, setName] = useState(""); const [phone, setPhone] = useState("");
   const [plate, setPlate] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const [feePct, setFeePct] = useState<number | null>(null); const [agree, setAgree] = useState(false);
   useEffect(() => { void getPlatformSettings(supabase()).then(s => setFeePct(Number(s.data?.fuel_fee_pct ?? 10))); }, []);
@@ -164,7 +167,8 @@ function ReserveForm({ r, uid, onClose }: { r: FuelRow; uid: string | null; onCl
     if (x.error) setError(friendlyErrorIn(x.error, lang)); else window.location.href = "/combustivel/pedidos";
   }
   return <form className="card stack" style={{ gap: 8 }} onSubmit={send}>
-    {r.accepts_prepay && <div className="row" role="radiogroup" aria-label={t("sv.fu_how_pay")}>{(["at_station", "prepaid"] as FuelMethod[]).map(m =>
+    {collects && <small>{t("pp.pay_platform")}</small>}
+    {r.accepts_prepay && !collects && <div className="row" role="radiogroup" aria-label={t("sv.fu_how_pay")}>{(["at_station", "prepaid"] as FuelMethod[]).map(m =>
       <button key={m} type="button" role="radio" aria-checked={method === m} className={method === m ? "" : "secondary"} onClick={() => setMethod(m)}>{tc(FUEL_METHOD_LABELS[m])}</button>)}</div>}
     <label>{gas ? t("sv.fu_how_many_bottles") : t("sv.fu_how_many_litres")}<input value={qty} onChange={e => setQty(e.target.value)} inputMode="decimal" /></label>
     <small>{t("sv.fu_max_person")}: {tc(fuelQuantityText(r.product, r.max_per_order))}.</small>
@@ -366,6 +370,7 @@ function ProductControl({ p, onSaved, onError }: { p: FuelProductRow; onSaved: (
 
 /** Painel do posto. */
 export function StationManage({ id }: { id: string }) {
+  const collects = usePlatformCollects();
   const { lang, t, tc } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined); const [st, setSt] = useState<FuelStation | null>(null); const [products, setProducts] = useState<FuelProductRow[]>([]);
   const [panel, setPanel] = useState<StationPanel | null>(null); const [settings, setSettings] = useState<PlatformSettings | null>(null);
@@ -422,7 +427,7 @@ export function StationManage({ id }: { id: string }) {
         <strong>{o.buyer_name} — {tc(fuelQuantityText(o.product, o.quantity))} {tc(FUEL_PRODUCTS[o.product].label).toLowerCase()} = {formatPrice(o.total)}</strong>
         <small>{fuelOrderRef(o.ref_no)} · {o.pay_method ? tc(PLAN_METHOD_LABELS[o.pay_method as PaymentMethodPlan]) : ""} · {t("sv.ref_short")}: <strong>{o.reference}</strong>{o.buyer_phone ? " · 📞 " + o.buyer_phone : ""}</small>
         <small>{t("sv.fu_check_bank", { total: formatPrice(o.total), ref: fuelOrderRef(o.ref_no), fee: formatPrice(o.fee_amount) })}</small>
-        <div className="row">{o.proof_path && <button type="button" className="secondary" onClick={() => void openProof(o.proof_path!, setError, t("sv.proof_open_fail"))}>📄 {t("sv.see_proof")}</button>}<button type="button" onClick={() => void decide(o, true)}>✅ {t("sv.got_money")}</button><button type="button" className="secondary" onClick={() => void decide(o, false)}>❌ {t("sv.not_received")}</button></div>
+        <div className="row">{o.proof_path && <button type="button" className="secondary" onClick={() => void openProof(o.proof_path!, setError, t("sv.proof_open_fail"))}>📄 {t("sv.see_proof")}</button>}{collects ? <small>{t("pp.team_confirms")}</small> : <><button type="button" onClick={() => void decide(o, true)}>✅ {t("sv.got_money")}</button><button type="button" className="secondary" onClick={() => void decide(o, false)}>❌ {t("sv.not_received")}</button></>}</div>
       </article>)}</section>}
     {active.length > 0 && <details className="card"><summary><strong>🧾 {t("sv.fu_active", { n: active.length })}</strong></summary>
       {active.map(o => <div key={o.id} className="row" style={{ justifyContent: "space-between", alignItems: "center", padding: "6px 0" }}>
@@ -486,6 +491,11 @@ export function AdminFuel() {
       listFuelOrdersForAdmin(supabase(), orderStatus)]);
     setStations(a.data); setPayments(b.data); setS(c.data); setOrders(d.data); if (a.error || b.error || d.error) setError(friendlyErrorIn(a.error ?? b.error ?? d.error, lang));
   }
+  async function decideOrder(id: string, ok: boolean) {
+    const note = ok ? "" : prompt(t("pp.reject_why")) ?? ""; if (!ok && !note.trim()) return;
+    const r = await decideFuelPayment(supabase(), id, ok, note);
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(t("pp.decided")); void load(); }
+  }
   useEffect(() => { void load(); }, [status, orderStatus]);
   async function setSt(x: FuelStation, to: "approved" | "suspended" | "pending") {
     const note = to === "suspended" ? prompt(t("sv.why_suspend")) ?? "" : "";
@@ -540,7 +550,9 @@ export function AdminFuel() {
       <strong>{formatPrice(o.total)} · {o.station_name} · {o.buyer_name}</strong>
       <small>{fuelOrderRef(o.ref_no)} · {stationRef(o.station_ref)} · {tc(fuelQuantityText(o.product, o.quantity))} {tc(FUEL_PRODUCTS[o.product].short).toLowerCase()} · {t("sv.fee")} {formatPrice(o.fee_amount)}{o.reference ? " · " + t("sv.ref_short") + ": " + o.reference : ""} · {tc(FUEL_ORDER_STATUS_LABELS[o.status])}</small>
       <div className="row">{o.proof_path && <button type="button" className="secondary" onClick={() => void openProof(o.proof_path!)}>📄 {t("sv.proof")}</button>}
-        <a className="btn secondary" href={"/combustivel/v/" + o.qr_token}>🔳 {t("sv.see_by_qr")}</a></div>
+        <a className="btn secondary" href={"/combustivel/v/" + o.qr_token}>🔳 {t("sv.see_by_qr")}</a>
+        {o.status === "submitted" && <><button type="button" onClick={() => void decideOrder(o.id, true)}>{t("pp.confirm_pay")}</button>
+          <button type="button" className="danger" onClick={() => void decideOrder(o.id, false)}>{t("pp.reject_pay")}</button></>}</div>
     </article>)}
   </section>;
 }

@@ -16,6 +16,7 @@ import { C, ui } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
 import { PlaceFields, PlaceView } from "./Place";
 import { PaymentDetails } from "./Plans";
+import { usePlatformCollects } from "../lib/platform";
 import { useTerritory } from "./Directory";
 import { QrScanButton } from "./QrScanner";
 import { ProfileQr } from "./ProfileQr";
@@ -156,7 +157,9 @@ export function StationScreen({ id }: { id: string }) {
 function ReserveForm({ r, uid, onClose }: { r: FuelRow; uid: string | null; onClose: () => void }) {
   const router = useRouter(); const gas = FUEL_PRODUCTS[r.product].gas;
   const { t: tr, tc, lang } = useT();
-  const [method, setMethod] = useState<FuelMethod>("at_station"); const [qty, setQty] = useState(gas ? "1" : "20"); const [name, setName] = useState(""); const [phone, setPhone] = useState("");
+  const collects = usePlatformCollects();
+  const [method, setMethod] = useState<FuelMethod>("at_station"); const [qty, setQty] = useState(gas ? "1" : "20");
+  useEffect(() => { if (collects) setMethod("prepaid"); }, [collects]); const [name, setName] = useState(""); const [phone, setPhone] = useState("");
   const [plate, setPlate] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const [feePct, setFeePct] = useState<number | null>(null); const [agree, setAgree] = useState(false);
   useEffect(() => { void getPlatformSettings(supabase()).then(s => setFeePct(Number(s.data?.fuel_fee_pct ?? 10))); }, []);
@@ -171,7 +174,8 @@ function ReserveForm({ r, uid, onClose }: { r: FuelRow; uid: string | null; onCl
     if (x.error) setError(friendlyErrorIn(x.error, lang)); else router.push("/combustivel/pedidos" as any);
   }
   return <View style={[ui.card, { gap: 8 }]}>
-    {r.accepts_prepay && <Chips options={(["at_station", "prepaid"] as FuelMethod[]).map(m => ({ value: m, label: tc(FUEL_METHOD_LABELS[m]) }))} value={method} onChange={setMethod} />}
+    {collects && <Text style={ui.muted}>{tr("pp.pay_platform")}</Text>}
+    {r.accepts_prepay && !collects && <Chips options={(["at_station", "prepaid"] as FuelMethod[]).map(m => ({ value: m, label: tc(FUEL_METHOD_LABELS[m]) }))} value={method} onChange={setMethod} />}
     <Field label={gas ? tr("sv.fu_how_many_gas") : tr("sv.fu_how_many_l")} value={qty} onChangeText={setQty} keyboardType="decimal-pad" />
     <Text style={ui.muted}>{tr("sv.fu_max", { q: tc(fuelQuantityText(r.product, r.max_per_order)) })}</Text>
     <Field label={tr("sv.your_name")} value={name} onChangeText={setName} maxLength={80} autoComplete="name" />
@@ -368,6 +372,7 @@ function ProductControl({ p, onSaved, onError }: { p: FuelProductRow; onSaved: (
 }
 
 export function StationManageScreen({ id }: { id: string }) {
+  const collects = usePlatformCollects();
   const router = useRouter();
   const { t: tr, tc, lang } = useT();
   const [uid, setUid] = useState<string | null | undefined>(undefined); const [st, setSt] = useState<FuelStation | null>(null); const [products, setProducts] = useState<FuelProductRow[]>([]);
@@ -424,7 +429,7 @@ export function StationManageScreen({ id }: { id: string }) {
       <Text style={ui.muted}>{fuelOrderRef(o.ref_no)}{tr("sv.ref_x", { ref: o.reference ?? "" })}{o.buyer_phone ? " · 📞 " + o.buyer_phone : ""}</Text>
       <Text style={ui.text}>{tr("sv.fu_check_account", { v: formatPrice(o.total), ref: fuelOrderRef(o.ref_no), fee: formatPrice(o.fee_amount) })}</Text>
       {!!o.proof_path && <Button title={tr("sv.proof_see")} variant="secondary" onPress={() => void openProof(o.proof_path!, setError, tr("sv.proof_open_fail"))} />}
-      {reject === o.id ? <>{reasonBox}<Button title={tr("sv.ina_not_received")} variant="danger" onPress={() => void decide(o, false)} /><Button title={tr("common.back")} variant="secondary" onPress={() => setReject(null)} /></>
+      {collects ? <Text style={ui.muted}>{tr("pp.team_confirms")}</Text> : reject === o.id ? <>{reasonBox}<Button title={tr("sv.ina_not_received")} variant="danger" onPress={() => void decide(o, false)} /><Button title={tr("common.back")} variant="secondary" onPress={() => setReject(null)} /></>
         : <><Button title={tr("sv.ev_got_money")} onPress={() => Alert.alert(tr("sv.ina_confirm_pay"), tr("sv.ev_received_q", { v: formatPrice(o.total), name: o.buyer_name }), [{ text: tr("sv.no"), style: "cancel" }, { text: tr("sv.yes"), onPress: () => void decide(o, true) }])} />
           <Button title={tr("sv.ina_not_received")} variant="secondary" onPress={() => { setReject(o.id); setReason(""); }} /></>}
     </View>)}
@@ -491,6 +496,10 @@ export function AdminFuel() {
       listFuelOrdersForAdmin(supabase(), orderStatus === "all" ? "" : orderStatus)]);
     setStations(a.data); setPayments(b.data); setS(c.data); setOrders(d.data); if (a.error || b.error || d.error) setError(friendlyErrorIn(a.error ?? b.error ?? d.error, lang));
   }
+  async function decideOrder(id: string, ok: boolean) {
+    const r = await decideFuelPayment(supabase(), id, ok, ok ? undefined : tr("pp.reject_pay"));
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(tr("pp.decided")); void load(); }
+  }
   useEffect(() => { void load(); }, [status, orderStatus]);
   async function setSt(x: FuelStation, to: "approved" | "suspended") {
     if (to === "suspended" && !reason.trim()) { setError(tr("sv.fua_why_suspend")); return; }
@@ -540,6 +549,8 @@ export function AdminFuel() {
       <Text style={ui.muted}>{fuelOrderRef(o.ref_no)} · {tc(fuelQuantityText(o.product, o.quantity))}{tr("sv.fua_fee", { v: formatPrice(o.fee_amount) })}{o.reference ? tr("sv.ref_x", { ref: o.reference }) : ""} · {tc(FUEL_ORDER_STATUS_LABELS[o.status])}</Text>
       {!!o.proof_path && <Button title={tr("sv.proof_doc")} variant="secondary" onPress={() => void openProof(o.proof_path!, setError, tr("sv.proof_open_fail"))} />}
       <Button title={tr("sv.fua_by_qr")} variant="secondary" onPress={() => router.push(("/combustivel/v/" + o.qr_token) as any)} />
+      {o.status === "submitted" && <><Button title={tr("pp.confirm_pay")} onPress={() => void decideOrder(o.id, true)} />
+        <Button title={tr("pp.reject_pay")} variant="danger" onPress={() => void decideOrder(o.id, false)} /></>}
     </View>)}
   </View>;
 }

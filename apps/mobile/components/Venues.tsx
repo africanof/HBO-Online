@@ -19,6 +19,7 @@ import { C, ui } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
 import { PlaceView } from "./Place";
 import { PaymentDetails } from "./Plans";
+import { usePlatformCollects } from "../lib/platform";
 import { useTerritory } from "./Directory";
 import { QrScanButton } from "./QrScanner";
 import { LiteImage } from "./LiteImage";
@@ -239,7 +240,9 @@ function ReserveArea({ d, uid, open, sections, from, to }: { d: VenueDetail; uid
   const [cart, setCart] = useState<Record<string, string>>({}); const [roomId, setRoomId] = useState<string | null>(null); const [rooms, setRooms] = useState("1");
   const [guests, setGuests] = useState("2"); const [day, setDay] = useState(luandaToday()); const [time, setTime] = useState("");
   const [name, setName] = useState(""); const [phone, setPhone] = useState(""); const [note, setNote] = useState("");
+  const collects = usePlatformCollects();
   const [method, setMethod] = useState<VenueMethod>(d.accepts_pay_at_place ? "at_place" : "prepaid"); const [agree, setAgree] = useState(false);
+  useEffect(() => { if (collects) setMethod("prepaid"); }, [collects]);
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const byId = (iid: string) => d.items.find(i => i.id === iid);
   function step(it: VenueItem, delta: number) {
@@ -321,7 +324,7 @@ function ReserveArea({ d, uid, open, sections, from, to }: { d: VenueDetail; uid
       <Field label={tr("sv.your_name")} value={name} onChangeText={setName} maxLength={80} autoComplete="name" />
       <Field label={tr("sv.phone")} value={phone} onChangeText={setPhone} keyboardType="phone-pad" maxLength={20} />
       <Field label={tr("sv.note_opt")} value={note} onChangeText={setNote} maxLength={300} placeholder={d.kind === "hotel" ? tr("sv.ve_note_hotel_ph") : tr("sv.ve_note_food_ph")} />
-      {d.accepts_pay_at_place && d.accepts_prepay ? <Chips options={(["at_place", "prepaid"] as VenueMethod[]).map(m => ({ value: m, label: tc(VENUE_METHOD_LABELS[m]) }))} value={method} onChange={setMethod} />
+      {collects ? <Text style={ui.muted}>{tr("pp.pay_platform")}</Text> : d.accepts_pay_at_place && d.accepts_prepay ? <Chips options={(["at_place", "prepaid"] as VenueMethod[]).map(m => ({ value: m, label: tc(VENUE_METHOD_LABELS[m]) }))} value={method} onChange={setMethod} />
         : <Text style={ui.label}>💳 {tc(VENUE_METHOD_LABELS[method])}</Text>}
       {lines.length > 0 && <View style={ui.card}>
         <Text style={ui.text}>{tr("sv.ve_price", { n: orderKind === "stay" ? ` (${tc(nightsText(nights))})` : "", v: formatPrice(sum.subtotal) })}</Text>
@@ -615,6 +618,7 @@ function CompleteResult({ r }: { r: VenueCompleteResult }) {
 
 type OrderFilter = "submitted" | "active" | "completed" | "all";
 export function VenueManageScreen({ id }: { id: string }) {
+  const collects = usePlatformCollects();
   const { t: tr, tc, lang } = useT();
   const router = useRouter();
   const [uid, setUid] = useState<string | null | undefined>(undefined); const [venue, setVenue] = useState<MyVenue | null | undefined>(undefined);
@@ -706,7 +710,7 @@ export function VenueManageScreen({ id }: { id: string }) {
         {!!o.proof_path && <Button title={tr("sv.proof_see")} variant="secondary" onPress={() => void openProof(o.proof_path!, setError, tr)} />}
         {o.status === "submitted" && <>
           <Text style={ui.text}>{tr("sv.vm_check_account", { v: formatPrice(o.total), ref: venueOrderRef(o.ref_no) })}</Text>
-          {reject === o.id ? <>{reasonBox}<Button title={tr("sv.ina_not_received")} variant="danger" onPress={() => void decide(o, false)} /><Button title={tr("common.back")} variant="secondary" onPress={() => setReject(null)} /></>
+          {collects ? <Text style={ui.muted}>{tr("pp.team_confirms")}</Text> : reject === o.id ? <>{reasonBox}<Button title={tr("sv.ina_not_received")} variant="danger" onPress={() => void decide(o, false)} /><Button title={tr("common.back")} variant="secondary" onPress={() => setReject(null)} /></>
             : <><Button title={tr("sv.ev_got_money")} onPress={() => Alert.alert(tr("sv.ina_confirm_pay"), tr("sv.ev_received_q", { v: formatPrice(o.total), name: o.buyer_name }), [{ text: tr("sv.no"), style: "cancel" }, { text: tr("sv.yes"), onPress: () => void decide(o, true) }])} />
               <Button title={tr("sv.ina_not_received")} variant="secondary" onPress={() => { setReject(o.id); setReason(""); }} /></>}
         </>}
@@ -840,6 +844,10 @@ export function AdminVenues() {
       setVenues(a.data); setPayments(b.data); setOrders(c.data); if (a.error || b.error || c.error) setError(friendlyErrorIn(a.error ?? b.error ?? c.error, lang));
     } catch (e) { setError(friendlyErrorIn(e, lang)); }
   }
+  async function decideOrder(id: string, ok: boolean) {
+    const r = await decideVenuePayment(supabase(), id, ok, ok ? undefined : tr("pp.reject_pay"));
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(tr("pp.decided")); void load(); }
+  }
   useEffect(() => { void load(); }, [status, orderStatus]);
   async function setSt(x: AdminVenue, to: VenueStatus) {
     if (to === "suspended" && !reason.trim()) { setError(tr("sv.fua_why_suspend")); return; }
@@ -893,6 +901,8 @@ export function AdminVenues() {
       <Text style={ui.text}>{tc(VENUE_ORDER_STATUS_LABELS[o.status])} · {formatDateTimeIn(o.created_at, lang)}</Text>
       {!!o.proof_path && <Button title={tr("sv.proof_doc")} variant="secondary" onPress={() => void openProof(o.proof_path!, setError, tr)} />}
       <Button title={tr("sv.fua_by_qr")} variant="secondary" onPress={() => router.push(("/reservas/v/" + o.qr_token) as any)} />
+      {o.status === "submitted" && <><Button title={tr("pp.confirm_pay")} onPress={() => void decideOrder(o.id, true)} />
+        <Button title={tr("pp.reject_pay")} variant="danger" onPress={() => void decideOrder(o.id, false)} /></>}
     </View>)}
   </View>;
 }
