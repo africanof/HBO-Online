@@ -45,8 +45,8 @@ export function conversationWarnings(messages: { sender_id: string; body: string
 
 export const SAFETY_TIPS = [
   "Encontre-se num lugar público e movimentado, de dia. Leve alguém consigo.",
-  "Veja e experimente o artigo antes de pagar.",
-  "Nunca pague adiantado a quem não conhece. Na Loja, use o Pagamento protegido.",
+  "Veja e experimente o artigo antes de confirmar que o recebeu.",
+  "Pague sempre pelo Huambo Online (pagamento protegido). Nunca pague diretamente ao vendedor.",
   "Nunca dê códigos que recebe por SMS, o PIN ou a palavra-passe.",
   "Desconfie de preços muito baixos e de quem tem muita pressa.",
   "Se algo não estiver bem, use «Denunciar» e «Bloquear»."

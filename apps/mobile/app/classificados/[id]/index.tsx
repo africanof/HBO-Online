@@ -6,7 +6,7 @@ import { VideoPlayer } from "../../../components/Video";
 import { WantedHelpers } from "../../../components/WantedHelpers";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
-import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
+import { saleModeBadges, buyerOptions, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
   reportClassifiedListing, getPublicProfile, AUCTIONABLE_TYPES, formatRef, formatPrice, friendlyErrorIn, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary, categoryOf, isJobCategorySlug, trackListingView, salaryLabel, type JobCategory } from "@huambo-online/core";
 import { DetailFacts } from "../../../components/ListingDetails";
 import { supabase } from "../../../lib/supabase";
@@ -19,6 +19,7 @@ import { RentalRequestForm, AuctionPanel } from "../../../components/ListingExtr
 import { MarketLink } from "../../../components/MarketPicker";
 import { SellerBadge } from "../../../components/Reputation";
 import { OfferBox, OffersList } from "../../../components/Offers";
+import { ProtectedBuyBox } from "../../../components/ProtectedBuy";
 import { PhotoGallery } from "../../../components/PhotoGallery";
 import { DeliveryPolicyBox } from "../../../components/Delivery";
 import { useT, coreText } from "../../../lib/i18n";
@@ -96,16 +97,6 @@ export default function ClassifiedDetail() {
     if (conversationId) router.push(("/mensagens?conversation=" + conversationId) as any); else setNotice(t("ls.detail.msg_sent"));
   }
 
-  async function buyNow() {
-    if (!uid) { setError(t("ls.detail.sign_in_buy")); return; }
-    setBusy(true); setError("");
-    const r = await contactListingOwner(supabase(), id, tc(buyNowMessage(item.title, item.price, item.currency)));
-    setBusy(false);
-    if (r.error) { setError(friendlyErrorIn(r.error, lang)); return; }
-    const conversationId = (r.data as any)?.id;
-    if (conversationId) router.push(("/mensagens?conversation=" + conversationId) as any); else setNotice(t("ls.detail.buy_sent"));
-  }
-
   async function report() {
     if (!uid) { setError(t("ls.detail.sign_in_report")); return; }
     if (!reason.trim()) { setError(t("ls.detail.reason_needed")); return; }
@@ -159,7 +150,7 @@ export default function ClassifiedDetail() {
       {item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} />}
     </View> : <View style={{ gap: 12 }}>
       {item.status === "published" && <SellerWhatsApp sellerId={item.owner_id} kind="listing" id={id} title={item.title} refCode={item.ref_no ? formatRef("listing", item.ref_no) : null} />}
-      {can.buyNow && <Button title={item.price != null ? t("ls.detail.buy_for", { price: formatPrice(item.price, item.currency) }) : t("ls.detail.buy")} disabled={busy} onPress={() => void buyNow()} />}
+      <ProtectedBuyBox item={item} uid={uid} isJob={!!job} />
       {(can.offerMoney || can.offerTrade) && <OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} />}
       <Button title={savedId ? t("ls.detail.saved") : t("ls.detail.save")} variant="secondary" onPress={() => void toggleSaved()} disabled={busy} />
       <SafetyTipsBox />

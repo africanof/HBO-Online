@@ -4,7 +4,7 @@ import { Gallery } from "../../../components/Video";
 import { TranslateListing } from "../../../components/AiTools";
 import { WantedHelpers } from "../../../components/WantedHelpers";
 import { useParams } from "next/navigation";
-import { saleModeBadges, buyerOptions, buyNowMessage, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
+import { saleModeBadges, buyerOptions, SALE_MODE_INFO, type SaleMode, loadItemWithCache, isOfflineError, getClassifiedListing, contactListingOwner, isClassifiedListingSaved, saveClassifiedListing, removeClassifiedListing,
   reportClassifiedListing, getPublicProfile, formatPrice, friendlyErrorIn, listingTerritory, LISTING_TYPE_LABELS, PURPOSE_LABELS, STATUS_LABELS, listingPriceLabel, wantedReplyMessage, isFeatured, readAgro, agroSummary, idFromParam } from "@huambo-online/core";
 import { supabase } from "../../../lib/supabase";
 import { useT } from "../../../lib/i18n";
@@ -20,6 +20,7 @@ import { DetailFacts } from "../../../components/ListingDetails";
 import { AUCTIONABLE_TYPES, formatRef, categoryOf, isJobCategorySlug, trackListingView, salaryLabel, type JobCategory } from "@huambo-online/core";
 import { SellerBadge } from "../../../components/Reputation";
 import { OfferBox, OffersList } from "../../../components/Offers";
+import { ProtectedBuyBox } from "../../../components/ProtectedBuy";
 
 export default function ClassifiedDetail() {
   const { id: rawId } = useParams<{ id: string }>();
@@ -95,16 +96,6 @@ export default function ClassifiedDetail() {
     else setNotice(t("ls.message_sent"));
   }
 
-  async function buyNow() {
-    if (!uid) { setError(t("ls.login_to_buy")); return; }
-    setBusy(true); setError("");
-    const r = await contactListingOwner(supabase(), id, buyNowMessage(item.title, item.price, item.currency));
-    setBusy(false);
-    if (r.error) { setError(friendlyErrorIn(r.error, lang)); return; }
-    const conversationId = (r.data as any)?.id;
-    if (conversationId) window.location.href = "/mensagens?conversation=" + conversationId; else setNotice(t("ls.buy_request_sent"));
-  }
-
   async function report() {
     if (!uid) { setError(t("ls.login_to_report")); return; }
     if (!reason.trim()) { setError(t("ls.report_need_reason")); return; }
@@ -154,14 +145,14 @@ export default function ClassifiedDetail() {
         {error && <p className="error" role="alert">{error}</p>}
         {item.status === "published" && <AuctionPanel listingId={id} uid={uid} mine={mine} canStart={["sale", "auction"].includes(item.purpose) && AUCTIONABLE_TYPES.includes(item.listing_type)} />}
         {!mine && item.status === "published" && ["rent", "lease"].includes(item.purpose) && <RentalRequestForm listingId={id} uid={uid} defaultPrice={item.price} />}
+        {!mine && <ProtectedBuyBox item={item} uid={uid} isJob={!!job} />}
         <div className="actions">
           {mine ? <><a className="btn" href={`/classificados/${id}/editar`}>{t("ls.edit_listing")}</a><a className="btn secondary" href="/meus-anuncios">{t("ft.my_ads")}</a></> : <>
             {item.purpose === "wanted"
               ? <a className="btn" href="#contactar" onClick={() => { if (!message.trim()) setMessage(wantedReplyMessage(item.title, item.listing_type === "service")); }}>{item.listing_type === "service" ? "🛠️ " + t("ls.i_can_do_service") : "✋ " + t("ls.i_have_it")}</a>
               : <>
-                {can.buyNow && <button type="button" onClick={buyNow} disabled={busy}>🛒 {item.price != null ? t("ls.want_buy_for", { price: formatPrice(item.price, item.currency) }) : t("ls.want_buy")}</button>}
-                {(can.offerMoney || can.offerTrade) && <a className={can.buyNow ? "btn secondary" : "btn"} href="#proposta">{item.sale_mode === "trade" ? "🔁 " + t("ls.offer_propose_trade") : "💬 " + t("ls.offer_make")}</a>}
-                <a className={can.buyNow || can.offerMoney || can.offerTrade ? "btn secondary" : "btn"} href="#contactar">✉️ {t("ls.contact_advertiser")}</a>
+                {(can.offerMoney || can.offerTrade) && <a className="btn secondary" href="#proposta">{item.sale_mode === "trade" ? "🔁 " + t("ls.offer_propose_trade") : "💬 " + t("ls.offer_make")}</a>}
+                <a className="btn secondary" href="#contactar">✉️ {t("ls.contact_advertiser")}</a>
                 {item.status === "published" && <SellerWhatsApp sellerId={item.owner_id} kind="listing" id={id} title={item.title} refCode={item.ref_no ? formatRef("listing", item.ref_no) : null} />}
               </>}
             <button type="button" className="secondary" onClick={toggleSaved} disabled={busy}>{savedId ? "♥ " + t("ls.saved") : "♡ " + t("ls.save_listing")}</button>

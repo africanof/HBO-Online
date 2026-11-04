@@ -73,7 +73,7 @@ function Encomendas() {
         <OrderEscrowPanel order={o} role={role} uid={uid} settings={settings} provider={provider} hasActiveDispute={!!lastDispute[o.id] && isActiveDispute(lastDispute[o.id].status)}
           onChanged={(m, bad) => { if (bad) { setError(m); setNotice(""); } else { setError(""); setNotice(m); void load(); } }} />
         {o.status !== "cancelled" || role === "buyer" ? <OrderTrackingPanel orderId={o.id} role={role} defaultOpen={role === "buyer" && openId === o.id} /> : null}
-        <ul style={{ margin: 0 }}>{(o.items ?? []).map((it: any, i: number) => <li key={i}>{it.quantity} × {it.name} — {formatPrice(it.line_total)}</li>)}</ul>
+        <ul style={{ margin: 0 }}>{(o.items ?? []).map((it: any, i: number) => <li key={i}>{it.quantity} × {it.listing_id ? <a href={"/classificados/" + it.listing_id}>{it.name}</a> : it.name} — {formatPrice(it.line_total)}</li>)}</ul>
         {o.delivery_text && <span>{t("sh.delivery")}: {o.delivery_text}</span>}
         {o.fulfillment_type === "delivery" && <OrderPoint orderId={o.id} canEdit={role === "buyer" && o.status !== "completed" && o.status !== "cancelled"} />}
         {role === "seller" && o.contact_phone && <span>{t("auth.phone")}: <a href={"tel:" + o.contact_phone.replace(/\s/g, "")}>{o.contact_phone}</a></span>}
