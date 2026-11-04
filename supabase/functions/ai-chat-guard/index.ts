@@ -17,6 +17,13 @@ NÃO podem trocar contactos nem pagar fora da plataforma. Decide se a MENSAGEM N
 NÃO é contacto: preços, quantidades, quilómetros, anos, datas, horas, medidas, referências de anúncio (ex.: A-1023), nomes de bairros, ruas ou pontos de encontro públicos.
 Em caso de dúvida razoável, "contact" = false.`;
 
+const NAME_SYSTEM = `Verificas o NOME PÚBLICO que um utilizador do Huambo Online (mercado online de Angola) escolheu para os outros verem.
+O objetivo é que ninguém consiga encontrar a pessoa fora da plataforma. Recusa ("ok": false) se o nome público:
+- tiver telefone, e-mail, ligação, @utilizador ou referência a WhatsApp, Facebook, Instagram, TikTok ou outra rede social (mesmo disfarçada);
+- for o nome verdadeiro completo da pessoa, ou tiver o apelido (sobrenome) dela, ou permitir identificá-la facilmente nas redes sociais;
+- for ofensivo ou se fizer passar pela equipa do Huambo Online.
+Aceita alcunhas e nomes comerciais simples (ex.: "Vendas do Bairro", "Tia Rosa", "Kapango Motors"), mesmo com o primeiro nome da pessoa.`;
+
 const SCHEMA = {
   type: "object",
   properties: {
@@ -57,5 +64,26 @@ Deno.serve(async req => {
       checked++; if (contact) blocked++;
     } catch (e) { console.error("ai-chat-guard", String(e).slice(0, 200)); }
   }
-  return reply({ checked, blocked });
+  // Nomes públicos novos: sem contactos, redes sociais nem o nome verdadeiro da pessoa.
+  let names = 0, refused = 0;
+  const nq = await admin.rpc("ai_name_queue", { p_limit: 20 });
+  for (const q of (nq.data ?? []) as { user_id: string; public_name: string; full_name: string | null }[]) {
+    try {
+      const r = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: MODEL, temperature: 0, max_tokens: 30,
+          messages: [{ role: "system", content: NAME_SYSTEM }, { role: "user", content: `Nome verdadeiro: ${q.full_name ?? "(desconhecido)"}\nNome público escolhido: ${q.public_name}` }],
+          response_format: { type: "json_schema", json_schema: { name: "name_check", strict: true, schema: { type: "object", properties: { ok: { type: "boolean" } }, required: ["ok"], additionalProperties: false } } }
+        }),
+        signal: AbortSignal.timeout(20_000)
+      });
+      if (!r.ok) continue;
+      const ok = JSON.parse((await r.json())?.choices?.[0]?.message?.content ?? "{}").ok !== false;
+      const v = await admin.rpc("ai_name_verdict", { p_user: q.user_id, p_ok: ok });
+      if (!v.error) { names++; if (!ok) refused++; }
+    } catch (e) { console.error("ai-chat-guard name", String(e).slice(0, 200)); }
+  }
+  return reply({ checked, blocked, names, refused });
 });
