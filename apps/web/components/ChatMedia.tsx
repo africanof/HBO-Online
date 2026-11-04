@@ -36,7 +36,7 @@ type Draft = { kind: ChatAttachmentKind; blob: Blob; type: string; seconds: numb
 
 /** Botões «📷 Fotografia», «🎬 Vídeo» e «🎤 Voz» por baixo da caixa de texto do chat. */
 /** Com allowDocuments (vagas de emprego e estágios) aparece também «📄 Documento» para enviar CV em Word ou PDF. */
-export function ChatAttachButtons({ conversationId, uid, caption, onSent, allowDocuments = false }: { conversationId: string; uid: string; caption: string; onSent: () => void; allowDocuments?: boolean }) {
+export function ChatAttachButtons({ conversationId, uid, caption, onSent, allowDocuments = false, compact = false }: { conversationId: string; uid: string; caption: string; onSent: () => void; allowDocuments?: boolean; compact?: boolean }) {
   const { lang, t, tc } = useT();
   const [draft, setDraft] = useState<Draft | null>(null); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const [recording, setRecording] = useState(false); const [elapsed, setElapsed] = useState(0);
@@ -99,12 +99,20 @@ export function ChatAttachButtons({ conversationId, uid, caption, onSent, allowD
     } catch (e) { setError(friendlyErrorIn(e, lang)); } finally { setBusy(false); }
   }
 
-  return <div className="stack" style={{ gap: 8 }}>
-    {!draft && !recording && <div className="row">
+  return <div className={compact ? "chat-attach" : "stack"} style={compact ? undefined : { gap: 8 }}>
+    {!draft && !recording && compact && <div className="chat-tools">
+      <button type="button" className="chat-icon" aria-label={t("ls.photo")} title={t("ls.photo")} onClick={() => photo.current?.click()}>📷</button>
+      <button type="button" className="chat-icon" aria-label={t("promo.video")} title={t("promo.video")} onClick={() => video.current?.click()}>🎬</button>
+      <button type="button" className="chat-icon" aria-label={t("ls.voice_msg")} title={t("ls.voice_msg")} onClick={() => void startRecording()}>🎤</button>
+      {allowDocuments && <button type="button" className="chat-icon" aria-label={t("ls.document_cv")} title={t("ls.document_cv")} onClick={() => doc.current?.click()}>📄</button>}
+    </div>}
+    {!draft && !recording && <div className="row" style={compact ? { display: "contents" } : undefined}>
+      {!compact && <>
       <button type="button" className="secondary" onClick={() => photo.current?.click()}>📷 {t("ls.photo")}</button>
       <button type="button" className="secondary" onClick={() => video.current?.click()}>🎬 {t("promo.video")}</button>
       <button type="button" className="secondary" onClick={() => void startRecording()}>🎤 {t("ls.voice_msg")}</button>
       {allowDocuments && <button type="button" className="secondary" onClick={() => doc.current?.click()}>📄 {t("ls.document_cv")}</button>}
+      </>}
       {allowDocuments && <input ref={doc} type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden aria-hidden tabIndex={-1} onChange={e => { chooseDocument(e.target.files?.[0]); e.target.value = ""; }} />}
       <input ref={photo} type="file" accept="image/jpeg,image/png,image/webp" hidden aria-hidden tabIndex={-1} onChange={e => { void choose(e.target.files?.[0], "image"); e.target.value = ""; }} />
       <input ref={video} type="file" accept="video/mp4,video/quicktime,video/webm,video/3gpp" hidden aria-hidden tabIndex={-1} onChange={e => { void choose(e.target.files?.[0], "video"); e.target.value = ""; }} />

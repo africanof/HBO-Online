@@ -20,7 +20,7 @@ const VOICE: RecordingOptions = { ...RecordingPresets.HIGH_QUALITY, sampleRate: 
 type Draft = { kind: ChatAttachmentKind; uri: string; base64?: string | null; type: string; seconds: number | null; size?: number | null; name?: string };
 
 /** Com allowDocuments (vagas de emprego e estágios) aparece também «📄 Documento» para enviar CV em Word ou PDF. */
-export function ChatAttachButtons({ conversationId, uid, caption, onSent, allowDocuments = false }: { conversationId: string; uid: string; caption: string; onSent: () => void; allowDocuments?: boolean }) {
+export function ChatAttachButtons({ conversationId, uid, caption, onSent, allowDocuments = false, compact = false, iconsHidden = false }: { conversationId: string; uid: string; caption: string; onSent: () => void; allowDocuments?: boolean; compact?: boolean; iconsHidden?: boolean }) {
   const { t, tc, lang } = useT();
   const [draft, setDraft] = useState<Draft | null>(null); const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const recorder = useAudioRecorder(VOICE); const rec = useAudioRecorderState(recorder, 250);
@@ -85,7 +85,16 @@ export function ChatAttachButtons({ conversationId, uid, caption, onSent, allowD
     } catch (e) { setError(friendlyErrorIn(e, lang)); } finally { setBusy(false); }
   }
 
-  return <View style={{ gap: 8 }}>
+  const icon = (e: string, label: string, onPress: () => void) => <Pressable key={e} accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={4}
+    style={({ pressed }) => ({ width: 38, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.6 : 1 })}><Text style={{ fontSize: 22 }}>{e}</Text></Pressable>;
+  if (compact && !draft && !rec.isRecording && !error && iconsHidden) return null;
+  if (compact && !draft && !rec.isRecording && !error) return <View style={{ flexDirection: "row", alignItems: "center" }}>
+    {icon("📷", t("ls.cm.shoot"), () => void pick("image", true))}
+    {icon("🖼️", t("ls.cm.gallery"), () => void pick("image", false))}
+    {icon("🎤", t("ls.cm.voice"), () => void record())}
+    {allowDocuments ? icon("📄", t("ls.document_cv"), () => void pickDocument()) : icon("🎬", t("ls.cm.video"), () => void pick("video", false))}
+  </View>;
+  return <View style={{ gap: 8, ...(compact ? { flexBasis: "100%" } : {}) }}>
     {!draft && !rec.isRecording && <View style={ui.row}>
       <Button title={t("ls.cm.shoot")} variant="secondary" onPress={() => void pick("image", true)} />
       <Button title={t("ls.cm.gallery")} variant="secondary" onPress={() => void pick("image", false)} />
