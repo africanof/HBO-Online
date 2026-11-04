@@ -51,10 +51,17 @@ export default function PesquisarFoto() {
     <h1>📷 {t("hdr.photo_search")}</h1>
     <p>{t("ls.photo_search_intro")}</p>
     <div className="card">
-      <label className="btn" style={{ justifySelf: "start", cursor: busy ? "wait" : "pointer" }}>
-        {busy ? t("ls.analysing_photo") : "📷 " + t("ls.take_or_pick_photo")}
-        <input type="file" accept="image/*" capture="environment" disabled={busy || left === 0} style={{ display: "none" }} onChange={e => { void choose(e.target.files?.[0]); e.target.value = ""; }} />
-      </label>
+      {busy ? <strong>{t("ls.analysing_photo")}</strong> : <div className="row">
+        {/* Câmara e galeria em botões separados: com «capture» o telemóvel abre só a câmara. */}
+        <label className="btn" style={{ cursor: "pointer" }}>
+          {t("ls.take_photo")}
+          <input type="file" accept="image/*" capture="environment" disabled={left === 0} style={{ display: "none" }} onChange={e => { void choose(e.target.files?.[0]); e.target.value = ""; }} />
+        </label>
+        <label className="btn secondary" style={{ cursor: "pointer" }}>
+          {t("ls.from_gallery")}
+          <input type="file" accept="image/*" disabled={left === 0} style={{ display: "none" }} onChange={e => { void choose(e.target.files?.[0]); e.target.value = ""; }} />
+        </label>
+      </div>}
       <span className="item-meta">{left === null ? "" : t("ls.photo_searches_left", { n: left, max: PHOTO_SEARCH_DAILY_LIMIT })} {t("ls.photo_not_stored")}</span>
     </div>
     {error && <p className="error" role="alert">{error}</p>}
