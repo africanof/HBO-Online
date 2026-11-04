@@ -36,3 +36,12 @@ describe("páginas locais", () => {
     expect(calls.some(c => c[1] === "attributes->>municipalityId")).toBe(false);
   });
 });
+
+import { isExampleName } from "./seo";
+describe("exemplos", () => {
+  it("reconhece nomes de exemplo", () => {
+    expect(isExampleName("Toyota Hilux 2018 (exemplo)")).toBe(true);
+    expect(isExampleName("Toyota Hilux 2018")).toBe(false);
+    expect(isExampleName(null)).toBe(false);
+  });
+});

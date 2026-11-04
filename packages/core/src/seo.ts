@@ -35,6 +35,9 @@ const first = (media: unknown): string | undefined => Array.isArray(media) ? med
 const https = (u: unknown) => typeof u === "string" && /^https:\/\//.test(u) ? u : undefined;
 const PURPOSE: Record<string, string> = { sale: "À venda", rent: "Para arrendar", lease: "Para alugar", auction: "Leilão", wanted: "Procura-se", service: "Serviço" };
 
+/** Anúncio, produto, perfil ou evento de exemplo (o nome acaba em «(exemplo)»). */
+export const isExampleName = (name: unknown) => typeof name === "string" && /\(exemplo\)\s*$/i.test(name);
+
 /** Monta o título e a descrição a partir dos dados (sem rede: fácil de testar). */
 export function buildSeo(kind: SeoKind, row: any): PageSeo {
   if (!row) return { title: "Não encontrado", description: "Esta página já não está disponível no Huambo Online.", noindex: true };
@@ -95,5 +98,8 @@ export async function fetchSeo(client: SupabaseClient, kind: SeoKind, rawId: str
     : kind === "event" ? client.from("events").select("title,description,venue,starts_at,ends_at,cover_url,status").eq("id", id).maybeSingle()
     : client.rpc("public_seller", { p_user_id: id }).maybeSingle();
   const { data } = await q;
-  return buildSeo(kind, data);
+  const seo = buildSeo(kind, data);
+  // Exemplos da equipa («… (exemplo)»): aparecem no Site, mas não no Google.
+  const d = data as Record<string, unknown> | null;
+  return d && isExampleName(d.title ?? d.name ?? d.display_name) ? { ...seo, noindex: true, jsonLd: undefined } : seo;
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { HUAMBO_MUNICIPALITIES, LOCAL_TOPICS, localMunicipality, localTopic, localPath, localSeo } from "@huambo-online/core";
+import { HUAMBO_MUNICIPALITIES, LOCAL_TOPICS, localMunicipality, localTopic, localPath, localSeo, isExampleName } from "@huambo-online/core";
 import { Breadcrumbs, JsonLd, ListingGrid, breadcrumbLd, localListings, municipalityId } from "../../../../lib/local";
 import { SITE_URL } from "../../../../lib/site";
 
@@ -31,8 +31,9 @@ export default async function LocalTopicPage({ params }: P) {
   const here = mId ? await localListings(t, mId) : [];
   const elsewhere = here.length < 6 ? (await localListings(t, null, 12)).filter(x => !here.some(h => h.id === x.id)) : [];
   const crumbs: [string, string][] = [["Início", "/"], ["Província do Huambo", "/huambo"], [m.name, localPath(m)], [t.label, localPath(m, t)]];
+  const real = here.filter(x => !isExampleName(x.title));
   const ld = [breadcrumbLd(crumbs), { "@context": "https://schema.org", "@type": "CollectionPage", name: s.title, description: s.description, url: SITE_URL + localPath(m, t),
-    ...(here.length ? { mainEntity: { "@type": "ItemList", itemListElement: here.map((x, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE_URL}/classificados/${x.id}`, name: x.title })) } } : {}) }];
+    ...(real.length ? { mainEntity: { "@type": "ItemList", itemListElement: real.map((x, i) => ({ "@type": "ListItem", position: i + 1, url: `${SITE_URL}/classificados/${x.id}`, name: x.title })) } } : {}) }];
 
   return <main className="stack">
     <JsonLd data={ld} />
