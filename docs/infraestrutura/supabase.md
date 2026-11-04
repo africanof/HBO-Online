@@ -69,5 +69,6 @@ Schema, RLS, Auth, Storage, Edge Functions e demais recursos só são alterados 
 | `20261104190000_nome_publico.sql` | Nome público: `profiles.public_name` (alcunha, `set_public_name` recusa contactos, @, redes sociais e apelidos; a IA revê em `ai-chat-guard`) ou «Nome I.» (`shown_name`). Fotografia só de profissionais/empresas (`shown_avatar`). Todas as funções não-admin que mostram pessoas a outros usam estas duas; a equipa continua a ver o nome completo. `provider_directory` deixa de devolver telefone/WhatsApp. |
 | `20261104191000_nome_real_equipa.sql` | `viewer_name`/`viewer_avatar`: administradores e moderadores veem sempre o nome real e a fotografia nas funções de leitura; os avisos continuam com o nome público. |
 | `20261104200000_nome_profissionais.sql` | Nome da página de profissional com as regras do nome público (`public_name_problem`; trigger `guard_provider_display_name`); os existentes com apelido passam ao nome curto. Fotografias mantêm-se; empresas não mudam. `shown_name` ignora o que está entre parênteses. |
+| `20261104201000_nome_profissional_privado.sql` | O nome escrito pelo profissional fica em `provider_private_contacts.display_name` (próprio e equipa); o público vê a versão protegida. `provider_directory` dá à equipa o nome original, o telefone e o WhatsApp. |
 
 Todas já estão aplicadas no projeto `pewymvkowbdizdiyjmao`.

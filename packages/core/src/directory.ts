@@ -96,7 +96,9 @@ export async function getProviderPrivateContact(client: SupabaseClient, userId: 
   const r = await client.rpc("provider_private_contact", { p_user_id: userId });
   const row = Array.isArray(r.data) ? r.data[0] : null;
   return row ? { phone: (row.phone as string | null) ?? null, whatsapp: (row.whatsapp as string | null) ?? null, directions: (row.directions as string | null) ?? null,
-    geo_lat: row.geo_lat == null ? null : Number(row.geo_lat), geo_lng: row.geo_lng == null ? null : Number(row.geo_lng) } : null;
+    geo_lat: row.geo_lat == null ? null : Number(row.geo_lat), geo_lng: row.geo_lng == null ? null : Number(row.geo_lng),
+    // Nome original (com apelido): só o próprio e a equipa; o público vê a versão protegida.
+    ...(row.display_name ? { display_name: row.display_name as string } : {}) } : null;
 }
 export async function saveMyProviderProfile(client: SupabaseClient, userId: string, input: ProviderInput) {
   const invalid = validateProviderInput(input);
