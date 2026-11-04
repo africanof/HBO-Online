@@ -170,6 +170,8 @@ export const CORE_LABEL_ROWS: CoreRow[] = [
   ["✖ Recusar", "✖ Decline", "✖ 拒绝", "✖ Refuser"],
   ["✅ Serviço concluído", "✅ Service completed", "✅ 服务已完成", "✅ Service terminé"],
   ["Cancelar pedido", "Cancel request", "取消申请", "Annuler la demande"],
+  ["🧾 Enviar orçamento", "🧾 Send quote", "🧾 发送报价", "🧾 Envoyer un devis"],
+  ["🛡️ Aceitar orçamento e pagar", "🛡️ Accept quote and pay", "🛡️ 接受报价并付款", "🛡️ Accepter le devis et payer"],
   ["⭐ Confirmar e avaliar", "⭐ Confirm and review", "⭐ 确认并评价", "⭐ Confirmer et évaluer"],
   ["Como vendedor", "As a seller", "作为卖家", "En tant que vendeur"],
   ["Como comprador", "As a buyer", "作为买家", "En tant qu'acheteur"],

@@ -49,6 +49,14 @@ export async function myListingOrder(client: SupabaseClient, listingId: string):
 export const orderHref = (orderId: string, pay = false) => `/encomendas${pay ? "?pagar=1" : ""}#encomenda-${orderId}`;
 
 export const LISTING_CHECKOUT_DICT: Dictionary = {
+  "sv.quote": { pt: "Orçamento", en: "Quote", zh: "报价", fr: "Devis" },
+  "sv.quote_amount_q": { pt: "Valor do orçamento (Kz):", en: "Quote amount (Kz):", zh: "报价金额（Kz）：", fr: "Montant du devis (Kz) :" },
+  "sv.quote_amount_ph": { pt: "Valor do orçamento (Kz)", en: "Quote amount (Kz)", zh: "报价金额（Kz）", fr: "Montant du devis (Kz)" },
+  "sv.quote_amount_bad": { pt: "Indique um valor de orçamento válido.", en: "Enter a valid quote amount.", zh: "请输入有效的报价金额。", fr: "Indiquez un montant de devis valide." },
+  "sv.quote_note_q": { pt: "Nota do orçamento (opcional): o que inclui, prazo…", en: "Quote note (optional): what's included, timing…", zh: "报价备注（可选）：包含内容、时间……", fr: "Note du devis (facultatif) : ce qui est inclus, délai…" },
+  "sv.quote_sent": { pt: "Orçamento enviado. O cliente vai aceitar e pagar com pagamento protegido.", en: "Quote sent. The client will accept and pay with protected payment.", zh: "报价已发送。客户将接受并使用担保支付付款。", fr: "Devis envoyé. Le client va l'accepter et payer avec le paiement protégé." },
+  "sv.quote_paid": { pt: "pago e guardado pelo Huambo Online", en: "paid and held by Huambo Online", zh: "已付款，由 Huambo Online 保管", fr: "payé et conservé par Huambo Online" },
+  "sv.quote_released": { pt: "pagamento entregue", en: "payment released", zh: "款项已发放", fr: "paiement versé" },
   "pp.buy": { pt: "🛡️ Comprar com pagamento protegido", en: "🛡️ Buy with protected payment", zh: "🛡️ 使用担保支付购买", fr: "🛡️ Acheter avec paiement protégé" },
   "pp.rent": { pt: "🛡️ Arrendar com pagamento protegido", en: "🛡️ Rent with protected payment", zh: "🛡️ 使用担保支付租房", fr: "🛡️ Louer avec paiement protégé" },
   "pp.lease": { pt: "🛡️ Alugar com pagamento protegido", en: "🛡️ Hire with protected payment", zh: "🛡️ 使用担保支付租用", fr: "🛡️ Louer avec paiement protégé" },

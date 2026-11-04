@@ -66,7 +66,7 @@ describe("reputação", () => {
     await listMyServiceRequests(client, "provider");
     await listPendingReviews(client);
     expect(calls.map(c => c.fn)).toEqual(["public_user_stats", "submit_deal_review", "set_listing_deal_v2", "listing_deal_candidates", "request_service_v2",
-      "update_service_request", "confirm_service", "my_service_requests_v2", "my_pending_reviews"]);
+      "update_service_request", "confirm_service", "my_service_requests_v3", "my_pending_reviews"]);
     expect(calls[1].args).toEqual({ p_kind: "order", p_ref: uuid, p_rating: 5, p_comment: "Bom" });
     expect(calls[4].args).toEqual({ p_provider_id: null, p_business_id: uuid, p_description: "Pintar", p_preferred_date: null });
     expect(calls[6].args.p_comment).toBeNull();
@@ -81,5 +81,16 @@ describe("reputação", () => {
     expect(friendlyError({ message: "DEAL_NOT_COMPLETED" })).toMatch(/concluído/);
     expect(friendlyError({ message: "NOT_DEAL_PARTY" })).toMatch(/negócio/);
     expect(friendlyError({ message: "CANNOT_REQUEST_OWN_SERVICE" })).toMatch(/si próprio/);
+  });
+});
+
+describe("serviços com orçamento e pagamento protegido", () => {
+  it("profissional orçamenta e só conclui depois de pago; cliente paga e confirma", () => {
+    expect(serviceActions("requested", "provider", { quoted: false })).toEqual(["quote", "decline"]);
+    expect(serviceActions("accepted", "provider", { quoted: true, escrow: "awaiting_payment" })).toEqual(["quote", "decline"]);
+    expect(serviceActions("accepted", "provider", { quoted: true, escrow: "held" })).toEqual(["done"]);
+    expect(serviceActions("accepted", "client", { quoted: true })).toEqual(["pay", "cancel"]);
+    expect(serviceActions("accepted", "client", { quoted: true, escrow: "held" })).toEqual([]);
+    expect(serviceActions("done", "client", { quoted: true, escrow: "held" })).toEqual(["confirm"]);
   });
 });

@@ -26,6 +26,9 @@ export type ServiceRequestStatus = "requested" | "accepted" | "declined" | "done
 export type ServiceRequest = {
   id: string; status: ServiceRequestStatus; description: string; provider_note: string | null; created_at: string; updated_at: string;
   provider_id: string | null; business_id: string | null; target_name: string; client_id: string; client_name: string; preferred_date?: string | null;
+  /** Orçamento (pagamento protegido obrigatório) e estado do pagamento da encomenda do serviço. */
+  quote_amount?: number | string | null; quote_note?: string | null; quoted_at?: string | null; order_id?: string | null;
+  escrow_status?: "awaiting_payment" | "held" | "released" | "refunded" | null;
 };
 export type ServiceAction = "accept" | "decline" | "done" | "cancel";
 
@@ -35,13 +38,37 @@ export const SERVICE_STATUS_LABELS: Record<ServiceRequestStatus, string> = {
 export const DEAL_ROLE_LABELS: Record<DealRole, string> = { seller: "vendedor", buyer: "comprador" };
 
 /** Botões que cada lado pode usar em cada passo do pedido de serviço. */
-export function serviceActions(status: ServiceRequestStatus, as: "client" | "provider"): (ServiceAction | "confirm")[] {
-  if (as === "provider") return status === "requested" ? ["accept", "decline", "done"] : status === "accepted" ? ["done", "decline"] : [];
-  return status === "requested" ? ["cancel"] : status === "accepted" ? ["confirm", "cancel"] : status === "done" ? ["confirm"] : [];
+/**
+ * Ações possíveis num pedido de serviço. Com pagamento protegido: o profissional envia o orçamento («quote»),
+ * o cliente aceita e paga («pay»), só depois de pago se marca «Serviço concluído», e o cliente confirma.
+ * Sem o estado do pagamento (chamadas antigas), mantém as ações de antes.
+ */
+export function serviceActions(status: ServiceRequestStatus, as: "client" | "provider", pay?: { quoted: boolean; escrow?: string | null }): (ServiceAction | ServiceExtraAction)[] {
+  if (!pay) {
+    if (as === "provider") return status === "requested" ? ["accept", "decline", "done"] : status === "accepted" ? ["done", "decline"] : [];
+    return status === "requested" ? ["cancel"] : status === "accepted" ? ["confirm", "cancel"] : status === "done" ? ["confirm"] : [];
+  }
+  const paid = pay.escrow === "held" || pay.escrow === "released";
+  if (as === "provider") {
+    if (status === "requested") return ["quote", "decline"];
+    if (status === "accepted") return paid ? ["done"] : ["quote", "decline"];
+    return [];
+  }
+  if (status === "requested") return ["cancel"];
+  if (status === "accepted") return paid ? [] : pay.quoted ? ["pay", "cancel"] : ["cancel"];
+  return status === "done" ? ["confirm"] : [];
 }
-export const SERVICE_ACTION_LABELS: Record<ServiceAction | "confirm", string> = {
-  accept: "✔ Aceitar", decline: "✖ Recusar", done: "✅ Serviço concluído", cancel: "Cancelar pedido", confirm: "⭐ Confirmar e avaliar"
+export type ServiceExtraAction = "confirm" | "quote" | "pay";
+export const SERVICE_ACTION_LABELS: Record<ServiceAction | ServiceExtraAction, string> = {
+  accept: "✔ Aceitar", decline: "✖ Recusar", done: "✅ Serviço concluído", cancel: "Cancelar pedido", confirm: "⭐ Confirmar e avaliar",
+  quote: "🧾 Enviar orçamento", pay: "🛡️ Aceitar orçamento e pagar"
 };
+/** O profissional/empresa envia (ou muda, antes de pago) o orçamento. */
+export function sendServiceQuote(client: SupabaseClient, id: string, amount: number, note?: string) {
+  return client.rpc("send_service_quote", { p_id: id, p_amount: amount, p_note: note?.trim() || null });
+}
+/** O cliente aceita o orçamento: cria a encomenda protegida para pagar. Devolve o id da encomenda. */
+export function acceptServiceQuote(client: SupabaseClient, id: string) { return client.rpc("accept_service_quote", { p_id: id }); }
 
 /** Estado final ao fechar um anúncio com negócio: venda → vendido, arrendamento → arrendado, pedidos/serviços → fechado. */
 export function finalDealStatus(purpose: string): "sold" | "rented" | "closed" {
@@ -178,6 +205,6 @@ export function confirmService(client: SupabaseClient, id: string, rating: numbe
   return client.rpc("confirm_service", { p_id: id, p_rating: rating, p_comment: comment?.trim() || null });
 }
 export async function listMyServiceRequests(client: SupabaseClient, as: "client" | "provider") {
-  const r = await client.rpc("my_service_requests_v2", { p_as: as });
+  const r = await client.rpc("my_service_requests_v3", { p_as: as });
   return { data: (r.data ?? []) as ServiceRequest[], error: r.error };
 }
