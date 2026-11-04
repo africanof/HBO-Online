@@ -25,11 +25,14 @@ export function conversationFromParticipantRow(row:any){return row?.conversation
 export function isConversationUnread(row:any,lastMessage:any,userId:string){return !!lastMessage&&lastMessage.sender_id!==userId&&(!row.last_read_at||new Date(lastMessage.created_at)>new Date(row.last_read_at));}
 
 export async function listMessages(client:SupabaseClient,conversationId:string){
-  return client.from("messages").select("id,conversation_id,sender_id,body,created_at,edited_at,attachment_kind,attachment_path,attachment_seconds,from_team,audience,forwarded_from,handled_at").eq("conversation_id",conversationId).order("created_at");
+  return client.from("messages").select("id,conversation_id,sender_id,body,created_at,edited_at,attachment_kind,attachment_path,attachment_seconds,from_team,audience,forwarded_from,handled_at,blocked_reason").eq("conversation_id",conversationId).order("created_at");
 }
 
 export async function sendMessage(client:SupabaseClient,conversationId:string,senderId:string,body:string){
-  return client.from("messages").insert({conversation_id:conversationId,sender_id:senderId,body:body.trim()}).select().single();
+  const r = await client.from("messages").insert({conversation_id:conversationId,sender_id:senderId,body:body.trim()}).select().single();
+  // Com contactos ou dados bancários a mensagem fica gravada (só quem a escreveu a vê), mas não é entregue.
+  if (!r.error && (r.data as any)?.blocked_reason) return { ...r, error: new Error("CONTACT_BLOCKED") };
+  return r;
 }
 export async function markConversationRead(client:SupabaseClient,conversationId:string,userId:string){return client.from("conversation_participants").update({last_read_at:new Date().toISOString()}).eq("conversation_id",conversationId).eq("user_id",userId);}
 export function subscribeToConversationMessages(client:SupabaseClient,conversationId:string,onChange:()=>void){const channel=client.channel(`conversation:${conversationId}`).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:`conversation_id=eq.${conversationId}`},onChange).subscribe();return ()=>{void client.removeChannel(channel);};}

@@ -51,7 +51,7 @@ function MensagensContent() {
     if (!body.trim() || !selected || !uid) return;
     setSending(true); setSendError("");
     const r = await sendMessage(client(), selected.id, uid, body); setSending(false);
-    if (r.error) { setSendError(friendlyErrorIn(r.error, lang)); return; }
+    if (r.error) { setSendError(friendlyErrorIn(r.error, lang)); if (r.data) { setBody(""); void showMessages(client(), selected.id); } return; }
     setBody("");
   }
   const otherName = (id?: string) => partners[id ?? ""]?.other_name;
@@ -73,7 +73,9 @@ function MensagensContent() {
         {selected && <p className="scam-warn" style={{ margin: "0 0 8px" }}>{t("ls.mediated_note")}</p>}
         {selected && uid && <ConversationSafety messages={msgs} uid={uid} otherUserId={partners[selected.id]?.other_user_id} otherName={otherName(selected.id)} />}
         {msgs.map(m => <div key={m.id} style={{ margin: "10px 0" }}>
-          <strong>{m.sender_id === uid ? t("ls.you") : (otherName(selected?.id) ?? t("ls.user"))}:</strong> {m.body}
+          <strong>{m.from_team ? "🛡️ Equipa Huambo Online" : m.sender_id === uid ? t("ls.you") : (otherName(selected?.id) ?? t("ls.user"))}:</strong> {m.body}
+          {m.sender_id === uid && m.blocked_reason && <div className="error" style={{ fontSize: 14 }}>{t("ls.msg_blocked")}</div>}
+          {m.sender_id === uid && !m.from_team && m.attachment_kind && !m.handled_at && <div className="muted" style={{ fontSize: 14 }}>{t("ls.msg_pending")}</div>}
           {m.attachment_kind && <div style={{ marginTop: 6 }}><MessageAttachment m={m} url={m.attachment_path ? media[m.attachment_path] : undefined} /></div>}
         </div>)}
         {selected && uid && <div className="stack" style={{ gap: 8 }}>

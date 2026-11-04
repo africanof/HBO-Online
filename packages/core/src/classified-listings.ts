@@ -153,6 +153,8 @@ const errorMessages: [RegExp, string][] = [
   [/FUEL_ORDER_OPEN/, "Já tem uma reserva ativa deste produto. Levante-a ou cancele-a primeiro."],
   [/FUEL_ORDER_NOT_FOUND/, "Pedido não encontrado."],
   [/IMPORT_NOT_FOUND/, "Pedido não encontrado."],
+  [/CONTACT_BLOCKED/, "Mensagem não entregue: não é permitido partilhar telefones, e-mails, WhatsApp, redes sociais, ligações nem contas bancárias. Combine tudo aqui e pague com o pagamento protegido."],
+  [/CHAT_SUSPENDED/, "Não pode enviar mensagens durante 24 horas, porque tentou partilhar contactos 3 vezes. Depois volta a poder escrever."],
   [/IMPORT_TOO_MANY/, "Tem 10 pedidos de importação em curso. Espere que alguns terminem antes de fazer outro."],
   [/IMPORT_QUOTE_EXPIRED/, "O orçamento expirou (os preços e o câmbio mudam). Faça um novo pedido."],
   [/IMPORT_PAY_EXPIRED/, "O prazo para pagar passou. Toque em «Aceitar e pagar» para ter mais tempo."],

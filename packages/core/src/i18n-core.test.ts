@@ -12,7 +12,7 @@ const SKIP_EXPORTS = new Set([
   "LANG_LABELS", "LANG_FLAGS", "LANG_TAGS", "LANGS", "COMMON_DICT", "CORE_TEXT", "CORE_PATTERNS", "BRAND", "PALETTES",
   "LOGO_PARTS", "NEXT_SELLER_STATUS", "PUBLIC_CACHE_TTL", "CHAT_LIMITS", "ANGOLA_BOUNDS",
   // Páginas locais para o Google: só em português (é a língua das pesquisas no Huambo).
-  "HUAMBO_MUNICIPALITIES", "LOCAL_TOPICS", "LISTING_CHECKOUT_DICT", "IMPORT_DICT"
+  "HUAMBO_MUNICIPALITIES", "LOCAL_TOPICS", "LISTING_CHECKOUT_DICT", "IMPORT_DICT", "CHAT_GUARD_DICT"
 ]);
 /** Campos com códigos ou endereços, não texto. */
 const SKIP_KEYS = new Set(["value", "key", "href", "path", "slug", "icon", "camera", "subtypes", "gas", "required", "minutes", "updated"]);

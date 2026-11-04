@@ -106,3 +106,4 @@ export * from "./profile-qr";
 export * from "./local-pages";
 export * from "./listing-checkout";
 export * from "./imports";
+export * from "./chat-guard";

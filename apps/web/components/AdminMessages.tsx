@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { listMediatedConversations, listMessages, teamForwardMessage, teamSendMessage, markMessageHandled, otherParticipant, chatMediaUrls,
-  friendlyErrorIn, type ChatMessage, type MediatedConversation } from "@huambo-online/core";
+  friendlyErrorIn, listChatSuspensions, liftChatSuspension, chatBlockReasonKey, type ChatMessage, type MediatedConversation, type ChatSuspension } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { useT, formatDateIn } from "../lib/i18n";
 import { MessageAttachment } from "./ChatMedia";
@@ -56,6 +56,7 @@ export function AdminMessages() {
           ? `🛡️ ${t("ad.msg.team")} → ${(m as any).audience ? nameOf((m as any).audience) : t("ad.msg.both")}`
           : `${nameOf(m.sender_id)} (${roleOf(m.sender_id)})${handled ? " · ✓ " + t("ad.msg.handled") : " · ⏳ " + t("ad.msg.pending")}`}</small>
         <p style={{ margin: "6px 0", whiteSpace: "pre-wrap" }}>{m.body}</p>
+        {m.blocked_reason && <small className="error">🚫 {t(chatBlockReasonKey(m.blocked_reason))}{m.blocked_reason.startsWith("ai_") ? " " + t("cg.by_ai") : ""}</small>}
         {m.attachment_kind && <MessageAttachment m={m} url={m.attachment_path ? media[m.attachment_path] : undefined} />}
         {!fromTeam && !handled && to && <div className="stack" style={{ gap: 6 }}>
           <textarea rows={2} value={drafts[m.id] ?? ""} onChange={e => setDrafts(d => ({ ...d, [m.id]: e.target.value }))}
@@ -83,6 +84,7 @@ export function AdminMessages() {
   </section>;
 
   return <section className="stack">
+    <ChatSuspensions />
     <p style={{ margin: 0 }}>{t("ad.msg.intro")}</p>
     <label className="row" style={{ gap: 8 }}><input type="checkbox" checked={pendingOnly} onChange={e => setPendingOnly(e.target.checked)} style={{ width: 22, height: 22 }} /> {t("ad.msg.pending_only")}</label>
     {err && <p className="error" role="alert">{err}</p>}
@@ -93,4 +95,21 @@ export function AdminMessages() {
       <small>{c.pending ? `⏳ ${t("ad.msg.pending_count", { n: c.pending })}` : `✓ ${t("ad.msg.all_handled")}`}{c.last_message_at ? " · " + formatDateIn(c.last_message_at, lang) : ""}</small>
     </button>)}
   </section>;
+}
+
+/** Quem está suspenso das mensagens (3 tentativas de partilhar contactos) e botão para levantar. */
+function ChatSuspensions() {
+  const { lang, t } = useT();
+  const [items, setItems] = useState<ChatSuspension[]>([]); const [err, setErr] = useState("");
+  async function load() { const r = await listChatSuspensions(supabase()); if (r.error) setErr(friendlyErrorIn(r.error, lang)); else setItems(r.data); }
+  useEffect(() => { void load(); }, []);
+  return <details className="card" open={items.length > 0}>
+    <summary style={{ fontWeight: 800, cursor: "pointer" }}>{t("cg.title")} ({items.length})</summary>
+    {err && <p className="error" role="alert">{err}</p>}
+    {!items.length && <p className="muted">{t("cg.none")}</p>}
+    {items.map(s => <div key={s.user_id} className="row" style={{ justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+      <span><strong>{s.name}</strong> · {t("cg.until", { d: formatDateIn(s.until, lang) })} · {t("cg.strikes", { n: s.strikes })} · {t(chatBlockReasonKey(s.last_reason))}{s.last_excerpt ? ": «" + s.last_excerpt + "»" : ""}</span>
+      <button type="button" className="secondary" onClick={async () => { const r = await liftChatSuspension(supabase(), s.user_id); if (r.error) setErr(friendlyErrorIn(r.error, lang)); else void load(); }}>{t("cg.lift")}</button>
+    </div>)}
+  </details>;
 }

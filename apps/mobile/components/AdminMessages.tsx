@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Switch, Text, TextInput, View } from "react-native";
 import { listMediatedConversations, listMessages, teamForwardMessage, teamSendMessage, markMessageHandled, otherParticipant, chatMediaUrls,
-  friendlyErrorIn, type MediatedConversation } from "@huambo-online/core";
+  friendlyErrorIn, listChatSuspensions, liftChatSuspension, chatBlockReasonKey, type MediatedConversation, type ChatSuspension } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { formatDateTimeIn, useT } from "../lib/i18n";
 import { ui, C } from "../lib/ui";
@@ -58,6 +58,7 @@ export function AdminMessages() {
           ? `🛡️ ${t("ad.msg.team")} → ${m.audience ? nameOf(m.audience) : t("ad.msg.both")}`
           : `${sender?.name ?? t("ad.msg.user")} (${roleLabel(sender?.role)})${handled ? " · ✓ " + t("ad.msg.handled") : " · ⏳ " + t("ad.msg.pending")}`}</Text>
         <Text style={ui.text}>{m.body}</Text>
+        {!!m.blocked_reason && <Text style={ui.error}>🚫 {t(chatBlockReasonKey(m.blocked_reason))}{String(m.blocked_reason).startsWith("ai_") ? " " + t("cg.by_ai") : ""}</Text>}
         {!!m.attachment_kind && <MessageAttachment m={m} url={m.attachment_path ? media[m.attachment_path] : undefined} />}
         {!fromTeam && !handled && to && <View style={{ gap: 6 }}>
           <TextInput style={ui.input} multiline value={drafts[m.id] ?? ""} onChangeText={v => setDrafts(d => ({ ...d, [m.id]: v }))}
@@ -82,6 +83,7 @@ export function AdminMessages() {
   </View>;
 
   return <View style={{ gap: 12 }}>
+    <ChatSuspensions />
     <Text style={ui.text}>{t("ad.msg.intro")}</Text>
     <View style={[ui.row, { alignItems: "center" }]}>
       <Switch value={pendingOnly} onValueChange={setPendingOnly} accessibilityLabel={t("ad.msg.pending_only")} />
@@ -94,6 +96,23 @@ export function AdminMessages() {
       <Text style={ui.text}>{c.participants.map(p => p.name).join(" ↔ ")}</Text>
       <Text style={ui.muted}>{c.pending ? `⏳ ${t("ad.msg.pending_count", { n: c.pending })}` : `✓ ${t("ad.msg.all_handled")}`}{c.last_message_at ? " · " + formatDateTimeIn(c.last_message_at, lang) : ""}</Text>
       <Button title={t("ad.msg.open")} variant="secondary" onPress={() => setOpen(c)} />
+    </View>)}
+  </View>;
+}
+
+/** Quem está suspenso das mensagens (3 tentativas de partilhar contactos) e botão para levantar. */
+function ChatSuspensions() {
+  const { lang, t } = useT();
+  const [items, setItems] = useState<ChatSuspension[]>([]); const [err, setErr] = useState("");
+  async function load() { const r = await listChatSuspensions(supabase()); if (r.error) setErr(friendlyErrorIn(r.error, lang)); else setItems(r.data); }
+  useEffect(() => { void load(); }, []);
+  return <View style={ui.card}>
+    <Text style={ui.label}>{t("cg.title")} ({items.length})</Text>
+    <Message error={err} />
+    {!items.length && <Text style={ui.muted}>{t("cg.none")}</Text>}
+    {items.map(s => <View key={s.user_id} style={{ gap: 6 }}>
+      <Text style={ui.text}><Text style={ui.label}>{s.name}</Text> · {t("cg.until", { d: formatDateTimeIn(s.until, lang) })} · {t("cg.strikes", { n: s.strikes })} · {t(chatBlockReasonKey(s.last_reason))}{s.last_excerpt ? ": «" + s.last_excerpt + "»" : ""}</Text>
+      <Button title={t("cg.lift")} variant="secondary" onPress={async () => { const r = await liftChatSuspension(supabase(), s.user_id); if (r.error) setErr(friendlyErrorIn(r.error, lang)); else void load(); }} />
     </View>)}
   </View>;
 }

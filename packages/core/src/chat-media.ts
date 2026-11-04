@@ -9,6 +9,7 @@ export type ChatAttachment = { kind: ChatAttachmentKind; path: string; seconds?:
 export type ChatMessage = {
   id: string; conversation_id: string; sender_id: string; body: string; created_at: string; edited_at?: string | null;
   attachment_kind?: ChatAttachmentKind | null; attachment_path?: string | null; attachment_seconds?: number | null;
+  handled_at?: string | null; blocked_reason?: string | null; from_team?: boolean;
 };
 
 export const CHAT_MEDIA_BUCKET = "chat-media";
