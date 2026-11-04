@@ -256,6 +256,7 @@ const errorMessages: [RegExp, string][] = [
   [/INVALID_BUY_NOW_PRICE/, "O preço «Comprar já» tem de ser maior que o preço inicial e não menor que o preço mínimo de venda."],
   [/BUY_NOW_NOT_AVAILABLE/, "«Comprar já» já não está disponível: alguém licitou primeiro."],
   [/INVALID_PERIOD/, "Escolha um período válido (até 13 meses)."],
+  [/EXAMPLE_ITEM/, "Este é um exemplo para mostrar como o Huambo Online funciona: não pode ser comprado, reservado nem contactado."],
   [/COMMISSION_OVERDUE/, "Tem comissões de vendas em atraso. Pague em «A sua conta» → «Comissões» para voltar a publicar anúncios."],
   [/STORE_UNAVAILABLE/, "Esta Loja não está disponível de momento."],
   [/NOTHING_TO_PAY/, "Não há comissões por pagar nesta escolha."],
