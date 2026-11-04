@@ -27,6 +27,17 @@ begin
 end $$;
 revoke all on function public.remove_examples() from public, anon, authenticated;
 
+-- Gatilhos (avisos, regras de publicação e assinaturas automáticas) desligados só durante a criação.
+alter table public.classified_listings disable trigger user;
+alter table public.products disable trigger user;
+alter table public.provider_profiles disable trigger user;
+alter table public.businesses disable trigger user;
+alter table public.events disable trigger user;
+alter table public.event_ticket_types disable trigger user;
+alter table public.fuel_stations disable trigger user;
+alter table public.fuel_products disable trigger user;
+alter table public.venues disable trigger user;
+
 do $$
 declare
   d uuid; p1 uuid; p2 uuid;
@@ -57,9 +68,6 @@ begin
   select id into p2 from auth.users where email = 'exemplo-explicadora@huambo.invalid';
 
   perform public.remove_examples();
-  -- Sem avisos automáticos enquanto os exemplos são criados (também desliga as verificações de chaves:
-  -- todos os ids abaixo são lidos da própria base de dados).
-  perform set_config('session_replication_role', 'replica', true);
 
   select id into prov from public.provinces where name = 'Huambo';
   select m.id into m_hb from public.municipalities m where m.province_id = prov and m.name = 'Huambo';
@@ -166,6 +174,14 @@ begin
     values (d, 'Revenda de gás do Bairro (exemplo)', 'gas', m_ca, 'Bairro central (exemplo), Caála', 'Segunda a sábado, 7h–19h', true, 'approved') returning id into st;
   insert into public.fuel_products(station_id, product, price, status, queue, reservable_qty, max_per_order) values
     (st, 'gas_12kg', 7500, 'available', 'short', 30, 2), (st, 'gas_6kg', 4000, 'out', 'none', 0, 2);
-
-  perform set_config('session_replication_role', 'origin', true);
 end $$;
+
+alter table public.classified_listings enable trigger user;
+alter table public.products enable trigger user;
+alter table public.provider_profiles enable trigger user;
+alter table public.businesses enable trigger user;
+alter table public.events enable trigger user;
+alter table public.event_ticket_types enable trigger user;
+alter table public.fuel_stations enable trigger user;
+alter table public.fuel_products enable trigger user;
+alter table public.venues enable trigger user;
