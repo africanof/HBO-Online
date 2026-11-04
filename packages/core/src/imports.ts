@@ -8,7 +8,7 @@ import type { Dictionary } from "./i18n";
  */
 export const IMPORT_ORIGINS = ["any", "china", "dubai", "portugal", "brasil", "africa_sul", "eua", "europa"] as const;
 export type ImportOrigin = typeof IMPORT_ORIGINS[number];
-export type ImportStatus = "requested" | "quoted" | "awaiting_payment" | "submitted" | "paid" | "purchased" | "in_transit" | "arrived" | "delivered" | "declined" | "cancelled" | "refunded";
+export type ImportStatus = "research_payment" | "research_submitted" | "requested" | "quoted" | "awaiting_payment" | "submitted" | "paid" | "purchased" | "in_transit" | "arrived" | "delivered" | "declined" | "cancelled" | "refunded";
 
 export type ImportCatalogItem = { id: string; title: string; description: string | null; icon: string; origin: ImportOrigin; days_min: number; days_max: number; active: boolean; sort: number };
 export type ImportRequest = {
@@ -16,14 +16,15 @@ export type ImportRequest = {
   quantity: number; budget: number | null; origin: ImportOrigin; fulfillment: "pickup" | "delivery"; address: string | null; phone: string; status: ImportStatus;
   product_cost: number | null; shipping_cost: number | null; service_fee: number | null; total: number | null; eta_days: number | null; quote_note: string | null;
   quoted_at: string | null; quote_valid_until: string | null; pay_by: string | null; pay_method: string | null; reference: string | null; proof_path: string | null;
-  paid_at: string | null; team_note: string | null; tracking: string | null; created_at: string; updated_at: string; buyer_name?: string | null;
+  paid_at: string | null; research_fee: number; research_credit: number; research_reference: string | null; research_proof_path: string | null;
+  research_pay_by: string | null; research_paid_at: string | null; team_note: string | null; tracking: string | null; created_at: string; updated_at: string; buyer_name?: string | null;
 };
 export type ImportRequestInput = { title: string; details?: string; links?: string; quantity: number; budget?: number | null; origin: ImportOrigin;
   fulfillment: "pickup" | "delivery"; address?: string; phone: string; catalogId?: string | null; photoUrl?: string | null };
 
 /** Passos que o cliente vê (linha do tempo). */
-export const IMPORT_STEPS: ImportStatus[] = ["requested", "quoted", "awaiting_payment", "submitted", "paid", "purchased", "in_transit", "arrived", "delivered"];
-export const IMPORT_OPEN: ImportStatus[] = ["requested", "quoted", "awaiting_payment", "submitted", "paid", "purchased", "in_transit", "arrived"];
+export const IMPORT_STEPS: ImportStatus[] = ["research_payment", "research_submitted", "requested", "quoted", "awaiting_payment", "submitted", "paid", "purchased", "in_transit", "arrived", "delivered"];
+export const IMPORT_OPEN: ImportStatus[] = ["research_payment", "research_submitted", "requested", "quoted", "awaiting_payment", "submitted", "paid", "purchased", "in_transit", "arrived"];
 /** Próximos passos que a equipa pode marcar depois do pagamento. */
 export const IMPORT_NEXT: Partial<Record<ImportStatus, ImportStatus[]>> = {
   paid: ["purchased", "refunded"], purchased: ["in_transit", "arrived", "refunded"], in_transit: ["arrived"], arrived: ["delivered"]
@@ -32,7 +33,7 @@ export const IMPORT_NEXT: Partial<Record<ImportStatus, ImportStatus[]>> = {
 export const importRef = (n: number) => "IMP-" + n;
 const num = (v: unknown) => v == null ? null : Number(v);
 function normalize(x: any): ImportRequest {
-  return { ...x, budget: num(x.budget), product_cost: num(x.product_cost), shipping_cost: num(x.shipping_cost), service_fee: num(x.service_fee), total: num(x.total) };
+  return { ...x, budget: num(x.budget), product_cost: num(x.product_cost), shipping_cost: num(x.shipping_cost), service_fee: num(x.service_fee), total: num(x.total), research_fee: Number(x.research_fee ?? 0), research_credit: Number(x.research_credit ?? 0) };
 }
 
 /** Devolve a chave do texto com o problema, ou null. */
@@ -75,7 +76,24 @@ export function submitImportPayment(client: SupabaseClient, id: string, i: { met
   return client.rpc("import_submit_payment", { p_id: id, p_method: i.method, p_reference: i.reference.trim(), p_proof_path: i.proofPath, p_proof_hash: i.proofHash || null });
 }
 
+/** Taxa de pesquisa e orçamento (paga antes de a equipa pesquisar; descontada no total se o cliente aceitar). */
+export function submitImportResearchPayment(client: SupabaseClient, id: string, i: { method: "bank_transfer" | "multicaixa_express"; reference: string; proofPath: string; proofHash?: string | null }) {
+  return client.rpc("import_submit_research_payment", { p_id: id, p_method: i.method, p_reference: i.reference.trim(), p_proof_path: i.proofPath, p_proof_hash: i.proofHash || null });
+}
+export type ImportResearchSettings = { fee: number; deduct: boolean };
+export async function getImportResearchSettings(client: SupabaseClient): Promise<ImportResearchSettings> {
+  const r = await client.from("platform_settings").select("import_research_fee_kz,import_research_deduct").eq("id", 1).maybeSingle();
+  const d = r.data as { import_research_fee_kz?: number; import_research_deduct?: boolean } | null;
+  return { fee: Number(d?.import_research_fee_kz ?? 0), deduct: d?.import_research_deduct ?? true };
+}
+
 // Equipa
+export const decideImportResearch = (client: SupabaseClient, id: string, confirm: boolean, note?: string | null) =>
+  client.rpc("decide_import_research", { p_id: id, p_confirm: confirm, p_note: note?.trim() || null });
+export function setImportResearchSettings(client: SupabaseClient, s: ImportResearchSettings) {
+  if (!Number.isFinite(s.fee) || s.fee < 0 || s.fee > 100000) return Promise.resolve({ data: null, error: new Error("INVALID_INPUT") });
+  return client.rpc("admin_set_import_research", { p_fee: Math.round(s.fee), p_deduct: s.deduct });
+}
 export async function listImportRequestsForAdmin(client: SupabaseClient, status: "open" | ImportStatus | "" = "open") {
   const r = await client.rpc("admin_list_import_requests", { p_status: status || null });
   return { data: ((r.data ?? []) as any[]).map(normalize), error: r.error };
@@ -105,6 +123,22 @@ export const IMPORT_DICT: Dictionary = {
     fr: "Dites-nous ce que vous cherchez. L'équipe Huambo Online trouve le produit, vous envoie un devis tout compris et s'occupe de l'achat, du transport et de la douane jusqu'à Huambo." },
   "im.how": { pt: "Como funciona", en: "How it works", zh: "如何运作", fr: "Comment ça marche" },
   "im.how1": { pt: "1. Peça: descreva o produto (com fotografia ou ligação, se tiver).", en: "1. Request: describe the product (with a photo or link if you have one).", zh: "1. 提交需求：描述商品（如有，可附照片或链接）。", fr: "1. Demandez : décrivez le produit (avec photo ou lien si vous en avez)." },
+  "im.how_fee": { pt: "💡 Para pesquisar e preparar o orçamento cobramos uma taxa de {fee}, paga ao enviar o pedido. Se aceitar o orçamento, este valor é descontado no total. Não é devolvida se desistir ou se o produto não for encontrado.",
+    en: "💡 To research and prepare the quote we charge a {fee} fee, paid when you send the request. If you accept the quote, this amount is deducted from the total. It is not refunded if you give up or the product cannot be found.",
+    zh: "💡 为查找商品并准备报价，我们收取 {fee} 的费用，在提交需求时支付。如果您接受报价，该金额将从总价中扣除。如果您放弃或找不到商品，该费用不予退还。",
+    fr: "💡 Pour rechercher et préparer le devis, nous facturons {fee}, payés à l'envoi de la demande. Si vous acceptez le devis, ce montant est déduit du total. Ils ne sont pas remboursés si vous renoncez ou si le produit est introuvable." },
+  "im.how_fee_nodeduct": { pt: "💡 Para pesquisar e preparar o orçamento cobramos uma taxa de {fee}, paga ao enviar o pedido. Não é devolvida se desistir ou se o produto não for encontrado.",
+    en: "💡 To research and prepare the quote we charge a {fee} fee, paid when you send the request. It is not refunded if you give up or the product cannot be found.",
+    zh: "💡 为查找商品并准备报价，我们收取 {fee} 的费用，在提交需求时支付。如果您放弃或找不到商品，该费用不予退还。",
+    fr: "💡 Pour rechercher et préparer le devis, nous facturons {fee}, payés à l'envoi de la demande. Ils ne sont pas remboursés si vous renoncez ou si le produit est introuvable." },
+  "im.r_pay_step": { pt: "1. Pague a taxa de pesquisa e orçamento: {fee}", en: "1. Pay the research and quote fee: {fee}", zh: "1. 支付查找和报价费：{fee}", fr: "1. Payez les frais de recherche et de devis : {fee}" },
+  "im.r_proof_sent": { pt: "Comprovativo enviado. Assim que for confirmado, a equipa começa a pesquisa.", en: "Proof sent. As soon as it is confirmed, the team starts the research.", zh: "凭证已提交。确认后，团队将开始查找。", fr: "Justificatif envoyé. Dès sa confirmation, l'équipe commence la recherche." },
+  "im.r_sent": { pt: "Pedido registado. Pague a taxa de pesquisa (em baixo) para a equipa começar.", en: "Request saved. Pay the research fee (below) so the team can start.", zh: "需求已登记。请支付下方的查找费，团队即可开始。", fr: "Demande enregistrée. Payez les frais de recherche (ci-dessous) pour que l'équipe commence." },
+  "im.q_credit": { pt: "Taxa de pesquisa já paga", en: "Research fee already paid", zh: "已付查找费", fr: "Frais de recherche déjà payés" },
+  "im.a_research": { pt: "Taxa de pesquisa e orçamento", en: "Research and quote fee", zh: "查找和报价费", fr: "Frais de recherche et de devis" },
+  "im.a_research_fee": { pt: "Valor em Kz (0 = sem taxa)", en: "Amount in Kz (0 = no fee)", zh: "金额（Kz，0 = 不收费）", fr: "Montant en Kz (0 = sans frais)" },
+  "im.a_research_deduct": { pt: "Descontar no total se o cliente aceitar o orçamento", en: "Deduct from the total if the customer accepts the quote", zh: "客户接受报价时从总价中扣除", fr: "Déduire du total si le client accepte le devis" },
+  "im.a_save": { pt: "Guardar", en: "Save", zh: "保存", fr: "Enregistrer" },
   "im.how2": { pt: "2. Orçamento: recebe o preço final (produto + transporte e alfândega + serviço) e o prazo.", en: "2. Quote: you receive the final price (product + shipping and customs + service) and the lead time.", zh: "2. 报价：您将收到最终价格（商品 + 运输和清关 + 服务费）及所需时间。", fr: "2. Devis : vous recevez le prix final (produit + transport et douane + service) et le délai." },
   "im.how3": { pt: "3. Pagamento protegido: paga ao Huambo Online. Se não conseguirmos comprar, devolvemos o dinheiro.", en: "3. Protected payment: you pay Huambo Online. If we can't buy it, we refund you.", zh: "3. 担保支付：您付款给 Huambo Online。如果无法购买，我们将退款。", fr: "3. Paiement protégé : vous payez Huambo Online. Si nous ne pouvons pas acheter, nous vous remboursons." },
   "im.how4": { pt: "4. Acompanhe: comprado → a caminho → chegou ao Huambo → entregue.", en: "4. Track it: bought → on the way → arrived in Huambo → delivered.", zh: "4. 跟踪：已购买 → 运输中 → 已到达万博 → 已交付。", fr: "4. Suivez : acheté → en route → arrivé à Huambo → livré." },
@@ -166,7 +200,9 @@ export const IMPORT_DICT: Dictionary = {
   "im.o.africa_sul": { pt: "África do Sul", en: "South Africa", zh: "南非", fr: "Afrique du Sud" },
   "im.o.eua": { pt: "Estados Unidos", en: "United States", zh: "美国", fr: "États-Unis" },
   "im.o.europa": { pt: "Europa", en: "Europe", zh: "欧洲", fr: "Europe" },
-  "im.s.requested": { pt: "⏳ À espera do orçamento", en: "⏳ Waiting for a quote", zh: "⏳ 等待报价", fr: "⏳ En attente du devis" },
+  "im.s.research_payment": { pt: "💳 Por pagar a taxa de pesquisa", en: "💳 Research fee to pay", zh: "💳 待付查找费", fr: "💳 Frais de recherche à payer" },
+  "im.s.research_submitted": { pt: "🔎 Taxa de pesquisa a confirmar", en: "🔎 Research fee being confirmed", zh: "🔎 查找费确认中", fr: "🔎 Frais de recherche en vérification" },
+  "im.s.requested": { pt: "⏳ Em pesquisa — à espera do orçamento", en: "⏳ Researching — waiting for a quote", zh: "⏳ 查找中 — 等待报价", fr: "⏳ Recherche en cours — en attente du devis" },
   "im.s.quoted": { pt: "💬 Orçamento recebido", en: "💬 Quote received", zh: "💬 已收到报价", fr: "💬 Devis reçu" },
   "im.s.awaiting_payment": { pt: "💳 Por pagar", en: "💳 Awaiting payment", zh: "💳 待付款", fr: "💳 À payer" },
   "im.s.submitted": { pt: "🔎 Pagamento a confirmar", en: "🔎 Payment being confirmed", zh: "🔎 付款确认中", fr: "🔎 Paiement en cours de vérification" },

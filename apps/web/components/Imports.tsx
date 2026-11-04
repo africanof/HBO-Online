@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { listImportCatalog, saveImportCatalogItem, createImportRequest, myImportRequests, acceptImportQuote, cancelImportRequest, submitImportPayment,
-  listImportRequestsForAdmin, quoteImport, declineImport, decideImportPayment, advanceImport, suggestedImportFee, importRef, getPlatformSettings,
+  listImportRequestsForAdmin, submitImportResearchPayment, getImportResearchSettings, setImportResearchSettings, decideImportResearch, quoteImport, declineImport, decideImportPayment, advanceImport, suggestedImportFee, importRef, getPlatformSettings,
   uploadPaymentProof, uploadClassifiedMedia, paymentProofUrl, validateDocument, sha256Hex, formatPrice, friendlyErrorIn, IMPORT_ORIGINS, IMPORT_NEXT, PLAN_METHOD_LABELS,
-  type ImportCatalogItem, type ImportRequest, type ImportOrigin, type ImportStatus, type PlatformSettings } from "@huambo-online/core";
+  type ImportCatalogItem, type ImportRequest, type ImportResearchSettings, type ImportOrigin, type ImportStatus, type PlatformSettings } from "@huambo-online/core";
 import { supabase, currentUserId } from "../lib/supabase";
 import { useT, eventDateIn } from "../lib/i18n";
 import { PaymentDetails } from "./Plans";
@@ -15,10 +15,12 @@ export function ImportsPage() {
   const [catalog, setCatalog] = useState<ImportCatalogItem[]>([]);
   const [mine, setMine] = useState<ImportRequest[] | null>(null);
   const [pick, setPick] = useState<ImportCatalogItem | null>(null);
+  const [research, setResearch] = useState<ImportResearchSettings | null>(null);
   const formRef = useRef<HTMLDivElement>(null);
   async function loadMine(u: string) { setMine((await myImportRequests(supabase(), u)).data); }
   useEffect(() => {
     void listImportCatalog(supabase()).then(r => setCatalog(r.data));
+    void getImportResearchSettings(supabase()).then(setResearch);
     void currentUserId().then(u => { setUid(u); if (u) void loadMine(u); });
   }, []);
   function ask(c: ImportCatalogItem) { setPick(c); setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth" }), 50); }
@@ -29,6 +31,7 @@ export function ImportsPage() {
     <section className="card stack" style={{ gap: 6 }}>
       <h2 style={{ margin: 0 }}>{t("im.how")}</h2>
       {["im.how1", "im.how2", "im.how3", "im.how4"].map(k => <span key={k}>{t(k)}</span>)}
+      {!!research?.fee && <strong>{t(research.deduct ? "im.how_fee" : "im.how_fee_nodeduct", { fee: formatPrice(research.fee) })}</strong>}
     </section>
 
     {uid && mine && mine.length > 0 && <section className="stack" style={{ gap: 10 }}>
@@ -74,7 +77,7 @@ function ImportForm({ uid, pick, onSent }: { uid: string; pick: ImportCatalogIte
       const r = await createImportRequest(supabase(), { title, details, links, quantity: Number(qty), budget: budget.trim() ? Number(budget.replace(/\D/g, "")) : null,
         origin, fulfillment, address, phone, catalogId: pick?.id ?? null, photoUrl });
       if (r.error) throw r.error;
-      setNotice(t("im.sent")); setTitle(""); setDetails(""); setLinks(""); setBudget(""); setPhoto(null); onSent();
+      setNotice(t(r.data?.status === "research_payment" ? "im.r_sent" : "im.sent")); setTitle(""); setDetails(""); setLinks(""); setBudget(""); setPhoto(null); onSent();
     } catch (e: any) { setError(String(e?.message ?? "").startsWith("im.") ? t(e.message) : friendlyErrorIn(e, lang)); } finally { setBusy(false); }
   }
   return <section className="card stack" style={{ gap: 10 }}>
@@ -106,60 +109,74 @@ function Quote({ r }: { r: ImportRequest }) {
     <dt>{t("im.q_product")}</dt><dd>{formatPrice(r.product_cost ?? 0)}</dd>
     <dt>{t("im.q_shipping")}</dt><dd>{formatPrice(r.shipping_cost ?? 0)}</dd>
     <dt>{t("im.q_fee")}</dt><dd>{formatPrice(r.service_fee ?? 0)}</dd>
+    {r.research_credit > 0 && <><dt>{t("im.q_credit")}</dt><dd>− {formatPrice(r.research_credit)}</dd></>}
     <dt>{t("im.q_total")}</dt><dd style={{ fontSize: 20 }}>{formatPrice(r.total ?? 0)}</dd>
     {r.eta_days && <><dt>⏱️</dt><dd>{t("im.q_eta", { n: r.eta_days })}</dd></>}
     {r.quote_valid_until && r.status === "quoted" && <><dt>📅</dt><dd>{t("im.q_valid", { d: eventDateIn(r.quote_valid_until, lang) })}</dd></>}
   </dl>;
 }
 
-function MyImport({ r, onChange }: { r: ImportRequest; onChange: () => void }) {
+/** Transferência para o Huambo Online + comprovativo (usada na taxa de pesquisa e no pagamento da importação). */
+function PayBox({ step, amount, until, refNo, onSubmit }: { step: string; amount: number; until: string | null; refNo: number;
+  onSubmit: (i: { method: "bank_transfer" | "multicaixa_express"; reference: string; proofPath: string; proofHash: string }) => PromiseLike<{ error: any }>; }) {
   const { t, tc, lang } = useT();
-  const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
   const [settings, setSettings] = useState<PlatformSettings | null>(null);
   const [method, setMethod] = useState<"multicaixa_express" | "bank_transfer">("bank_transfer"); const [reference, setReference] = useState(""); const [file, setFile] = useState<File | null>(null);
-  useEffect(() => { if (r.status === "awaiting_payment") void getPlatformSettings(supabase()).then(x => setSettings(x.data)); }, [r.status]);
-  const expired = (iso: string | null) => !!iso && new Date(iso).getTime() < Date.now();
-  async function run(fn: () => PromiseLike<{ error: any }>, ok = "") {
-    setBusy(true); setError(""); const x = await fn(); setBusy(false);
-    if (x.error) setError(friendlyErrorIn(x.error, lang)); else { if (ok) setNotice(ok); onChange(); }
-  }
+  const [busy, setBusy] = useState(false); const [error, setError] = useState("");
+  useEffect(() => { void getPlatformSettings(supabase()).then(x => setSettings(x.data)); }, []);
   async function pay() {
     if (!file || reference.replace(/[^A-Za-z0-9]/g, "").length < 4) { setError(t("im.err_proof")); return; }
     const bad = validateDocument({ size: file.size, type: file.type }); if (bad) { setError(tc(bad)); return; }
     setBusy(true); setError("");
     try {
+      const uid = await currentUserId(); if (!uid) throw new Error(t("sv.login_needed"));
       const hash = sha256Hex(await file.arrayBuffer());
-      const up = await uploadPaymentProof(supabase(), r.user_id, file, file.name, file.type); if (up.error || !up.data) throw up.error ?? new Error(t("sv.proof_fail"));
-      const x = await submitImportPayment(supabase(), r.id, { method, reference, proofPath: up.data, proofHash: hash }); if (x.error) throw x.error;
-      setNotice(t("im.proof_sent")); onChange();
+      const up = await uploadPaymentProof(supabase(), uid, file, file.name, file.type); if (up.error || !up.data) throw up.error ?? new Error(t("sv.proof_fail"));
+      const x = await onSubmit({ method, reference, proofPath: up.data, proofHash: hash }); if (x.error) throw x.error;
     } catch (e) { setError(friendlyErrorIn(e, lang)); } finally { setBusy(false); }
+  }
+  return <div className="stack" style={{ gap: 8 }}>
+    <strong>{t(step, { total: formatPrice(amount), fee: formatPrice(amount) })} {until ? t("im.pay_until", { d: eventDateIn(until, lang) }) : ""}</strong>
+    <PaymentDetails s={settings} />
+    <p className="banner yellow" style={{ margin: 0, padding: 12, display: "block" }}>✍️ {t("im.pay_desc", { ref: importRef(refNo) })}</p>
+    <strong>{t("im.send_proof")}</strong>
+    <div className="row" role="radiogroup">{(["multicaixa_express", "bank_transfer"] as const).map(m => <button key={m} type="button" role="radio" aria-checked={method === m}
+      className={method === m ? "" : "secondary"} onClick={() => setMethod(m)}>{tc(PLAN_METHOD_LABELS[m])}</button>)}</div>
+    <label>{t("sv.ref_label")}<input value={reference} onChange={e => setReference(e.target.value)} maxLength={120} /></label>
+    <label>{t("sv.fu_proof_required")}<input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label>
+    {error && <p className="error" role="alert">{error}</p>}
+    <button type="button" disabled={busy} style={{ justifySelf: "start" }} onClick={() => void pay()}>{busy ? t("sv.sending") : "✅ " + t("sv.fu_paid_send")}</button>
+    <small>{t("im.protected")}</small>
+  </div>;
+}
+
+function MyImport({ r, onChange }: { r: ImportRequest; onChange: () => void }) {
+  const { t, lang } = useT();
+  const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
+  const expired = (iso: string | null) => !!iso && new Date(iso).getTime() < Date.now();
+  async function run(fn: () => PromiseLike<{ error: any }>, ok = "") {
+    setBusy(true); setError(""); const x = await fn(); setBusy(false);
+    if (x.error) setError(friendlyErrorIn(x.error, lang)); else { if (ok) setNotice(ok); onChange(); }
+    return x;
   }
   return <article className="card stack" style={{ gap: 8 }}>
     <strong style={{ fontSize: 18 }}>{r.title}</strong>
     <small>{importRef(r.ref_no)} · {t("im.qty_n", { n: r.quantity })} · {t("im.o." + r.origin)} · {eventDateIn(r.created_at, lang)}</small>
     <span style={{ fontWeight: 800 }}>{t("im.s." + r.status)}</span>
     {r.tracking && <small>{t("im.tracking")}: <strong>{r.tracking}</strong></small>}
-    {r.team_note && <small className={r.status === "declined" || r.status === "refunded" || r.status === "awaiting_payment" ? "error" : ""}>{t("im.team_note")}: {r.team_note}</small>}
+    {r.team_note && <small className={["declined", "refunded", "awaiting_payment", "research_payment"].includes(r.status) ? "error" : ""}>{t("im.team_note")}: {r.team_note}</small>}
     {r.status === "refunded" && <small>{t("im.refund_note")}</small>}
-    {r.total != null && !["requested", "declined", "cancelled"].includes(r.status) && <Quote r={r} />}
+    {r.status === "research_payment" && (expired(r.research_pay_by) ? <small className="error">{t("im.pay_expired")}</small>
+      : <PayBox step="im.r_pay_step" amount={r.research_fee} until={r.research_pay_by} refNo={r.ref_no}
+        onSubmit={i => run(() => submitImportResearchPayment(supabase(), r.id, i), t("im.r_proof_sent"))} />)}
+    {r.total != null && !["research_payment", "research_submitted", "requested", "declined", "cancelled"].includes(r.status) && <Quote r={r} />}
     {r.quote_note && r.status === "quoted" && <small>💬 {r.quote_note}</small>}
     {r.status === "quoted" && (expired(r.quote_valid_until) ? <small className="error">{t("im.q_expired")}</small>
       : <button type="button" disabled={busy} style={{ justifySelf: "start" }} onClick={() => void run(() => acceptImportQuote(supabase(), r.id))}>{t("im.accept")}</button>)}
     {r.status === "awaiting_payment" && (expired(r.pay_by) ? <div className="stack" style={{ gap: 6 }}><small className="error">{t("im.pay_expired")}</small>
       {!expired(r.quote_valid_until) && <button type="button" disabled={busy} style={{ justifySelf: "start" }} onClick={() => void run(() => acceptImportQuote(supabase(), r.id))}>{t("im.accept")}</button>}</div>
-      : <div className="stack" style={{ gap: 8 }}>
-        <strong>{t("im.pay_step", { total: formatPrice(r.total ?? 0) })} {r.pay_by ? t("im.pay_until", { d: eventDateIn(r.pay_by, lang) }) : ""}</strong>
-        <PaymentDetails s={settings} />
-        <p className="banner yellow" style={{ margin: 0, padding: 12, display: "block" }}>✍️ {t("im.pay_desc", { ref: importRef(r.ref_no) })}</p>
-        <strong>{t("im.send_proof")}</strong>
-        <div className="row" role="radiogroup">{(["multicaixa_express", "bank_transfer"] as const).map(m => <button key={m} type="button" role="radio" aria-checked={method === m}
-          className={method === m ? "" : "secondary"} onClick={() => setMethod(m)}>{tc(PLAN_METHOD_LABELS[m])}</button>)}</div>
-        <label>{t("sv.ref_label")}<input value={reference} onChange={e => setReference(e.target.value)} maxLength={120} /></label>
-        <label>{t("sv.fu_proof_required")}<input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label>
-        <button type="button" disabled={busy} style={{ justifySelf: "start" }} onClick={() => void pay()}>{busy ? t("sv.sending") : "✅ " + t("sv.fu_paid_send")}</button>
-        <small>{t("im.protected")}</small>
-      </div>)}
-    {["requested", "quoted", "awaiting_payment"].includes(r.status) && <button type="button" className="secondary" disabled={busy} style={{ justifySelf: "start" }}
+      : <PayBox step="im.pay_step" amount={r.total ?? 0} until={r.pay_by} refNo={r.ref_no} onSubmit={i => run(() => submitImportPayment(supabase(), r.id, i), t("im.proof_sent"))} />)}
+    {["research_payment", "requested", "quoted", "awaiting_payment"].includes(r.status) && <button type="button" className="secondary" disabled={busy} style={{ justifySelf: "start" }}
       onClick={() => { if (confirm(t("im.cancel_q"))) void run(() => cancelImportRequest(supabase(), r.id)); }}>{t("im.cancel")}</button>}
     {error && <p className="error" role="alert">{error}</p>}
     {notice && <p className="ok" role="status">{notice}</p>}
@@ -184,6 +201,7 @@ export function AdminImports() {
     {notice && <p className="ok" role="status">{notice}</p>}
     {items.length === 0 && <p className="muted">{t("pp.none_pending")}</p>}
     {items.map(r => <AdminImportCard key={r.id} r={r} run={run} />)}
+    <AdminResearchFee />
     <AdminImportCatalog />
   </section>;
 }
@@ -194,7 +212,7 @@ function AdminImportCard({ r, run }: { r: ImportRequest; run: (fn: () => Promise
   const [fee, setFee] = useState(r.service_fee != null ? String(r.service_fee) : ""); const [eta, setEta] = useState(r.eta_days ? String(r.eta_days) : "30"); const [note, setNote] = useState(r.quote_note ?? "");
   const n = (v: string) => Number(v.replace(/\D/g, "")) || 0;
   const hint = suggestedImportFee(n(product), n(shipping));
-  async function openProof() { if (!r.proof_path) return; const u = await paymentProofUrl(supabase(), r.proof_path); if (u.data) window.open(u.data, "_blank", "noopener"); }
+  async function openProof(path: string | null = r.proof_path) { if (!path) return; const u = await paymentProofUrl(supabase(), path); if (u.data) window.open(u.data, "_blank", "noopener"); }
   const canQuote = r.status === "requested" || r.status === "quoted" || r.status === "awaiting_payment";
   return <article className="card stack" style={{ gap: 8 }}>
     <strong>{importRef(r.ref_no)} · {r.title} · {t("im.qty_n", { n: r.quantity })}</strong>
@@ -220,10 +238,19 @@ function AdminImportCard({ r, run }: { r: ImportRequest; run: (fn: () => Promise
         <button type="button" className="danger" onClick={() => { const why = prompt(t("im.a_decline_q")) ?? ""; if (why.trim()) void run(() => declineImport(supabase(), r.id, why)); }}>{t("im.a_decline")}</button>
       </div>
     </div>}
+    {r.status === "research_submitted" && <div className="stack" style={{ gap: 6 }}>
+      <small>{t("im.a_research")}: <strong>{formatPrice(r.research_fee)}</strong> · {t("sv.reference")}: <strong>{r.research_reference}</strong></small>
+      <div className="row">
+        {r.research_proof_path && <button type="button" className="secondary" onClick={() => void openProof(r.research_proof_path)}>🧾 {t("im.a_proof")}</button>}
+        <button type="button" onClick={() => void run(() => decideImportResearch(supabase(), r.id, true))}>{t("pp.confirm_pay")}</button>
+        <button type="button" className="danger" onClick={() => { const why = prompt(t("pp.reject_why")) ?? ""; if (why.trim()) void run(() => decideImportResearch(supabase(), r.id, false, why)); }}>{t("pp.reject_pay")}</button>
+      </div>
+    </div>}
+    {r.status === "research_payment" && <button type="button" className="danger" style={{ justifySelf: "start" }} onClick={() => { const why = prompt(t("im.a_decline_q")) ?? ""; if (why.trim()) void run(() => declineImport(supabase(), r.id, why)); }}>{t("im.a_decline")}</button>}
     {r.status === "submitted" && <div className="stack" style={{ gap: 6 }}>
       <small>{t("sv.reference")}: <strong>{r.reference}</strong> · {r.pay_method}</small>
       <div className="row">
-        {r.proof_path && <button type="button" className="secondary" onClick={() => void openProof()}>🧾 {t("im.a_proof")}</button>}
+        {r.proof_path && <button type="button" className="secondary" onClick={() => void openProof(r.proof_path)}>🧾 {t("im.a_proof")}</button>}
         <button type="button" onClick={() => void run(() => decideImportPayment(supabase(), r.id, true))}>{t("pp.confirm_pay")}</button>
         <button type="button" className="danger" onClick={() => { const why = prompt(t("pp.reject_why")) ?? ""; if (why.trim()) void run(() => decideImportPayment(supabase(), r.id, false, why)); }}>{t("pp.reject_pay")}</button>
       </div>
@@ -235,6 +262,24 @@ function AdminImportCard({ r, run }: { r: ImportRequest; run: (fn: () => Promise
         void run(() => advanceImport(supabase(), r.id, s as ImportStatus, null, tracking));
       }}>{t("im.a_mark", { s: t("im.s." + s) })}</button>)}</div>}
   </article>;
+}
+
+function AdminResearchFee() {
+  const { t, lang } = useT();
+  const [fee, setFee] = useState(""); const [deduct, setDeduct] = useState(true); const [msg, setMsg] = useState(""); const [error, setError] = useState("");
+  useEffect(() => { void getImportResearchSettings(supabase()).then(s => { setFee(String(s.fee)); setDeduct(s.deduct); }); }, []);
+  async function save() {
+    setMsg(""); setError(""); const r = await setImportResearchSettings(supabase(), { fee: Number(fee.replace(/\D/g, "")) || 0, deduct });
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else setMsg(t("pp.decided"));
+  }
+  return <div className="card stack" style={{ gap: 8 }}>
+    <strong>💡 {t("im.a_research")}</strong>
+    <label>{t("im.a_research_fee")}<input value={fee} onChange={e => setFee(e.target.value)} inputMode="numeric" /></label>
+    <label className="row" style={{ alignItems: "center" }}><input type="checkbox" checked={deduct} onChange={e => setDeduct(e.target.checked)} style={{ width: 22, height: 22 }} /> {t("im.a_research_deduct")}</label>
+    {error && <p className="error" role="alert">{error}</p>}
+    {msg && <p className="ok" role="status">{msg}</p>}
+    <button type="button" style={{ justifySelf: "start" }} onClick={() => void save()}>{t("im.a_save")}</button>
+  </div>;
 }
 
 function AdminImportCatalog() {

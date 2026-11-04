@@ -24,6 +24,6 @@ describe("importação", () => {
   it("todos os textos em todas as línguas", () => {
     for (const [k, v] of Object.entries(IMPORT_DICT)) for (const l of LANGS) expect(v[l], k + " " + l).toBeTruthy();
     for (const o of IMPORT_ORIGINS) expect(IMPORT_DICT["im.o." + o]).toBeTruthy();
-    for (const s of ["requested", "quoted", "awaiting_payment", "submitted", "paid", "purchased", "in_transit", "arrived", "delivered", "declined", "cancelled", "refunded"]) expect(IMPORT_DICT["im.s." + s]).toBeTruthy();
+    for (const s of ["research_payment", "research_submitted", "requested", "quoted", "awaiting_payment", "submitted", "paid", "purchased", "in_transit", "arrived", "delivered", "declined", "cancelled", "refunded"]) expect(IMPORT_DICT["im.s." + s]).toBeTruthy();
   });
 });
