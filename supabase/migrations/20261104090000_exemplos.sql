@@ -46,7 +46,7 @@ declare
   prov uuid; m_hb uuid; m_ca uuid; m_ba uuid;
   b_rest uuid; b_hotel uuid; ev uuid; st uuid;
   u record;
-  cat jsonb;
+  cats jsonb;
 begin
   -- 1) Contas de exemplo (sem palavra-passe e bloqueadas: ninguém entra nelas).
   for u in select * from (values
@@ -73,13 +73,13 @@ begin
   select m.id into m_hb from public.municipalities m where m.province_id = prov and m.name = 'Huambo';
   select m.id into m_ca from public.municipalities m where m.province_id = prov and m.name = 'Caála';
   select m.id into m_ba from public.municipalities m where m.province_id = prov and m.name = 'Bailundo';
-  select jsonb_object_agg(slug, id) into cat from public.categories;
+  select jsonb_object_agg(slug, id) into cats from public.categories;
   if prov is null or m_hb is null or m_ca is null or m_ba is null then raise exception 'Território do Huambo em falta'; end if;
 
   -- 2) Classificados, trocas, imóveis, viaturas, emprego, «Procura-se» e agricultura.
   insert into public.classified_listings(owner_id, category_id, listing_type, purpose, title, description, price, sale_mode,
     accepts_trade, trade_wants, budget_min, budget_max, attributes, media, status, conformity_accepted_at)
-  select d, (cat->>x.cat)::uuid, x.lt, x.pu, x.title, x.descr || nota, x.price, x.sm, x.tr, x.tw, x.bmin, x.bmax,
+  select d, (cats->>x.cat)::uuid, x.lt, x.pu, x.title, x.descr || nota, x.price, x.sm, x.tr, x.tw, x.bmin, x.bmax,
     x.attrs || jsonb_build_object('provinceId', prov, 'municipalityId', x.mun),
     case when x.img is null then '[]'::jsonb else jsonb_build_array(site || x.img || '.jpg') end, 'published', now()
   from (values
@@ -125,28 +125,28 @@ begin
   insert into public.subscriptions(kind, owner_id, seller_id, trial_ends_at) values ('store', d, d, now() + interval '1 year');
   insert into public.products(seller_id, name, description, category_id, price, stock, active, media, municipality_id, conformity_accepted_at) values
     (d, 'Arroz agulha 25 kg (exemplo)', 'Saco de arroz agulha de 25 kg, grão longo. Entrega em todo o Huambo.' || nota,
-      (cat->>'mercearia-e-alimentacao')::uuid, 21500, 40, true, jsonb_build_array(site || 'arroz.jpg'), m_hb, now()),
+      (cats->>'mercearia-e-alimentacao')::uuid, 21500, 40, true, jsonb_build_array(site || 'arroz.jpg'), m_hb, now()),
     (d, 'Panela de pressão 7 litros (exemplo)', 'Panela de pressão em alumínio, 7 litros, com válvula de segurança.' || nota,
-      (cat->>'casa-e-cozinha')::uuid, 18900, 15, true, jsonb_build_array(site || 'panela.jpg'), m_hb, now());
+      (cats->>'casa-e-cozinha')::uuid, 18900, 15, true, jsonb_build_array(site || 'panela.jpg'), m_hb, now());
 
   -- 4) Profissionais: 2 perfis (cada um na sua conta).
   insert into public.provider_profiles(user_id, display_name, headline, bio, category_id, municipality_id, avatar_url, active) values
     (p1, 'Pedro, eletricista (exemplo)', 'Instalações elétricas, quadros e reparações',
       'Eletricista com 10 anos de experiência em casas, lojas e armazéns. Orçamento sem compromisso.' || nota,
-      (cat->>'eletricistas')::uuid, m_hb, site || 'eletricista.jpg', true),
+      (cats->>'eletricistas')::uuid, m_hb, site || 'eletricista.jpg', true),
     (p2, 'Ana, explicações de Matemática (exemplo)', 'Explicações de Matemática e Física (7.ª à 12.ª classe)',
       'Professora licenciada. Explicações em grupo ou individuais, em casa do aluno ou online.' || nota,
-      (cat->>'explicadores')::uuid, m_ca, site || 'explicadora.jpg', true);
+      (cats->>'explicadores')::uuid, m_ca, site || 'explicadora.jpg', true);
   insert into public.subscriptions(kind, owner_id, provider_id, trial_ends_at) values
     ('provider', p1, p1, now() + interval '1 year'), ('provider', p2, p2, now() + interval '1 year');
 
   -- 5) Empresas: restaurante e hotel, ambos com reservas.
   insert into public.businesses(owner_id, name, description, category_id, municipality_id, logo_url, address_text, active)
     values (d, 'Restaurante Mesa Farta (exemplo)', 'Comida angolana caseira: funge, muamba, calulu e grelhados. Almoços e jantares.' || nota,
-      (cat->>'restaurantes')::uuid, m_hb, site || 'restaurante.jpg', 'Huambo (exemplo)', true) returning id into b_rest;
+      (cats->>'restaurantes')::uuid, m_hb, site || 'restaurante.jpg', 'Huambo (exemplo)', true) returning id into b_rest;
   insert into public.businesses(owner_id, name, description, category_id, municipality_id, logo_url, address_text, active)
     values (d, 'Hotel Jardim do Planalto (exemplo)', 'Quartos com pequeno-almoço, Wi-Fi e estacionamento. Sala para eventos.' || nota,
-      (cat->>'hoteis')::uuid, m_hb, site || 'hotel.jpg', 'Huambo (exemplo)', true) returning id into b_hotel;
+      (cats->>'hoteis')::uuid, m_hb, site || 'hotel.jpg', 'Huambo (exemplo)', true) returning id into b_hotel;
   insert into public.subscriptions(kind, owner_id, business_id, trial_ends_at) values
     ('business', d, b_rest, now() + interval '1 year'), ('business', d, b_hotel, now() + interval '1 year');
   insert into public.venues(business_id, owner_id, kind, subtype, accepts_reservations, accepts_pay_at_place, opening_hours, check_in_time, check_out_time, policies, status) values
