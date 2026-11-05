@@ -50,10 +50,24 @@ export function HelpPageView() {
     <h1>❓ {t("nav.help")}</h1>
     <p style={{ fontSize: 19 }}>{t("sv.help_intro")}</p>
     <a className="btn secondary" href="/seguranca" style={{ justifySelf: "start" }}>🛡️ {t("sv.help_safety_btn")}</a>
+    <a className="btn" href="/suporte" style={{ justifySelf: "start" }}>{t("sp.title")}</a>
     <HelpAssistant />
     {faq.map(f => <details key={f.q} className="card faq"><summary><strong>{f.q}</strong></summary><p style={{ margin: 0, lineHeight: 1.6 }}>{f.a}</p></details>)}
     <section className="card"><h2 style={{ margin: 0 }}>{t("sv.help_more")}</h2><p style={{ margin: 0 }}>{contactLineIn(t)}</p></section>
     <nav className="row" aria-label={t("sv.info_more")}><a href="/termos">{t("nav.terms")}</a> · <a href="/privacidade">{t("nav.privacy")}</a> · <a href="/devolucoes">{t("sv.help_returns")}</a> · <a href="/apagar-conta">{t("sv.help_delete")}</a></nav>
+  </main>;
+}
+
+/** Página «Suporte»: a IA responde primeiro; um botão passa a conversa a uma pessoa da equipa. */
+export function SupportPageView() {
+  const { t } = useT();
+  const e = CONTACT_EMAIL.trim(); const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) ? e : "";
+  return <main className="stack" style={{ maxWidth: 820 }}>
+    <a href="/ajuda">← {t("nav.help")}</a>
+    <h1>{t("sp.title")}</h1>
+    <p style={{ fontSize: 19, margin: 0 }}>{t("sp.intro")}</p>
+    <HelpAssistant back="/suporte" title={"🤖 " + t("ai.help.title").replace(/^🤖\s*/, "")} />
+    {email && (() => { const [a, b = ""] = t("sp.email", { email: "\u0000" }).split("\u0000"); return <p style={{ margin: 0 }}>{a}<a href={"mailto:" + email}>{email}</a>{b}</p>; })()}
   </main>;
 }
 

@@ -4,7 +4,7 @@ import { createSupabaseClient } from "@huambo-online/supabase";
 import { useSearchParams } from "next/navigation";
 import { listConversations, listMessages, sendMessage, markConversationRead, subscribeToConversationMessages, subscribeToUserConversationMessages, conversationFromParticipantRow,
   isConversationUnread, listConversationPartners, conversationAllowsDocuments, friendlyErrorIn, messagePreview, CHAT_KIND_LABELS, chatMediaUrls,
-  chatListTime, chatDayLabel, chatClock, groupChatMessages, initials, avatarColor, conversationSubject, type ChatMessage } from "@huambo-online/core";
+  chatListTime, chatDayLabel, chatClock, groupChatMessages, initials, avatarColor, conversationSubject, isSupportConversation, type ChatMessage } from "@huambo-online/core";
 import { ConversationSafety } from "../../components/Safety";
 import { ChatAttachButtons, MessageAttachment } from "../../components/ChatMedia";
 import { useT } from "../../lib/i18n";
@@ -46,7 +46,10 @@ function MensagensContent() {
     await Promise.all(rows.map(async row => { const x = conversationFromParticipantRow(row); const m = await listMessages(c, x.id); pv[x.id] = m.data?.at(-1) ?? null; }));
     const last = (row: any) => { const x = conversationFromParticipantRow(row); return pv[x.id]?.created_at ?? x.updated_at ?? x.created_at; };
     setItems([...rows].sort((a, b) => String(last(b)).localeCompare(String(last(a)))));
-    setPreviews(pv); setPartners(await listConversationPartners(c)); setLoaded(true);
+    const ps: Record<string, any> = { ...(await listConversationPartners(c)) };
+    // Suporte: do outro lado está a equipa.
+    for (const row of rows) { const x = conversationFromParticipantRow(row); if (isSupportConversation(x)) ps[x.id] = { conversation_id: x.id, other_user_id: null, other_name: "🛡️ " + t("cg.team"), other_avatar: "/icon.svg", support: true }; }
+    setPreviews(pv); setPartners(ps); setLoaded(true);
   }
   async function showMessages(c: ReturnType<typeof client>, id: string) {
     const r = await listMessages(c, id); const list = (r.data ?? []) as ChatMessage[]; setMsgs(list);
@@ -121,8 +124,8 @@ function MensagensContent() {
           </header>
           <details className="chat-safety">
             <summary>🛡️ {t("cg.safety")}</summary>
-            <p className="muted" style={{ margin: "0 0 8px" }}>{t("ls.mediated_note")}</p>
-            {uid && <ConversationSafety messages={msgs} uid={uid} otherUserId={other?.other_user_id} otherName={other?.other_name} />}
+            {!other?.support && <p className="muted" style={{ margin: "0 0 8px" }}>{t("ls.mediated_note")}</p>}
+            {other?.support ? <p style={{ margin: 0 }}>{t("sp.team_chat")}</p> : uid && <ConversationSafety messages={msgs} uid={uid} otherUserId={other?.other_user_id} otherName={other?.other_name} />}
           </details>
           <div className="chat-scroll">
             {!msgs.length && <div className="chat-empty small"><Avatar name={other?.other_name} src={other?.other_avatar} seed={other?.other_user_id} size={72} /><p>{t("cg.say_hi")}</p></div>}

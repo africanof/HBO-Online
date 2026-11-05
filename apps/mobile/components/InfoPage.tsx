@@ -8,7 +8,7 @@ import { useT } from "../lib/i18n";
 import { INFO_PAGES_I18N, HELP_FAQ_I18N } from "../lib/i18n/services";
 
 /** E-mail público de contacto (opcional): EXPO_PUBLIC_CONTACT_EMAIL. */
-export const CONTACT_EMAIL = (process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? "").trim();
+export const CONTACT_EMAIL = ((process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? "").trim() || "suporte@huamboonline.com");
 
 const Links = () => {
   const { t } = useT();

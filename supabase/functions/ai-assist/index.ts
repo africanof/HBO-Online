@@ -161,7 +161,7 @@ ${text(body.catalog, 7000)}` },
       const history = Array.isArray(body.history) ? body.history.slice(-6).map((h: any) => ({ role: h?.role === "assistant" ? "assistant" : "user", content: clip(h?.content, 800) })) : [];
       const out = await chat(apiKey, [
         { role: "system", content: `És o assistente de ajuda do Huambo Online (Site e APP de classificados, loja e serviços do Huambo, Angola). Respondes em ${LANG_NAMES[lang]}, de forma curta (até 6 frases), simples e simpática.
-- Usa só a informação abaixo. Se a resposta não estiver lá, ou se for um problema com uma conta, pagamento ou pedido concreto, diz que não sabes e põe "handoff" = true (a pessoa pode falar com a equipa pelas Mensagens).
+- Usa só a informação abaixo. Se a resposta não estiver lá, ou se for um problema com uma conta, pagamento ou pedido concreto, diz que não sabes e põe "handoff" = true. Põe também "handoff" = true se a pessoa pedir para falar com uma pessoa, um agente ou a equipa. Nesses casos, diz-lhe para carregar no botão «👤 Falar com um agente», logo abaixo, que abre uma conversa com a equipa nas Mensagens.
 - Não inventes preços, prazos nem regras. Não peças palavras-passe nem dados de cartões.
 Informação do Huambo Online:
 ${KNOWLEDGE}` },

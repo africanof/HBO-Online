@@ -3,7 +3,7 @@ import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
 import { useRouter } from "expo-router";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
-import { fillFromPhoto, smartSearch, askHelp, translateListing, priceHint, suggestTeamReply, summarizeDispute, listAiFlags, dismissAiFlag, moderateListing,
+import { fillFromPhoto, smartSearch, askHelp, openSupportConversation, translateListing, priceHint, suggestTeamReply, summarizeDispute, listAiFlags, dismissAiFlag, moderateListing,
   aiMessage, formatPrice, friendlyErrorIn, removePhotoBackgroundBase64, photoBackgroundMessage, PHOTO_BACKGROUND_STYLES, type PhotoBackgroundStyle, type CategoryRef, type PhotoFill, type SmartSearch, type PriceHint, type HelpTurn, type AiFlag } from "@huambo-online/core";
 import { supabase, siteUrl } from "../lib/supabase";
 import { formatDateTimeIn, useT } from "../lib/i18n";
@@ -116,11 +116,11 @@ export function TranslateListing({ listingId, onTranslated }: { listingId: strin
   </View>;
 }
 
-/** Assistente da Ajuda: responde com base na Ajuda, nos Termos e na Privacidade. */
-export function HelpAssistant() {
+/** Assistente da Ajuda e do Suporte: a IA responde primeiro; «👤 Falar com um agente» passa a conversa à equipa. */
+export function HelpAssistant({ title }: { title?: string }) {
   const router = useRouter(); const { lang, t, tc } = useT();
   const [q, setQ] = useState(""); const [turns, setTurns] = useState<HelpTurn[]>([]); const [handoff, setHandoff] = useState(false);
-  const [busy, setBusy] = useState(false); const [err, setErr] = useState(""); const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false); const [agentBusy, setAgentBusy] = useState(false); const [err, setErr] = useState(""); const [signedIn, setSignedIn] = useState<boolean | null>(null);
   useEffect(() => { void supabase().auth.getSession().then(({ data }) => setSignedIn(!!data.session)); }, []);
   async function ask() {
     const question = q.trim(); if (question.length < 2) return;
@@ -130,17 +130,29 @@ export function HelpAssistant() {
     setTurns(x => [...x, { role: "user" as const, content: question }, { role: "assistant" as const, content: r.data!.answer || t("ai.help.handoff") }].slice(-12));
     setHandoff(r.data.handoff); setQ("");
   }
+  async function agent() {
+    setAgentBusy(true); setErr("");
+    const question = q.trim();
+    const r = await openSupportConversation(supabase(), question.length >= 2 ? [...turns, { role: "user" as const, content: question }] : turns);
+    setAgentBusy(false);
+    if (r.error || !r.data) { setErr(friendlyErrorIn(r.error, lang)); return; }
+    setQ(""); router.push({ pathname: "/mensagens", params: { conversation: r.data } } as any);
+  }
   return <View style={[ui.card, { gap: 8 }]}>
-    <Text style={ui.h2}>{t("ai.help.title")}</Text>
+    <Text style={ui.h2}>{title ?? t("ai.help.title")}</Text>
     {signedIn === false ? <Button title={t("ai.help.login")} variant="secondary" onPress={() => router.push("/login")} /> : <>
       {turns.map((m, i) => <Text key={i} style={[ui.text, { padding: 10, borderRadius: 10, borderWidth: 1, borderColor: C.line, backgroundColor: m.role === "user" ? C.blueSoft : C.card }]}>
         {m.role === "user" ? "🙂 " : "🤖 "}{m.content}</Text>)}
-      {handoff && <Button title={"💬 " + t("ai.help.handoff")} variant="secondary" onPress={() => router.push("/mensagens")} />}
-      <TextInput style={ui.input} value={q} onChangeText={setQ} maxLength={600} placeholder={t("ai.help.ph")} placeholderTextColor={C.muted} accessibilityLabel={t("ai.help.title")}
+      {handoff && <Text style={ui.text}>{t("ai.help.handoff")}</Text>}
+      <TextInput style={ui.input} value={q} onChangeText={setQ} maxLength={600} placeholder={t("ai.help.ph")} placeholderTextColor={C.muted} accessibilityLabel={title ?? t("ai.help.title")}
         onSubmitEditing={() => void ask()} returnKeyType="send" />
       <Button title={busy ? "…" : t("ai.help.ask")} disabled={busy || q.trim().length < 2} onPress={() => void ask()} />
       <Message error={err} />
       <Text style={ui.muted}>{t("ai.help.note")}</Text>
+      <View style={{ gap: 4, borderTopWidth: 1, borderTopColor: C.line, paddingTop: 10 }}>
+        <Button title={agentBusy ? t("sp.agent_working") : t("sp.agent")} variant={handoff ? undefined : "secondary"} disabled={agentBusy || signedIn !== true} onPress={() => void agent()} />
+        <Text style={ui.muted}>{t("sp.agent_note")}</Text>
+      </View>
     </>}
   </View>;
 }

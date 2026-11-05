@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { BackHandler, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { listConversations, listMessages, sendMessage, markConversationRead, subscribeToConversationMessages, subscribeToUserConversationMessages, conversationFromParticipantRow,
   isConversationUnread, listConversationPartners, conversationAllowsDocuments, friendlyErrorIn, messagePreview, chatMediaUrls, chatListTime, chatDayLabel, chatClock,
-  groupChatMessages, initials, avatarColor, conversationSubject } from "@huambo-online/core";
+  groupChatMessages, initials, avatarColor, conversationSubject, isSupportConversation } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { themed, C } from "../lib/ui";
 import { useT } from "../lib/i18n";
@@ -47,7 +47,10 @@ export default function Mensagens() {
     await Promise.all(rows.map(async (row: any) => { const x = conversationFromParticipantRow(row); const z = await listMessages(c, x.id); pv[x.id] = z.data?.at(-1) ?? null; }));
     const last = (row: any) => { const x = conversationFromParticipantRow(row); return pv[x.id]?.created_at ?? x.updated_at ?? x.created_at; };
     setItems([...rows].sort((a, b) => String(last(b)).localeCompare(String(last(a)))));
-    setPreviews(pv); setPartners(await listConversationPartners(c)); setLoaded(true);
+    const ps: Record<string, any> = { ...(await listConversationPartners(c)) };
+    // Suporte: do outro lado está a equipa.
+    for (const row of rows) { const x = conversationFromParticipantRow(row); if (isSupportConversation(x)) ps[x.id] = { conversation_id: x.id, other_user_id: null, other_name: "🛡️ " + t("cg.team"), other_avatar: null, support: true }; }
+    setPreviews(pv); setPartners(ps); setLoaded(true);
   }
   async function open(x: any) {
     setSelected(x); setSendError(""); setBody(""); setSafetyOpen(false); const c = supabase(); setAllowDocs(false);
@@ -124,8 +127,8 @@ export default function Mensagens() {
       <Pressable onPress={() => setSafetyOpen(v => !v)} accessibilityRole="button" accessibilityLabel={t("cg.safety")} accessibilityState={{ expanded: safetyOpen }} hitSlop={8} style={s.back}><Text style={{ fontSize: 22 }}>🛡️</Text></Pressable>
     </View>
     {safetyOpen && <ScrollView style={s.safety} contentContainerStyle={{ gap: 8, padding: 12 }}>
-      <Text style={s.muted}>{t("ls.chat.mediated_note")}</Text>
-      {!!uid && <ConversationSafety messages={msgs} uid={uid} otherUserId={other?.other_user_id} otherName={other?.other_name} />}
+      {!other?.support && <Text style={s.muted}>{t("ls.chat.mediated_note")}</Text>}
+      {other?.support ? <Text style={s.muted}>{t("sp.team_chat")}</Text> : !!uid && <ConversationSafety messages={msgs} uid={uid} otherUserId={other?.other_user_id} otherName={other?.other_name} />}
     </ScrollView>}
     <ScrollView ref={scroller} style={{ flex: 1 }} contentContainerStyle={s.thread} onContentSizeChange={() => scroller.current?.scrollToEnd({ animated: false })} keyboardShouldPersistTaps="handled">
       {!msgs.length && <View style={s.hello}><Avatar name={other?.other_name} src={other?.other_avatar} seed={other?.other_user_id} size={80} /><Text style={s.headName}>{other?.other_name}</Text><Text style={s.muted}>{t("cg.say_hi")}</Text></View>}

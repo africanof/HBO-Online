@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { fillFromPhoto, smartSearch, askHelp, translateListing, priceHint, suggestTeamReply, summarizeDispute, listAiFlags, dismissAiFlag, moderateListing,
+import { fillFromPhoto, smartSearch, askHelp, openSupportConversation, translateListing, priceHint, suggestTeamReply, summarizeDispute, listAiFlags, dismissAiFlag, moderateListing,
   aiMessage, formatPrice, friendlyErrorIn, removePhotoBackground, photoBackgroundMessage, PHOTO_BACKGROUND_STYLES, type PhotoBackgroundStyle, type CategoryRef, type PhotoFill, type SmartSearch, type PriceHint, type HelpTurn, type AiFlag } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { useT, formatDateIn } from "../lib/i18n";
@@ -120,11 +120,11 @@ export function TranslateListing({ listingId, onTranslated }: { listingId: strin
   </div>;
 }
 
-/** Assistente da Ajuda: responde com base na Ajuda, nos Termos e na Privacidade. */
-export function HelpAssistant() {
+/** Assistente da Ajuda e do Suporte: a IA responde primeiro; «👤 Falar com um agente» passa a conversa à equipa. */
+export function HelpAssistant({ back = "/ajuda", title }: { back?: string; title?: string }) {
   const { lang, t, tc } = useT();
   const [q, setQ] = useState(""); const [turns, setTurns] = useState<HelpTurn[]>([]); const [handoff, setHandoff] = useState(false);
-  const [busy, setBusy] = useState(false); const [err, setErr] = useState(""); const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false); const [agentBusy, setAgentBusy] = useState(false); const [err, setErr] = useState(""); const [signedIn, setSignedIn] = useState<boolean | null>(null);
   useEffect(() => { void supabase().auth.getSession().then(({ data }) => setSignedIn(!!data.session)); }, []);
   async function ask() {
     const question = q.trim(); if (question.length < 2) return;
@@ -134,18 +134,29 @@ export function HelpAssistant() {
     setTurns(x => [...x, { role: "user" as const, content: question }, { role: "assistant" as const, content: r.data!.answer || t("ai.help.handoff") }].slice(-12));
     setHandoff(r.data.handoff); setQ("");
   }
-  return <section id="assistente" className="card stack" aria-label={t("ai.help.title")}>
-    <h2 style={{ margin: 0 }}>{t("ai.help.title")}</h2>
-    {signedIn === false ? <p style={{ margin: 0 }}><a href="/conta/login?voltar=/ajuda">{t("ai.help.login")}</a></p> : <>
+  async function agent() {
+    setAgentBusy(true); setErr("");
+    const question = q.trim();
+    const r = await openSupportConversation(supabase(), question.length >= 2 ? [...turns, { role: "user" as const, content: question }] : turns);
+    if (r.error || !r.data) { setAgentBusy(false); setErr(friendlyErrorIn(r.error, lang)); return; }
+    window.location.href = "/mensagens?conversation=" + r.data;
+  }
+  return <section id="assistente" className="card stack" aria-label={title ?? t("ai.help.title")}>
+    <h2 style={{ margin: 0 }}>{title ?? t("ai.help.title")}</h2>
+    {signedIn === false ? <p style={{ margin: 0 }}><a href={"/conta/login?voltar=" + back}>{t("ai.help.login")}</a></p> : <>
       {turns.map((m, i) => <p key={i} style={{ margin: 0, whiteSpace: "pre-wrap", padding: 10, borderRadius: 10, background: m.role === "user" ? "var(--accent-soft)" : "var(--card)", border: "1px solid var(--line)" }}>
         <strong>{m.role === "user" ? "🙂 " : "🤖 "}</strong>{m.content}</p>)}
-      {handoff && <p className="ok" style={{ margin: 0 }}>{t("ai.help.handoff")} <a href="/mensagens">{t("nav.messages")}</a></p>}
+      {handoff && <p className="ok" style={{ margin: 0 }}>{t("ai.help.handoff")}</p>}
       <form className="row" style={{ gap: 8, flexWrap: "nowrap" }} onSubmit={e => { e.preventDefault(); void ask(); }}>
-        <input value={q} onChange={e => setQ(e.target.value)} maxLength={600} placeholder={t("ai.help.ph")} aria-label={t("ai.help.title")} style={{ flex: 1 }} />
+        <input value={q} onChange={e => setQ(e.target.value)} maxLength={600} placeholder={t("ai.help.ph")} aria-label={title ?? t("ai.help.title")} style={{ flex: 1 }} />
         <button disabled={busy || q.trim().length < 2}>{busy ? "…" : t("ai.help.ask")}</button>
       </form>
       {err && <p className="error" role="alert" style={{ margin: 0 }}>{err}</p>}
       <small className="muted">{t("ai.help.note")}</small>
+      <div className="stack" style={{ gap: 4, borderTop: "1px solid var(--line)", paddingTop: 10 }}>
+        <button type="button" className={handoff ? "" : "secondary"} disabled={agentBusy || signedIn !== true} onClick={() => void agent()} style={{ justifySelf: "start" }}>{agentBusy ? t("sp.agent_working") : t("sp.agent")}</button>
+        <small className="muted">{t("sp.agent_note")}</small>
+      </div>
     </>}
   </section>;
 }

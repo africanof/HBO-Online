@@ -12,6 +12,7 @@ export default function Ajuda() {
     <Text style={ui.h1}>{t("sv.help_title")}</Text>
     <Text style={ui.text}>{t("sv.help_intro")}</Text>
     <Link href={"/seguranca" as any} style={ui.link}>{t("sv.help_safety_link")}</Link>
+    <Link href={"/suporte" as any} style={[ui.link, { fontWeight: "700" }]}>{t("sp.title")}</Link>
     <HelpAssistant />
     <FaqList items={faq} />
     <View style={ui.card}><Text style={ui.h2}>{t("sv.help_more")}</Text><Text style={ui.text}>{contact}</Text></View>

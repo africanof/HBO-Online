@@ -45,7 +45,7 @@ export function AdminMessages() {
 
   if (open) return <section className="stack">
     <button className="secondary" style={{ justifySelf: "start" }} onClick={() => { setOpen(null); setOk(""); setErr(""); }}>← {t("ad.msg.back")}</button>
-    <h2 style={{ margin: 0 }}>{open.subject || t("ls.conversation")}</h2>
+    <h2 style={{ margin: 0 }}>{open.context_type === "support" ? "🆘 " : ""}{open.subject || t("ls.conversation")}</h2>
     <p style={{ margin: 0 }}>{open.participants.map(p => `${p.name} (${p.role === "owner" ? t("ad.msg.owner") : t("ad.msg.starter")})`).join(" · ")}</p>
     {err && <p className="error" role="alert">{err}</p>}
     {ok && <p className="ok" role="status">{ok}</p>}
@@ -90,7 +90,7 @@ export function AdminMessages() {
     {err && <p className="error" role="alert">{err}</p>}
     {!list.length && <p>{t("ad.msg.none")}</p>}
     {list.map(c => <button key={c.conversation_id} className="card" style={{ textAlign: "left" }} onClick={() => setOpen(c)}>
-      <strong>{c.subject || t("ls.conversation")}</strong>
+      <strong>{c.context_type === "support" ? "🆘 " : ""}{c.subject || t("ls.conversation")}</strong>
       <span>{c.participants.map(p => p.name).join(" ↔ ")}</span>
       <small>{c.pending ? `⏳ ${t("ad.msg.pending_count", { n: c.pending })}` : `✓ ${t("ad.msg.all_handled")}`}{c.last_message_at ? " · " + formatDateIn(c.last_message_at, lang) : ""}</small>
     </button>)}

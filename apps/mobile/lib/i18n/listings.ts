@@ -486,7 +486,7 @@ export const DICT_LISTINGS: Dictionary = {
   "ai.help.title": { pt: "🤖 Pergunte ao assistente", en: "🤖 Ask the assistant", zh: "🤖 询问助手", fr: "🤖 Demander à l'assistant" },
   "ai.help.ph": { pt: "Ex.: Como ponho o meu anúncio em destaque?", en: "E.g. How do I feature my listing?", zh: "例如：如何置顶我的信息？", fr: "Ex. : Comment mettre mon annonce à la une ?" },
   "ai.help.ask": { pt: "Perguntar", en: "Ask", zh: "提问", fr: "Demander" },
-  "ai.help.handoff": { pt: "Para isto, fale com a equipa pelas Mensagens.", en: "For this, talk to the team through Messages.", zh: "此问题请通过消息联系团队。", fr: "Pour cela, parlez à l'équipe via Messages." },
+  "ai.help.handoff": { pt: "Para isto, é melhor falar com uma pessoa da equipa:", en: "For this, it is best to talk to a person from the team:", zh: "此问题最好与团队成员沟通：", fr: "Pour cela, mieux vaut parler à une personne de l'équipe :" },
   "ai.help.login": { pt: "Inicie sessão para perguntar ao assistente.", en: "Sign in to ask the assistant.", zh: "请登录后向助手提问。", fr: "Connectez-vous pour interroger l'assistant." },
   "ai.help.note": { pt: "Respostas automáticas com base na Ajuda e nos Termos. Pode enganar-se.", en: "Automatic answers based on Help and the Terms. It can make mistakes.", zh: "根据帮助和条款自动回答，可能会出错。", fr: "Réponses automatiques basées sur l'Aide et les Conditions. Elles peuvent contenir des erreurs." },
   "ai.staff.suggest": { pt: "🤖 Sugerir resposta", en: "🤖 Suggest reply", zh: "🤖 建议回复", fr: "🤖 Suggérer une réponse" },

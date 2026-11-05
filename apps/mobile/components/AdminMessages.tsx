@@ -47,7 +47,7 @@ export function AdminMessages() {
 
   if (open) return <View style={{ gap: 12 }}>
     <Button title={"← " + t("ad.msg.back")} variant="secondary" onPress={() => { setOpen(null); setOk(""); setErr(""); }} />
-    <Text style={ui.h2}>{open.subject || t("ad.tab.messages")}</Text>
+    <Text style={ui.h2}>{open.context_type === "support" ? "🆘 " : ""}{open.subject || t("ad.tab.messages")}</Text>
     <Text style={ui.muted}>{open.participants.map(p => `${p.name} (${roleLabel(p.role)})`).join(" · ")}</Text>
     <Message error={err} ok={ok} />
     {msgs.map(m => {
@@ -92,7 +92,7 @@ export function AdminMessages() {
     <Message error={err} />
     {!list.length && <Text style={ui.muted}>{t("ad.msg.none")}</Text>}
     {list.map(c => <View key={c.conversation_id} style={ui.card}>
-      <Text style={ui.h2}>{c.subject || t("ad.tab.messages")}</Text>
+      <Text style={ui.h2}>{c.context_type === "support" ? "🆘 " : ""}{c.subject || t("ad.tab.messages")}</Text>
       <Text style={ui.text}>{c.participants.map(p => p.name).join(" ↔ ")}</Text>
       <Text style={ui.muted}>{c.pending ? `⏳ ${t("ad.msg.pending_count", { n: c.pending })}` : `✓ ${t("ad.msg.all_handled")}`}{c.last_message_at ? " · " + formatDateTimeIn(c.last_message_at, lang) : ""}</Text>
       <Button title={t("ad.msg.open")} variant="secondary" onPress={() => setOpen(c)} />

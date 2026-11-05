@@ -92,3 +92,20 @@ export async function markMessageHandled(client: SupabaseClient, messageId: stri
 export function otherParticipant(c: Pick<MediatedConversation, "participants">, senderId: string): MediatedParticipant | null {
   return c.participants.find(p => p.user_id !== senderId) ?? null;
 }
+
+// ---------------------------------------------------------------------------------------------
+// Suporte: a IA responde primeiro; «Falar com um agente» abre uma conversa com a equipa nas Mensagens.
+export type SupportTurn = { role: "user" | "assistant"; content: string };
+/** Resumo da conversa com o assistente que segue para a equipa (as últimas trocas, até ~3 000 caracteres). */
+export function supportSummary(turns: SupportTurn[]): string {
+  const lines = turns.filter(x => x.content?.trim()).map(x => (x.role === "user" ? "🙂 " : "🤖 ") + x.content.trim().replace(/\s+/g, " "));
+  let out = "";
+  for (let i = lines.length - 1; i >= 0; i--) { const next = lines[i] + (out ? "\n" + out : ""); if (next.length > 3000) break; out = next; }
+  return out;
+}
+/** Abre (ou reutiliza) a conversa de suporte com a equipa e devolve o seu id. */
+export async function openSupportConversation(client: SupabaseClient, turns: SupportTurn[] = []): Promise<{ data: string | null; error: any }> {
+  const r = await client.rpc("open_support_conversation", { p_summary: supportSummary(turns) || null });
+  return { data: (r.data as string | null) ?? null, error: r.error };
+}
+export function isSupportConversation(x: { context_type?: string | null } | null | undefined): boolean { return x?.context_type === "support"; }
