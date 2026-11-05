@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * Comprovativos de pagamento lidos pela IA: a base de dados confere valor, conta de destino, data
  * e talões repetidos; a equipa confirma ou recusa (a IA nunca confirma sozinha).
  */
-export type ProofKind = "subscription" | "boost" | "promo_boost" | "event_fee" | "fuel_fee" | "venue_fee" | "commission" | "order" | "fuel_order" | "venue_order" | "import_order" | "import_research";
+export type ProofKind = "subscription" | "boost" | "promo_boost" | "event_fee" | "fuel_fee" | "venue_fee" | "commission" | "order" | "fuel_order" | "venue_order" | "import_order" | "import_research" | "item_inspection";
 export type ProofVerdict = "match" | "check" | "suspicious" | "unreadable" | "pending";
 export type ProofCheck = {
   kind: ProofKind; payment_id: string; label: string; amount: number; method: string | null; reference: string | null;
@@ -35,6 +35,7 @@ export function decideProofPayment(client: SupabaseClient, kind: ProofKind, id: 
     case "venue_order": return client.rpc("decide_venue_payment", { p_order_id: id, p_confirm: confirm, p_note: n });
     case "import_order": return client.rpc("decide_import_payment", { p_id: id, p_confirm: confirm, p_note: n });
     case "import_research": return client.rpc("decide_import_research", { p_id: id, p_confirm: confirm, p_note: n });
+    case "item_inspection": return client.rpc("decide_item_inspection_payment", { p_id: id, p_confirm: confirm, p_note: n });
     case "commission": return client.rpc("admin_update_commission", { p_id: id, p_action: confirm ? "confirm" : "reject", p_note: n, p_sale_amount: null });
   }
 }

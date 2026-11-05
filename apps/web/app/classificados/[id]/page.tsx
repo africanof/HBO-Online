@@ -21,6 +21,7 @@ import { AUCTIONABLE_TYPES, formatRef, categoryOf, isJobCategorySlug, trackListi
 import { SellerBadge } from "../../../components/Reputation";
 import { OfferBox, OffersList } from "../../../components/Offers";
 import { ProtectedBuyBox } from "../../../components/ProtectedBuy";
+import { ListingInspection } from "../../../components/ItemInspection";
 import { isExampleName } from "@huambo-online/core";
 
 export default function ClassifiedDetail() {
@@ -148,6 +149,7 @@ export default function ClassifiedDetail() {
         {item.status === "published" && <AuctionPanel listingId={id} uid={uid} mine={mine} canStart={["sale", "auction"].includes(item.purpose) && AUCTIONABLE_TYPES.includes(item.listing_type)} />}
         {!mine && item.status === "published" && ["rent", "lease"].includes(item.purpose) && <RentalRequestForm listingId={id} uid={uid} defaultPrice={item.price} />}
         {!mine && <ProtectedBuyBox item={item} uid={uid} isJob={!!job} />}
+        {item.purpose !== "wanted" && !job && <ListingInspection listingId={id} listingType={item.listing_type} mine={mine} uid={uid} />}
         <div className="actions">
           {mine ? <><a className="btn" href={`/classificados/${id}/editar`}>{t("ls.edit_listing")}</a><a className="btn secondary" href="/meus-anuncios">{t("ft.my_ads")}</a></> : <>
             {item.purpose === "wanted"

@@ -25,6 +25,7 @@ import { AdminSafeSpots } from "../../components/Safety";
 import { AdminAgents } from "../../components/Agents";
 import { AdminEvents, AdminTicketPayments } from "../../components/Events";
 import { AdminImports } from "../../components/Imports";
+import { AdminItemInspections } from "../../components/ItemInspection";
 import { AdminPromos } from "../../components/Promo";
 import { AdminFuel } from "../../components/Fuel";
 import { AdminVenues } from "../../components/Venues";
@@ -111,7 +112,7 @@ function AdminContent() {
     {tab === "fuel" && <AdminFuel />}
     {tab === "imports" && <AdminImports />}
     {tab === "venues" && <AdminVenues />}
-    {tab === "inspections" && <AdminInspections />}
+    {tab === "inspections" && <><AdminItemInspections /><AdminInspections /></>}
     {tab === "revenue" && <AdminRevenue />}
     {tab === "audit" && <AdminAudit />}
     {tab === "stats" && <JobQueueLine />}

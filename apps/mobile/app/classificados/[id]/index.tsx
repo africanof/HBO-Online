@@ -20,6 +20,7 @@ import { MarketLink } from "../../../components/MarketPicker";
 import { SellerBadge } from "../../../components/Reputation";
 import { OfferBox, OffersList } from "../../../components/Offers";
 import { ProtectedBuyBox } from "../../../components/ProtectedBuy";
+import { ListingInspection } from "../../../components/ItemInspection";
 import { isExampleName } from "@huambo-online/core";
 import { PhotoGallery } from "../../../components/PhotoGallery";
 import { DeliveryPolicyBox } from "../../../components/Delivery";
@@ -149,10 +150,12 @@ export default function ClassifiedDetail() {
     {mine ? <View style={{ gap: 10 }}>
       <Button title={t("ls.edit.title")} onPress={() => router.push(`/classificados/${id}/editar` as any)} />
       <Button title={t("more.my_listings")} variant="secondary" onPress={() => router.push("/meus-anuncios" as any)} />
+      {item.purpose !== "wanted" && !job && <ListingInspection listingId={id} listingType={item.listing_type} mine uid={uid} />}
       {item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} />}
     </View> : <View style={{ gap: 12 }}>
       {item.status === "published" && <SellerWhatsApp sellerId={item.owner_id} kind="listing" id={id} title={item.title} refCode={item.ref_no ? formatRef("listing", item.ref_no) : null} />}
       <ProtectedBuyBox item={item} uid={uid} isJob={!!job} />
+      {item.purpose !== "wanted" && !job && <ListingInspection listingId={id} listingType={item.listing_type} mine={false} uid={uid} />}
       {(can.offerMoney || can.offerTrade) && <OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} />}
       <Button title={savedId ? t("ls.detail.saved") : t("ls.detail.save")} variant="secondary" onPress={() => void toggleSaved()} disabled={busy} />
       <SafetyTipsBox />

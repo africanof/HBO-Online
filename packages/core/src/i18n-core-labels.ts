@@ -703,6 +703,8 @@ export const CORE_LABEL_ROWS: CoreRow[] = [
   ["⚖️ Ver devolução / reembolso →", "⚖️ See return / refund →", "⚖️ 查看退货 / 退款 →", "⚖️ Voir le retour / remboursement →"],
   ["🎬 Ver vídeo / live →", "🎬 See video / live stream →", "🎬 查看视频 / 直播 →", "🎬 Voir la vidéo / le direct →"],
   ["⛽ Ver o posto →", "⛽ See the station →", "⛽ 查看站点 →", "⛽ Voir la station →"],
+  ["🔍 Ver as minhas inspeções →", "🔍 See my inspections →", "🔍 查看我的检验 →", "🔍 Voir mes inspections →"],
+  ["✈️ Ver a importação →", "✈️ See the import →", "✈️ 查看进口代购 →", "✈️ Voir l'importation →"],
   ["⛽ Ver as minhas reservas →", "⛽ See my reservations →", "⛽ 查看我的预订 →", "⛽ Voir mes réservations →"],
   ["⛽ Gerir o posto →", "⛽ Manage the station →", "⛽ 管理站点 →", "⛽ Gérer la station →"],
   ["🏨 Gerir o estabelecimento →", "🏨 Manage the venue →", "🏨 管理商家 →", "🏨 Gérer l'établissement →"],
