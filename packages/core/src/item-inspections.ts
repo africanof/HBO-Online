@@ -83,6 +83,7 @@ export function itemInspectionAdminSteps(i: Pick<ItemInspection, "status" | "mod
 }
 
 export const ITEM_INSPECTION_DICT: Dictionary = {
+  "ad.tab.item_inspections": { pt: "🔍 Inspeção de artigos", en: "🔍 Item inspections", zh: "🔍 商品检验", fr: "🔍 Inspection d'articles" },
   "ii.badge": { pt: "🔍 Inspecionado pelo Huambo Online", en: "🔍 Inspected by Huambo Online", zh: "🔍 经 Huambo Online 检验", fr: "🔍 Inspecté par Huambo Online" },
   "ii.badge_when": { pt: "Inspecionado em {d} · válido até {v}", en: "Inspected on {d} · valid until {v}", zh: "检验于 {d} · 有效期至 {v}", fr: "Inspecté le {d} · valable jusqu'au {v}" },
   "ii.report": { pt: "Relatório da inspeção", en: "Inspection report", zh: "检验报告", fr: "Rapport d'inspection" },

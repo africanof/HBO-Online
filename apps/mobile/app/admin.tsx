@@ -35,8 +35,8 @@ import { AdminVenues } from "../components/Venues";
 import { AdminInspections } from "../components/Inspection";
 import { MfaPrompt, useMfaCheck } from "../components/Mfa";
 
-type Tab = "stats" | "proofs" | "provinces" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "imports" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
-const TABS: Tab[] = ["stats", "proofs", "provinces", "requests", "messages", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "imports", "inspections", "disputes", "verifications", "listings",
+type Tab = "stats" | "proofs" | "provinces" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "imports" | "item_inspections" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+const TABS: Tab[] = ["stats", "proofs", "provinces", "requests", "messages", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "imports", "item_inspections", "inspections", "disputes", "verifications", "listings",
   "users", "categories", "couriers", "markets", "audit"];
 
 export default function Admin() {
@@ -60,7 +60,7 @@ export default function Admin() {
   async function load(t: Tab) {
     setError("");
     if (t === "messages" || t === "requests") return;
-    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "disputes" || t === "plans" || t === "safety" || t === "agents" || t === "events" || t === "videos" || t === "fuel" || t === "venues" || t === "imports" || t === "inspections" || t === "revenue" || t === "protected") return;
+    if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "disputes" || t === "plans" || t === "safety" || t === "agents" || t === "events" || t === "videos" || t === "fuel" || t === "venues" || t === "imports" || t === "item_inspections" || t === "inspections" || t === "revenue" || t === "protected") return;
     const c = supabase();
     const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReportsV2(c, reportFilter || undefined)
       : t === "listings" ? await listListingsForModeration(c, "", listingQuery) : t === "users" ? await listUsersForAdmin(c, userQuery) : await listAllCategories(c);
@@ -109,7 +109,8 @@ export default function Admin() {
     {tab === "fuel" && <AdminFuel />}
     {tab === "imports" && <AdminImports />}
     {tab === "venues" && <AdminVenues />}
-    {tab === "inspections" && <><AdminItemInspections /><AdminInspections /></>}
+    {tab === "item_inspections" && <AdminItemInspections />}
+    {tab === "inspections" && <AdminInspections />}
     {tab === "audit" && <AdminAudit />}
     {tab === "stats" && <JobQueueLine />}
     {tab === "stats" && <TeamWhatsappSettings />}
