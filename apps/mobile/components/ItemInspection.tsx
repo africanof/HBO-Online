@@ -44,7 +44,7 @@ export function ListingInspection({ listingId, listingType, mine, uid }: { listi
   }
   const fee = fees ? formatPrice(fees[category]) : "";
   const canAsk = !!uid && !open && (mine ? !badge : !!orderId);
-  if (!badge && !canAsk && !open && !msg) return null;
+  const visitor = !mine && !orderId && !open && !msg;
   return <View style={ui.card}>
     {badge ? <>
       <Text style={[ui.label, { color: C.green }]}>{t("ii.badge")}</Text>
@@ -57,6 +57,7 @@ export function ListingInspection({ listingId, listingType, mine, uid }: { listi
       <Text style={ui.muted}>{t("ii.how." + category)}</Text>
       <Button title={t("ii.request", { fee })} variant="secondary" disabled={busy} onPress={() => void ask()} />
     </>}
+    {visitor && <><Text style={ui.text}>{t("ii.visitor_offer", { fee })}</Text><Text style={ui.muted}>{t("ii.how." + category)}</Text></>}
     {(!!open || !!msg) && <Text style={ui.link} onPress={() => router.push("/inspecoes" as any)}>{msg || t("ii.s." + open!.status)} · {t("ii.see_mine")} →</Text>}
     <Message error={err} />
   </View>;

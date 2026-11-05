@@ -38,7 +38,7 @@ export function ListingInspection({ listingId, listingType, mine, uid }: { listi
   }
   const fee = fees ? formatPrice(fees[category]) : "";
   const canAsk = uid && !open && (mine ? !badge : !!orderId);
-  if (!badge && !canAsk && !open && !msg) return null;
+  const visitor = !mine && !orderId && !open && !msg;
   return <section className="card stack" style={{ gap: 8 }}>
     {badge ? <>
       <strong className="verified" style={{ justifySelf: "start", fontSize: 16 }}>{t("ii.badge")}</strong>
@@ -53,6 +53,7 @@ export function ListingInspection({ listingId, listingType, mine, uid }: { listi
       <small className="muted">{t("ii.how." + category)}</small>
       <button type="button" className="secondary" disabled={busy} style={{ justifySelf: "start" }} onClick={() => void ask()}>{t("ii.request", { fee })}</button>
     </>}
+    {visitor && <><span>{t("ii.visitor_offer", { fee })}</span><small className="muted">{t("ii.how." + category)}</small></>}
     {(open || msg) && <span>{msg || t("ii.s." + open!.status)} · <a href="/inspecoes">{t("ii.see_mine")} →</a></span>}
     {err && <p className="error" role="alert" style={{ margin: 0 }}>{err}</p>}
   </section>;
