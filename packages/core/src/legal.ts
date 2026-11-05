@@ -6,7 +6,7 @@
 export type InfoSection = { title: string; paragraphs: string[] };
 export type InfoPage = { slug: string; title: string; intro: string; updated: string; sections: InfoSection[] };
 
-export const LEGAL_UPDATED = "2026-11-02";
+export const LEGAL_UPDATED = "2026-11-05";
 /** E-mail de contacto público (opcional). Sem e-mail, as páginas indicam a Conta e as Mensagens. */
 export function contactLine(email?: string | null): string {
   const e = (email ?? "").trim();
@@ -26,7 +26,8 @@ export function termsPage(email?: string | null): InfoPage {
       { title: "2. A sua conta", paragraphs: [
         "Deve ter pelo menos 18 anos, ou autorização de quem tem a sua responsabilidade.",
         "Os dados da conta devem ser verdadeiros. Guarde bem a sua palavra-passe: tudo o que for feito na sua conta é da sua responsabilidade.",
-        "Pode apagar a conta quando quiser (veja «Como apagar a minha conta»)."] },
+        "Pode apagar a conta quando quiser (veja «Como apagar a minha conta»).",
+        "Os outros utilizadores veem apenas o seu nome público: uma alcunha que escolhe ou o primeiro nome e a inicial do apelido. O nome completo, o e-mail e o telefone só são vistos pela equipa do Huambo Online (administradores e moderadores). O nome público não pode ter telefones, @, redes sociais nem o apelido completo, e é revisto também por IA."] },
       { title: "3. Anúncios, produtos e serviços", paragraphs: [
         "Só pode anunciar o que é seu ou o que tem autorização para vender, arrendar, trocar ou prestar.",
         "O título, o preço, as fotografias e a descrição devem corresponder à verdade. Indique se o preço é fixo, negociável, aberto a propostas, leilão ou troca.",
@@ -36,31 +37,47 @@ export function termsPage(email?: string | null): InfoPage {
       { title: "4. Propostas, leilões, trocas e encomendas", paragraphs: [
         "Uma proposta aceite, um lance vencedor ou uma encomenda confirmada é um compromisso entre as duas pessoas. Cumpra o que combinou.",
         "Pode retirar uma proposta enquanto não tiver resposta. Um lance só pode ser retirado com motivo, se faltarem mais de 12 horas para o fim do leilão ou se foi feito há menos de 1 hora; quem retira lances muitas vezes pode ser impedido de licitar.",
-        "Nunca pague adiantado a quem não conhece. Prefira encontrar-se num local público, ver o artigo e pagar na entrega.",
+        "Pague sempre pelo Huambo Online (pagamento protegido) e nunca diretamente ao vendedor. Para entregas em mão, encontre-se num lugar público e movimentado e veja o artigo antes de confirmar a receção.",
         "Nas encomendas da Loja, o comprador pode pedir devolução, reembolso ou troca até 14 dias depois da entrega, e o vendedor deve responder. Veja «Devoluções e reembolsos»."] },
-      { title: "5. Mensalidades e comissões", paragraphs: [
+      { title: "5. Mensagens e contactos", paragraphs: [
+        "As conversas fazem-se pelas Mensagens do Huambo Online. É proibido trocar contactos nas mensagens (telefones, e-mails, WhatsApp, redes sociais, ligações, contas bancárias, IBAN ou referências de pagamento) e combinar negócios ou pagamentos fora da plataforma.",
+        "As mensagens são verificadas automaticamente, também com inteligência artificial. Uma mensagem com contactos não é entregue; quem insistir fica 24 horas sem poder enviar mensagens, e casos repetidos podem levar à suspensão da conta.",
+        "Fotografias, documentos e outros anexos passam pela equipa antes de chegarem à outra pessoa. Para evitar burlas e resolver disputas, a equipa pode ler as conversas.",
+        "Na conversa de suporte com a equipa pode dar o seu telefone à equipa; esse contacto não é mostrado a outros utilizadores."] },
+      { title: "6. Mensalidades e comissões", paragraphs: [
         "Os perfis de profissionais e de empresas têm um mês grátis. Depois, pagam uma mensalidade à plataforma: 2 000 Kz por mês para profissionais e 5 000 Kz por mês para empresas (os valores em vigor aparecem em «O meu plano»).",
         "O pagamento é feito por transferência bancária ou Multicaixa Express, com a referência ou o comprovativo, e fica válido quando a administração o confirma.",
         "As Lojas (produtos vendidos na Loja sem empresa) seguem o mesmo critério das empresas: um mês grátis e depois 5 000 Kz por mês. Os produtos de uma empresa ficam cobertos pela mensalidade dessa empresa.",
         "Sem mês grátis nem pagamento em dia, o perfil ou a Loja deixa de aparecer aos clientes, mas não é apagado. Volta a aparecer quando o pagamento é confirmado.",
         "Anúncios classificados não pagam mensalidade: quando um artigo é vendido (incluindo leilões), o vendedor paga à plataforma uma comissão de 5% do valor da venda, no prazo de 7 dias. O mesmo vale para o aluguer de bens móveis (viaturas, máquinas, etc.): 5% do valor indicado ao marcar «Arrendado», ou do valor total de um pedido de aluguer aceite. O arrendamento e o aluguer de imóveis são grátis: não pagam comissão. Com comissões em atraso não se podem publicar anúncios novos.",
         "Destaques (opcional): o vendedor pode pagar para o anúncio aparecer no topo das listas, com o selo «⭐ Destaque», durante o número de dias indicado (500 Kz por 7 dias, salvo outro valor anunciado). O destaque começa quando a administração confirma o pagamento e termina sozinho no fim do prazo. Não garante a venda."] },
-      { title: "6. Pagamento protegido", paragraphs: [
+      { title: "7. Pagamento protegido", paragraphs: [
         "Todas as compras no Huambo Online — Loja, classificados, imóveis, viaturas, alugueres, propostas, leilões, serviços, bilhetes de eventos, combustível e gás, e reservas em hotéis e restaurantes — são feitas com o «Pagamento protegido». Paga ao Huambo Online, que guarda o dinheiro e só o entrega ao vendedor depois de o comprador confirmar que recebeu. Não pague diretamente ao vendedor: fora do Huambo Online o pagamento não fica protegido.",
         "Se o comprador não confirmar nem reclamar dentro do prazo indicado depois da entrega (3 dias, salvo outro valor anunciado), o dinheiro é entregue ao vendedor. Um pedido de devolução ou reembolso aberto a tempo congela o dinheiro até ser resolvido.",
         "Encomendas protegidas que não são pagas dentro do prazo indicado (48 horas, salvo outro valor anunciado) são canceladas. Os reembolsos de dinheiro ainda guardado são feitos pelo Huambo Online, para o IBAN ou o número Multicaixa Express indicado pelo comprador.",
         "O vendedor recebe as vendas libertadas no seu saldo e pede o levantamento para a sua conta. Os levantamentos são pagos por transferência nos dias anunciados em «O meu saldo». Se houver comissão sobre o pagamento protegido, é mostrada antes de vender e descontada no saldo.",
         "O Huambo Online atua apenas como intermediário tecnológico e de pagamento: não é o vendedor dos produtos nem responde pela sua qualidade, mas segue as regras de devolução descritas em «Devoluções e reembolsos»."] },
-      { title: "7. Avaliações e denúncias", paragraphs: [
+      { title: "8. Importação (compras no exterior)", paragraphs: [
+        "Em «Importação», a equipa do Huambo Online procura, compra e traz produtos do exterior a pedido do cliente.",
+        "Cada pedido paga uma taxa de pesquisa e orçamento, mostrada antes de enviar. Se aceitar o orçamento, a taxa é descontada no total; não é devolvida se desistir ou se o produto não for encontrado.",
+        "O orçamento indica o preço final (produto, transporte, alfândega e serviço) e o prazo, e é válido 7 dias. O pagamento só é feito depois de aceitar. Se não for possível comprar o produto, o valor pago pelo produto é devolvido. Os prazos de transporte e de alfândega podem variar."] },
+      { title: "9. Inspeção de artigos", paragraphs: [
+        "A pedido do vendedor ou do comprador, a equipa do Huambo Online pode inspecionar um artigo: eletrónicos (hardware e software), viaturas (mecânica e documentos) e imóveis (situação física e legal). No fim, a equipa entrega o artigo ou acompanha a transferência de propriedade.",
+        "A taxa de inspeção aparece no anúncio, paga a deslocação e o trabalho, e não é devolvida em nenhum caso, mesmo que o artigo não seja aprovado ou o negócio não se concretize.",
+        "Se a inspeção pedida pelo comprador não aprovar o artigo, devolve-se o valor da compra (sem a taxa de inspeção). O selo «🔍 Inspecionado pelo Huambo Online» descreve o estado do artigo no dia da inspeção e vale 90 dias; não é uma garantia de funcionamento futuro."] },
+      { title: "10. Inteligência artificial e suporte", paragraphs: [
+        "Algumas funções usam inteligência artificial: preencher pela fotografia, melhorar o texto, pesquisa inteligente, tradução, verificação de mensagens e de comprovativos, e o assistente da Ajuda. A IA pode enganar-se: reveja sempre o que ela propõe. Há limites de uso por dia.",
+        "No suporte, o assistente responde primeiro. A qualquer momento pode carregar em «👤 Falar com um agente» para falar com uma pessoa da equipa nas Mensagens. As respostas do assistente não substituem as decisões da equipa nem estes termos."] },
+      { title: "11. Avaliações e denúncias", paragraphs: [
         "Só quem fez negócio pode avaliar. As avaliações devem ser honestas e sem insultos.",
         "Se vir algo errado, use «Denunciar». A administração analisa as denúncias e pode retirar conteúdos."] },
-      { title: "8. Verificação de perfis", paragraphs: [
+      { title: "12. Verificação de perfis", paragraphs: [
         "O selo «Verificado» quer dizer que a administração viu um documento. Não é uma garantia sobre a pessoa nem sobre o negócio: continue a ter cuidado."] },
-      { title: "9. Responsabilidade", paragraphs: [
+      { title: "13. Responsabilidade", paragraphs: [
         "O Huambo Online faz o possível para manter o serviço a funcionar e seguro, mas não garante que esteja sempre disponível nem responde pelos negócios feitos entre utilizadores.",
         "Estes termos podem mudar. Quando mudarem, a data no topo é atualizada."] },
-      { title: "10. Contacto", paragraphs: [contactLine(email)] }
-    ]
+      { title: "14. Contacto", paragraphs: [contactLine(email)] }
+        ]
   };
 }
 

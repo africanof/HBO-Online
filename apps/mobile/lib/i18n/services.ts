@@ -1148,7 +1148,8 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
         { title: "2. Your account", paragraphs: [
           "You must be at least 18 years old, or have permission from the person responsible for you.",
           "Your account details must be true. Keep your password safe: everything done in your account is your responsibility.",
-          "You can delete your account whenever you want (see “How to delete my account”)."] },
+          "You can delete your account whenever you want (see “How to delete my account”).",
+          "Other users only see your public name: a nickname you choose, or your first name and the initial of your surname. Your full name, email and phone are only seen by the Huambo Online team (administrators and moderators). The public name may not contain phone numbers, @, social media or your full surname, and it is also reviewed by AI."] },
         { title: "3. Listings, products and services", paragraphs: [
           "You may only advertise what is yours or what you are authorised to sell, rent, trade or provide.",
           "The title, price, photos and description must be truthful. State whether the price is fixed, negotiable, open to offers, an auction or a trade.",
@@ -1158,31 +1159,47 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
         { title: "4. Offers, auctions, trades and orders", paragraphs: [
           "An accepted offer, a winning bid or a confirmed order is a commitment between the two people. Keep your word.",
           "You can withdraw an offer while it has no answer. A bid can only be withdrawn with a reason, if there are more than 12 hours left in the auction or if it was placed less than 1 hour ago; people who withdraw bids often may be blocked from bidding.",
-          "Never pay in advance to someone you don't know. Prefer meeting in a public place, seeing the item and paying on delivery.",
+          "Always pay through Huambo Online (protected payment) and never directly to the seller. For hand-to-hand deliveries, meet in a busy public place and check the item before confirming receipt.",
           "For Shop orders, the buyer can request a return, refund or exchange up to 14 days after delivery, and the seller must respond. See “Returns and refunds”."] },
-        { title: "5. Monthly fees and commissions", paragraphs: [
+        { title: "5. Messages and contacts", paragraphs: [
+          "Conversations take place in Huambo Online Messages. It is forbidden to exchange contacts in messages (phone numbers, emails, WhatsApp, social media, links, bank accounts, IBAN or payment references) or to arrange deals or payments outside the platform.",
+          "Messages are checked automatically, including with artificial intelligence. A message with contacts is not delivered; anyone who insists cannot send messages for 24 hours, and repeated cases may lead to account suspension.",
+          "Photos, documents and other attachments go through the team before reaching the other person. To prevent scams and settle disputes, the team may read conversations.",
+          "In the support conversation with the team you may give your phone number to the team; that contact is not shown to other users."] },
+        { title: "6. Monthly fees and commissions", paragraphs: [
           "Professional and business profiles get one free month. After that, they pay a monthly fee to the platform: 2,000 Kz per month for professionals and 5,000 Kz per month for businesses (the current amounts appear under “My plan”).",
           "Payment is made by bank transfer or Multicaixa Express, with the reference or the receipt, and becomes valid once the admins confirm it.",
           "Shops (products sold in the Shop without a business) follow the same rule as businesses: one free month and then 5,000 Kz per month. A business's products are covered by that business's monthly fee.",
           "Without a free month or an up-to-date payment, the profile or Shop stops being shown to customers, but it is not deleted. It reappears when the payment is confirmed.",
           "Classified listings don't pay a monthly fee: when an item is sold (including auctions), the seller pays the platform a commission of 5% of the sale value within 7 days. The same applies to renting out movable goods (vehicles, machinery, etc.): 5% of the amount entered when marking “Rented”, or of the total amount of an accepted rental request. Renting out and leasing property is free: no commission. With overdue commissions, new listings can't be published.",
           "Featured listings (optional): the seller can pay for the listing to appear at the top of the lists, with the “⭐ Featured” badge, for the stated number of days (500 Kz for 7 days, unless another amount is announced). The feature starts when the admins confirm the payment and ends on its own at the end of the period. It does not guarantee a sale."] },
-        { title: "6. Protected payment", paragraphs: [
-          "When available, you can choose “Protected payment” for Shop purchases. You pay Huambo Online, which holds the money and only releases it to the seller after the buyer confirms they received the order.",
+        { title: "7. Protected payment", paragraphs: [
+          "All purchases on Huambo Online — Shop, classifieds, property, vehicles, rentals, offers, auctions, services, event tickets, fuel and gas, and hotel and restaurant bookings — are made with «Protected payment». You pay Huambo Online, which holds the money and only hands it to the seller after the buyer confirms they received it. Do not pay the seller directly: outside Huambo Online the payment is not protected.",
           "If the buyer neither confirms nor complains within the stated period after delivery (3 days, unless another period is announced), the money is released to the seller. A return or refund request opened in time freezes the money until it is resolved.",
           "Protected orders that are not paid within the stated period (48 hours, unless another period is announced) are cancelled. Refunds of money still being held are made by Huambo Online, to the IBAN or Multicaixa Express number given by the buyer.",
           "The seller receives released sales in their balance and requests a withdrawal to their account. Withdrawals are paid by transfer on the days announced under “My balance”. If there is a commission on protected payment, it is shown before selling and deducted from the balance.",
           "Huambo Online acts only as a technology and payment intermediary: it is not the seller of the products and is not responsible for their quality, but it follows the return rules described in “Returns and refunds”."] },
-        { title: "7. Reviews and reports", paragraphs: [
+        { title: "8. Imports (buying abroad)", paragraphs: [
+          "In «Imports», the Huambo Online team searches for, buys and brings products from abroad at the client's request.",
+          "Each request pays a search and quote fee, shown before sending. If you accept the quote, the fee is deducted from the total; it is not refunded if you give up or the product is not found.",
+          "The quote states the final price (product, shipping, customs and service) and the deadline, and is valid for 7 days. Payment is only made after you accept. If the product cannot be bought, the amount paid for the product is refunded. Shipping and customs times may vary."] },
+        { title: "9. Item inspection", paragraphs: [
+          "At the seller's or buyer's request, the Huambo Online team can inspect an item: electronics (hardware and software), vehicles (mechanics and documents) and property (physical and legal situation). At the end, the team hands over the item or follows the transfer of ownership.",
+          "The inspection fee is shown on the listing, pays for travel and work, and is not refunded in any case, even if the item is not approved or the deal does not go ahead.",
+          "If an inspection requested by the buyer does not approve the item, the purchase amount is refunded (without the inspection fee). The «🔍 Inspected by Huambo Online» badge describes the item's condition on the day of the inspection and is valid for 90 days; it is not a guarantee of future working order."] },
+        { title: "10. Artificial intelligence and support", paragraphs: [
+          "Some features use artificial intelligence: fill in from photo, improve text, smart search, translation, checking messages and payment receipts, and the Help assistant. AI can make mistakes: always review what it suggests. There are daily usage limits.",
+          "In support, the assistant answers first. At any time you can tap «👤 Talk to an agent» to talk to a person from the team in Messages. The assistant's answers do not replace the team's decisions or these terms."] },
+        { title: "11. Reviews and reports", paragraphs: [
           "Only people who made a deal can leave a review. Reviews must be honest and free of insults.",
           "If you see something wrong, use “Report”. The admins review reports and may remove content."] },
-        { title: "8. Profile verification", paragraphs: [
+        { title: "12. Profile verification", paragraphs: [
           "The “Verified” badge means the admins have seen a document. It is not a guarantee about the person or the business: keep being careful."] },
-        { title: "9. Liability", paragraphs: [
+        { title: "13. Liability", paragraphs: [
           "Huambo Online does its best to keep the service running and safe, but does not guarantee it will always be available and is not responsible for deals made between users.",
           "These terms may change. When they do, the date at the top is updated."] },
-        { title: "10. Contact", paragraphs: ["{contact}"] }
-      ]
+        { title: "14. Contact", paragraphs: ["{contact}"] }
+            ]
     },
     zh: {
       title: "使用条款",
@@ -1194,7 +1211,8 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
         { title: "2. 您的账户", paragraphs: [
           "您必须年满 18 岁，或获得监护人的许可。",
           "账户资料必须真实。请妥善保管您的密码：在您账户中进行的一切操作均由您负责。",
-          "您可以随时删除账户（参见“如何删除我的账户”）。"] },
+          "您可以随时删除账户（参见“如何删除我的账户”）。",
+          "其他用户只能看到您的公开名称：您自选的昵称，或您的名字加姓氏首字母。您的全名、电子邮件和电话只有 Huambo Online 团队（管理员和版主）可以看到。公开名称不得包含电话、@、社交网络或完整姓氏，并且也会由 AI 审核。"] },
         { title: "3. 信息、商品和服务", paragraphs: [
           "您只能发布属于您的物品，或您有权出售、出租、交换或提供的物品与服务。",
           "标题、价格、照片和描述必须真实。请注明价格是固定、可议价、接受报价、拍卖还是交换。",
@@ -1204,118 +1222,114 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
         { title: "4. 报价、拍卖、交换和订单", paragraphs: [
           "被接受的报价、中标的出价或已确认的订单是双方之间的承诺。请遵守约定。",
           "在报价尚未得到答复前，您可以撤回报价。出价只有在说明理由，且距拍卖结束超过 12 小时或出价不到 1 小时的情况下才能撤回；经常撤回出价的人可能被禁止参与竞拍。",
-          "切勿向不认识的人预先付款。最好在公共场所见面，查看物品后当面付款。",
+          "请始终通过 Huambo Online 付款（受保护付款），切勿直接付款给卖家。当面交付时，请在人多的公共场所见面，并在确认收货前检查物品。",
           "对于商店订单，买方可在收货后 14 天内申请退货、退款或换货，卖方必须答复。参见“退货和退款”。"] },
-        { title: "5. 月费和佣金", paragraphs: [
+        { title: "5. 消息与联系方式", paragraphs: [
+          "对话通过 Huambo Online 消息进行。禁止在消息中交换联系方式（电话、电子邮件、WhatsApp、社交网络、链接、银行账户、IBAN 或付款参考号），也禁止在平台之外约定交易或付款。",
+          "消息会被自动检查，包括使用人工智能。含有联系方式的消息不会被送达；坚持发送者将在 24 小时内无法发送消息，屡次违规可能导致账户被停用。",
+          "照片、文件和其他附件会先经过团队审核，再送达对方。为防范诈骗和解决纠纷，团队可以查看对话。",
+          "在与团队的客服对话中，您可以把电话号码告诉团队；该联系方式不会向其他用户显示。"] },
+        { title: "6. 月费和佣金", paragraphs: [
           "专业人士和企业资料可免费使用一个月。之后需向平台支付月费：专业人士每月 2 000 Kz，企业每月 5 000 Kz（现行金额见“我的套餐”）。",
           "付款可通过银行转账或 Multicaixa Express 完成，需附上参考号或凭证，经管理员确认后生效。",
           "商店（不属于企业、在商店中销售的商品）与企业规则相同：免费一个月，之后每月 5 000 Kz。企业的商品包含在该企业的月费中。",
           "如果没有免费月且未按时付款，资料或商店将不再向客户显示，但不会被删除。付款确认后会重新显示。",
           "分类信息无需支付月费：物品售出（包括拍卖）时，卖家须在7天内向平台支付成交金额5%的佣金。动产（车辆、机械等）出租同样适用：按标记“已出租”时填写的金额或已接受租赁请求的总金额收取5%。房产出租免费，不收佣金。有逾期佣金时不能发布新信息。",
           "置顶（可选）：卖方可以付费让信息在列表顶部显示，并带有“⭐ 精选”标志，持续所示天数（7 天 500 Kz，另有公告的除外）。置顶在管理员确认付款后开始，到期自动结束。置顶不保证售出。"] },
-        { title: "6. 担保付款", paragraphs: [
-          "在可用时，您可以在商店购物时选择“担保付款”。您将款项付给 Huambo Online，平台代为保管，买方确认收货后才转给卖方。",
+        { title: "7. 担保付款", paragraphs: [
+          "在 Huambo Online 上的所有购买——商店、分类信息、房产、车辆、租赁、出价、拍卖、服务、活动门票、燃油和燃气，以及酒店和餐厅预订——都使用「受保护付款」。您付款给 Huambo Online，平台保管这笔钱，只有在买家确认收到后才交给卖家。请勿直接付款给卖家：在 Huambo Online 之外付款不受保护。",
           "如果买方在收货后的规定期限内（3 天，另有公告的除外）既未确认也未投诉，款项将转给卖方。及时提出的退货或退款申请会冻结款项，直至问题解决。",
           "未在规定期限内（48 小时，另有公告的除外）付款的担保订单将被取消。仍由平台保管的款项由 Huambo Online 退还至买方提供的 IBAN 或 Multicaixa Express 号码。",
           "卖方在余额中收到已放款的销售款，并申请提现到自己的账户。提现在“我的余额”中公布的日期通过转账支付。如担保付款收取佣金，会在销售前显示并从余额中扣除。",
           "Huambo Online 仅作为技术和支付中介：它不是商品的卖方，也不对商品质量负责，但会遵守“退货和退款”中所述的退货规则。"] },
-        { title: "7. 评价和举报", paragraphs: [
+        { title: "8. 进口代购（海外购买）", paragraphs: [
+          "在「进口代购」中，Huambo Online 团队应客户要求在海外查找、购买并运回商品。",
+          "每个请求需支付查询和报价费，发送前会显示金额。如果您接受报价，该费用会从总额中扣除；如果您放弃或找不到商品，该费用不予退还。",
+          "报价会注明最终价格（商品、运输、海关和服务）及期限，有效期 7 天。只有在您接受后才需付款。如果无法购买商品，将退还为商品支付的金额。运输和清关时间可能会有变化。"] },
+        { title: "9. 物品检验", paragraphs: [
+          "应卖家或买家要求，Huambo Online 团队可以检验物品：电子产品（硬件和软件）、车辆（机械和证件）以及房产（实际状况和法律状况）。最后，团队会交付物品或协助办理产权转移。",
+          "检验费显示在信息中，用于支付出行和工作费用，在任何情况下均不退还，即使物品未通过检验或交易未达成。",
+          "如果买家申请的检验未通过，将退还购买金额（不含检验费）。「🔍 经 Huambo Online 检验」标志描述的是检验当天的物品状况，有效期 90 天；它不保证物品今后正常使用。"] },
+        { title: "10. 人工智能与客服", paragraphs: [
+          "部分功能使用人工智能：用照片填写、优化文字、智能搜索、翻译、检查消息和付款凭证，以及帮助助手。AI 可能会出错：请始终检查它的建议。每天有使用次数限制。",
+          "在客服中，助手会先回答。您可以随时点击「👤 与客服人员交谈」，在消息中与团队成员沟通。助手的回答不能取代团队的决定，也不能取代本条款。"] },
+        { title: "11. 评价和举报", paragraphs: [
           "只有完成交易的人才能评价。评价必须诚实，不得含有侮辱。",
           "如果发现问题，请使用“举报”。管理员会审核举报，并可能删除相关内容。"] },
-        { title: "8. 资料认证", paragraphs: [
+        { title: "12. 资料认证", paragraphs: [
           "“已认证”标志表示管理员看过一份证件。这并不是对个人或业务的担保：请继续保持谨慎。"] },
-        { title: "9. 责任", paragraphs: [
+        { title: "13. 责任", paragraphs: [
           "Huambo Online 尽力保持服务正常、安全地运行，但不保证服务始终可用，也不对用户之间的交易负责。",
           "这些条款可能会变更。变更时，顶部的日期会更新。"] },
-        { title: "10. 联系方式", paragraphs: ["{contact}"] }
-      ]
+        { title: "14. 联系方式", paragraphs: ["{contact}"] }
+            ]
     },
     fr: {
       "title": "Conditions d'utilisation",
       "intro": "Ces règles s'appliquent au Site et à l'APP Huambo Online. En créant un compte ou en utilisant le service, vous acceptez ces conditions.",
       "sections": [
-        {
-          "title": "1. Ce qu'est Huambo Online",
-          "paragraphs": [
-            "Un endroit pour acheter, vendre, échanger et louer, trouver des professionnels et des entreprises, et demander des services au Huambo et dans tout l'Angola.",
-            "Huambo Online met les gens en relation. Les affaires se concluent entre l'acheteur et le vendeur (ou le client et le professionnel), qui sont responsables de ce qu'ils conviennent."
-          ]
-        },
-        {
-          "title": "2. Votre compte",
-          "paragraphs": [
-            "Vous devez avoir au moins 18 ans, ou l'autorisation de la personne qui est responsable de vous.",
-            "Les données de votre compte doivent être vraies. Gardez votre mot de passe en sécurité : tout ce qui est fait avec votre compte relève de votre responsabilité.",
-            "Vous pouvez supprimer votre compte quand vous voulez (voir « Comment supprimer mon compte »)."
-          ]
-        },
-        {
-          "title": "3. Annonces, produits et services",
-          "paragraphs": [
-            "Vous ne pouvez annoncer que ce qui vous appartient ou ce que vous êtes autorisé à vendre, louer, échanger ou fournir.",
-            "Le titre, le prix, les photos et la description doivent être vrais. Indiquez si le prix est fixe, négociable, ouvert aux offres, aux enchères ou en échange.",
-            "Garantie de conformité : en publiant, vous déclarez que l'annonce décrit l'article de façon vraie et complète, défauts et éléments manquants compris. Si quelque chose a été omis ou est faux, la personne qui a acheté ou loué a droit à un échange, un retour avec remboursement, ou un remboursement (total ou partiel). Les réclamations peuvent être faites jusqu'à 7 jours après l'affaire, dans « Retours et remboursements » ; le propriétaire répond dans les 3 jours et, s'il refuse ou ne répond pas, l'administration tranche. Quiconque ne respecte pas la décision peut voir son compte suspendu.",
-            "Il est interdit d'annoncer : armes, drogues, médicaments non autorisés, animaux protégés, biens volés ou contrefaits, documents, contenu sexuel, et tout ce qui est interdit par la loi angolaise.",
-            "L'administration peut masquer ou retirer les annonces, produits et profils qui ne respectent pas ces règles, et suspendre des comptes."
-          ]
-        },
-        {
-          "title": "4. Offres, enchères, échanges et commandes",
-          "paragraphs": [
-            "Une offre acceptée, une enchère gagnante ou une commande confirmée est un engagement entre les deux personnes. Faites ce qui a été convenu.",
-            "Vous pouvez retirer une offre tant qu'elle n'a pas de réponse. Une enchère ne peut être retirée qu'avec un motif, s'il reste plus de 12 heures à la vente ou si elle a été placée il y a moins d'1 heure ; les personnes qui retirent souvent des enchères peuvent être empêchées d'enchérir.",
-            "Ne payez jamais d'avance quelqu'un que vous ne connaissez pas. Préférez un rendez-vous dans un lieu public, voir l'article et payer à la remise.",
-            "Pour les commandes de la Boutique, l'acheteur peut demander un retour, un remboursement ou un échange jusqu'à 14 jours après la livraison, et le vendeur doit répondre. Voir « Retours et remboursements »."
-          ]
-        },
-        {
-          "title": "5. Mensualités et commissions",
-          "paragraphs": [
-            "Les profils de professionnels et d'entreprises ont un mois gratuit. Ensuite, ils paient une mensualité à la plateforme : 2 000 Kz par mois pour les professionnels et 5 000 Kz par mois pour les entreprises (les montants en vigueur apparaissent dans « Mon forfait »).",
-            "Le paiement se fait par virement bancaire ou Multicaixa Express, avec la référence ou le justificatif, et devient valable quand l'administration le confirme.",
-            "Les Boutiques (produits vendus dans la Boutique sans entreprise) suivent la même règle que les entreprises : un mois gratuit puis 5 000 Kz par mois. Les produits d'une entreprise sont couverts par la mensualité de cette entreprise.",
-            "Sans mois gratuit ni paiement à jour, le profil ou la Boutique n'est plus montré aux clients, mais n'est pas supprimé. Il réapparaît quand le paiement est confirmé.",
-            "Les petites annonces ne paient pas de mensualité : quand un article est vendu (enchères comprises), le vendeur paie à la plateforme une commission de 5 % du montant de la vente dans les 7 jours. Il en va de même pour la location de biens meubles (véhicules, machines, etc.) : 5 % du montant indiqué en marquant « Loué », ou du montant total d'une demande de location acceptée. La location et le bail de biens immobiliers sont gratuits : aucune commission. Avec des commissions en retard, il n'est pas possible de publier de nouvelles annonces.",
-            "Mise à la une (facultative) : le vendeur peut payer pour que l'annonce apparaisse en haut des listes, avec le badge « ⭐ À la une », pendant le nombre de jours indiqué (500 Kz pour 7 jours, sauf autre montant annoncé). La mise à la une commence quand l'administration confirme le paiement et se termine d'elle-même à la fin de la période. Elle ne garantit pas la vente."
-          ]
-        },
-        {
-          "title": "6. Paiement protégé",
-          "paragraphs": [
-            "Quand il est disponible, vous pouvez choisir le « Paiement protégé » pour les achats dans la Boutique. Vous payez Huambo Online, qui retient l'argent et ne le débloque au vendeur qu'après que l'acheteur a confirmé avoir reçu la commande.",
-            "Si l'acheteur ne confirme pas et ne se plaint pas dans le délai indiqué après la livraison (3 jours, sauf autre délai annoncé), l'argent est débloqué au vendeur. Une demande de retour ou de remboursement ouverte à temps gèle l'argent jusqu'à sa résolution.",
-            "Les commandes protégées qui ne sont pas payées dans le délai indiqué (48 heures, sauf autre délai annoncé) sont annulées. Les remboursements de l'argent encore retenu sont effectués par Huambo Online, sur l'IBAN ou le numéro Multicaixa Express indiqué par l'acheteur.",
-            "Le vendeur reçoit les ventes débloquées dans son solde et demande un retrait vers son compte. Les retraits sont payés par virement les jours annoncés dans « Mon solde ». S'il y a une commission sur le paiement protégé, elle est indiquée avant la vente et déduite du solde.",
-            "Huambo Online agit uniquement comme intermédiaire technologique et de paiement : il n'est pas le vendeur des produits et n'est pas responsable de leur qualité, mais il applique les règles de retour décrites dans « Retours et remboursements »."
-          ]
-        },
-        {
-          "title": "7. Évaluations et signalements",
-          "paragraphs": [
-            "Seules les personnes qui ont fait affaire peuvent laisser une évaluation. Les évaluations doivent être honnêtes et sans insultes.",
-            "Si vous voyez quelque chose d'anormal, utilisez « Signaler ». L'administration examine les signalements et peut retirer des contenus."
-          ]
-        },
-        {
-          "title": "8. Vérification du profil",
-          "paragraphs": [
-            "Le badge « Vérifié » signifie que l'administration a vu un document. Ce n'est pas une garantie sur la personne ou l'entreprise : restez prudent."
-          ]
-        },
-        {
-          "title": "9. Responsabilité",
-          "paragraphs": [
-            "Huambo Online fait de son mieux pour que le service fonctionne et soit sûr, mais ne garantit pas qu'il sera toujours disponible et n'est pas responsable des affaires conclues entre utilisateurs.",
-            "Ces conditions peuvent changer. Dans ce cas, la date en haut de la page est mise à jour."
-          ]
-        },
-        {
-          "title": "10. Contact",
-          "paragraphs": [
+        { title: "1. Ce qu'est Huambo Online", paragraphs: [
+          "Un endroit pour acheter, vendre, échanger et louer, trouver des professionnels et des entreprises, et demander des services au Huambo et dans tout l'Angola.",
+          "Huambo Online met les gens en relation. Les affaires se concluent entre l'acheteur et le vendeur (ou le client et le professionnel), qui sont responsables de ce qu'ils conviennent."] },
+        { title: "2. Votre compte", paragraphs: [
+          "Vous devez avoir au moins 18 ans, ou l'autorisation de la personne qui est responsable de vous.",
+          "Les données de votre compte doivent être vraies. Gardez votre mot de passe en sécurité : tout ce qui est fait avec votre compte relève de votre responsabilité.",
+          "Vous pouvez supprimer votre compte quand vous voulez (voir « Comment supprimer mon compte »).",
+          "Les autres utilisateurs ne voient que votre nom public : un pseudo que vous choisissez, ou votre prénom et l'initiale de votre nom de famille. Votre nom complet, votre e-mail et votre téléphone ne sont vus que par l'équipe Huambo Online (administrateurs et modérateurs). Le nom public ne peut contenir ni téléphone, ni @, ni réseaux sociaux, ni votre nom de famille complet, et il est aussi vérifié par l'IA."] },
+        { title: "3. Annonces, produits et services", paragraphs: [
+          "Vous ne pouvez annoncer que ce qui vous appartient ou ce que vous êtes autorisé à vendre, louer, échanger ou fournir.",
+          "Le titre, le prix, les photos et la description doivent être vrais. Indiquez si le prix est fixe, négociable, ouvert aux offres, aux enchères ou en échange.",
+          "Garantie de conformité : en publiant, vous déclarez que l'annonce décrit l'article de façon vraie et complète, défauts et éléments manquants compris. Si quelque chose a été omis ou est faux, la personne qui a acheté ou loué a droit à un échange, un retour avec remboursement, ou un remboursement (total ou partiel). Les réclamations peuvent être faites jusqu'à 7 jours après l'affaire, dans « Retours et remboursements » ; le propriétaire répond dans les 3 jours et, s'il refuse ou ne répond pas, l'administration tranche. Quiconque ne respecte pas la décision peut voir son compte suspendu.",
+          "Il est interdit d'annoncer : armes, drogues, médicaments non autorisés, animaux protégés, biens volés ou contrefaits, documents, contenu sexuel, et tout ce qui est interdit par la loi angolaise.",
+          "L'administration peut masquer ou retirer les annonces, produits et profils qui ne respectent pas ces règles, et suspendre des comptes."] },
+        { title: "4. Offres, enchères, échanges et commandes", paragraphs: [
+          "Une offre acceptée, une enchère gagnante ou une commande confirmée est un engagement entre les deux personnes. Faites ce qui a été convenu.",
+          "Vous pouvez retirer une offre tant qu'elle n'a pas de réponse. Une enchère ne peut être retirée qu'avec un motif, s'il reste plus de 12 heures à la vente ou si elle a été placée il y a moins d'1 heure ; les personnes qui retirent souvent des enchères peuvent être empêchées d'enchérir.",
+          "Payez toujours via Huambo Online (paiement protégé) et jamais directement au vendeur. Pour les remises en main propre, retrouvez-vous dans un lieu public et fréquenté et vérifiez l'article avant de confirmer la réception.",
+          "Pour les commandes de la Boutique, l'acheteur peut demander un retour, un remboursement ou un échange jusqu'à 14 jours après la livraison, et le vendeur doit répondre. Voir « Retours et remboursements »."] },
+        { title: "5. Messages et coordonnées", paragraphs: [
+          "Les conversations se font dans les Messages de Huambo Online. Il est interdit d'échanger des coordonnées dans les messages (téléphones, e-mails, WhatsApp, réseaux sociaux, liens, comptes bancaires, IBAN ou références de paiement) et de conclure des affaires ou des paiements en dehors de la plateforme.",
+          "Les messages sont vérifiés automatiquement, y compris par intelligence artificielle. Un message contenant des coordonnées n'est pas remis ; qui insiste ne peut plus envoyer de messages pendant 24 heures, et les cas répétés peuvent entraîner la suspension du compte.",
+          "Les photos, documents et autres pièces jointes passent par l'équipe avant d'arriver à l'autre personne. Pour éviter les arnaques et régler les litiges, l'équipe peut lire les conversations.",
+          "Dans la conversation d'assistance avec l'équipe, vous pouvez donner votre téléphone à l'équipe ; ce contact n'est pas montré aux autres utilisateurs."] },
+        { title: "6. Mensualités et commissions", paragraphs: [
+          "Les profils de professionnels et d'entreprises ont un mois gratuit. Ensuite, ils paient une mensualité à la plateforme : 2 000 Kz par mois pour les professionnels et 5 000 Kz par mois pour les entreprises (les montants en vigueur apparaissent dans « Mon forfait »).",
+          "Le paiement se fait par virement bancaire ou Multicaixa Express, avec la référence ou le justificatif, et devient valable quand l'administration le confirme.",
+          "Les Boutiques (produits vendus dans la Boutique sans entreprise) suivent la même règle que les entreprises : un mois gratuit puis 5 000 Kz par mois. Les produits d'une entreprise sont couverts par la mensualité de cette entreprise.",
+          "Sans mois gratuit ni paiement à jour, le profil ou la Boutique n'est plus montré aux clients, mais n'est pas supprimé. Il réapparaît quand le paiement est confirmé.",
+          "Les petites annonces ne paient pas de mensualité : quand un article est vendu (enchères comprises), le vendeur paie à la plateforme une commission de 5 % du montant de la vente dans les 7 jours. Il en va de même pour la location de biens meubles (véhicules, machines, etc.) : 5 % du montant indiqué en marquant « Loué », ou du montant total d'une demande de location acceptée. La location et le bail de biens immobiliers sont gratuits : aucune commission. Avec des commissions en retard, il n'est pas possible de publier de nouvelles annonces.",
+          "Mise à la une (facultative) : le vendeur peut payer pour que l'annonce apparaisse en haut des listes, avec le badge « ⭐ À la une », pendant le nombre de jours indiqué (500 Kz pour 7 jours, sauf autre montant annoncé). La mise à la une commence quand l'administration confirme le paiement et se termine d'elle-même à la fin de la période. Elle ne garantit pas la vente."] },
+        { title: "7. Paiement protégé", paragraphs: [
+          "Tous les achats sur Huambo Online — Boutique, petites annonces, immobilier, véhicules, locations, offres, enchères, services, billets d'événements, carburant et gaz, et réservations d'hôtels et de restaurants — se font avec le «Paiement protégé». Vous payez Huambo Online, qui garde l'argent et ne le remet au vendeur qu'après que l'acheteur a confirmé la réception. Ne payez pas directement le vendeur : en dehors de Huambo Online, le paiement n'est pas protégé.",
+          "Si l'acheteur ne confirme pas et ne se plaint pas dans le délai indiqué après la livraison (3 jours, sauf autre délai annoncé), l'argent est débloqué au vendeur. Une demande de retour ou de remboursement ouverte à temps gèle l'argent jusqu'à sa résolution.",
+          "Les commandes protégées qui ne sont pas payées dans le délai indiqué (48 heures, sauf autre délai annoncé) sont annulées. Les remboursements de l'argent encore retenu sont effectués par Huambo Online, sur l'IBAN ou le numéro Multicaixa Express indiqué par l'acheteur.",
+          "Le vendeur reçoit les ventes débloquées dans son solde et demande un retrait vers son compte. Les retraits sont payés par virement les jours annoncés dans « Mon solde ». S'il y a une commission sur le paiement protégé, elle est indiquée avant la vente et déduite du solde.",
+          "Huambo Online agit uniquement comme intermédiaire technologique et de paiement : il n'est pas le vendeur des produits et n'est pas responsable de leur qualité, mais il applique les règles de retour décrites dans « Retours et remboursements »."] },
+        { title: "8. Importation (achats à l'étranger)", paragraphs: [
+          "Dans «Importation», l'équipe Huambo Online recherche, achète et fait venir des produits de l'étranger à la demande du client.",
+          "Chaque demande paie des frais de recherche et de devis, affichés avant l'envoi. Si vous acceptez le devis, ces frais sont déduits du total ; ils ne sont pas remboursés si vous renoncez ou si le produit n'est pas trouvé.",
+          "Le devis indique le prix final (produit, transport, douane et service) et le délai, et il est valable 7 jours. Le paiement n'a lieu qu'après acceptation. Si le produit ne peut pas être acheté, le montant payé pour le produit est remboursé. Les délais de transport et de douane peuvent varier."] },
+        { title: "9. Inspection d'articles", paragraphs: [
+          "À la demande du vendeur ou de l'acheteur, l'équipe Huambo Online peut inspecter un article : électronique (matériel et logiciel), véhicules (mécanique et documents) et biens immobiliers (situation physique et juridique). À la fin, l'équipe remet l'article ou accompagne le transfert de propriété.",
+          "Les frais d'inspection figurent sur l'annonce, couvrent le déplacement et le travail, et ne sont remboursés en aucun cas, même si l'article n'est pas approuvé ou si l'affaire ne se conclut pas.",
+          "Si l'inspection demandée par l'acheteur n'approuve pas l'article, le montant de l'achat est remboursé (sans les frais d'inspection). Le badge «🔍 Inspecté par Huambo Online» décrit l'état de l'article le jour de l'inspection et est valable 90 jours ; ce n'est pas une garantie de bon fonctionnement futur."] },
+        { title: "10. Intelligence artificielle et assistance", paragraphs: [
+          "Certaines fonctions utilisent l'intelligence artificielle : remplir avec la photo, améliorer le texte, recherche intelligente, traduction, vérification des messages et des justificatifs de paiement, et l'assistant de l'Aide. L'IA peut se tromper : vérifiez toujours ce qu'elle propose. Il y a des limites d'utilisation par jour.",
+          "Dans l'assistance, l'assistant répond d'abord. À tout moment, vous pouvez appuyer sur «👤 Parler à un agent» pour parler à une personne de l'équipe dans Messages. Les réponses de l'assistant ne remplacent ni les décisions de l'équipe ni ces conditions."] },
+        { title: "11. Évaluations et signalements", paragraphs: [
+          "Seules les personnes qui ont fait affaire peuvent laisser une évaluation. Les évaluations doivent être honnêtes et sans insultes.",
+          "Si vous voyez quelque chose d'anormal, utilisez « Signaler ». L'administration examine les signalements et peut retirer des contenus."] },
+        { title: "12. Vérification du profil", paragraphs: [
+          "Le badge « Vérifié » signifie que l'administration a vu un document. Ce n'est pas une garantie sur la personne ou l'entreprise : restez prudent."] },
+        { title: "13. Responsabilité", paragraphs: [
+          "Huambo Online fait de son mieux pour que le service fonctionne et soit sûr, mais ne garantit pas qu'il sera toujours disponible et n'est pas responsable des affaires conclues entre utilisateurs.",
+          "Ces conditions peuvent changer. Dans ce cas, la date en haut de la page est mise à jour."] },
+        { title: "14. Contact",
+          paragraphs: [
             "{contact}"
           ]
         }
-      ]
+            ]
     }
   },
   privacidade: {

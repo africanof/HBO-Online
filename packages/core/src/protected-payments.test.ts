@@ -173,8 +173,8 @@ describe("avisos, mensagens e textos", () => {
     expect(friendlyError(new Error("PAYMENT_PENDING"))).toMatch(/à espera/);
   });
   it("termos, devoluções, ajuda e receitas falam do pagamento protegido", () => {
-    expect(termsPage().sections.map(s => s.title)).toContain("6. Pagamento protegido");
-    expect(termsPage().sections.at(-1)?.title).toBe("10. Contacto");
+    expect(termsPage().sections.map(s => s.title)).toContain("7. Pagamento protegido");
+    expect(termsPage().sections.at(-1)?.title).toBe("14. Contacto");
     expect(returnsPage().sections.flatMap(s => s.paragraphs).join(" ")).toMatch(/pagamento protegido/);
     expect(HELP_FAQ.some(f => /Pagamento protegido/.test(f.q))).toBe(true);
     expect(REVENUE_KIND_LABELS.protected_fee).toMatch(/pagamento protegido/);
