@@ -22,7 +22,7 @@ function Checklist({ category, checklist }: { category: ItemInspectionCategory; 
   return <>{keys.map(k => <Text key={k} style={ui.text}>{checklist[k] ? "✔" : "✖"} {t("ii.c." + k)}</Text>)}</>;
 }
 
-/** No anúncio: selo para todos; pedido de inspeção para o dono ou para quem já comprou. */
+/** No anúncio: selo para todos; pedido de inspeção para o dono, para quem quer comprar e para quem já comprou. */
 export function ListingInspection({ listingId, listingType, mine, uid }: { listingId: string; listingType: string; mine: boolean; uid: string | null }) {
   const { t, lang } = useT(); const router = useRouter();
   const category = itemInspectionCategory(listingType);
@@ -38,7 +38,7 @@ export function ListingInspection({ listingId, listingType, mine, uid }: { listi
   }, [listingId, uid, mine]);
   async function ask() {
     setBusy(true); setErr("");
-    const r = await requestItemInspection(supabase(), mine ? { listingId } : { orderId });
+    const r = await requestItemInspection(supabase(), mine || !orderId ? { listingId } : { orderId }); // sem encomenda: inspeção antes de comprar
     setBusy(false);
     if (r.error) setErr(friendlyErrorIn(r.error, lang)); else { setMsg(t("ii.requested")); setOpen(r.data as any); }
   }
@@ -57,7 +57,9 @@ export function ListingInspection({ listingId, listingType, mine, uid }: { listi
       <Text style={ui.muted}>{t("ii.how." + category)}</Text>
       <Button title={t("ii.request", { fee })} variant="secondary" disabled={busy} onPress={() => void ask()} />
     </>}
-    {visitor && <><Text style={ui.text}>{t("ii.visitor_offer", { fee })}</Text><Text style={ui.muted}>{t("ii.how." + category)}</Text></>}
+    {visitor && <><Text style={ui.text}>{t("ii.visitor_offer", { fee })}</Text><Text style={ui.muted}>{t("ii.how." + category)}</Text>
+      {uid ? <Button title={t("ii.request_prebuy", { fee })} variant="secondary" disabled={busy} onPress={() => void ask()} />
+        : <Button title={t("ii.prebuy_login")} variant="secondary" onPress={() => router.push("/login")} />}</>}
     {(!!open || !!msg) && <Text style={ui.link} onPress={() => router.push("/inspecoes" as any)}>{msg || t("ii.s." + open!.status)} · {t("ii.see_mine")} →</Text>}
     <Message error={err} />
   </View>;
@@ -116,7 +118,7 @@ export function MyItemInspectionsScreen() {
     {items && !items.length && <Text style={ui.muted}>{t("ii.none")}</Text>}
     {items?.map(i => <View key={i.id} style={ui.card}>
       <Text style={[ui.label, { fontSize: 18 }]}>{i.title}</Text>
-      <Text style={ui.muted}>{itemInspectionRef(i.ref_no)} · {t("ii.cat." + i.category)} · {t(i.role === "seller" && i.mode === "buyer" ? "ii.mode.seller_of" : "ii.mode." + i.mode)} · {formatPrice(i.fee)}</Text>
+      <Text style={ui.muted}>{itemInspectionRef(i.ref_no)} · {t("ii.cat." + i.category)} · {t(i.role === "seller" && i.mode === "buyer" ? "ii.mode.seller_of" : i.role === "seller" && i.mode === "prebuy" ? "ii.mode.seller_of_prebuy" : "ii.mode." + i.mode)} · {formatPrice(i.fee)}</Text>
       <Text style={[ui.label, { color: C.blue }]}>{t("ii.s." + i.status)}</Text>
       {!!i.scheduled_for && ["scheduled", "in_progress"].includes(i.status) && <Text style={ui.text}>{t("ii.when", { d: formatDateTimeIn(i.scheduled_for, lang) })}{i.place ? " · 📍 " + i.place : ""}</Text>}
       {!!i.team_note && <Text style={ui.muted}>{t("im.team_note")}: {i.team_note}</Text>}
@@ -178,6 +180,7 @@ function AdminInspectionCard({ i, run }: { i: ItemInspection; run: (fn: () => Pr
     <Text style={ui.label}>{itemInspectionRef(i.ref_no)} · {i.title} · {t("ii.cat." + i.category)}</Text>
     <Text style={ui.muted}>{t("ii.mode." + i.mode)} · {i.requester_name ?? "—"} → {i.seller_name ?? "—"} · {formatPrice(i.fee)} · {formatDateTimeIn(i.updated_at, lang)}</Text>
     {i.mode === "buyer" && <Text style={ui.muted}>{t("ii.a_buyer_mode")}</Text>}
+    {i.mode === "prebuy" && <Text style={ui.muted}>{t("ii.a_prebuy_mode")}</Text>}
     <Text style={[ui.label, { color: C.blue }]}>{t("ii.s." + i.status)}</Text>
     {!!i.note && <Text style={ui.text}>💬 {i.note}</Text>}
     {!!i.listing_id && <Text style={ui.link} onPress={() => router.push(("/classificados/" + i.listing_id) as any)}>{t("cg.view_listing")} →</Text>}

@@ -1184,8 +1184,8 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
           "Each request pays a search and quote fee, shown before sending. If you accept the quote, the fee is deducted from the total; it is not refunded if you give up or the product is not found.",
           "The quote states the final price (product, shipping, customs and service) and the deadline, and is valid for 7 days. Payment is only made after you accept. If the product cannot be bought, the amount paid for the product is refunded. Shipping and customs times may vary."] },
         { title: "9. Item inspection", paragraphs: [
-          "At the seller's or buyer's request, the Huambo Online team can inspect an item: electronics (hardware and software), vehicles (mechanics and documents) and property (physical and legal situation). At the end, the team hands over the item or follows the transfer of ownership.",
-          "The inspection fee is shown on the listing, pays for travel and work, and is not refunded in any case, even if the item is not approved or the deal does not go ahead.",
+          "At the request of the seller, of an interested buyer (before buying) or of the buyer (after buying), the Huambo Online team can inspect an item: electronics (hardware and software), vehicles (mechanics and documents) and property (physical and legal situation). At the end, the team hands over the item or follows the transfer of ownership.",
+          "The inspection fee is shown on the listing, pays for travel and work, and is not refunded in any case, even if the item is not approved or the deal does not go ahead. For an inspection before buying, it is also not refunded if the seller sells to someone else or does not show the item, and the report gives the listing no public badge.",
           "If an inspection requested by the buyer does not approve the item, the purchase amount is refunded (without the inspection fee). The «🔍 Inspected by Huambo Online» badge describes the item's condition on the day of the inspection and is valid for 90 days; it is not a guarantee of future working order."] },
         { title: "10. Artificial intelligence and support", paragraphs: [
           "Some features use artificial intelligence: fill in from photo, improve text, smart search, translation, checking messages and payment receipts, and the Help assistant. AI can make mistakes: always review what it suggests. There are daily usage limits.",
@@ -1247,8 +1247,8 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
           "每个请求需支付查询和报价费，发送前会显示金额。如果您接受报价，该费用会从总额中扣除；如果您放弃或找不到商品，该费用不予退还。",
           "报价会注明最终价格（商品、运输、海关和服务）及期限，有效期 7 天。只有在您接受后才需付款。如果无法购买商品，将退还为商品支付的金额。运输和清关时间可能会有变化。"] },
         { title: "9. 物品检验", paragraphs: [
-          "应卖家或买家要求，Huambo Online 团队可以检验物品：电子产品（硬件和软件）、车辆（机械和证件）以及房产（实际状况和法律状况）。最后，团队会交付物品或协助办理产权转移。",
-          "检验费显示在信息中，用于支付出行和工作费用，在任何情况下均不退还，即使物品未通过检验或交易未达成。",
+          "应卖家、有意买家（购买前）或买家（购买后）的要求，Huambo Online 团队可以检验物品：电子产品（硬件和软件）、车辆（机械和证件）以及房产（实际状况和法律状况）。最后，团队会交付物品或协助办理产权转移。",
+          "检验费显示在信息中，用于支付出行和工作费用，在任何情况下均不退还，即使物品未通过检验或交易未达成。对于购买前检验，如果卖家卖给他人或不出示物品，检验费同样不退还，且报告不会给信息授予公开标志。",
           "如果买家申请的检验未通过，将退还购买金额（不含检验费）。「🔍 经 Huambo Online 检验」标志描述的是检验当天的物品状况，有效期 90 天；它不保证物品今后正常使用。"] },
         { title: "10. 人工智能与客服", paragraphs: [
           "部分功能使用人工智能：用照片填写、优化文字、智能搜索、翻译、检查消息和付款凭证，以及帮助助手。AI 可能会出错：请始终检查它的建议。每天有使用次数限制。",
@@ -1310,8 +1310,8 @@ export const INFO_PAGES_I18N: Record<string, { en: LocalInfoPage; zh: LocalInfoP
           "Chaque demande paie des frais de recherche et de devis, affichés avant l'envoi. Si vous acceptez le devis, ces frais sont déduits du total ; ils ne sont pas remboursés si vous renoncez ou si le produit n'est pas trouvé.",
           "Le devis indique le prix final (produit, transport, douane et service) et le délai, et il est valable 7 jours. Le paiement n'a lieu qu'après acceptation. Si le produit ne peut pas être acheté, le montant payé pour le produit est remboursé. Les délais de transport et de douane peuvent varier."] },
         { title: "9. Inspection d'articles", paragraphs: [
-          "À la demande du vendeur ou de l'acheteur, l'équipe Huambo Online peut inspecter un article : électronique (matériel et logiciel), véhicules (mécanique et documents) et biens immobiliers (situation physique et juridique). À la fin, l'équipe remet l'article ou accompagne le transfert de propriété.",
-          "Les frais d'inspection figurent sur l'annonce, couvrent le déplacement et le travail, et ne sont remboursés en aucun cas, même si l'article n'est pas approuvé ou si l'affaire ne se conclut pas.",
+          "À la demande du vendeur, d'un acheteur intéressé (avant l'achat) ou de l'acheteur (après l'achat), l'équipe Huambo Online peut inspecter un article : électronique (matériel et logiciel), véhicules (mécanique et documents) et biens immobiliers (situation physique et juridique). À la fin, l'équipe remet l'article ou accompagne le transfert de propriété.",
+          "Les frais d'inspection figurent sur l'annonce, couvrent le déplacement et le travail, et ne sont remboursés en aucun cas, même si l'article n'est pas approuvé ou si l'affaire ne se conclut pas. Pour une inspection avant achat, ils ne sont pas non plus remboursés si le vendeur vend à quelqu'un d'autre ou ne montre pas l'article, et le rapport ne donne pas de badge public à l'annonce.",
           "Si l'inspection demandée par l'acheteur n'approuve pas l'article, le montant de l'achat est remboursé (sans les frais d'inspection). Le badge «🔍 Inspecté par Huambo Online» décrit l'état de l'article le jour de l'inspection et est valable 90 jours ; ce n'est pas une garantie de bon fonctionnement futur."] },
         { title: "10. Intelligence artificielle et assistance", paragraphs: [
           "Certaines fonctions utilisent l'intelligence artificielle : remplir avec la photo, améliorer le texte, recherche intelligente, traduction, vérification des messages et des justificatifs de paiement, et l'assistant de l'Aide. L'IA peut se tromper : vérifiez toujours ce qu'elle propose. Il y a des limites d'utilisation par jour.",

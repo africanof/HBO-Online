@@ -32,7 +32,7 @@ export function ListingInspection({ listingId, listingType, mine, uid }: { listi
   }, [listingId, uid, mine]);
   async function ask() {
     setBusy(true); setErr("");
-    const r = await requestItemInspection(supabase(), mine ? { listingId } : { orderId });
+    const r = await requestItemInspection(supabase(), mine || !orderId ? { listingId } : { orderId }); // sem encomenda: inspeção antes de comprar
     setBusy(false);
     if (r.error) setErr(friendlyErrorIn(r.error, lang)); else { setMsg(t("ii.requested")); setOpen(r.data as any); }
   }
@@ -53,7 +53,9 @@ export function ListingInspection({ listingId, listingType, mine, uid }: { listi
       <small className="muted">{t("ii.how." + category)}</small>
       <button type="button" className="secondary" disabled={busy} style={{ justifySelf: "start" }} onClick={() => void ask()}>{t("ii.request", { fee })}</button>
     </>}
-    {visitor && <><span>{t("ii.visitor_offer", { fee })}</span><small className="muted">{t("ii.how." + category)}</small></>}
+    {visitor && <><span>{t("ii.visitor_offer", { fee })}</span><small className="muted">{t("ii.how." + category)}</small>
+      {uid ? <button type="button" className="secondary" disabled={busy} style={{ justifySelf: "start" }} onClick={() => void ask()}>{t("ii.request_prebuy", { fee })}</button>
+        : <a href={"/conta/login?voltar=/classificados/" + listingId}>{t("ii.prebuy_login")}</a>}</>}
     {(open || msg) && <span>{msg || t("ii.s." + open!.status)} · <a href="/inspecoes">{t("ii.see_mine")} →</a></span>}
     {err && <p className="error" role="alert" style={{ margin: 0 }}>{err}</p>}
   </section>;
@@ -108,7 +110,7 @@ export function MyItemInspectionsPage() {
     {items && !items.length && <p className="card">{t("ii.none")}</p>}
     {items?.map(i => <article key={i.id} className="card stack" style={{ gap: 8 }}>
       <strong style={{ fontSize: 18 }}>{i.title}</strong>
-      <small>{itemInspectionRef(i.ref_no)} · {t("ii.cat." + i.category)} · {t(i.role === "seller" && i.mode === "buyer" ? "ii.mode.seller_of" : "ii.mode." + i.mode)} · {formatPrice(i.fee)}</small>
+      <small>{itemInspectionRef(i.ref_no)} · {t("ii.cat." + i.category)} · {t(i.role === "seller" && i.mode === "buyer" ? "ii.mode.seller_of" : i.role === "seller" && i.mode === "prebuy" ? "ii.mode.seller_of_prebuy" : "ii.mode." + i.mode)} · {formatPrice(i.fee)}</small>
       <span style={{ fontWeight: 800 }}>{t("ii.s." + i.status)}</span>
       {i.scheduled_for && ["scheduled", "in_progress"].includes(i.status) && <span>{t("ii.when", { d: eventDateIn(i.scheduled_for, lang) })}{i.place ? " · 📍 " + i.place : ""}</span>}
       {i.team_note && <small>{t("im.team_note")}: {i.team_note}</small>}
@@ -170,6 +172,7 @@ function AdminInspectionCard({ i, run }: { i: ItemInspection; run: (fn: () => Pr
     <strong>{itemInspectionRef(i.ref_no)} · {i.title} · {t("ii.cat." + i.category)}</strong>
     <small>{t("ii.mode." + i.mode)} · {i.requester_name ?? "—"} → {i.seller_name ?? "—"} · {formatPrice(i.fee)} · {eventDateIn(i.updated_at, lang)}</small>
     {i.mode === "buyer" && <small className="muted">{t("ii.a_buyer_mode")}</small>}
+    {i.mode === "prebuy" && <small className="muted">{t("ii.a_prebuy_mode")}</small>}
     <span style={{ fontWeight: 800 }}>{t("ii.s." + i.status)}</span>
     {i.note && <small>💬 {i.note}</small>}
     {i.listing_id && <a href={"/classificados/" + i.listing_id} target="_blank" rel="noopener">{t("cg.view_listing")} →</a>}
