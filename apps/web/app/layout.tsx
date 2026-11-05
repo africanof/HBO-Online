@@ -3,7 +3,7 @@ import "./globals.css";
 import { SiteHeader, SiteFooter } from "../components/SiteHeader";
 import { ReferralCapture } from "../components/Referral";
 import { ConnectionWatcher } from "../components/Offline";
-import { SITE_URL } from "../lib/site";
+import { SITE_URL, DEFAULT_OG_IMAGES } from "../lib/site";
 import { THEME_STORAGE_KEY } from "@huambo-online/core";
 import { I18nProvider } from "../lib/i18n";
 import { LANG_SCRIPT } from "../lib/lang-script";
@@ -16,7 +16,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   // Verificação do Google Search Console por etiqueta (opcional; a verificação por DNS também funciona).
   verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } : undefined,
-  openGraph: { type: "website", locale: "pt_AO", siteName: "Huambo Online", url: SITE_URL, title: "Huambo Online", description: "Compre, venda e encontre tudo no Huambo." }
+  openGraph: { type: "website", locale: "pt_AO", siteName: "Huambo Online", title: "Huambo Online", description: "Compre, venda e encontre tudo no Huambo.", images: DEFAULT_OG_IMAGES },
+  twitter: { card: "summary_large_image", title: "Huambo Online", description: "Compre, venda e encontre tudo no Huambo.", images: ["/og-image.png"] }
 };
 export const viewport: Viewport = {
   width: "device-width", initialScale: 1, colorScheme: "light dark",
@@ -27,7 +28,7 @@ export const viewport: Viewport = {
 const SITE_JSON_LD = JSON.stringify({
   "@context": "https://schema.org",
   "@graph": [
-    { "@type": "Organization", "@id": SITE_URL + "/#org", name: "Huambo Online", url: SITE_URL, logo: SITE_URL + "/icon.svg",
+    { "@type": "Organization", "@id": SITE_URL + "/#org", name: "Huambo Online", url: SITE_URL, logo: SITE_URL + "/icon-512.png",
       areaServed: { "@type": "City", name: "Huambo", address: { "@type": "PostalAddress", addressLocality: "Huambo", addressCountry: "AO" } } },
     { "@type": "WebSite", "@id": SITE_URL + "/#site", name: "Huambo Online", url: SITE_URL, inLanguage: "pt-AO", publisher: { "@id": SITE_URL + "/#org" },
       potentialAction: { "@type": "SearchAction", target: { "@type": "EntryPoint", urlTemplate: SITE_URL + "/explorar?q={search_term_string}" }, "query-input": "required name=search_term_string" } }

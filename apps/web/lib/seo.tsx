@@ -2,6 +2,7 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import { createSupabaseClient } from "@huambo-online/supabase";
 import { fetchSeo, idFromParam, type PageSeo, type SeoKind } from "@huambo-online/core";
+import { DEFAULT_OG_IMAGES } from "./site";
 
 /** Dados de SEO de uma página (lidos uma só vez por pedido: metadados + dados estruturados). */
 const getSeo = cache(async (kind: SeoKind, rawId: string): Promise<PageSeo | null> => {
@@ -21,12 +22,12 @@ export async function seoMetadata(kind: SeoKind, rawId: string, base: string): P
   const s = await getSeo(kind, rawId);
   if (!s) return {};
   const path = canonicalPath(base, rawId, s);
-  const images = s.image ? [{ url: s.image }] : undefined;
+  const images = s.image ? [{ url: s.image }] : DEFAULT_OG_IMAGES;
   return {
     title: s.title, description: s.description, alternates: { canonical: path },
     robots: s.noindex ? { index: false, follow: true } : undefined,
     openGraph: { title: s.title, description: s.description, url: path, siteName: "Huambo Online", locale: "pt_AO", type: "website", images },
-    twitter: { card: s.image ? "summary_large_image" : "summary", title: s.title, description: s.description, images: s.image ? [s.image] : undefined }
+    twitter: { card: "summary_large_image", title: s.title, description: s.description, images: [s.image || "/og-image.png"] }
   };
 }
 

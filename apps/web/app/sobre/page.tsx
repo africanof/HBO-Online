@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { HUAMBO_MUNICIPALITIES, LOCAL_TOPICS, localPath } from "@huambo-online/core";
 import { Breadcrumbs, JsonLd, breadcrumbLd } from "../../lib/local";
 import { SITE_URL } from "../../lib/site";
+import { DEFAULT_OG_IMAGES } from "../../lib/site";
 
 export const metadata: Metadata = {
   title: "Sobre o Huambo Online — o marketplace da província do Huambo",
   description: "O Huambo Online junta num só sítio classificados, imóveis, viaturas, emprego, loja online, profissionais, empresas e praças da província do Huambo, Angola.",
   alternates: { canonical: "/sobre" },
-  openGraph: { title: "Sobre o Huambo Online", description: "O marketplace da província do Huambo, Angola.", url: "/sobre", siteName: "Huambo Online", locale: "pt_AO", type: "website" }
+  openGraph: { images: DEFAULT_OG_IMAGES, title: "Sobre o Huambo Online", description: "O marketplace da província do Huambo, Angola.", url: "/sobre", siteName: "Huambo Online", locale: "pt_AO", type: "website" }
 };
 
 const FAQ: [string, string][] = [

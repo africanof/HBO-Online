@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { HUAMBO_MUNICIPALITIES, LOCAL_TOPICS, localMunicipality, localTopic, localPath, localSeo, isExampleName } from "@huambo-online/core";
 import { Breadcrumbs, JsonLd, ListingGrid, breadcrumbLd, localListings, municipalityId } from "../../../../lib/local";
 import { SITE_URL } from "../../../../lib/site";
+import { DEFAULT_OG_IMAGES } from "../../../../lib/site";
 
 export const revalidate = 1800; // os anúncios atualizam de meia em meia hora
 export const dynamicParams = false;
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
   if (!m || !t) return {};
   const s = localSeo(m, t), path = localPath(m, t);
   return { title: s.title, description: s.description, alternates: { canonical: path },
-    openGraph: { title: s.title, description: s.description, url: path, siteName: "Huambo Online", locale: "pt_AO", type: "website" } };
+    openGraph: { images: DEFAULT_OG_IMAGES, title: s.title, description: s.description, url: path, siteName: "Huambo Online", locale: "pt_AO", type: "website" } };
 }
 
 /** «Casas à venda na Caála», «Emprego no Bailundo»…: texto próprio + anúncios dessa zona. */

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { HUAMBO_MUNICIPALITIES, LOCAL_TOPICS, localMunicipality, localPath, localSeo, localTopic } from "@huambo-online/core";
 import { Breadcrumbs, JsonLd, ListingGrid, breadcrumbLd, localListings, municipalityId } from "../../../lib/local";
+import { DEFAULT_OG_IMAGES } from "../../../lib/site";
 
 export const revalidate = 1800;
 export const dynamicParams = false;
@@ -14,7 +15,7 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
   if (!m) return {};
   const s = localSeo(m), path = localPath(m);
   return { title: s.title, description: s.description, alternates: { canonical: path },
-    openGraph: { title: s.title, description: s.description, url: path, siteName: "Huambo Online", locale: "pt_AO", type: "website" } };
+    openGraph: { images: DEFAULT_OG_IMAGES, title: s.title, description: s.description, url: path, siteName: "Huambo Online", locale: "pt_AO", type: "website" } };
 }
 
 /** Página de um município: o que há para comprar, arrendar e trabalhar lá. */

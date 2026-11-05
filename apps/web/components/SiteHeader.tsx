@@ -23,7 +23,7 @@ const SCOPE_BY_PATH: [string, SearchScope][] = [["/loja", "loja"], ["/pracas", "
 /** [ícone, chave do texto, endereço] */
 const CATEGORY_LINKS: [string, string, string][] = [
   ["", "nav.home", "/"], ["", "scope.classificados", "/explorar"], ["🏠", "cat.Imóveis", "/imoveis"], ["🚗", "cat.Viaturas", "/viaturas"], ["🌾", "cat.Campo", "/agricultura"], ["🏭", "cat.Fábricas", "/empresas?categoria=fabricas"], ["💼", "cat.Emprego", "/emprego"], ["🎟️", "cat.Eventos", "/eventos"], ["⛽", "web.fuel", "/combustivel"], ["🛎️", "nav.bookings", "/reservas"], ["✈️", "cat.Importação", "/importacao"], ["🎬", "web.videos", "/videos"],
-  ["", "cat.Arrendar", "/explorar?finalidade=rent"], ["", "cat.Leilões", "/explorar?finalidade=auction"], ["", "cat.Procura-se", "/procura-se"], ["", "cat.Trocas", "/trocas"], ["", "cat.Praças", "/pracas"], ["", "web.events_tickets", "/eventos"], ["", "cat.Loja", "/loja"],
+  ["", "cat.Arrendar", "/explorar?finalidade=rent"], ["", "cat.Leilões", "/explorar?finalidade=auction"], ["", "cat.Procura-se", "/procura-se"], ["", "cat.Trocas", "/trocas"], ["", "cat.Praças", "/pracas"], ["", "cat.Loja", "/loja"],
   ["", "cat.Profissionais", "/profissionais"], ["", "cat.Empresas", "/empresas"], ["", "web.recent", "/historico"]
 ];
 
