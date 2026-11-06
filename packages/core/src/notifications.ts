@@ -31,6 +31,7 @@ export function getNotificationLink(n: Pick<AppNotification, "data" | "type" | "
   if (d.for === "venue" && isUuid(d.venue_id)) return { href: "/reservas/" + d.venue_id + "/gerir", label: "🏨 Gerir o estabelecimento →" };
   if (d.for === "venue_orders") return { href: "/reservas/minhas", label: "🛎️ Ver as minhas reservas →" };
   if (isUuid(d.venue_id) || isUuid(d.venue_payment_id)) return { href: "/admin", label: "🛡️ Ver na administração →" };
+  if (isUuid(d.whatsapp_thread_id)) return { href: "/admin?tab=whatsapp", label: "💬 Responder no WhatsApp →" };
   if (isUuid(d.support_conversation_id)) return { href: "/admin", label: "🆘 Responder ao pedido de suporte →" };
   if (d.for === "inspections") return { href: "/inspecoes", label: "🔍 Ver as minhas inspeções →" };
   if (d.for === "imports") return { href: "/importacao", label: "✈️ Ver a importação →" };

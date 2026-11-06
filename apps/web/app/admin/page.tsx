@@ -31,10 +31,11 @@ import { AdminFuel } from "../../components/Fuel";
 import { AdminVenues } from "../../components/Venues";
 import { AdminInspections } from "../../components/Inspection";
 import { MfaGate } from "../../components/Mfa";
+import { AdminWhatsapp } from "../../components/AdminWhatsapp";
 
-type Tab = "stats" | "proofs" | "provinces" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "imports" | "item_inspections" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+type Tab = "stats" | "proofs" | "provinces" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "whatsapp" | "imports" | "item_inspections" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
 /** Separadores (o texto vem do dicionário: ad.tab.<separador>). */
-const tabs: Tab[] = ["stats", "proofs", "provinces", "requests", "messages", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "imports", "item_inspections", "inspections", "disputes", "verifications", "listings", "users", "categories", "couriers", "markets", "audit"];
+const tabs: Tab[] = ["stats", "proofs", "provinces", "requests", "messages", "whatsapp", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "imports", "item_inspections", "inspections", "disputes", "verifications", "listings", "users", "categories", "couriers", "markets", "audit"];
 
 // Com a entrada em dois passos ligada, as funções da administração só respondem depois do código (sessão aal2).
 export default function AdminPage() {
@@ -64,6 +65,8 @@ function AdminContent() {
   const [categories, setCategories] = useState<any[]>([]); const [catName, setCatName] = useState(""); const [catType, setCatType] = useState<string>("classified");
 
   useEffect(() => { void getMyAdminRole(supabase()).then(setRole); }, []);
+  // Abrir um separador pelo endereço (ex.: /admin?tab=whatsapp, a partir de um aviso).
+  useEffect(() => { const q = new URLSearchParams(window.location.search).get("tab"); if (q && (tabs as string[]).includes(q)) setTab(q as Tab); }, []);
   useEffect(() => { if (canModerate(role)) void load(tab); }, [role, tab]);
 
   async function load(t: Tab) {
@@ -99,6 +102,7 @@ function AdminContent() {
     {tab === "provinces" && <AdminProvinces />}
     {tab === "requests" && <AdminRequests />}
     {tab === "messages" && <AdminMessages />}
+    {tab === "whatsapp" && <AdminWhatsapp />}
     {tab === "couriers" && <AdminCouriers />}
     {tab === "markets" && <AdminMarkets />}
     {tab === "verifications" && <AdminVerifications />}
