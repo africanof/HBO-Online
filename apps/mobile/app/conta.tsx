@@ -14,6 +14,7 @@ import { PublicNameSettings, WhatsAppSettings } from "../components/Engage";
 import { DataSaverPicker } from "../components/DataSaver";
 import { LanguagePicker } from "../components/LanguagePicker";
 import { useT } from "../lib/i18n";
+import { unregisterPush } from "../lib/push";
 
 export default function Conta() {
   const router = useRouter(); const { t } = useT();
@@ -105,6 +106,6 @@ export default function Conta() {
       <TextInput style={ui.input} value={del} onChangeText={setDel} placeholder={t("account.delete_placeholder")} placeholderTextColor={C.muted} accessibilityLabel={t("account.delete_placeholder")} />
       <Button title={busy ? t("account.deleting") : t("account.delete")} variant="danger" disabled={busy} onPress={async () => { if (await run(() => deleteCurrentUserAccount(supabase(), del), t("account.deleted"))) router.replace("/"); }} />
     </View>
-    <Button title={t("account.sign_out")} variant="secondary" onPress={async () => { await signOutCurrentUser(supabase()); router.replace("/login"); }} />
+    <Button title={t("account.sign_out")} variant="secondary" onPress={async () => { await unregisterPush(); await signOutCurrentUser(supabase()); router.replace("/login"); }} />
   </ScrollView>;
 }

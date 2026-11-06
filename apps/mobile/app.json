@@ -3,7 +3,7 @@
     "name": "Huambo Online",
     "slug": "huambo-online",
     "owner": "africanofestos-team",
-    "version": "0.4.4",
+    "version": "0.5.0",
     "orientation": "portrait",
     "scheme": "huamboonline",
     "userInterfaceStyle": "automatic",
@@ -103,6 +103,14 @@
         "expo-camera",
         {
           "cameraPermission": "O Huambo Online usa a câmara para fotografar artigos e documentos, pesquisar por fotografia e ler o QR das reservas de combustível e dos bilhetes de eventos."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#3665F3",
+          "defaultChannel": "default"
         }
       ]
     ],
