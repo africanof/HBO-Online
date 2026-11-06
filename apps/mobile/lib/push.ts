@@ -54,7 +54,8 @@ export async function unregisterPush(): Promise<void> {
 export function pushTarget(data: Record<string, any> | null | undefined): string {
   const d = data ?? {};
   if (typeof d.conversation_id === "string") return "/mensagens?conversation=" + d.conversation_id;
-  if (typeof d.support_conversation_id === "string" || d.tab) return "/admin";
+  if (typeof d.tab === "string") return "/admin?tab=" + encodeURIComponent(d.tab);
+  if (typeof d.support_conversation_id === "string") return "/admin";
   const link = getNotificationLink({ data: d, type: d.type ?? "system", title: d.title ?? "" } as any);
   return link?.href ?? "/notificacoes";
 }

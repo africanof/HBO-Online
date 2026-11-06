@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { jobQueueStats, jobQueueText } from "@huambo-online/core";
-import { Link, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Alert, ScrollView, Text, TextInput, View } from "react-native";
 import { getMyAdminRole, getAdminStats, listReports, resolveReport, listListingsForModeration, moderateListing, listUsersForAdmin,
   setUserStatus, setUserRole, listAllCategories, createCategory, setCategoryActive, canModerate, canManageRoles, assignableRoles, canManageAccount, friendlyErrorIn, formatPrice,
@@ -13,6 +13,7 @@ import { ui } from "../lib/ui";
 import { Button, Chips, Message } from "../components/Ui";
 import { AdminCouriers } from "../components/AdminCouriers";
 import { AdminMessages } from "../components/AdminMessages";
+import { AdminWhatsapp } from "../components/AdminWhatsapp";
 import { AdminAiFlags } from "../components/AiTools";
 import { TeamWhatsappSettings } from "../components/Engage";
 import { AdminRequests } from "../components/AdminRequests";
@@ -35,8 +36,8 @@ import { AdminVenues } from "../components/Venues";
 import { AdminInspections } from "../components/Inspection";
 import { MfaPrompt, useMfaCheck } from "../components/Mfa";
 
-type Tab = "stats" | "proofs" | "provinces" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "imports" | "item_inspections" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
-const TABS: Tab[] = ["stats", "proofs", "provinces", "requests", "messages", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "imports", "item_inspections", "inspections", "disputes", "verifications", "listings",
+type Tab = "stats" | "proofs" | "provinces" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "whatsapp" | "imports" | "item_inspections" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+const TABS: Tab[] = ["stats", "proofs", "provinces", "requests", "messages", "whatsapp", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "imports", "item_inspections", "inspections", "disputes", "verifications", "listings",
   "users", "categories", "couriers", "markets", "audit"];
 
 export default function Admin() {
@@ -44,7 +45,9 @@ export default function Admin() {
   const { lang, t: tr, tc } = useT();
   const tabOptions = TABS.map(value => ({ value, label: tr("ad.tab." + value) }));
   const [role, setRole] = useState<AdminRole | null>(null);
-  const [tab, setTab] = useState<Tab>("stats");
+  const params = useLocalSearchParams<{ tab?: string }>();
+  // Abrir um separador pelo endereço (ex.: a partir de um aviso: /admin?tab=whatsapp).
+  const [tab, setTab] = useState<Tab>(TABS.includes(params.tab as Tab) ? params.tab as Tab : "stats");
   const [error, setError] = useState(""); const [notice, setNotice] = useState("");
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [reports, setReports] = useState<any[]>([]); const [reportFilter, setReportFilter] = useState<ReportStatus | "">("open");
@@ -59,7 +62,7 @@ export default function Admin() {
 
   async function load(t: Tab) {
     setError("");
-    if (t === "messages" || t === "requests") return;
+    if (t === "messages" || t === "requests" || t === "whatsapp") return;
     if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "disputes" || t === "plans" || t === "safety" || t === "agents" || t === "events" || t === "videos" || t === "fuel" || t === "venues" || t === "imports" || t === "item_inspections" || t === "inspections" || t === "revenue" || t === "protected") return;
     const c = supabase();
     const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReportsV2(c, reportFilter || undefined)
@@ -95,6 +98,7 @@ export default function Admin() {
     {tab === "requests" && <AdminRequests />}
     {tab === "listings" && <AdminAiFlags />}
     {tab === "messages" && <AdminMessages />}
+    {tab === "whatsapp" && <AdminWhatsapp />}
     {tab === "couriers" && <AdminCouriers />}
     {tab === "markets" && <AdminMarkets />}
     {tab === "verifications" && <AdminVerifications />}
