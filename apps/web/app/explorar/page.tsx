@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { filterFieldsFor, attributeFilters, trackSearch } from "@huambo-online/core";
 import { loadWithCache, isOfflineError, searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyErrorIn, parsePrice, readExploreParams, categoryLabelIn,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, type ClassifiedSearchFilters, listingPriceLabel, SALE_MODE_FILTERS, cardSaleTag, isFeatured } from "@huambo-online/core";
@@ -22,8 +22,16 @@ export default function ExplorarPage() {
   const [name, setName] = useState(""); const [showFilters, setShowFilters] = useState(false);
   const [categories, setCategories] = useState<(Option & { slug?: string })[]>([]); const [provinces, setProvinces] = useState<Option[]>([]); const [municipalities, setMunicipalities] = useState<Option[]>([]);
   const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
+  const [sort, setSort] = useState<"recent" | "price_asc" | "price_desc">("recent");
+  const [view, setView] = useState<"grid" | "list">("grid"); const [filtersOpen, setFiltersOpen] = useState(false);
+  const [places, setPlaces] = useState<Record<string, string>>({});
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
 
+  // Vista escolhida (grelha ou lista) fica guardada neste navegador.
+  useEffect(() => { try { const v = localStorage.getItem("huambo:vista"); if (v === "list" || v === "grid") setView(v); } catch { /* sem armazenamento */ } }, []);
+  function chooseView(v: "grid" | "list") { setView(v); try { localStorage.setItem("huambo:vista", v); } catch { /* sem armazenamento */ } }
+  // Nomes dos municípios para mostrar o local em cada cartão.
+  useEffect(() => { void supabase().from("municipalities").select("id,name").then(({ data }) => setPlaces(Object.fromEntries(((data ?? []) as Option[]).map(m => [m.id, m.name])))); }, []);
   useEffect(() => {
     const c = supabase();
     void listProvinces(c).then(({ data }) => setProvinces((data ?? []) as Option[]));
@@ -67,6 +75,12 @@ export default function ExplorarPage() {
     const r = await saveClassifiedSearch(c, name, toFilters(f));
     if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setName(""); setNotice(t("ls.search_saved")); }
   }
+  const sorted = useMemo(() => {
+    if (!items || sort === "recent") return items;
+    const price = (x: any) => (typeof x.price === "number" && x.price > 0 ? x.price : null);
+    return [...items].sort((a, b) => { const pa = price(a), pb = price(b); if (pa === null) return 1; if (pb === null) return -1; return sort === "price_asc" ? pa - pb : pb - pa; });
+  }, [items, sort]);
+  const activeFilters = [f.q, f.type, f.categoryId, f.provinceId, f.municipalityId, f.min, f.max, ...Object.values(f.attrs)].filter(Boolean).length;
   const set = (k: keyof F) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value });
 
   return <main className="stack">
@@ -80,7 +94,8 @@ export default function ExplorarPage() {
       {([{ value: "", label: t("ls.all") }, ...SALE_MODE_FILTERS.map(m => ({ ...m, label: tc(m.label) }))] as { value: string; label: string }[]).map(m => <button key={m.value} type="button" className={"chip" + (f.mode === m.value ? " on" : "")} aria-pressed={f.mode === m.value} onClick={() => quick({ mode: m.value })}>{m.label}</button>)}
     </nav>
     <div className="results">
-      <form className="filters card" onSubmit={e => { e.preventDefault(); void search(); }}>
+      <button type="button" className="secondary filters-toggle" aria-expanded={filtersOpen} onClick={() => setFiltersOpen(!filtersOpen)}>⚙️ {t("ls.filters")}{activeFilters ? ` (${activeFilters})` : ""}</button>
+      <form className={"filters card" + (filtersOpen ? " open" : "")} onSubmit={e => { e.preventDefault(); setFiltersOpen(false); void search(); }}>
         <div className="row" style={{ justifyContent: "space-between" }}><h2>{t("ls.filters")}</h2><button type="button" className="secondary" onClick={() => setShowFilters(!showFilters)} style={{ minHeight: 40, padding: "4px 14px" }} aria-expanded={showFilters}>{showFilters ? t("ls.less") : t("ls.more")}</button></div>
         <label>{t("nav.search")}<input value={f.q} onChange={set("q")} placeholder={t("ls.ph_search")} /></label>
         <SmartSearchButton text={f.q} categories={categories.map(c => ({ slug: c.slug, name: c.name }))} onApply={x => {
@@ -109,15 +124,28 @@ export default function ExplorarPage() {
         <button type="button" className="secondary" onClick={save}>⭐ {t("ls.save_and_alert")}</button>
       </form>
       <section className="stack" aria-label={t("ls.results")}>
-        <div className="results-bar"><strong>{items === null ? t("common.loading") : t("ls.n_results", { n: items.length })}</strong><a href="/classificados/publicar">+ {t("ls.publish_listing")}</a></div>
+        <div className="results-bar">
+          <strong>{items === null ? t("common.loading") : t("ls.n_results", { n: items.length })}</strong>
+          <div className="row" style={{ gap: 8 }}>
+            <label className="sort-select"><span className="muted">{t("ls.sort")}</span>
+              <select value={sort} onChange={e => setSort(e.target.value as typeof sort)}>
+                <option value="recent">{t("ls.sort_recent")}</option><option value="price_asc">{t("ls.sort_price_asc")}</option><option value="price_desc">{t("ls.sort_price_desc")}</option>
+              </select></label>
+            <div className="view-toggle" role="group" aria-label={t("ls.view")}>
+              <button type="button" aria-pressed={view === "grid"} title={t("ls.view_grid")} aria-label={t("ls.view_grid")} onClick={() => chooseView("grid")}>▦</button>
+              <button type="button" aria-pressed={view === "list"} title={t("ls.view_list")} aria-label={t("ls.view_list")} onClick={() => chooseView("list")}>☰</button>
+            </div>
+            <a className="btn" href="/classificados/publicar" style={{ minHeight: 40, padding: "6px 16px", fontSize: 15 }}>+ {t("ls.publish_listing")}</a>
+          </div>
+        </div>
         <OfflineBanner show={offline.on} savedAt={offline.at} />
         {error && <p className="error" role="alert">{error}</p>}
         {notice && <p className="ok" role="status">{notice}</p>}
         {items?.length === 0 && <div className="card"><strong>{t("ls.no_listings_found")}</strong><span>{t("ls.try_other_words")} <a href="/classificados/publicar">{t("ls.publish_first")}</a></span></div>}
-        <div className="results-grid">
-          {items?.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={listingPriceLabel(x)}
+        <div className={"results-grid" + (view === "list" ? " list" : "")}>
+          {sorted?.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={listingPriceLabel(x)}
             icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? t("purpose.auction") : x.purpose !== "sale" ? t("purpose." + x.purpose) : cardSaleTag(x)} tagRed={x.purpose === "auction"}
-            meta={[tc(LISTING_TYPE_LABELS[x.listing_type as keyof typeof LISTING_TYPE_LABELS]), timeAgoIn(x.published_at ?? x.created_at, lang)].filter(Boolean).join(" · ")} />)}
+            meta={[places[x.attributes?.municipalityId] ? "📍 " + places[x.attributes.municipalityId] : "", tc(LISTING_TYPE_LABELS[x.listing_type as keyof typeof LISTING_TYPE_LABELS]), timeAgoIn(x.published_at ?? x.created_at, lang)].filter(Boolean).join(" · ")} />)}
         </div>
       </section>
     </div>

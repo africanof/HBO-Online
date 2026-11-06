@@ -127,6 +127,17 @@ main > a:first-child { font-size: 15px; display: inline-block; margin-bottom: 4p
 .fs-group .row { gap: 6px; }
 .fs-group .chip { min-height: 36px; padding: 4px 14px; font-size: 14px; }
 .fs-group small { font-size: 13px; color: var(--muted); }
+.footer details summary { list-style: none; cursor: pointer; }
+.footer details summary::-webkit-details-marker { display: none; }
+@media (max-width: 760px) {
+  .footer-in { grid-template-columns: 1fr; gap: 0; }
+  .footer nav details { border-bottom: 1px solid var(--line); }
+  .footer nav summary h3 { display: flex; justify-content: space-between; margin: 0; padding: 14px 0; }
+  .footer nav summary h3::after { content: "＋"; color: var(--muted); }
+  .footer nav details[open] summary h3::after { content: "－"; }
+  .footer nav details a { padding: 6px 0; }
+  .footer-settings { border-top: 0; }
+}
 
 @media (max-width: 760px) {
   .header { flex-wrap: wrap; gap: 10px; }
@@ -155,7 +166,40 @@ main > a:first-child { font-size: 15px; display: inline-block; margin-bottom: 4p
 .chip:hover { border-color: var(--fg); color: var(--fg); background: var(--surface); }
 .chip.on:hover { background: var(--fg); color: var(--bg); }
 .chip.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
-@media (max-width: 860px) { .results { grid-template-columns: 1fr; } .filters { position: static; } }
+.filters label { font-size: 15px; gap: 4px; }
+.filters input, .filters select { padding: 9px 12px; }
+.filters button { min-height: 42px; }
+.filters-toggle { display: none; }
+.sort-select { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+.sort-select select { width: auto; padding: 7px 10px; border-width: 1px; border-radius: var(--pill); }
+.view-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: var(--pill); overflow: hidden; }
+.view-toggle button { min-height: 38px; padding: 4px 14px; border: 0; border-radius: 0; background: var(--card); color: var(--muted); font-size: 18px; }
+.view-toggle button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+/* Vista em lista (como no OLX): fotografia à esquerda, texto à direita. */
+.results-grid.list { grid-template-columns: 1fr; gap: 12px; }
+.results-grid.list .item { grid-template-columns: 210px minmax(0, 1fr); grid-template-rows: auto auto 1fr; column-gap: 18px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); align-items: start; }
+.results-grid.list .item:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08); }
+.results-grid.list .item-img { grid-row: 1 / span 3; aspect-ratio: 4/3; }
+.results-grid.list .item-title { font-size: 18px; font-weight: 700; -webkit-line-clamp: 2; }
+.results-grid.list .item-price { font-size: 22px; }
+@media (max-width: 860px) {
+  .results { grid-template-columns: 1fr; } .filters { position: static; }
+  .filters-toggle { display: inline-flex; justify-self: start; }
+  .filters:not(.open) { display: none; }
+  .results-grid.list .item { grid-template-columns: 120px minmax(0, 1fr); column-gap: 12px; }
+  .results-grid.list .item-title { font-size: 16px; }
+}
+@media (max-width: 560px) {
+  .results-grid:not(.list) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 10px; }
+  .results-grid:not(.list) .item-title { font-size: 14px; }
+  .results-grid:not(.list) .item-price { font-size: 17px; }
+  .results-grid:not(.list) .item-meta { font-size: 12px; }
+  .results-grid:not(.list) .item-tag { font-size: 11px; padding: 2px 7px; left: 6px; top: 6px; }
+  /* Botões de filtro numa só linha que desliza para o lado (como nas APPs). */
+  nav.chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px 2px; }
+  nav.chips::-webkit-scrollbar { display: none; }
+  nav.chips > * { flex: none; }
+}
 
 /* Página do artigo (como no eBay, OLX e Airbnb): galeria e detalhes à esquerda; à direita a caixa de compra,
    que acompanha a página. No telemóvel: galeria, caixa de compra e depois os detalhes. */

@@ -98,6 +98,9 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   const { t } = useT();
+  // No telemóvel, as secções do rodapé abrem e fecham (como nas grandes lojas online); no computador ficam abertas.
+  const [compact, setCompact] = useState(false);
+  useEffect(() => { const m = window.matchMedia("(max-width: 760px)"); setCompact(m.matches); const on = () => setCompact(m.matches); m.addEventListener("change", on); return () => m.removeEventListener("change", on); }, []);
   // Textos já traduzidos: [título, [texto, endereço][]]
   const cols: [string, [string, string][]][] = [
     [t("ft.buy"), [[t("scope.classificados"), "/explorar"], [t("ft.wanted_requests"), "/procura-se"], [t("ft.post_wanted"), "/classificados/publicar?finalidade=wanted"], [t("cat.Trocas"), "/trocas"], [t("ft.farming"), "/agricultura"], [t("nav.markets"), "/pracas"], [t("nav.shop"), "/loja"], [t("cat.Leilões"), "/explorar?finalidade=auction"], [t("ft.cart"), "/carrinho"], [t("ft.orders"), "/encomendas"]]],
@@ -109,7 +112,7 @@ export function SiteFooter() {
     [t("ft.help_info"), INFO_LINKS.map(l => [infoLabel(l.href, l.label, t), l.href] as [string, string])]
   ];
   return <footer className="footer"><div className="footer-in">
-    {cols.map(([title, links]) => <nav key={title} aria-label={title}><h3>{title}</h3>{links.map(([l, h]) => <a key={h} href={h}>{l}</a>)}</nav>)}
+    {cols.map(([title, links]) => <nav key={title + (compact ? "-m" : "")} aria-label={title}><details open={!compact}><summary onClick={e => { if (!compact) e.preventDefault(); }}><h3>{title}</h3></summary>{links.map(([l, h]) => <a key={h} href={h}>{l}</a>)}</details></nav>)}
     <div className="footer-settings">
       <div className="fs-group"><h3>{t("nav.appearance")}</h3><ThemePicker /></div>
       <div className="fs-group"><h3>{t("nav.data_saver")}</h3><DataSaverPicker /></div>
