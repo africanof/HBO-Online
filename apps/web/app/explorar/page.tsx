@@ -143,7 +143,7 @@ export default function ExplorarPage() {
         {notice && <p className="ok" role="status">{notice}</p>}
         {items?.length === 0 && <div className="card"><strong>{t("ls.no_listings_found")}</strong><span>{t("ls.try_other_words")} <a href="/classificados/publicar">{t("ls.publish_first")}</a></span></div>}
         <div className={"results-grid" + (view === "list" ? " list" : "")}>
-          {sorted?.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={listingPriceLabel(x)}
+          {sorted?.map(x => <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={listingPriceLabel(x)}
             icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? t("purpose.auction") : x.purpose !== "sale" ? t("purpose." + x.purpose) : cardSaleTag(x)} tagRed={x.purpose === "auction"}
             meta={[places[x.attributes?.municipalityId] ? "📍 " + places[x.attributes.municipalityId] : "", tc(LISTING_TYPE_LABELS[x.listing_type as keyof typeof LISTING_TYPE_LABELS]), timeAgoIn(x.published_at ?? x.created_at, lang)].filter(Boolean).join(" · ")} />)}
         </div>

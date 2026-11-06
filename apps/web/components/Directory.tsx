@@ -15,6 +15,7 @@ import { PlaceView } from "./Place";
 import { InspectedBadge, useInspected } from "./Inspection";
 import { inspectionKindFor } from "@huambo-online/core";
 import { ProfileQr } from "./ProfileQr";
+import { ResultsToolbar, FiltersToggle } from "./ResultsTools";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string; slug?: string | null };
@@ -42,6 +43,7 @@ export function DirectoryList({ kind }: { kind: Kind }) {
   const [q, setQ] = useState(""); const [categoryId, setCategoryId] = useState(""); const [municipalityId, setMunicipalityId] = useState("");
   const [categories, setCategories] = useState<Option[]>([]); const { municipalities } = useTerritory();
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState("");
+  const [sort, setSort] = useState<"recent" | "rating" | "reviews" | "name">("recent"); const [filtersOpen, setFiltersOpen] = useState(false);
   const badges = useInspected(inspectionKindFor(kind), (items ?? []).map(x => kind === "providers" ? x.user_id : x.id));
 
   useEffect(() => {
@@ -60,45 +62,65 @@ export function DirectoryList({ kind }: { kind: Kind }) {
     if (r.error) setError(friendlyErrorIn(r.error, lang)); else setItems(r.data ?? []);
   }
 
-  return <main className="stack">
-    <a href="/">← {tr("nav.home")}</a>
-    <h1>{t.title}</h1>
-    <a className="btn secondary" href={t.ctaHref} style={{ justifySelf: "start" }}>{t.cta}</a>
-    <form onSubmit={search} className="grid" style={{ gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))" }}>
-      <label>{tr("nav.search")}<input value={q} onChange={e => setQ(e.target.value)} placeholder={t.search} /></label>
-      <label>{tr("sv.f_category")}<select value={categoryId} onChange={e => setCategoryId(e.target.value)}><option value="">{tr("sv.all_f")}</option>{categories.map(c => <option key={c.id} value={c.id}>{tc(c.name)}</option>)}</select></label>
-      <label>{tr("sv.municipality")}<select value={municipalityId} onChange={e => setMunicipalityId(e.target.value)}><option value="">{tr("sv.all")}</option>{municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
-      <button type="submit" style={{ alignSelf: "end" }}>{tr("nav.search")}</button>
-    </form>
-    {error && <p className="error" role="alert">{error}</p>}
+  const sorted = !items ? items : sort === "rating" ? [...items].sort((a, b) => (Number(b.rating ?? 0) - Number(a.rating ?? 0)) || (Number(b.review_count ?? 0) - Number(a.review_count ?? 0)))
+    : sort === "reviews" ? [...items].sort((a, b) => Number(b.review_count ?? 0) - Number(a.review_count ?? 0))
+    : sort === "name" ? [...items].sort((a, b) => String(kind === "providers" ? a.display_name : a.name).localeCompare(String(kind === "providers" ? b.display_name : b.name), lang)) : items;
+  const banners = <>
     {kind === "businesses" && categories.find(c => c.id === categoryId)?.slug === FUEL_CATEGORY_SLUG && <a href="/combustivel" className="banner yellow" style={{ color: "inherit", textDecoration: "none", fontWeight: 400, padding: 18 }}>
       <strong>⛽ {tr("sv.dir_fuel_q")}</strong> {tr("sv.dir_fuel_text")}</a>}
     {kind === "businesses" && (() => { const vk = venueKindFromSlug(categories.find(c => c.id === categoryId)?.slug); if (!vk) return null; const V = VENUE_KINDS[vk];
       return <a href={"/reservas?tipo=" + V.slug} className="banner yellow" style={{ color: "inherit", textDecoration: "none", fontWeight: 400, padding: 18 }}>
         <span><strong>{V.icon} {vk === "hotel" ? tr("sv.dir_v_hotel") : vk === "restaurant" ? tr("sv.dir_v_rest") : tr("sv.dir_v_wh")}</strong> {vk === "hotel" ? tr("sv.dir_v_hotel_b") : tr("sv.dir_v_other_b")}</span>
         <span className="btn">🛎️ {tr("sv.fu_reserve")}</span></a>; })()}
-    {items?.length === 0 && <p>{t.empty}</p>}
-    <a href="/classificados/publicar?finalidade=wanted" className="banner yellow" style={{ color: "inherit", textDecoration: "none", fontWeight: 400, padding: 18 }}>
-      <span><strong>{tr("sv.dir_wanted_q")}</strong> {tr("sv.dir_wanted_text")}</span>
-      <span className="btn">🔎 {tr("sv.dir_wanted_btn")}</span>
-    </a>
-    <section className="grid">
-      {items?.map(x => {
-        const id = kind === "providers" ? x.user_id : x.id;
-        const name = kind === "providers" ? x.display_name : x.name;
-        const pic = kind === "providers" ? x.avatar_url : x.logo_url;
-        return <a key={id} href={`${t.base}/${id}`} className="card" style={{ color: "inherit", textDecoration: "none", fontWeight: 400 }}>
-          <div className="row" style={{ flexWrap: "nowrap" }}>
-            {pic ? <LiteImg placeholder={kind === "providers" ? "👤" : "🏪"} src={pic} alt="" style={{ width: 56, height: 56, borderRadius: kind === "providers" ? "50%" : 12, objectFit: "cover" }} /> : <span aria-hidden style={{ width: 56, height: 56, borderRadius: kind === "providers" ? "50%" : 12, background: "var(--surface)", display: "grid", placeItems: "center", fontSize: 28 }}>{kind === "providers" ? "👷" : "🏢"}</span>}
-            <strong style={{ fontSize: 19 }}>{name}{x.verified ? " ✔️" : ""}</strong>
-          </div>
-          <InspectedBadge info={badges[id]} />
-          {kind === "providers" ? x.headline && <span>{x.headline}</span> : x.description && <span>{String(x.description).slice(0, 120)}</span>}
-          <span className="item-meta">{[x.category_name ? tc(x.category_name) : null, x.municipality_name].filter(Boolean).join(" · ")}</span>
-          <span><strong>{rating(x.rating, x.review_count)}</strong></span>
-        </a>;
-      })}
-    </section>
+  </>;
+
+  return <main className="stack">
+    <a href="/">← {tr("nav.home")}</a>
+    <div className="results-bar"><h1 style={{ margin: 0 }}>{t.title}</h1><a className="btn secondary" href={t.ctaHref}>{t.cta}</a></div>
+    {categories.length > 0 && <nav className="chips" aria-label={tr("sv.f_category")}>
+      {[{ id: "", name: tr("sv.all_f") }, ...categories].map(c => <button key={c.id} type="button" className={"chip" + (categoryId === c.id ? " on" : "")} aria-pressed={categoryId === c.id}
+        onClick={() => { setCategoryId(c.id); void search(undefined, q, c.id); }}>{c.id ? tc(c.name) : c.name}</button>)}
+    </nav>}
+    <div className="results">
+      <FiltersToggle open={filtersOpen} onToggle={() => setFiltersOpen(!filtersOpen)} active={[q, categoryId, municipalityId].filter(Boolean).length} />
+      <form onSubmit={e => { setFiltersOpen(false); void search(e); }} className={"filters card" + (filtersOpen ? " open" : "")}>
+        <h2>{tr("ls.filters")}</h2>
+        <label>{tr("nav.search")}<input value={q} onChange={e => setQ(e.target.value)} placeholder={t.search} /></label>
+        <label>{tr("sv.f_category")}<select value={categoryId} onChange={e => setCategoryId(e.target.value)}><option value="">{tr("sv.all_f")}</option>{categories.map(c => <option key={c.id} value={c.id}>{tc(c.name)}</option>)}</select></label>
+        <label>{tr("sv.municipality")}<select value={municipalityId} onChange={e => setMunicipalityId(e.target.value)}><option value="">{tr("sv.all")}</option>{municipalities.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
+        <button type="submit">{tr("nav.search")}</button>
+      </form>
+      <section className="stack" aria-label={t.title}>
+        <ResultsToolbar count={items === null ? tr("common.loading") : tr("ls.n_results", { n: items.length })} sort={sort} onSort={setSort}
+          sorts={[{ value: "recent", label: tr("ls.sort_relevant") }, { value: "rating", label: tr("ls.sort_rating") }, { value: "reviews", label: tr("ls.sort_reviews") }, { value: "name", label: tr("ls.sort_name") }]} />
+        {error && <p className="error" role="alert">{error}</p>}
+        {banners}
+        {items?.length === 0 && <div className="card"><strong>{t.empty}</strong></div>}
+        <div className="dir-grid">
+          {sorted?.map(x => {
+            const id = kind === "providers" ? x.user_id : x.id;
+            const name = kind === "providers" ? x.display_name : x.name;
+            const pic = kind === "providers" ? x.avatar_url : x.logo_url;
+            const about = kind === "providers" ? x.headline : x.description;
+            return <a key={id} href={`${t.base}/${id}`} className="card dir-card">
+              <div className="dir-card-top">
+                {pic ? <LiteImg placeholder={kind === "providers" ? "👤" : "🏪"} src={pic} alt="" className={"dir-pic" + (kind === "providers" ? " round" : "")} />
+                  : <span aria-hidden className={"dir-pic dir-pic-empty" + (kind === "providers" ? " round" : "")}>{kind === "providers" ? "👤" : "🏪"}</span>}
+                <span className="dir-card-name"><strong>{name}</strong>{x.verified && <span className="verified" style={{ fontSize: 12 }}>✔ {tr("common.verified")}</span>}</span>
+              </div>
+              <InspectedBadge info={badges[id]} />
+              {about && <span className="dir-about">{String(about).slice(0, 160)}</span>}
+              <span className="item-meta">{[x.category_name ? tc(x.category_name) : null, x.municipality_name ? "📍 " + x.municipality_name : null].filter(Boolean).join(" · ")}</span>
+              <span className="dir-rating">{rating(x.rating, x.review_count)}</span>
+            </a>;
+          })}
+        </div>
+        <a href="/classificados/publicar?finalidade=wanted" className="banner yellow" style={{ color: "inherit", textDecoration: "none", fontWeight: 400, padding: 18 }}>
+          <span><strong>{tr("sv.dir_wanted_q")}</strong> {tr("sv.dir_wanted_text")}</span>
+          <span className="btn">🔎 {tr("sv.dir_wanted_btn")}</span>
+        </a>
+      </section>
+    </div>
   </main>;
 }
 

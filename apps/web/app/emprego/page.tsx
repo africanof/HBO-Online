@@ -48,7 +48,7 @@ export default function Emprego() {
     {items?.length === 0 && <div className="card"><strong>{q ? t("job.none_q", { q }) : t("job.none")}</strong><a href={publishHref}>{t("job.be_first")} →</a></div>}
     <div className="results-grid">{items?.map(x => {
       const s = slugOf(x.category_id); const c = cats.find(k => k.id === x.category_id);
-      return <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
+      return <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
         price={tc(salaryLabel(x.price, s, x.currency))} icon="💼" tag={c ? categoryLabelIn(c.name, lang) : undefined}
         meta={timeAgoIn(x.created_at, lang)} />;
     })}</div>

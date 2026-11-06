@@ -54,10 +54,10 @@ export default function Vendedor() {
     <PromoSection kind="store" id={s.id} />
     <h2>{t("ls.listings_n", { n: listings.length })}</h2>
     {listings.length === 0 && <p>{t("ls.no_published")}</p>}
-    <div className="results-grid">{listings.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
+    <div className="results-grid">{listings.map(x => <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
       icon={LISTING_ICON[x.listing_type] ?? "🏷️"} meta={tc(PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] ?? x.purpose)} tag={x.purpose === "auction" ? t("purpose.auction") : undefined} tagRed />)}</div>
     {products.length > 0 && <><h2>{t("ls.shop_products_n", { n: products.length })}</h2>
-      <div className="results-grid">{products.map(p => <ItemCard key={p.id} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)} meta={p.stock > 0 ? t("ls.in_stock", { n: p.stock }) : t("home.sold_out")} />)}</div></>}
+      <div className="results-grid">{products.map(p => <ItemCard save={{ kind: "product", id: p.id }} key={p.id} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)} meta={p.stock > 0 ? t("ls.in_stock", { n: p.stock }) : t("home.sold_out")} />)}</div></>}
     <section className="stack"><h2>{t("ls.deal_reviews_n", { n: reviews.length })}</h2>
       <p style={{ margin: 0 }}>{t("ls.deal_reviews_note")}</p>
       {reviews.length === 0 && <p>{t("ls.no_reviews_yet")}</p>}

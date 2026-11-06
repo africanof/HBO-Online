@@ -25,6 +25,14 @@ export async function toggleSaved(client: SupabaseClient, userId: string, kind: 
   return { data: (r.data as any)?.id ?? null, error: r.error };
 }
 export async function listMySaved(client: SupabaseClient) { return client.rpc("my_saved_items"); }
+/** Tudo o que a pessoa guardou de um tipo, numa só consulta: { id do artigo → id do favorito }. Para os corações ♡ das listas. */
+export async function mySavedMap(client: SupabaseClient, userId: string, kind: SavedKind): Promise<Record<string, string>> {
+  const col = COLUMN[kind];
+  const r = await client.from("saved_items").select("id," + col).eq("user_id", userId).not(col, "is", null).limit(1000);
+  const out: Record<string, string> = {};
+  for (const row of (r.data ?? []) as any[]) if (row[col]) out[row[col]] = row.id;
+  return out;
+}
 
 // Histórico (fica só no aparelho)
 export type HistoryEntry = { kind: SavedKind; id: string; title: string; image?: string | null; at: number };

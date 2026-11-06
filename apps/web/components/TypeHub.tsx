@@ -49,7 +49,7 @@ export function TypeHub({ kind }: { kind: Kind }) {
     {error && <p className="error" role="alert">{error}</p>}
     {items === null && !error && <p>{t("common.loading")}</p>}
     {items?.length === 0 && <div className="card"><strong>{t(`hub.${kind}.none`)}</strong><a href={`/classificados/publicar?tipo=${kind}`}>{t(`hub.${kind}.be_first`)} →</a></div>}
-    <div className="results-grid">{items?.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media}
+    <div className="results-grid">{items?.map(x => <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media}
       title={x.title} price={tc(listingPriceLabel(x))} icon={c.icon} tag={x.purpose !== "sale" ? tc(PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] ?? x.purpose) : undefined}
       meta={[...facts(x), timeAgoIn(x.published_at ?? x.created_at, lang)].filter(Boolean).join(" · ")} />)}</div>
   </main>;

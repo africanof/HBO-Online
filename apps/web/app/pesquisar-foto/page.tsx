@@ -78,9 +78,9 @@ export default function PesquisarFoto() {
       <h2>{total ? t("ls.n_results", { n: total }) : t("ls.nothing_similar")}</h2>
       {!total && <p>{t("ls.try_words_above")} <a href="/pesquisas-guardadas">{t("ls.save_a_search")}</a> {t("ls.to_get_alerts")}</p>}
       <div className="results-grid">
-        {items.listings.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
+        {items.listings.map(x => <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={listingPriceLabel(x)}
           icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? t("purpose.auction") : x.purpose !== "sale" ? t("purpose." + x.purpose) : undefined} tagRed={x.purpose === "auction"} meta={timeAgoIn(x.created_at, lang)} />)}
-        {items.products.map(p => <ItemCard key={p.id} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)} tag={t("nav.shop")} meta={[p.seller_name, p.municipality_name].filter(Boolean).join(" · ")} />)}
+        {items.products.map(p => <ItemCard save={{ kind: "product", id: p.id }} key={p.id} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)} tag={t("nav.shop")} meta={[p.seller_name, p.municipality_name].filter(Boolean).join(" · ")} />)}
       </div>
     </>}
   </main>;

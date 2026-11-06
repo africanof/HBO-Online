@@ -34,7 +34,7 @@ export default function Agricultura() {
     {items === null && !error && <p>{t("common.loading")}</p>}
     {items?.length === 0 && <div className="card"><strong>{q ? t(cat ? "ls.no_listings_type_q" : "ls.no_listings_q", { q }) : t(cat ? "ls.no_listings_type" : "ls.no_listings")}</strong><a href="/classificados/publicar?campo=1">{t("ls.be_first_listing")} →</a></div>}
     <div className="results-grid">{items?.map(x => { const a = readAgro(x.attributes); const c = AGRO_CATEGORIES.find(k => k.value === a?.category);
-      return <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
+      return <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
         price={listingPriceLabel(x)} icon={c?.icon ?? "🌾"} tag={x.purpose === "wanted" ? t("ls.looking_for") : undefined}
         meta={[a ? tc(agroSummary(a)).split(" · ").slice(1).join(" · ") : "", timeAgoIn(x.created_at, lang)].filter(Boolean).join(" · ")} />; })}</div>
   </main>;

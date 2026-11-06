@@ -33,7 +33,7 @@ export default function Trocas() {
     {error && <p className="error" role="alert">{error}</p>}
     {items === null && !error && <p>{t("common.loading")}</p>}
     {items?.length === 0 && <div className="card"><strong>{q ? t("ls.no_trades_q", { q }) : t("ls.no_trades")}</strong><a href={PUBLISH_TRADE_HREF}>{t("ls.be_first_trade")} →</a></div>}
-    <div className="results-grid">{items?.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
+    <div className="results-grid">{items?.map(x => <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
       price={listingPriceLabel(x)} icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.sale_mode === "trade" ? t("ls.trade") : t("ls.accepts_trade_tag")}
       meta={[x.trade_wants ? t("ls.wants") + " " + x.trade_wants : "", timeAgoIn(x.published_at ?? x.created_at, lang)].filter(Boolean).join(" · ")} />)}</div>
   </main>;
