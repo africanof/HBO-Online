@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocalSearchParams } from "expo-router";
 import { ScrollView, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { SALE_MODE_FILTERS, cardSaleTag, loadWithCache, isOfflineError, searchClassifiedListings, saveClassifiedSearch, listProvinces, listMunicipalities, formatPrice, friendlyErrorIn, parsePrice,
   LISTING_TYPE_LABELS, PURPOSE_LABELS, readExploreParams, filterFieldsFor, attributeFilters, trackSearch, type ClassifiedSearchFilters, listingPriceLabel, isFeatured, categoryLabelIn } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
-import { Button, Chips, Message } from "../components/Ui";
+import { Button, Chips, Message, SortChips } from "../components/Ui";
 import { SearchBar } from "../components/Brand";
 import { ItemCard, Grid, LISTING_ICON } from "../components/ItemCard";
 import { OfflineBanner } from "../components/Offline";
@@ -27,7 +27,9 @@ export default function Explorar() {
   const [min, setMin] = useState(""); const [max, setMax] = useState(""); const [name, setName] = useState(""); const [showFilters, setShowFilters] = useState(false);
   const [categories, setCategories] = useState<(Option & { slug?: string })[]>([]); const [attrs, setAttrs] = useState<Record<string, string>>({}); const [provinces, setProvinces] = useState<Option[]>([]); const [municipalities, setMunicipalities] = useState<Option[]>([]);
   const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
-  const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
+  const [items, setItems] = useState<any[] | null>(null);
+  const [sort, setSort] = useState<"recent" | "price_asc" | "price_desc">("recent");
+  const sorted = useMemo(() => !items || sort === "recent" ? items : byPrice(items, sort === "price_asc" ? "asc" : "desc"), [items, sort]); const [error, setError] = useState(""); const [notice, setNotice] = useState(""); const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     const c = supabase();
@@ -102,9 +104,16 @@ export default function Explorar() {
     <OfflineBanner show={offline.on} savedAt={offline.at} />
     <Message error={error} ok={notice} />
     {items !== null && <Text style={ui.label}>{t("ls.explore.results", { n: items.length })}</Text>}
+    {!!items?.length && <SortChips label={t("ls.sort")} value={sort} onChange={setSort} options={[{ value: "recent", label: t("ls.sort_recent") }, { value: "price_asc", label: t("ls.sort_price_asc") }, { value: "price_desc", label: t("ls.sort_price_desc") }]} />}
     {items?.length === 0 && <View style={ui.card}><Text style={ui.text}>{t("ls.explore.none")}</Text><Link href="/classificados/publicar" style={ui.link}>{t("ls.explore.post_first")}</Link></View>}
-    <Grid>{items?.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} width={cardW} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={tc(coreText(listingPriceLabel(x), t) ?? "")}
+    <Grid>{sorted?.map(x => <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} video={!!x.video_url} width={cardW} href={`/classificados/${x.id}`} media={x.media} title={x.title} price={tc(coreText(listingPriceLabel(x), t) ?? "")}
       icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? t("tag.auction") : coreText(x.purpose !== "sale" ? tc(PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS]) : cardSaleTag(x), t)} tagRed={x.purpose === "auction"}
       meta={timeAgoIn(x.published_at ?? x.created_at, t, lang)} />)}</Grid>
   </ScrollView>;
+}
+
+/** Ordena por preço (sem preço fica no fim). */
+function byPrice(list: any[], dir: "asc" | "desc") {
+  const p = (x: any) => (typeof x.price === "number" && x.price > 0 ? x.price : null);
+  return [...list].sort((a, b) => { const pa = p(a), pb = p(b); if (pa === null) return 1; if (pb === null) return -1; return dir === "asc" ? pa - pb : pb - pa; });
 }

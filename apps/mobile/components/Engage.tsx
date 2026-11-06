@@ -8,7 +8,7 @@ import { getTeamWhatsapp, setTeamWhatsapp, teamWhatsappMessage, teamWhatsappRequ
   friendlyErrorIn, type SavedKind, type KeyValueStore, type ShareExtra } from "@huambo-online/core";
 import { supabase, siteUrl, currentUserId } from "../lib/supabase";
 import { C, ui } from "../lib/ui";
-import { Button, Message } from "./Ui";
+import { Button, Message , SmallButton } from "./Ui";
 import { useT } from "../lib/i18n";
 
 export const deviceStore: KeyValueStore = { getItem: k => AsyncStorage.getItem(k), setItem: (k, v) => AsyncStorage.setItem(k, v) };
@@ -38,9 +38,12 @@ export function SaveButton({ kind, id }: { kind: SavedKind; id: string }) {
   </>;
 }
 
-export function ShareButton({ kind, id, title, extra }: { kind: SavedKind; id: string; title: string; extra?: ShareExtra }) {
+export function ShareButton({ kind, id, title, extra, compact }: { kind: SavedKind; id: string; title: string; extra?: ShareExtra; compact?: boolean }) {
   const { t, tc } = useT();
   const { url, text: raw } = shareMessage(siteUrl, kind, id, title, extra); const text = tc(raw);
+  const share = () => { void recordItemEvent(supabase(), kind, id, "share"); void Share.share({ message: text, url: url || undefined, title }); };
+  const shareWa = () => { void recordItemEvent(supabase(), kind, id, "share"); void Linking.openURL(whatsappShareUrl(text)); };
+  if (compact) return <><SmallButton title={"🔗 " + t("common.share")} onPress={share} /><SmallButton title={t("ls.engage.share_wa")} onPress={shareWa} /></>;
   return <>
     <Button title={"🔗 " + t("common.share")} variant="secondary" onPress={() => { void recordItemEvent(supabase(), kind, id, "share"); void Share.share({ message: text, url: url || undefined, title }); }} />
     <Button title={t("ls.engage.share_wa")} variant="secondary" onPress={() => { void recordItemEvent(supabase(), kind, id, "share"); void Linking.openURL(whatsappShareUrl(text)); }} />

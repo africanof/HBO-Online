@@ -7,7 +7,7 @@ import { listProviders, listBusinesses, getProvider, getBusiness, listProviderSe
   listProviderReviews, getUserStats, getBusinessStats, userStatsRows, businessStatsRows, memberSince , categoryIdFromSlug, directoryHeading, FUEL_CATEGORY_SLUG, venueKindFromSlug, venueForBusiness, VENUE_KINDS } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
-import { Button, Chips, Message } from "./Ui";
+import { Button, Chips, Message, SortChips } from "./Ui";
 import { SaveButton, ShareButton, FollowButton, useRecordView } from "./Engage";
 import { StatsBlock, StarPicker, RequestServiceBox, VerifiedTag, stars } from "./Reputation";
 import { ReportButton, TrustBadges, ReviewReply } from "./Trust";
@@ -45,6 +45,10 @@ export function DirectoryList({ kind }: { kind: Kind }) {
   const [categories, setCategories] = useState<Option[]>([]); const { municipalities } = useTerritory();
   const [items, setItems] = useState<any[] | null>(null); const [error, setError] = useState("");
   const badges = useInspected(inspectionKindFor(kind), (items ?? []).map(x => kind === "providers" ? x.user_id : x.id));
+  const [sort, setSort] = useState<"relevant" | "rating" | "reviews" | "name">("relevant");
+  const nameOf = (x: any) => String(kind === "providers" ? x.display_name : x.name);
+  const sorted = !items || sort === "relevant" ? items : sort === "rating" ? [...items].sort((a, b) => (Number(b.rating ?? 0) - Number(a.rating ?? 0)) || (Number(b.review_count ?? 0) - Number(a.review_count ?? 0)))
+    : sort === "reviews" ? [...items].sort((a, b) => Number(b.review_count ?? 0) - Number(a.review_count ?? 0)) : [...items].sort((a, b) => nameOf(a).localeCompare(nameOf(b), lang));
 
   useEffect(() => {
     void listDirectoryCategories(supabase(), kind).then(({ data }) => {
@@ -62,12 +66,12 @@ export function DirectoryList({ kind }: { kind: Kind }) {
 
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Text style={ui.h1}>{tx.title}</Text>
-    <Button title={tx.cta} variant="secondary" onPress={() => router.push(tx.ctaHref as any)} />
     <TextInput value={q} onChangeText={setQ} placeholder={tx.search} style={ui.input} returnKeyType="search" onSubmitEditing={() => void search()} />
+    {categories.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <Chips options={[{ value: "", label: t("sv.f_all") }, ...categories.map(c => ({ value: c.id, label: c.name }))]} value={categoryId} onChange={v => { setCategoryId(v); void search(v); }} />
+    </ScrollView>}
     <Button title={showFilters ? t("sv.hide_filters") : t("sv.filters")} variant="secondary" onPress={() => setShowFilters(!showFilters)} />
     {showFilters && <View style={{ gap: 10 }}>
-      <Text style={ui.label}>{t("sv.category")}</Text>
-      <Chips options={[{ value: "", label: t("sv.f_all") }, ...categories.map(c => ({ value: c.id, label: c.name }))]} value={categoryId} onChange={setCategoryId} />
       <Text style={ui.label}>{t("sv.municipality")}</Text>
       <Chips options={[{ value: "", label: t("sv.f_all_m") }, ...municipalities.map(m => ({ value: m.id, label: m.name }))]} value={municipalityId} onChange={setMunicipalityId} />
     </View>}
@@ -76,23 +80,34 @@ export function DirectoryList({ kind }: { kind: Kind }) {
     {kind === "businesses" && categories.find(c => c.id === categoryId)?.slug === FUEL_CATEGORY_SLUG &&
       <Button title={t("sv.dir_fuel")} onPress={() => router.push("/combustivel" as any)} />}
     {kind === "businesses" && (() => { const vk = venueKindFromSlug(categories.find(c => c.id === categoryId)?.slug); return vk ? <Button title={t("sv.dir_venue", { icon: VENUE_KINDS[vk].icon, label: tc(VENUE_KINDS[vk].label) })} onPress={() => router.push(("/reservas?tipo=" + VENUE_KINDS[vk].slug) as any)} /> : null; })()}
+    {items !== null && items.length > 0 && <SortChips label={t("ls.sort")} value={sort} onChange={setSort}
+      options={[{ value: "relevant", label: t("ls.sort_relevant") }, { value: "rating", label: t("ls.sort_rating") }, { value: "reviews", label: t("ls.sort_reviews") }, { value: "name", label: t("ls.sort_name") }]} />}
     {items?.length === 0 && <Text style={ui.text}>{tx.empty}</Text>}
+    {sorted?.map(x => {
+      const id = kind === "providers" ? x.user_id : x.id;
+      const pic = kind === "providers" ? x.avatar_url : x.logo_url;
+      const about = kind === "providers" ? x.headline : x.description;
+      const round = kind === "providers";
+      return <Pressable key={id} style={[ui.card, { gap: 8 }]} accessibilityRole="link" onPress={() => router.push(`${tx.base}/${id}` as any)}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          {pic ? <LiteImage placeholder={round ? "👤" : "🏪"} source={{ uri: pic }} style={{ width: 64, height: 64, borderRadius: round ? 32 : 12 }} />
+            : <View style={{ width: 64, height: 64, borderRadius: round ? 32 : 12, backgroundColor: C.surface, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: 30 }}>{round ? "👤" : "🏪"}</Text></View>}
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={ui.h2} numberOfLines={2}>{nameOf(x)}</Text>
+            {!!x.verified && <Text style={{ alignSelf: "flex-start", backgroundColor: C.greenSoft, color: C.green, fontWeight: "800", fontSize: 12, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2, overflow: "hidden" }}>✔ {t("common.verified")}</Text>}
+          </View>
+        </View>
+        <InspectedBadge info={badges[id]} />
+        {!!about && <Text style={ui.text} numberOfLines={3}>{String(about)}</Text>}
+        <Text style={ui.muted}>{[x.category_name, x.municipality_name ? "📍 " + x.municipality_name : null].filter(Boolean).join(" · ")}</Text>
+        <Text style={[ui.text, { fontWeight: "700" }]}>{coreText(ratingLabel(x.rating, x.review_count), t)}</Text>
+      </Pressable>;
+    })}
     <View style={{ backgroundColor: C.yellowSoft, borderRadius: 16, padding: 14, gap: 8 }}>
       <Text style={ui.text}><Text style={{ fontWeight: "800" }}>{t("sv.dir_not_found")}</Text>{t("sv.dir_not_found_text")}</Text>
       <Button title={t("sv.dir_post_wanted")} onPress={() => router.push("/classificados/publicar?finalidade=wanted" as any)} />
     </View>
-    {items?.map(x => {
-      const id = kind === "providers" ? x.user_id : x.id;
-      const pic = kind === "providers" ? x.avatar_url : x.logo_url;
-      return <Pressable key={id} style={ui.card} accessibilityRole="link" onPress={() => router.push(`${tx.base}/${id}` as any)}>
-        {pic ? <LiteImage placeholder={kind === "providers" ? "👤" : "🏪"} source={{ uri: pic }} style={{ width: 56, height: 56, borderRadius: kind === "providers" ? 28 : 12 }} /> : <Text style={{ fontSize: 36 }}>{kind === "providers" ? "👷" : "🏢"}</Text>}
-        <Text style={ui.h2}>{kind === "providers" ? x.display_name : x.name}{x.verified ? " ✔️" : ""}</Text>
-        <InspectedBadge info={badges[id]} />
-        {!!(kind === "providers" ? x.headline : x.description) && <Text style={ui.text}>{String(kind === "providers" ? x.headline : x.description).slice(0, 120)}</Text>}
-        <Text style={ui.muted}>{[x.category_name, x.municipality_name].filter(Boolean).join(" · ")}</Text>
-        <Text style={ui.text}>{coreText(ratingLabel(x.rating, x.review_count), t)}</Text>
-      </Pressable>;
-    })}
+    <Button title={tx.cta} variant="secondary" onPress={() => router.push(tx.ctaHref as any)} />
   </ScrollView>;
 }
 

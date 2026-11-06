@@ -54,7 +54,7 @@ export default function Home() {
     });
   }, []));
 
-  const listing = (x: any) => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={coreText(listingPriceLabel(x), t) ?? ""}
+  const listing = (x: any) => <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={coreText(listingPriceLabel(x), t) ?? ""}
     icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? t("tag.auction") : coreText(x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : cardSaleTag(x), t)}
     tagRed={x.purpose === "auction"} meta={timeAgoIn(x.published_at ?? x.created_at, t, lang)} />;
 
@@ -119,7 +119,7 @@ export default function Home() {
       <Button title={t("home.post_wanted")} variant="secondary" onPress={() => router.push("/classificados/publicar?finalidade=wanted" as any)} />
     </View>
 
-    {!!s?.products.length && <Shelf title={t("home.in_shop")} href="/loja">{s.products.map(p => <ItemCard key={p.id} href={"/loja/" + p.id} media={p.media} title={p.name}
+    {!!s?.products.length && <Shelf title={t("home.in_shop")} href="/loja">{s.products.map(p => <ItemCard save={{ kind: "product", id: p.id }} key={p.id} href={"/loja/" + p.id} media={p.media} title={p.name}
       price={coreText(formatPrice(p.price, p.currency), t) ?? ""} tag={p.stock > 0 ? undefined : t("tag.sold_out")} meta={[p.seller_name, p.municipality_name].filter(Boolean).join(" · ")} />)}</Shelf>}
     {!!s?.rentals.length && <Shelf title={t("home.for_rent")} href="/explorar?finalidade=rent">{s.rentals.map(listing)}</Shelf>}
     {!!s?.trades?.length && <Shelf title={"🔁 " + t("home.trades")} href="/trocas">{s.trades.map(listing)}</Shelf>}

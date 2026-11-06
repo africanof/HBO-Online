@@ -2,6 +2,23 @@ import type { Dictionary } from "@huambo-online/core";
 
 /** Textos da área «listings» (APP): anúncios, explorar, guardados, mensagens, notificações, leilões, propostas… */
 export const DICT_LISTINGS: Dictionary = {
+  "act.save": { pt: "♡ Guardar", en: "♡ Save", zh: "♡ 收藏", fr: "♡ Enregistrer" },
+  "act.saved": { pt: "♥ Guardado", en: "♥ Saved", zh: "♥ 已收藏", fr: "♥ Enregistré" },
+  "act.offer": { pt: "💬 Fazer proposta", en: "💬 Make an offer", zh: "💬 出价", fr: "💬 Faire une offre" },
+  "act.trade": { pt: "🔁 Propor troca", en: "🔁 Propose a trade", zh: "🔁 提议交换", fr: "🔁 Proposer un échange" },
+  "act.message": { pt: "✉️ Mensagem", en: "✉️ Message", zh: "✉️ 留言", fr: "✉️ Message" },
+  "act.report": { pt: "🚩 Denunciar anúncio", en: "🚩 Report listing", zh: "🚩 举报信息", fr: "🚩 Signaler l'annonce" },
+  "ls.details": { pt: "Detalhes", en: "Details", zh: "详情", fr: "Détails" },
+  "ls.description_t": { pt: "Descrição", en: "Description", zh: "描述", fr: "Description" },
+  "ls.sort": { pt: "Ordenar", en: "Sort", zh: "排序", fr: "Trier" },
+  "ls.sort_recent": { pt: "Mais recentes", en: "Newest", zh: "最新", fr: "Plus récents" },
+  "ls.sort_price_asc": { pt: "Preço ↑", en: "Price ↑", zh: "价格 ↑", fr: "Prix ↑" },
+  "ls.sort_price_desc": { pt: "Preço ↓", en: "Price ↓", zh: "价格 ↓", fr: "Prix ↓" },
+  "ls.sort_name": { pt: "Nome A–Z", en: "Name A–Z", zh: "名称 A–Z", fr: "Nom A–Z" },
+  "ls.sort_relevant": { pt: "Relevantes", en: "Relevant", zh: "相关", fr: "Pertinents" },
+  "ls.sort_rating": { pt: "Melhor avaliados", en: "Best rated", zh: "评分最高", fr: "Mieux notés" },
+  "ls.sort_reviews": { pt: "Mais avaliações", en: "Most reviews", zh: "评价最多", fr: "Plus d'avis" },
+
   // Publicar e editar anúncio
   "ls.publish.title": { pt: "Publicar anúncio", en: "Post a listing", zh: "发布信息", fr: "Publier une annonce" },
   "ls.publish.want_buy": { pt: "Quer comprar? Publique o que procura →", en: "Want to buy? Post what you're looking for →", zh: "想购买？发布您的求购信息 →", fr: "Vous voulez acheter ? Publiez ce que vous cherchez →" },

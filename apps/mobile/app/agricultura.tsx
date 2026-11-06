@@ -34,7 +34,7 @@ export default function Agricultura() {
     {items === null && !error && <Text style={ui.text}>{t("common.loading")}</Text>}
     {items?.length === 0 && <Text style={ui.text}>{cat !== "all" ? t("ls.agro.none_type") : t("ls.agro.none")}</Text>}
     {!!items?.length && <Grid>{items.map(x => { const a = readAgro(x.attributes); const c = AGRO_CATEGORIES.find(k => k.value === a?.category);
-      return <ItemCard key={x.id} featured={isFeatured(x)} width={cardW} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
+      return <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} width={cardW} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
         price={tc(coreText(listingPriceLabel(x), t) ?? "")} icon={c?.icon ?? "🌾"} tag={x.purpose === "wanted" ? t("ls.agro.wanted") : undefined} meta={a ? agroSummary(a).split(" · ").slice(1).map(p => tc(p)).join(" · ") : undefined} />; })}</Grid>}
   </ScrollView>;
 }

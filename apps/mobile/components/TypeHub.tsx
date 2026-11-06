@@ -53,7 +53,7 @@ export function TypeHub({ kind }: { kind: Kind }) {
     <Message error={error} />
     {items === null && !error && <Text style={ui.text}>{t("common.loading")}</Text>}
     {items?.length === 0 && <Text style={ui.text}>{t(`hub.${kind}.none`)}</Text>}
-    {!!items?.length && <Grid>{items.map(x => <ItemCard key={x.id} featured={isFeatured(x)} width={cardW} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media}
+    {!!items?.length && <Grid>{items.map(x => <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} width={cardW} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media}
       title={x.title} price={tc(coreText(listingPriceLabel(x), t) ?? "")} icon={c.icon} meta={facts(x) || undefined} />)}</Grid>}
   </ScrollView>;
 }

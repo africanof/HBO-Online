@@ -31,7 +31,7 @@ export default function Trocas() {
     <Message error={error} />
     {items === null && !error && <Text style={ui.text}>{t("common.loading")}</Text>}
     {items?.length === 0 && <Text style={ui.text}>{q ? t("ls.trades.none_q", { q }) : t("ls.trades.none")}</Text>}
-    {!!items?.length && <Grid>{items.map(x => <ItemCard key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
+    {!!items?.length && <Grid>{items.map(x => <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
       price={tc(coreText(listingPriceLabel(x), t) ?? "")} icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.sale_mode === "trade" ? t("tag.trade") : t("tag.accepts_trade")}
       meta={[x.trade_wants ? t("ls.trades.wants", { what: x.trade_wants }) : "", timeAgoIn(x.published_at ?? x.created_at, t, lang)].filter(Boolean).join(" · ")} />)}</Grid>}
   </ScrollView>;

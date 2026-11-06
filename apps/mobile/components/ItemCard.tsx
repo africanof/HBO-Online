@@ -4,14 +4,18 @@ import { firstPhoto, isExampleName } from "@huambo-online/core";
 import { C, themed } from "../lib/ui";
 import { LiteImage } from "./LiteImage";
 import { useT } from "../lib/i18n";
+import { SaveHeart } from "./SaveHeart";
+import type { SavedKind } from "@huambo-online/core";
 
 export const LISTING_ICON: Record<string, string> = { real_estate: "🏠", vehicle: "🚗", product: "📦", service: "🛠️", classified: "🏷️" };
 
 /** Cartão de artigo ao estilo eBay: fotografia quadrada, título em duas linhas, preço forte. */
 // Estilo fixo (não função): dentro de <Link asChild> um estilo-função é ignorado e o cartão perdia a largura,
 // ficando do tamanho do ecrã com a fotografia ampliada e desfocada.
-export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = "📦", width, video, featured }: {
+export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = "📦", width, video, featured, save }: {
   href: string; media?: unknown; title: string; price: string; meta?: string; tag?: string; tagRed?: boolean; icon?: string; width?: number | `${number}%`; video?: boolean; featured?: boolean;
+  /** Mostra o coração ♡ para guardar (anúncios e produtos). */
+  save?: { kind: SavedKind; id: string };
 }) {
   const photo = firstPhoto(media); const { t } = useT();
   return <Link href={href as any} asChild>
@@ -22,6 +26,7 @@ export function ItemCard({ href, media, title, price, meta, tag, tagRed, icon = 
         {!!video && <View style={s.video}><Text style={s.videoText}>{t("card.video")}</Text></View>}
         {!!featured && <View style={s.feat}><Text style={s.featText}>{t("card.featured")}</Text></View>}
         {isExampleName(title) && <View style={s.example}><Text style={s.exampleText}>{t("pp.example_badge")}</Text></View>}
+        {!!save && <SaveHeart kind={save.kind} id={save.id} title={title} />}
       </View>
       <Text style={s.title} numberOfLines={2}>{title}</Text>
       <Text style={s.price}>{price}</Text>
@@ -45,7 +50,7 @@ export function Grid({ children }: { children: React.ReactNode }) {
 }
 
 const s = themed(C => StyleSheet.create({
-  example: { position: "absolute", top: 8, right: 8, backgroundColor: "#c62828", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  example: { position: "absolute", bottom: 8, right: 8, backgroundColor: "#c62828", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   exampleText: { color: "#fff", fontWeight: "900", fontSize: 12, letterSpacing: 1 },
   card: { width: 160, gap: 4 },
   img: { width: "100%", aspectRatio: 1, borderRadius: 16, backgroundColor: C.surface, overflow: "hidden", alignItems: "center", justifyContent: "center", marginBottom: 4 },

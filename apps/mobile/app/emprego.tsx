@@ -39,7 +39,7 @@ export default function Emprego() {
     {items === null && !error && <Text style={ui.text}>{t("common.loading")}</Text>}
     {items?.length === 0 && <Text style={ui.text}>{q ? t("job.none_q", { q }) : t("job.none")}</Text>}
     {!!items?.length && <Grid>{items.map(x => { const c = cats.find(k => k.id === x.category_id);
-      return <ItemCard key={x.id} featured={isFeatured(x)} width={cardW} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
+      return <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} width={cardW} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title}
         price={tc(salaryLabel(x.price, c?.slug, x.currency))} icon="💼" tag={c ? categoryLabelIn(c.name, lang) : undefined} />; })}</Grid>}
   </ScrollView>;
 }
