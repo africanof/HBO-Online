@@ -276,7 +276,7 @@ export const DICT_LISTINGS: Dictionary = {
   "ls.sort_recent": { pt: "Mais recentes", en: "Newest", zh: "最新", fr: "Plus récents" },
   "ls.sort_price_asc": { pt: "Preço: mais baixo", en: "Price: lowest", zh: "价格：从低到高", fr: "Prix : le plus bas" },
   "ls.sort_price_desc": { pt: "Preço: mais alto", en: "Price: highest", zh: "价格：从高到低", fr: "Prix : le plus élevé" },
-  "ls.view": { pt: "Vista", en: "View", zh: "视图", fr: "Affichage" },
+  "ls.view_mode": { pt: "Vista", en: "View", zh: "视图", fr: "Affichage" },
   "ls.view_grid": { pt: "Ver em grelha", en: "Grid view", zh: "网格视图", fr: "Vue en grille" },
   "ls.view_list": { pt: "Ver em lista", en: "List view", zh: "列表视图", fr: "Vue en liste" },
   "ls.details": { pt: "Detalhes", en: "Details", zh: "详情", fr: "Détails" },

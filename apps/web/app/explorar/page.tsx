@@ -131,7 +131,7 @@ export default function ExplorarPage() {
               <select value={sort} onChange={e => setSort(e.target.value as typeof sort)}>
                 <option value="recent">{t("ls.sort_recent")}</option><option value="price_asc">{t("ls.sort_price_asc")}</option><option value="price_desc">{t("ls.sort_price_desc")}</option>
               </select></label>
-            <div className="view-toggle" role="group" aria-label={t("ls.view")}>
+            <div className="view-toggle" role="group" aria-label={t("ls.view_mode")}>
               <button type="button" aria-pressed={view === "grid"} title={t("ls.view_grid")} aria-label={t("ls.view_grid")} onClick={() => chooseView("grid")}>▦</button>
               <button type="button" aria-pressed={view === "list"} title={t("ls.view_list")} aria-label={t("ls.view_list")} onClick={() => chooseView("list")}>☰</button>
             </div>
