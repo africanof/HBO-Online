@@ -39,7 +39,7 @@ button[role="tab"][aria-selected="true"] { background: var(--fg); border-color: 
 /* Blocos */
 .stack { display: grid; gap: 14px; }
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.card { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 8px; background: var(--card); }
+.card { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 10px; background: var(--card); box-shadow: 0 1px 2px rgba(0,0,0,.04); }
 a.card { transition: box-shadow .15s, border-color .15s; }
 a.card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08); border-color: var(--muted); }
 .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
@@ -101,6 +101,7 @@ main > a:first-child { font-size: 15px; display: inline-block; margin-bottom: 4p
 .cat-circle { width: 104px; height: 104px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; font-size: 44px; transition: transform .15s, background .15s; }
 .cat:hover { color: var(--fg); text-decoration: underline; }
 .cat:hover .cat-circle { transform: scale(1.05); background: var(--accent-soft); }
+@media (min-width: 1100px) { .cats { grid-template-columns: repeat(10, 1fr); gap: 18px 12px; } .cat-circle { width: 84px; height: 84px; font-size: 38px; } .cat { font-size: 14px; } }
 .shelf-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 28px; }
 .shelf-head h2 { margin: 0; }
 .shelf { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(190px, 1fr); gap: 16px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x mandatory; }
@@ -120,6 +121,12 @@ main > a:first-child { font-size: 15px; display: inline-block; margin-bottom: 4p
 .footer a { display: block; color: var(--fg); font-weight: 400; text-decoration: none; padding: 3px 0; }
 .footer a:hover { text-decoration: underline; }
 .footer small { grid-column: 1 / -1; color: var(--muted); }
+.footer-settings { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 18px 48px; padding-top: 20px; border-top: 1px solid var(--line); }
+.fs-group { display: grid; gap: 8px; align-content: start; max-width: 520px; }
+.fs-group h3 { margin: 0; }
+.fs-group .row { gap: 6px; }
+.fs-group .chip { min-height: 36px; padding: 4px 14px; font-size: 14px; }
+.fs-group small { font-size: 13px; color: var(--muted); }
 
 @media (max-width: 760px) {
   .header { flex-wrap: wrap; gap: 10px; }
@@ -150,27 +157,50 @@ main > a:first-child { font-size: 15px; display: inline-block; margin-bottom: 4p
 .chip.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 @media (max-width: 860px) { .results { grid-template-columns: 1fr; } .filters { position: static; } }
 
-/* Página do artigo: galeria à esquerda, caixa de compra à direita */
-.itempage { display: grid; gap: 28px; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 1fr); align-items: start; }
+/* Página do artigo (como no eBay, OLX e Airbnb): galeria e detalhes à esquerda; à direita a caixa de compra,
+   que acompanha a página. No telemóvel: galeria, caixa de compra e depois os detalhes. */
+.itempage { display: grid; gap: 20px 32px; grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  grid-template-areas: "gallery buy" "content buy"; align-items: start; }
+.item-gallery { grid-area: gallery; min-width: 0; }
+.item-content { grid-area: content; min-width: 0; }
+.buybox { grid-area: buy; position: sticky; top: 16px; display: grid; gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--card); box-shadow: 0 2px 14px rgba(0,0,0,.06); max-height: calc(100vh - 32px); overflow-y: auto; scrollbar-width: thin; }
+.buybox h1 { font-size: clamp(22px, 2.4vw, 28px); margin: 0; }
+.buybox .big-price { font-size: 34px; font-weight: 800; line-height: 1.1; letter-spacing: -0.01em; }
+.buybox-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: -6px 0 0; color: var(--muted); font-size: 14px; }
+.buybox .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.buybox .actions > * { flex: 1 1 calc(50% - 4px); min-width: 0; }
+.buybox .actions > .full { flex-basis: 100%; }
+.buybox .actions .btn, .buybox .actions button { width: 100%; min-height: 44px; padding: 8px 10px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.buybox .actions > div:not(.full) { display: contents; }
+.buybox .card, .buybox section.card { padding: 12px; }
+.seller-box { display: flex; gap: 12px; align-items: center; padding: 12px 0 0; border-top: 1px solid var(--line); }
+.seller-avatar { flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--blue-text); font-weight: 800; font-size: 20px; }
 .gallery { display: grid; gap: 10px; grid-template-columns: 76px 1fr; align-items: start; }
 .gallery.single { grid-template-columns: 1fr; }
 .item-video { position: absolute; right: 10px; bottom: 10px; background: rgba(0,0,0,.75); color: #fff; font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: var(--pill); }
-.gallery-main { width: 100%; aspect-ratio: 1/1; object-fit: contain; background: var(--surface); border-radius: var(--radius); }
-.gallery-empty { width: 100%; aspect-ratio: 1/1; background: var(--surface); border-radius: var(--radius); display: grid; place-items: center; font-size: 96px; grid-column: 1 / -1; }
+.gallery-main { width: 100%; aspect-ratio: 4/3; max-height: 640px; object-fit: contain; background: var(--surface); border-radius: var(--radius); }
+.gallery-empty { width: 100%; aspect-ratio: 4/3; background: var(--surface); border-radius: var(--radius); display: grid; place-items: center; font-size: 96px; grid-column: 1 / -1; }
 .thumbs { display: grid; gap: 8px; }
 .thumbs button { padding: 0; width: 72px; height: 72px; min-height: 0; overflow: hidden; border-radius: 10px; border: 2px solid var(--line); background: var(--card); }
 .thumbs button[aria-current="true"] { border-color: var(--fg); }
 .thumbs img { width: 100%; height: 100%; object-fit: cover; }
-.buybox { display: grid; gap: 14px; }
-.buybox h1 { font-size: clamp(24px, 3vw, 30px); margin: 0; }
-.buybox .big-price { font-size: 32px; font-weight: 800; line-height: 1.1; }
-.buybox .actions { display: grid; gap: 10px; }
-.buybox .actions > button, .buybox .actions > .btn { width: 100%; }
-.seller-box { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; }
 .facts dt { color: var(--muted); }
 .facts dd { margin: 0; font-weight: 700; }
-@media (max-width: 860px) { .itempage { grid-template-columns: 1fr; } .gallery { grid-template-columns: 1fr; } .thumbs { grid-auto-flow: column; grid-auto-columns: 72px; overflow-x: auto; order: 2; } }
+/* Detalhes em duas colunas (rótulo e valor), com linhas finas, como as «características do artigo» do eBay. */
+.facts-grid { grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr); gap: 0 18px; }
+.facts-grid dt, .facts-grid dd { padding: 9px 0; border-bottom: 1px solid var(--line); }
+button.linklike { background: none; border: 0; color: var(--muted); min-height: 0; padding: 4px 0; font-weight: 600; font-size: 15px; }
+button.linklike:hover { background: none; color: var(--danger); text-decoration: underline; }
+@media (max-width: 1000px) { .facts-grid { grid-template-columns: max-content minmax(0, 1fr); } }
+@media (max-width: 900px) {
+  .itempage { grid-template-columns: minmax(0, 1fr); grid-template-areas: "gallery" "buy" "content"; }
+  .buybox { position: static; max-height: none; overflow: visible; box-shadow: none; padding: 16px; }
+  .gallery { grid-template-columns: 1fr; } .thumbs { grid-auto-flow: column; grid-auto-columns: 72px; overflow-x: auto; order: 2; }
+  .gallery-main, .gallery-empty { aspect-ratio: 1/1; }
+  .buybox .actions .btn, .buybox .actions button { white-space: normal; line-height: 1.2; }
+}
 
 /* Pedidos "Procura-se" */
 .wanted-card { color: inherit; text-decoration: none; font-weight: 400; border-left: 6px solid var(--yellow); }

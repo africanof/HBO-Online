@@ -120,68 +120,81 @@ export default function ClassifiedDetail() {
     <a href={"/explorar?tipo=" + item.listing_type}>← {t("scope.classificados")} › {typeLabel}</a>
     <OfflineBanner show={offline.on} savedAt={offline.at} />
     {item.status !== "published" && <p className="badge">{tc(STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] ?? item.status)} — {t("ls.only_you_see")}</p>}
+    {/* Como nos melhores marketplaces: à esquerda a galeria e os detalhes; à direita a caixa de compra, que acompanha a página. */}
     <div className="itempage">
-      <Gallery media={media} video={item.video_url} icon={item.purpose === "wanted" ? "🔎" : "🏷️"} title={item.title} />
-      <section className="buybox">
+      <div className="item-gallery">
+        <Gallery media={media} video={item.video_url} icon={item.purpose === "wanted" ? "🔎" : "🏷️"} title={item.title} />
+      </div>
+
+      <aside className="buybox" aria-label={t("ls.listing")}>
         {item.purpose === "wanted" && <span className="badge" style={{ justifySelf: "start", background: "var(--yellow-soft)", borderColor: "var(--yellow-line)", color: "var(--yellow-text)" }}>🔎 {t("home.wanted_badge")} — {t("ls.buyer_request")}</span>}
         {isFeatured(item) && <span className="badge" style={{ justifySelf: "start", background: "var(--yellow-soft)", borderColor: "var(--yellow-line)", color: "var(--yellow-text)" }}>⭐ {t("ls.featured")}</span>}
         {isExampleName(item.title) && <p className="scam-warn" style={{ margin: 0 }}>{t("pp.example_note")}</p>}
         <h1>{tr?.title ?? item.title}</h1>
-        {item.status === "published" && <TranslateListing listingId={item.id} onTranslated={setTr} />}
-        {seller && <div className="seller-box"><span aria-hidden style={{ fontSize: 30 }}>👤</span><span>{item.purpose === "wanted" ? t("ls.buyer") : t("ls.advertiser")}: <a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a> <SellerBadge userId={item.owner_id} /><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>{t("ls.see_other_listings")}</a></span></div>}
+        <p className="buybox-meta">{place && <span>📍 {place}</span>}{item.ref_no && <span>{formatRef("listing", item.ref_no)}</span>}<span>{typeLabel} · {purposeLabel}</span></p>
         {item.purpose === "wanted" ? <div><span className="muted">{t("ls.budget")}</span><div className="big-price">{tc(listingPriceLabel(item))}</div></div> : job ? <div><span className="muted">{t("job.salary")}</span><div className="big-price">{tc(salaryLabel(item.price, job.slug, item.currency))}</div></div>
           : <div className="big-price">{tc(listingPriceLabel(item))}</div>}
-        {job && <p className="scam-warn" style={{ margin: 0 }}>{t("job.detail_hint")}</p>}
-        {badges.length > 0 && <div className="row">{badges.map(b => <span key={b} className="mode-badge">{tc(b)}</span>)}</div>}
+        {(badges.length > 0 || (mode && SALE_MODE_INFO[mode])) && <div className="row" style={{ gap: 6 }}>
+          {badges.map(b => <span key={b} className="mode-badge">{tc(b)}</span>)}
+        </div>}
         {item.trade_wants && <p style={{ margin: 0 }}>🔁 {t("ls.accepts_trade")} <strong>{item.trade_wants}</strong></p>}
-        <dl className="facts">
-          <DetailFacts listingType={item.listing_type} attributes={item.attributes} categorySlug={catSlug} />
-          {item.ref_no && <><dt>{t("ls.listing_no")}</dt><dd><strong>{formatRef("listing", item.ref_no)}</strong></dd></>}
-          <dt>{t("ls.type")}</dt><dd>{typeLabel}</dd>
-          {readAgro(item.attributes) && <><dt>{t("ls.from_farm")}</dt><dd><a href="/agricultura">{tc(agroSummary(readAgro(item.attributes)!))}</a></dd></>}
-          <dt>{t("ls.purpose")}</dt><dd>{purposeLabel}</dd>
-          {mode && SALE_MODE_INFO[mode] && <><dt>{t("ls.how_sells")}</dt><dd>{SALE_MODE_INFO[mode].icon} {tc(SALE_MODE_INFO[mode].label)}</dd></>}
-          {place && <><dt>{t("ls.location")}</dt><dd>📍 {place}</dd></>}
-          <MarketFact id={item.market_id} />
-        </dl>
-        {notice && <p className="ok" role="status">{notice}</p>}
-        {error && <p className="error" role="alert">{error}</p>}
+        {job && <p className="scam-warn" style={{ margin: 0 }}>{t("job.detail_hint")}</p>}
+        {notice && <p className="ok" role="status" style={{ margin: 0 }}>{notice}</p>}
+        {error && <p className="error" role="alert" style={{ margin: 0 }}>{error}</p>}
         {item.status === "published" && <AuctionPanel listingId={id} uid={uid} mine={mine} canStart={["sale", "auction"].includes(item.purpose) && AUCTIONABLE_TYPES.includes(item.listing_type)} />}
         {!mine && item.status === "published" && ["rent", "lease"].includes(item.purpose) && <RentalRequestForm listingId={id} uid={uid} defaultPrice={item.price} />}
         {!mine && <ProtectedBuyBox item={item} uid={uid} isJob={!!job} />}
-        {item.purpose !== "wanted" && !job && <ListingInspection listingId={id} listingType={item.listing_type} mine={mine} uid={uid} />}
         <div className="actions">
           {mine ? <><a className="btn" href={`/classificados/${id}/editar`}>{t("ls.edit_listing")}</a><a className="btn secondary" href="/meus-anuncios">{t("ft.my_ads")}</a></> : <>
             {item.purpose === "wanted"
-              ? <a className="btn" href="#contactar" onClick={() => { if (!message.trim()) setMessage(wantedReplyMessage(item.title, item.listing_type === "service")); }}>{item.listing_type === "service" ? "🛠️ " + t("ls.i_can_do_service") : "✋ " + t("ls.i_have_it")}</a>
+              ? <a className="btn full" href="#contactar" onClick={() => { if (!message.trim()) setMessage(wantedReplyMessage(item.title, item.listing_type === "service")); }}>{item.listing_type === "service" ? "🛠️ " + t("ls.i_can_do_service") : "✋ " + t("ls.i_have_it")}</a>
               : <>
                 {(can.offerMoney || can.offerTrade) && <a className="btn secondary" href="#proposta">{item.sale_mode === "trade" ? "🔁 " + t("ls.offer_propose_trade") : "💬 " + t("ls.offer_make")}</a>}
                 <a className="btn secondary" href="#contactar">✉️ {t("ls.contact_advertiser")}</a>
-                {item.status === "published" && <SellerWhatsApp sellerId={item.owner_id} kind="listing" id={id} title={item.title} refCode={item.ref_no ? formatRef("listing", item.ref_no) : null} />}
+                {item.status === "published" && <div className="full"><SellerWhatsApp sellerId={item.owner_id} kind="listing" id={id} title={item.title} refCode={item.ref_no ? formatRef("listing", item.ref_no) : null} /></div>}
               </>}
             <button type="button" className="secondary" onClick={toggleSaved} disabled={busy}>{savedId ? "♥ " + t("ls.saved") : "♡ " + t("ls.save_listing")}</button>
           </>}
           {item.status === "published" && <ShareButton kind="listing" id={id} title={item.title} extra={{ price: item.purpose === "wanted" ? null : item.price, currency: item.currency, refCode: item.ref_no ? formatRef("listing", item.ref_no) : null, place }} />}
         </div>
+        {seller && <div className="seller-box"><span className="seller-avatar" aria-hidden>{seller.trim().charAt(0).toUpperCase()}</span><span>{item.purpose === "wanted" ? t("ls.buyer") : t("ls.advertiser")}<br /><a href={"/vendedor/" + item.owner_id}><strong>{seller}</strong></a> <SellerBadge userId={item.owner_id} /><br /><a href={"/vendedor/" + item.owner_id} style={{ fontWeight: 400, fontSize: 15 }}>{t("ls.see_other_listings")}</a></span></div>}
+        {item.status === "published" && <TranslateListing listingId={item.id} onTranslated={setTr} />}
         {item.purpose !== "wanted" && <DeliveryPolicyBox sellerId={item.owner_id} />}
-      </section>
+        {item.purpose !== "wanted" && !job && <ListingInspection listingId={id} listingType={item.listing_type} mine={mine} uid={uid} />}
+      </aside>
+
+      <div className="item-content stack">
+        <section className="card">
+          <h2 style={{ margin: 0 }}>{t("ls.details")}</h2>
+          <dl className="facts facts-grid">
+            <DetailFacts listingType={item.listing_type} attributes={item.attributes} categorySlug={catSlug} />
+            {item.ref_no && <><dt>{t("ls.listing_no")}</dt><dd><strong>{formatRef("listing", item.ref_no)}</strong></dd></>}
+            <dt>{t("ls.type")}</dt><dd>{typeLabel}</dd>
+            {readAgro(item.attributes) && <><dt>{t("ls.from_farm")}</dt><dd><a href="/agricultura">{tc(agroSummary(readAgro(item.attributes)!))}</a></dd></>}
+            <dt>{t("ls.purpose")}</dt><dd>{purposeLabel}</dd>
+            {mode && SALE_MODE_INFO[mode] && <><dt>{t("ls.how_sells")}</dt><dd>{SALE_MODE_INFO[mode].icon} {tc(SALE_MODE_INFO[mode].label)}</dd></>}
+            {place && <><dt>{t("ls.location")}</dt><dd>📍 {place}</dd></>}
+            <MarketFact id={item.market_id} />
+          </dl>
+        </section>
+        {item.purpose === "wanted" && item.status === "published" && <WantedHelpers title={item.title} mine={mine} />}
+        {item.description && <section className="card"><h2 style={{ margin: 0 }}>{t("ls.description")}</h2><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{tr?.description ?? item.description}</p></section>}
+        <PlaceView directions={item.directions} lat={item.geo_lat} lng={item.geo_lng} approximate />
+        <ListingGuarantee listingId={id} uid={uid} mine={mine} wanted={item.purpose === "wanted"} />
+        {mine && item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} />}
+        {!mine && <>
+          {(can.offerMoney || can.offerTrade) && <OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} />}
+          <section className="card" id="contactar">
+            <h2 style={{ margin: 0 }}>{item.purpose === "wanted" ? t("ls.reply_buyer") : t("ls.contact_advertiser")}</h2>
+            <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder={t("ls.ph_contact")} rows={4} />
+            <button type="button" disabled={busy || !message.trim()} onClick={contact} style={{ justifySelf: "start" }}>{busy ? t("ls.sending") : t("ls.send_message")}</button>
+          </section>
+          <SafetyTipsBox />
+          {!reporting ? <button type="button" className="linklike" onClick={() => setReporting(true)} style={{ justifySelf: "start" }}>🚩 {t("ls.report_listing")}</button> :
+            <section className="card"><label>{t("ls.report_reason")}<textarea value={reason} onChange={e => setReason(e.target.value)} rows={3} placeholder={t("ls.ph_report")} /></label>
+              <div className="row"><button type="button" className="danger" onClick={report}>{t("ls.report_send")}</button><button type="button" className="secondary" onClick={() => setReporting(false)}>{t("common.cancel")}</button></div></section>}
+        </>}
+      </div>
     </div>
-    {item.purpose === "wanted" && item.status === "published" && <WantedHelpers title={item.title} mine={mine} />}
-    {item.description && <section className="card"><h2 style={{ margin: 0 }}>{t("ls.description")}</h2><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{tr?.description ?? item.description}</p></section>}
-    <PlaceView directions={item.directions} lat={item.geo_lat} lng={item.geo_lng} approximate />
-    <ListingGuarantee listingId={id} uid={uid} mine={mine} wanted={item.purpose === "wanted"} />
-    {mine && item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} />}
-    {!mine && <>
-      {(can.offerMoney || can.offerTrade) && <OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} />}
-      <SafetyTipsBox />
-      <section className="card" id="contactar">
-        <h2 style={{ margin: 0 }}>{item.purpose === "wanted" ? t("ls.reply_buyer") : t("ls.contact_advertiser")}</h2>
-        <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder={t("ls.ph_contact")} rows={4} />
-        <button type="button" disabled={busy || !message.trim()} onClick={contact} style={{ justifySelf: "start" }}>{busy ? t("ls.sending") : t("ls.send_message")}</button>
-      </section>
-      {!reporting ? <button type="button" className="secondary" onClick={() => setReporting(true)} style={{ justifySelf: "start" }}>{t("ls.report_listing")}</button> :
-        <section className="card"><label>{t("ls.report_reason")}<textarea value={reason} onChange={e => setReason(e.target.value)} rows={3} placeholder={t("ls.ph_report")} /></label>
-          <div className="row"><button type="button" className="danger" onClick={report}>{t("ls.report_send")}</button><button type="button" className="secondary" onClick={() => setReporting(false)}>{t("common.cancel")}</button></div></section>}
-    </>}
   </main>;
 }

@@ -110,7 +110,11 @@ export function SiteFooter() {
   ];
   return <footer className="footer"><div className="footer-in">
     {cols.map(([title, links]) => <nav key={title} aria-label={title}><h3>{title}</h3>{links.map(([l, h]) => <a key={h} href={h}>{l}</a>)}</nav>)}
-    <div className="stack" style={{ gap: 6 }}><h3 style={{ margin: 0 }}>{t("nav.appearance")}</h3><ThemePicker /><h3 style={{ margin: "8px 0 0" }}>{t("nav.data_saver")}</h3><DataSaverPicker /><h3 style={{ margin: "8px 0 0" }}>🌐 {t("lang.choose")}</h3><LanguagePicker /></div>
+    <div className="footer-settings">
+      <div className="fs-group"><h3>{t("nav.appearance")}</h3><ThemePicker /></div>
+      <div className="fs-group"><h3>{t("nav.data_saver")}</h3><DataSaverPicker /></div>
+      <div className="fs-group"><h3>🌐 {t("lang.choose")}</h3><LanguagePicker /></div>
+    </div>
     <small>© {new Date().getFullYear()} Huambo Online · {t("ft.tagline")}</small>
   </div></footer>;
 }

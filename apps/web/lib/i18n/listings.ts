@@ -272,6 +272,7 @@ export const DICT_LISTINGS: Dictionary = {
   "ls.ph_wanted_service": { pt: "Ex.: Procuro um eletricista para instalação", en: "E.g.: Looking for an electrician for an installation", zh: "例如：寻找电工安装线路", fr: "Ex. : Je cherche un électricien pour une installation" },
   "ls.ph_wanted_item": { pt: "Ex.: Preciso de um Router 5G da Unitel", en: "E.g.: I need a Unitel 5G router", zh: "例如：需要一台 Unitel 5G 路由器", fr: "Ex. : J'ai besoin d'un routeur Unitel 5G" },
   "ls.ph_title": { pt: "Ex.: Toyota Hilux 2018", en: "E.g.: Toyota Hilux 2018", zh: "例如：Toyota Hilux 2018", fr: "Ex. : Toyota Hilux 2018" },
+  "ls.details": { pt: "Detalhes", en: "Details", zh: "详情", fr: "Détails" },
   "ls.description": { pt: "Descrição", en: "Description", zh: "描述", fr: "Description" },
   "ls.ph_wanted_desc": { pt: "Pormenores: estado, marca, zona, quando precisa…", en: "Details: condition, brand, area, when you need it…", zh: "详情：成色、品牌、地区、需要时间…", fr: "Détails : état, marque, quartier, quand vous en avez besoin…" },
   "ls.ph_desc": { pt: "Estado, características, como entregar…", en: "Condition, features, how to deliver…", zh: "成色、特点、交货方式…", fr: "État, caractéristiques, mode de livraison…" },
