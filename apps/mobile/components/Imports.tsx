@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useFocusEffect, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Alert, Image, Linking, ScrollView, Switch, Text, TextInput, View } from "react-native";
-import { listImportCatalog, saveImportCatalogItem, createImportRequest, myImportRequests, acceptImportQuote, cancelImportRequest, submitImportPayment,
+import { listImportCatalog, saveImportCatalogItem, deleteImportCatalogItem, createImportRequest, myImportRequests, acceptImportQuote, cancelImportRequest, submitImportPayment,
   listImportRequestsForAdmin, submitImportResearchPayment, getImportResearchSettings, setImportResearchSettings, decideImportResearch, quoteImport, declineImport, decideImportPayment, advanceImport, suggestedImportFee, importRef, getPlatformSettings,
   uploadPaymentProof, uploadClassifiedMedia, paymentProofUrl, sha256Hex, base64ToArrayBuffer, formatPrice, friendlyErrorIn, IMPORT_ORIGINS, IMPORT_NEXT, PLAN_METHOD_LABELS,
   type ImportCatalogItem, type ImportRequest, type ImportResearchSettings, type ImportOrigin, type ImportStatus, type PlatformSettings } from "@huambo-online/core";
@@ -291,26 +291,57 @@ function AdminResearchFee() {
 
 function AdminImportCatalog() {
   const { t, lang } = useT();
-  const [items, setItems] = useState<ImportCatalogItem[]>([]); const [error, setError] = useState(""); const [open, setOpen] = useState(false);
+  const [items, setItems] = useState<ImportCatalogItem[]>([]); const [error, setError] = useState(""); const [ok, setOk] = useState(""); const [open, setOpen] = useState(false); const [busy, setBusy] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [title, setTitle] = useState(""); const [description, setDescription] = useState(""); const [icon, setIcon] = useState("📦"); const [origin, setOrigin] = useState<ImportOrigin>("any");
+  const [dMin, setDMin] = useState("15"); const [dMax, setDMax] = useState("45"); const [sort, setSort] = useState("100");
   async function load() { setItems((await listImportCatalog(supabase(), true)).data); }
   useEffect(() => { void load(); }, []);
-  async function save(item: Partial<ImportCatalogItem> & { title: string }) {
-    setError(""); const r = await saveImportCatalogItem(supabase(), item);
-    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setTitle(""); setDescription(""); void load(); }
+  function reset() { setEditId(null); setTitle(""); setDescription(""); setIcon("📦"); setOrigin("any"); setDMin("15"); setDMax("45"); setSort("100"); }
+  function edit(c: ImportCatalogItem) {
+    setEditId(c.id); setTitle(c.title); setDescription(c.description ?? ""); setIcon(c.icon); setOrigin(c.origin);
+    setDMin(String(c.days_min)); setDMax(String(c.days_max)); setSort(String(c.sort)); setError(""); setOk("");
   }
+  async function run(fn: () => PromiseLike<{ error: any }>, message: string, clear = false) {
+    setBusy(true); setError(""); setOk("");
+    const r = await fn(); setBusy(false);
+    if (r.error) { setError(friendlyErrorIn(r.error, lang)); return; }
+    setOk(message); if (clear) reset(); void load();
+  }
+  const current = { id: editId ?? undefined, title, description, icon, origin, days_min: Number(dMin) || 15, days_max: Number(dMax) || 45, sort: Number(sort) || 100,
+    active: editId ? items.find(i => i.id === editId)?.active ?? true : true };
+  const num = (v: string) => v.replace(/\D/g, "");
   if (!open) return <Button title={`${t("im.a_catalog")} (${items.length})`} variant="secondary" onPress={() => setOpen(true)} />;
   return <View style={ui.card}>
     <Text style={ui.h2}>{t("im.a_catalog")}</Text>
-    {items.map(c => <View key={c.id} style={{ gap: 4, opacity: c.active ? 1 : 0.5 }}>
-      <Text style={ui.text}>{c.icon} {c.title} · {t("im.o." + c.origin)}</Text>
-      <Button title={t(c.active ? "im.a_hide" : "im.a_show")} variant="secondary" onPress={() => void save({ ...c, active: !c.active })} />
+    <View style={{ gap: 6, padding: 10, borderRadius: 12, borderWidth: 1, borderStyle: "dashed", borderColor: C.line }}>
+      <Text style={ui.label}>{editId ? t("im.a_editing", { t: title }) : t("im.a_new")}</Text>
+      <Text style={ui.muted}>{t("im.a_icon")}</Text>
+      <TextInput style={ui.input} value={icon} onChangeText={setIcon} maxLength={8} />
+      <Text style={ui.muted}>{t("im.f_title")}</Text>
+      <TextInput style={ui.input} value={title} onChangeText={setTitle} maxLength={120} />
+      <Text style={ui.muted}>{t("im.f_details")}</Text>
+      <TextInput style={[ui.input, { minHeight: 80, textAlignVertical: "top" }]} value={description} onChangeText={setDescription} maxLength={1000} multiline />
+      <Text style={ui.muted}>{t("im.f_origin")}</Text>
+      <Chips options={IMPORT_ORIGINS.map(o => ({ value: o, label: t("im.o." + o) }))} value={origin} onChange={setOrigin} />
+      <Text style={ui.muted}>{t("im.a_days_min")}</Text>
+      <TextInput style={ui.input} value={dMin} onChangeText={v => setDMin(num(v))} keyboardType="number-pad" />
+      <Text style={ui.muted}>{t("im.a_days_max")}</Text>
+      <TextInput style={ui.input} value={dMax} onChangeText={v => setDMax(num(v))} keyboardType="number-pad" />
+      <Text style={ui.muted}>{t("im.a_sort")}</Text>
+      <TextInput style={ui.input} value={sort} onChangeText={v => setSort(num(v))} keyboardType="number-pad" />
+      <Message error={error} ok={ok} />
+      <Button title={editId ? t("im.a_save_changes") : t("im.a_add")} disabled={busy || title.trim().length < 3} onPress={() => void run(() => saveImportCatalogItem(supabase(), current), t("im.a_saved"), true)} />
+      {!!editId && <Button title={t("im.a_cancel")} variant="secondary" onPress={reset} />}
+    </View>
+    {items.map(c => <View key={c.id} style={{ gap: 6, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.line, opacity: c.active ? 1 : 0.55 }}>
+      <Text style={ui.label}>{c.icon} {c.title}</Text>
+      <Text style={ui.muted}>{t("im.o." + c.origin)} · {t("im.days", { min: c.days_min, max: c.days_max })}</Text>
+      <Button title={t("im.a_edit")} variant="secondary" disabled={busy} onPress={() => edit(c)} />
+      <Button title={t(c.active ? "im.a_hide" : "im.a_show")} variant="secondary" disabled={busy} onPress={() => void run(() => saveImportCatalogItem(supabase(), { ...c, active: !c.active }), t("im.a_saved"))} />
+      <Button title={t("im.a_delete")} variant="danger" disabled={busy} onPress={() => Alert.alert(t("im.a_delete"), t("im.a_delete_q", { t: c.title }), [
+        { text: t("im.a_cancel"), style: "cancel" },
+        { text: t("im.a_delete"), style: "destructive", onPress: () => void run(() => deleteImportCatalogItem(supabase(), c.id), t("im.a_deleted"), editId === c.id) }])} />
     </View>)}
-    <TextInput style={ui.input} value={icon} onChangeText={setIcon} maxLength={8} />
-    <TextInput style={ui.input} value={title} onChangeText={setTitle} maxLength={120} placeholder={t("im.f_title")} {...ph} />
-    <TextInput style={ui.input} value={description} onChangeText={setDescription} maxLength={1000} placeholder={t("im.f_details")} {...ph} />
-    <Chips options={IMPORT_ORIGINS.map(o => ({ value: o, label: t("im.o." + o) }))} value={origin} onChange={setOrigin} />
-    <Message error={error} />
-    <Button title={t("im.a_add")} disabled={title.trim().length < 3} onPress={() => void save({ title, description, icon, origin })} />
   </View>;
 }

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { listImportCatalog, saveImportCatalogItem, createImportRequest, myImportRequests, acceptImportQuote, cancelImportRequest, submitImportPayment,
+import { listImportCatalog, saveImportCatalogItem, deleteImportCatalogItem, createImportRequest, myImportRequests, acceptImportQuote, cancelImportRequest, submitImportPayment,
   listImportRequestsForAdmin, submitImportResearchPayment, getImportResearchSettings, setImportResearchSettings, decideImportResearch, quoteImport, declineImport, decideImportPayment, advanceImport, suggestedImportFee, importRef, getPlatformSettings,
   uploadPaymentProof, uploadClassifiedMedia, paymentProofUrl, validateDocument, sha256Hex, formatPrice, friendlyErrorIn, IMPORT_ORIGINS, IMPORT_NEXT, PLAN_METHOD_LABELS,
   type ImportCatalogItem, type ImportRequest, type ImportResearchSettings, type ImportOrigin, type ImportStatus, type PlatformSettings } from "@huambo-online/core";
@@ -284,35 +284,58 @@ function AdminResearchFee() {
 
 function AdminImportCatalog() {
   const { t, lang } = useT();
-  const [items, setItems] = useState<ImportCatalogItem[]>([]); const [error, setError] = useState("");
+  const [items, setItems] = useState<ImportCatalogItem[]>([]); const [error, setError] = useState(""); const [ok, setOk] = useState(""); const [busy, setBusy] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
   const [title, setTitle] = useState(""); const [description, setDescription] = useState(""); const [icon, setIcon] = useState("📦");
-  const [origin, setOrigin] = useState<ImportOrigin>("any"); const [dMin, setDMin] = useState("15"); const [dMax, setDMax] = useState("45");
+  const [origin, setOrigin] = useState<ImportOrigin>("any"); const [dMin, setDMin] = useState("15"); const [dMax, setDMax] = useState("45"); const [sort, setSort] = useState("100");
   async function load() { setItems((await listImportCatalog(supabase(), true)).data); }
   useEffect(() => { void load(); }, []);
-  async function save(item: Partial<ImportCatalogItem> & { title: string }) {
-    setError(""); const r = await saveImportCatalogItem(supabase(), item);
-    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setTitle(""); setDescription(""); void load(); }
+  function reset() { setEditId(null); setTitle(""); setDescription(""); setIcon("📦"); setOrigin("any"); setDMin("15"); setDMax("45"); setSort("100"); }
+  function edit(c: ImportCatalogItem) {
+    setEditId(c.id); setTitle(c.title); setDescription(c.description ?? ""); setIcon(c.icon); setOrigin(c.origin);
+    setDMin(String(c.days_min)); setDMax(String(c.days_max)); setSort(String(c.sort)); setError(""); setOk("");
+    document.getElementById("catalogo-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
-  return <details className="card">
+  async function run(fn: () => PromiseLike<{ error: any }>, message: string, clear = false) {
+    setBusy(true); setError(""); setOk("");
+    const r = await fn(); setBusy(false);
+    if (r.error) { setError(friendlyErrorIn(r.error, lang)); return; }
+    setOk(message); if (clear) reset(); void load();
+  }
+  const current = { id: editId ?? undefined, title, description, icon, origin, days_min: Number(dMin) || 15, days_max: Number(dMax) || 45, sort: Number(sort) || 100,
+    active: editId ? items.find(i => i.id === editId)?.active ?? true : true };
+  return <details className="card" open={!!editId || undefined}>
     <summary style={{ fontWeight: 800, cursor: "pointer" }}>{t("im.a_catalog")} ({items.length})</summary>
-    <div className="stack" style={{ gap: 8, marginTop: 10 }}>
-      {items.map(c => <div key={c.id} className="row" style={{ justifyContent: "space-between", opacity: c.active ? 1 : 0.5 }}>
-        <span>{c.icon} {c.title} · {t("im.o." + c.origin)} · {t("im.days", { min: c.days_min, max: c.days_max })}</span>
-        <button type="button" className="secondary" onClick={() => void save({ ...c, active: !c.active })}>{t(c.active ? "im.a_hide" : "im.a_show")}</button>
+    <div className="stack" style={{ gap: 10, marginTop: 10 }}>
+      <div id="catalogo-form" className="stack" style={{ gap: 8, padding: 12, borderRadius: 12, border: "1px dashed var(--line)" }}>
+        <strong>{editId ? t("im.a_editing", { t: title }) : t("im.a_new")}</strong>
+        <div className="row">
+          <label style={{ width: 80 }}>{t("im.a_icon")}<input value={icon} onChange={e => setIcon(e.target.value)} maxLength={8} /></label>
+          <label style={{ flex: 1, minWidth: 200 }}>{t("im.f_title")}<input value={title} onChange={e => setTitle(e.target.value)} maxLength={120} /></label>
+        </div>
+        <label>{t("im.f_details")}<textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={1000} rows={3} /></label>
+        <div className="row">
+          <label style={{ flex: 2, minWidth: 160 }}>{t("im.f_origin")}<select value={origin} onChange={e => setOrigin(e.target.value as ImportOrigin)}>{IMPORT_ORIGINS.map(o => <option key={o} value={o}>{t("im.o." + o)}</option>)}</select></label>
+          <label style={{ flex: 1, minWidth: 120 }}>{t("im.a_days_min")}<input value={dMin} onChange={e => setDMin(e.target.value.replace(/\D/g, ""))} inputMode="numeric" /></label>
+          <label style={{ flex: 1, minWidth: 120 }}>{t("im.a_days_max")}<input value={dMax} onChange={e => setDMax(e.target.value.replace(/\D/g, ""))} inputMode="numeric" /></label>
+        </div>
+        <label>{t("im.a_sort")}<input value={sort} onChange={e => setSort(e.target.value.replace(/\D/g, ""))} inputMode="numeric" style={{ maxWidth: 140 }} /></label>
+        {error && <p className="error" role="alert" style={{ margin: 0 }}>{error}</p>}
+        {ok && <p className="ok" role="status" style={{ margin: 0 }}>{ok}</p>}
+        <div className="row">
+          <button type="button" disabled={busy || title.trim().length < 3} onClick={() => void run(() => saveImportCatalogItem(supabase(), current), t("im.a_saved"), true)}>{editId ? t("im.a_save_changes") : t("im.a_add")}</button>
+          {editId && <button type="button" className="secondary" onClick={reset}>{t("im.a_cancel")}</button>}
+        </div>
+      </div>
+      {items.map(c => <div key={c.id} className="stack" style={{ gap: 6, paddingBottom: 10, borderBottom: "1px solid var(--line)", opacity: c.active ? 1 : 0.55 }}>
+        <span><strong>{c.icon} {c.title}</strong> · {t("im.o." + c.origin)} · {t("im.days", { min: c.days_min, max: c.days_max })}</span>
+        {c.description && <small className="muted">{c.description}</small>}
+        <div className="row">
+          <button type="button" className="secondary" disabled={busy} onClick={() => edit(c)}>{t("im.a_edit")}</button>
+          <button type="button" className="secondary" disabled={busy} onClick={() => void run(() => saveImportCatalogItem(supabase(), { ...c, active: !c.active }), t("im.a_saved"))}>{t(c.active ? "im.a_hide" : "im.a_show")}</button>
+          <button type="button" className="danger" disabled={busy} onClick={() => { if (confirm(t("im.a_delete_q", { t: c.title }))) void run(() => deleteImportCatalogItem(supabase(), c.id), t("im.a_deleted"), editId === c.id); }}>{t("im.a_delete")}</button>
+        </div>
       </div>)}
-      <div className="row">
-        <label style={{ width: 70 }}>🙂<input value={icon} onChange={e => setIcon(e.target.value)} maxLength={8} /></label>
-        <label style={{ flex: 1 }}>{t("im.f_title")}<input value={title} onChange={e => setTitle(e.target.value)} maxLength={120} /></label>
-      </div>
-      <label>{t("im.f_details")}<input value={description} onChange={e => setDescription(e.target.value)} maxLength={1000} /></label>
-      <div className="row">
-        <label style={{ flex: 2 }}>{t("im.f_origin")}<select value={origin} onChange={e => setOrigin(e.target.value as ImportOrigin)}>{IMPORT_ORIGINS.map(o => <option key={o} value={o}>{t("im.o." + o)}</option>)}</select></label>
-        <label style={{ flex: 1 }}>min<input value={dMin} onChange={e => setDMin(e.target.value.replace(/\D/g, ""))} inputMode="numeric" /></label>
-        <label style={{ flex: 1 }}>max<input value={dMax} onChange={e => setDMax(e.target.value.replace(/\D/g, ""))} inputMode="numeric" /></label>
-      </div>
-      {error && <p className="error" role="alert">{error}</p>}
-      <button type="button" style={{ justifySelf: "start" }} disabled={title.trim().length < 3}
-        onClick={() => void save({ title, description, icon, origin, days_min: Number(dMin) || 15, days_max: Number(dMax) || 45 })}>{t("im.a_add")}</button>
     </div>
   </details>;
 }

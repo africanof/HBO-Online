@@ -57,6 +57,8 @@ export function saveImportCatalogItem(client: SupabaseClient, item: Partial<Impo
     days_min: item.days_min ?? 15, days_max: Math.max(item.days_max ?? 45, item.days_min ?? 15), active: item.active ?? true, sort: item.sort ?? 100 };
   return item.id ? client.from("import_catalog").update(row).eq("id", item.id) : client.from("import_catalog").insert(row);
 }
+/** Equipa: apagar do catálogo (os pedidos já feitos continuam, sem ligação ao catálogo). */
+export const deleteImportCatalogItem = (client: SupabaseClient, id: string) => client.from("import_catalog").delete().eq("id", id);
 
 export async function createImportRequest(client: SupabaseClient, i: ImportRequestInput) {
   const bad = validateImportRequest(i);
@@ -232,5 +234,18 @@ export const IMPORT_DICT: Dictionary = {
   "im.a_catalog": { pt: "Catálogo de importação", en: "Import catalogue", zh: "代购目录", fr: "Catalogue d'importation" },
   "im.a_add": { pt: "Adicionar ao catálogo", en: "Add to catalogue", zh: "添加到目录", fr: "Ajouter au catalogue" },
   "im.a_hide": { pt: "Esconder", en: "Hide", zh: "隐藏", fr: "Masquer" },
+  "im.a_new": { pt: "➕ Novo artigo do catálogo", en: "➕ New catalogue item", zh: "➕ 新目录项目", fr: "➕ Nouvel article du catalogue" },
+  "im.a_editing": { pt: "✏️ A editar: {t}", en: "✏️ Editing: {t}", zh: "✏️ 正在编辑：{t}", fr: "✏️ Modification : {t}" },
+  "im.a_edit": { pt: "✏️ Editar", en: "✏️ Edit", zh: "✏️ 编辑", fr: "✏️ Modifier" },
+  "im.a_delete": { pt: "🗑️ Apagar", en: "🗑️ Delete", zh: "🗑️ 删除", fr: "🗑️ Supprimer" },
+  "im.a_delete_q": { pt: "Apagar «{t}» do catálogo? Os pedidos já feitos continuam. Para só o tirar da página, use «Esconder».", en: "Delete «{t}» from the catalogue? Requests already made remain. To just remove it from the page, use «Hide».", zh: "从目录中删除「{t}」？已提交的请求会保留。如只想从页面移除，请用「隐藏」。", fr: "Supprimer «{t}» du catalogue ? Les demandes déjà faites restent. Pour seulement le retirer de la page, utilisez «Masquer»." },
+  "im.a_save_changes": { pt: "Guardar alterações", en: "Save changes", zh: "保存更改", fr: "Enregistrer les modifications" },
+  "im.a_cancel": { pt: "Cancelar", en: "Cancel", zh: "取消", fr: "Annuler" },
+  "im.a_saved": { pt: "Guardado.", en: "Saved.", zh: "已保存。", fr: "Enregistré." },
+  "im.a_deleted": { pt: "Apagado do catálogo.", en: "Deleted from the catalogue.", zh: "已从目录中删除。", fr: "Supprimé du catalogue." },
+  "im.a_icon": { pt: "Ícone", en: "Icon", zh: "图标", fr: "Icône" },
+  "im.a_days_min": { pt: "Prazo mínimo (dias)", en: "Minimum time (days)", zh: "最短时间（天）", fr: "Délai minimum (jours)" },
+  "im.a_days_max": { pt: "Prazo máximo (dias)", en: "Maximum time (days)", zh: "最长时间（天）", fr: "Délai maximum (jours)" },
+  "im.a_sort": { pt: "Ordem (o número mais baixo aparece primeiro)", en: "Order (lowest number shows first)", zh: "顺序（数字越小越靠前）", fr: "Ordre (le plus petit nombre apparaît en premier)" },
   "im.a_show": { pt: "Mostrar", en: "Show", zh: "显示", fr: "Afficher" }
 };
