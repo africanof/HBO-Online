@@ -16,9 +16,9 @@ export const AUCTIONABLE_TYPES = ["real_estate", "vehicle", "product", "classifi
  * só o necessário para ficar à frente. O incremento sobe com o preço (escalões em Kz) e nunca é menor
  * que o escolhido pelo vendedor — igual à função auction_increment do servidor.
  */
-export const BID_INCREMENT_STEPS: [number, number][] = [[1000, 50], [5000, 100], [25000, 250], [100000, 500], [250000, 1000], [1000000, 2500], [5000000, 5000]];
+export const BID_INCREMENT_STEPS: [number, number][] = [[1000, 50], [5000, 250], [25000, 500], [100000, 1000], [250000, 2500], [500000, 5000], [1000000, 10000], [2500000, 25000], [5000000, 50000]];
 export function bidIncrement(price: number, sellerMin = 0): number {
-  const step = BID_INCREMENT_STEPS.find(([limit]) => Number(price) < limit)?.[1] ?? 10000;
+  const step = BID_INCREMENT_STEPS.find(([limit]) => Number(price) < limit)?.[1] ?? 100000;
   return Math.max(Number(sellerMin) || 0, step);
 }
 /**
@@ -50,6 +50,16 @@ export function quickBids(a: Pick<ListingAuction, "bid_count" | "starting_price"
   const first = Math.ceil(min / inc) * inc;
   const cap = a.buy_now_available && Number(a.buy_now_price) > 0 ? Number(a.buy_now_price) : Infinity;
   return [...new Set([first, first + inc, first + 4 * inc])].filter(v => v >= min && v < cap);
+}
+
+/** Contagem ao segundo (como no eBay): "2 d 4 h 12 min 05 s", "23 h 58 min 12 s", "2 min 10 s", "45 s", "Terminado". */
+export function timeLeftLive(endsAt: string, now = Date.now()): { text: string; urgent: boolean; ended: boolean } {
+  const ms = new Date(endsAt).getTime() - now;
+  if (!(ms > 0)) return { text: "Terminado", urgent: false, ended: true };
+  const total = Math.floor(ms / 1000), sec = total % 60, min = Math.floor(total / 60) % 60, h = Math.floor(total / 3600) % 24, d = Math.floor(total / 86400);
+  const ss = String(sec).padStart(2, "0"), mm = String(min).padStart(2, "0");
+  const text = d > 0 ? `${d} d ${h} h ${mm} min ${ss} s` : h > 0 ? `${h} h ${mm} min ${ss} s` : min > 0 ? `${min} min ${ss} s` : `${sec} s`;
+  return { text, urgent: total < 3600, ended: false };
 }
 
 /** "2 d 4 h", "35 min", "Terminado" */

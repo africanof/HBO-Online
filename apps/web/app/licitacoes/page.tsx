@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { listMyAuctionBids, groupMyBids, formatPrice, formatRef, timeLeft, friendlyErrorIn, LANG_TAGS, BID_STANDING_LABELS, type MyAuctionBid } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
 import { LiteImg } from "../../components/LiteImg";
+import { Countdown, withSlot } from "../../components/Countdown";
 import { useT } from "../../lib/i18n";
 
 function Row({ b }: { b: MyAuctionBid }) {
@@ -15,7 +16,7 @@ function Row({ b }: { b: MyAuctionBid }) {
       <a href={b.listing_id ? "/classificados/" + b.listing_id : "#"} style={{ overflowWrap: "anywhere" }}><strong>{b.title}</strong></a>
       <span className={tone} style={{ margin: 0 }}><strong>{tc(BID_STANDING_LABELS[b.standing])}</strong></span>
       <span>{t("ls.current_price")} <strong>{formatPrice(b.current_price)}</strong>{b.my_max != null && live ? <> · {t("ls.your_max")} <strong>{formatPrice(b.my_max)}</strong></> : null}</span>
-      <small className="muted">{t("ls.n_bids", { n: b.bid_count })} · {live ? t("ls.auc_ends_in", { left: tc(timeLeft(b.ends_at)) }) : t("ls.auc_ended_at", { d: new Date(b.ends_at).toLocaleString(LANG_TAGS[lang]) })}{b.ref_no ? " · " + formatRef("listing", b.ref_no) : ""}</small>
+      <small className="muted">{t("ls.n_bids", { n: b.bid_count })} · {live ? withSlot(t("ls.auc_ends_in", { left: "\u0000" }), <Countdown endsAt={b.ends_at} />) : t("ls.auc_ended_at", { d: new Date(b.ends_at).toLocaleString(LANG_TAGS[lang]) })}{b.ref_no ? " · " + formatRef("listing", b.ref_no) : ""}</small>
       {live && b.standing === "outbid" && b.listing_id && <a className="btn" href={"/classificados/" + b.listing_id} style={{ justifySelf: "start" }}>{t("ls.raise_my_max")}</a>}
       {b.standing === "won" && b.listing_id && <a className="btn secondary" href={"/classificados/" + b.listing_id} style={{ justifySelf: "start" }}>{t("ls.contact_seller")}</a>}
     </div>

@@ -7,6 +7,7 @@ import { requestRental, getListingAuction, startListingAuction, bidOnAuction, ca
 import { supabase } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
+import { Countdown, withSlot } from "./Countdown";
 import { useT, formatDateTimeIn } from "../lib/i18n";
 
 /** Pedido de aluguer (anúncios para arrendar/alugar). Datas no formato AAAA-MM-DD. */
@@ -90,7 +91,7 @@ export function AuctionPanel({ listingId, uid, mine, canStart }: { listingId: st
   return <View style={ui.card} accessibilityLabel={t("tag.auction")}>
     <Text style={ui.h2}>{live ? t("ls.auc.live") : a.status === "scheduled" ? t("ls.auc.scheduled") : t("ls.auc.ended")}</Text>
     <Text style={ui.price}>{formatPrice(a.current_price)}</Text>
-    <Text style={ui.text}>{t("ls.bids.count", { n: a.bid_count })} · {live ? t("ls.bids.ends_in", { time: tc(timeLeft(a.ends_at)) }) : t("ls.auc.ended_at", { date: formatDateTimeIn(a.ends_at, lang) })}{!a.reserve_met && a.bid_count > 0 ? " · " + t("ls.auc.reserve_not_met") : ""}</Text>
+    <Text style={ui.text}>{t("ls.bids.count", { n: a.bid_count })} · {live ? withSlot(t("ls.bids.ends_in", { time: "\u0000" }), <Countdown endsAt={a.ends_at} onEnd={() => void load()} />) : t("ls.auc.ended_at", { date: formatDateTimeIn(a.ends_at, lang) })}{!a.reserve_met && a.bid_count > 0 ? " · " + t("ls.auc.reserve_not_met") : ""}</Text>
     {a.status === "ended" && <Text style={ui.label}>{a.winner_id ? (a.winner_id === uid ? (a.bought_now ? t("ls.auc.you_bought") : t("ls.auc.you_won")) : a.bought_now ? t("ls.auc.sold_buy_now") : t("ls.auc.sold")) : a.has_reserve && a.bid_count > 0 ? t("ls.auc.no_reserve") : t("ls.auc.no_winner")}</Text>}
     {live && a.buy_now_available && a.buy_now_price != null && (mine
       ? <Text style={ui.text}>{t("ls.auc.buy_now_owner", { price: formatPrice(a.buy_now_price) })}</Text>

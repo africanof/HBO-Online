@@ -4,6 +4,7 @@ import { requestRental, getListingAuction, startListingAuction, bidOnAuction, ca
   formatPrice, parsePrice, friendlyErrorIn, LANG_TAGS, buyAuctionNow, listBidsForAuction, retractMyBid, cancelBidAsSeller, canRetractBid, RETRACT_REASON_LABELS,
   type ListingAuction, type AuctionBid, type RetractReason } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
+import { Countdown, withSlot } from "./Countdown";
 import { useT } from "../lib/i18n";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -79,7 +80,7 @@ export function AuctionPanel({ listingId, uid, mine, canStart }: { listingId: st
   return <section className="card stack" aria-label={t("purpose.auction")}>
     <h2 style={{ margin: 0 }}>🔨 {live ? t("ls.auc_live") : a.status === "scheduled" ? t("ls.auc_scheduled") : t("ls.auc_ended")}</h2>
     <span className="price">{formatPrice(a.current_price)}</span>
-    <span>{t("ls.n_bids", { n: a.bid_count })} · {live ? t("ls.auc_ends_in", { left: tc(timeLeft(a.ends_at)) }) : t("ls.auc_ended_at", { d: new Date(a.ends_at).toLocaleString(LANG_TAGS[lang]) })}{!a.reserve_met && a.bid_count > 0 ? " · " + t("ls.auc_reserve_not_met") : ""}</span>
+    <span>{t("ls.n_bids", { n: a.bid_count })} · {live ? withSlot(t("ls.auc_ends_in", { left: "\u0000" }), <Countdown endsAt={a.ends_at} onEnd={() => void load()} />) : t("ls.auc_ended_at", { d: new Date(a.ends_at).toLocaleString(LANG_TAGS[lang]) })}{!a.reserve_met && a.bid_count > 0 ? " · " + t("ls.auc_reserve_not_met") : ""}</span>
     {a.status === "ended" && <strong>{a.winner_id ? (a.winner_id === uid ? (a.bought_now ? "🎉 " + t("ls.auc_you_bought") : "🎉 " + t("ls.auc_you_won")) : a.bought_now ? t("ls.auc_sold_buy_now") : t("ls.auc_sold")) : a.has_reserve && a.bid_count > 0 ? t("ls.auc_ended_reserve") : t("ls.auc_no_winner")}</strong>}
     {live && a.buy_now_available && a.buy_now_price != null && (mine
       ? <span>🛒 {t("ls.auc_buy_now_for")} <strong>{formatPrice(a.buy_now_price)}</strong> ({t("ls.auc_buy_now_gone")})</span>

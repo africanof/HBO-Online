@@ -6,6 +6,7 @@ import { supabase, currentUserId } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
 import { LiteImage } from "../components/LiteImage";
+import { Countdown, withSlot } from "../components/Countdown";
 import { useT } from "../lib/i18n";
 
 function Row({ b }: { b: MyAuctionBid }) {
@@ -18,7 +19,7 @@ function Row({ b }: { b: MyAuctionBid }) {
       <Text style={ui.h2} onPress={open} accessibilityRole="link">{b.title}</Text>
       <Text style={b.standing === "winning" || b.standing === "won" ? ui.ok : b.standing === "outbid" ? ui.error : ui.label}>{tc(BID_STANDING_LABELS[b.standing])}</Text>
       <Text style={ui.text}>{t("ls.bids.current", { price: formatPrice(b.current_price) })}{b.my_max != null && live ? " · " + t("ls.bids.my_max", { price: formatPrice(b.my_max) }) : ""}</Text>
-      <Text style={ui.muted}>{t("ls.bids.count", { n: b.bid_count })} · {live ? t("ls.bids.ends_in", { time: tc(timeLeft(b.ends_at)) }) : t("ls.bids.ended")}{b.ref_no ? " · " + formatRef("listing", b.ref_no) : ""}</Text>
+      <Text style={ui.muted}>{t("ls.bids.count", { n: b.bid_count })} · {live ? withSlot(t("ls.bids.ends_in", { time: "\u0000" }), <Countdown endsAt={b.ends_at} />) : t("ls.bids.ended")}{b.ref_no ? " · " + formatRef("listing", b.ref_no) : ""}</Text>
       {live && b.standing === "outbid" && <Button title={t("ls.bids.raise")} onPress={open} />}
       {b.standing === "won" && <Button title={t("ls.contact_seller")} variant="secondary" onPress={open} />}
     </View>

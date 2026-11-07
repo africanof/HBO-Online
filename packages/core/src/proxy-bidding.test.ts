@@ -6,20 +6,26 @@ const t = (s: number) => new Date(Date.UTC(2026, 9, 12, 12, 0, s)).toISOString()
 
 describe("leilões como no eBay (licitação automática)", () => {
   it("o incremento sobe com o preço e respeita o do vendedor", () => {
+    // eBay em dólares × 1000 (1 US$ → 1000 Kz)
     expect(bidIncrement(500)).toBe(50);
-    expect(bidIncrement(1000)).toBe(100);
-    expect(bidIncrement(5000)).toBe(250);
-    expect(bidIncrement(99999)).toBe(500);
-    expect(bidIncrement(6_000_000)).toBe(10000);
+    expect(bidIncrement(1000)).toBe(250);
+    expect(bidIncrement(5000)).toBe(500);
+    expect(bidIncrement(91010)).toBe(1000);     // como 91,01 US$ → 1 US$
+    expect(bidIncrement(150000)).toBe(2500);
+    expect(bidIncrement(300000)).toBe(5000);
+    expect(bidIncrement(750000)).toBe(10000);
+    expect(bidIncrement(2_000_000)).toBe(25000);
+    expect(bidIncrement(3_000_000)).toBe(50000);
+    expect(bidIncrement(6_000_000)).toBe(100000);
     expect(bidIncrement(1000, 700)).toBe(700);
   });
   it("mesmo cenário testado no servidor", () => {
     // A deixa 5000 de máximo: paga o preço inicial
     expect(proxyStanding([{ bidder: "A", max: 5000, at: t(1) }], 1000)).toEqual({ leader: "A", price: 1000 });
-    // B licita 2000: A continua a ganhar com 2100
-    expect(proxyStanding([{ bidder: "A", max: 5000, at: t(1) }, { bidder: "B", max: 2000, at: t(2) }], 1000)).toEqual({ leader: "A", price: 2100 });
-    // B sobe para 6000: B ganha com 5000 + 250
-    expect(proxyStanding([{ bidder: "A", max: 5000, at: t(1) }, { bidder: "B", max: 6000, at: t(3) }], 1000)).toEqual({ leader: "B", price: 5250 });
+    // B licita 2000: A continua a ganhar com 2250
+    expect(proxyStanding([{ bidder: "A", max: 5000, at: t(1) }, { bidder: "B", max: 2000, at: t(2) }], 1000)).toEqual({ leader: "A", price: 2250 });
+    // B sobe para 6000: B ganha com 5000 + 500
+    expect(proxyStanding([{ bidder: "A", max: 5000, at: t(1) }, { bidder: "B", max: 6000, at: t(3) }], 1000)).toEqual({ leader: "B", price: 5500 });
     // empate: ganha quem chegou primeiro a esse valor, e paga o valor todo
     expect(proxyStanding([{ bidder: "B", max: 9000, at: t(4) }, { bidder: "A", max: 9000, at: t(5) }], 1000)).toEqual({ leader: "B", price: 9000 });
   });
