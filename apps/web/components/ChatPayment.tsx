@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { chatPaymentState, requestChatPayment, formatPrice, friendlyErrorIn, parsePrice, orderHref, type ChatPaymentCard } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { ProtectedBuyBox } from "./ProtectedBuy";
@@ -26,10 +26,12 @@ export function ChatPayAsk({ conversationId, listing, onSent, onClose }: { conve
 
 /** Cartão do pedido de pagamento dentro da conversa (os dois lados veem o estado). */
 export function ChatPayCard({ card, uid }: { card: ChatPaymentCard; uid: string }) {
-  const { t, lang } = useT(); const [paying, setPaying] = useState(false);
+  const { t, lang } = useT(); const [paying, setPaying] = useState(false); const box = useRef<HTMLDivElement>(null);
+  // Ao abrir o formulário, mostra-o todo (fica dentro da lista de mensagens).
+  useEffect(() => { if (paying) setTimeout(() => box.current?.scrollIntoView({ block: "end", behavior: "smooth" }), 50); }, [paying]);
   const st = chatPaymentState(card); const amount = formatPrice(card.amount, card.currency);
   const item = { id: card.listing_id, status: card.listing_status, purpose: card.purpose, price: card.amount, currency: card.currency, title: card.title };
-  return <div className={"chat-pay-card st-" + st}>
+  return <div ref={box} className={"chat-pay-card st-" + st}>
     <div className="chat-pay-head">
       {card.photo ? <img src={card.photo} alt="" loading="lazy" /> : <span aria-hidden>🛡️</span>}
       <div><small>{t("pay.card_title")}</small><strong>{card.title}</strong><span className="chat-pay-amount">{amount}</span>

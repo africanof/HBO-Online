@@ -150,7 +150,7 @@ function MensagensContent() {
                   {!mine && <span className="chat-row-avatar">{last && !team ? <Avatar name={other?.other_name} src={other?.other_avatar} seed={other?.other_user_id} size={28} /> : last && team ? <span className="chat-avatar team" style={{ width: 28, height: 28 }}>🛡️</span> : null}</span>}
                   <div className="chat-col">
                     {team && first && <small className="chat-team-name">🛡️ {t("cg.team")}</small>}
-                    <div className={"chat-bubble" + (blocked ? " blocked" : "") + (m.attachment_kind && !m.body ? " media" : "")} title={chatClock(m.created_at, lang)}>
+                    <div className={"chat-bubble" + (blocked ? " blocked" : "") + (m.attachment_kind && !m.body ? " media" : "") + (m.payment_offer_id && cards[m.payment_offer_id] ? " paycard" : "")} title={chatClock(m.created_at, lang)}>
                       {m.attachment_kind && <div className="chat-media"><MessageAttachment m={m} url={m.attachment_path ? media[m.attachment_path] : undefined} /></div>}
                       {m.payment_offer_id && cards[m.payment_offer_id] ? <ChatPayCard card={cards[m.payment_offer_id]} uid={uid} /> : m.body && <span>{m.body}</span>}
                       {!blocked && !!parseMeetingPoint(m.body) && <a className="chat-meet" href={parseMeetingPoint(m.body)!.url} target="_blank" rel="noopener noreferrer">🗺️ {t("map.open")}</a>}

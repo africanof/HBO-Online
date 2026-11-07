@@ -163,7 +163,7 @@ export default function Mensagens() {
             {!mine && <View style={{ width: 28 }}>{last && (team ? <View style={s.teamAv}><Text>🛡️</Text></View> : <Avatar name={other?.other_name} src={other?.other_avatar} seed={other?.other_user_id} size={28} />)}</View>}
             <View style={[s.col, mine && { alignItems: "flex-end" }]}>
               {team && first && <Text style={s.teamName}>🛡️ {t("cg.team")}</Text>}
-              <View style={[s.bubble, mine ? s.bubbleMine : team ? s.bubbleTeam : s.bubbleOther, corner, blocked && s.bubbleBlocked, media_ && s.bubbleMedia]}>
+              <View style={[s.bubble, mine ? s.bubbleMine : team ? s.bubbleTeam : s.bubbleOther, corner, blocked && s.bubbleBlocked, media_ && s.bubbleMedia, !!m.payment_offer_id && !!cards[m.payment_offer_id] && { backgroundColor: "transparent", padding: 0 }]}>
                 {!!m.attachment_kind && <MessageAttachment m={m} url={m.attachment_path ? media[m.attachment_path] : undefined} />}
                 {!!m.payment_offer_id && !!cards[m.payment_offer_id] && !!uid ? <ChatPayCard card={cards[m.payment_offer_id]} uid={uid} />
                   : !!m.body && <Text style={[s.msg, mine && !blocked && { color: C.onAccent }, team && { color: C.yellowText }, blocked && s.msgBlocked]}>{m.body}</Text>}
