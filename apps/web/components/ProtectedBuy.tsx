@@ -9,12 +9,12 @@ import { useT } from "../lib/i18n";
  * Compra de um anúncio com pagamento protegido (obrigatório): comprar, arrendar ou alugar cria uma encomenda
  * paga ao Huambo Online. Mostra «Reservado» quando outra pessoa está a pagar e «Pagar agora» a quem já reservou.
  */
-export function ProtectedBuyBox({ item, uid, isJob }: { item: any; uid: string | null; isJob: boolean }) {
+export function ProtectedBuyBox({ item, uid, isJob, startOpen, onCancel }: { item: any; uid: string | null; isJob: boolean; startOpen?: boolean; onCancel?: () => void }) {
   const { lang, t } = useT();
   const kind = listingCheckoutKind(item, isJob);
   const [reserved, setReserved] = useState(false);
   const [mine, setMine] = useState<MyListingOrder | null>(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!startOpen);
   const [fulfillment, setFulfillment] = useState<"pickup" | "delivery">("pickup");
   const [phone, setPhone] = useState(""); const [address, setAddress] = useState(""); const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
@@ -66,7 +66,7 @@ export function ProtectedBuyBox({ item, uid, isJob }: { item: any; uid: string |
     {error && <p className="error" role="alert">{error}</p>}
     <div className="row">
       <button type="submit" disabled={busy}>{busy ? t("common.loading") : t("pp.continue")}</button>
-      <button type="button" className="secondary" onClick={() => setOpen(false)}>{t("common.cancel")}</button>
+      <button type="button" className="secondary" onClick={() => { setOpen(false); onCancel?.(); }}>{t("common.cancel")}</button>
     </div>
     <small className="muted">🛡️ {t("pp.never_outside")}</small>
   </form>;

@@ -126,7 +126,7 @@ export default function ClassifiedDetail() {
         <Gallery media={media} video={item.video_url} icon={item.purpose === "wanted" ? "🔎" : "🏷️"} title={item.title} />
       </div>
 
-      <aside className="buybox" aria-label={t("ls.listing")}>
+      <aside className="buybox" id="comprar" aria-label={t("ls.listing")}>
         {item.purpose === "wanted" && <span className="badge" style={{ justifySelf: "start", background: "var(--yellow-soft)", borderColor: "var(--yellow-line)", color: "var(--yellow-text)" }}>🔎 {t("home.wanted_badge")} — {t("ls.buyer_request")}</span>}
         {isFeatured(item) && <span className="badge" style={{ justifySelf: "start", background: "var(--yellow-soft)", borderColor: "var(--yellow-line)", color: "var(--yellow-text)" }}>⭐ {t("ls.featured")}</span>}
         {isExampleName(item.title) && <p className="scam-warn" style={{ margin: 0 }}>{t("pp.example_note")}</p>}

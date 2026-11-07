@@ -505,3 +505,16 @@ main.chat-page { padding-top: 12px; padding-bottom: 16px; }
 .health-fatal { border: 2px solid var(--danger); }
 .health-stack { font-size: 12px; white-space: pre-wrap; word-break: break-word; max-height: 200px; overflow: auto; }
 .health-screen { display: flex; justify-content: space-between; gap: 8px; }
+/* Pedido de pagamento na conversa */
+.chat-qchip.pay { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.chat-qchip.pay:hover { background: var(--accent-dark); color: var(--on-accent); }
+.chat-pay-ask { margin: 8px 12px 0; gap: 8px; }
+.chat-pay-card { display: grid; gap: 8px; background: var(--card); color: var(--fg); border: 2px solid var(--accent); border-radius: 16px; padding: 12px; min-width: 240px; max-width: 340px; }
+.chat-pay-card.st-held, .chat-pay-card.st-released { border-color: var(--ok); }
+.chat-pay-card.st-expired, .chat-pay-card.st-cancelled, .chat-pay-card.st-unavailable { border-color: var(--line); opacity: .85; }
+.chat-pay-head { display: flex; gap: 10px; align-items: center; }
+.chat-pay-head img, .chat-pay-head > span { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex: none; display: grid; place-items: center; background: var(--surface); font-size: 28px; }
+.chat-pay-head > div { display: grid; gap: 2px; min-width: 0; }
+.chat-pay-head strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-pay-amount { font-size: 20px; font-weight: 800; }
+.chat-bubble .chat-pay-card { margin: -4px; }

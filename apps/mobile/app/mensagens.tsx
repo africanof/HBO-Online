@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { tap } from "../lib/haptics";
 import { Linking } from "react-native";
 import { devicePosition } from "../components/Place";
-import { meetingPointUrl, parseMeetingPoint } from "@huambo-online/core";
+import { meetingPointUrl, parseMeetingPoint, listChatPaymentCards, type ChatPaymentCard } from "@huambo-online/core";
+import { ChatPayAsk, ChatPayCard } from "../components/ChatPayment";
 import { usePull } from "../components/Pull";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { BackHandler, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
@@ -39,10 +40,12 @@ export default function Mensagens() {
   const [media, setMedia] = useState<Record<string, string>>({}); const [allowDocs, setAllowDocs] = useState(false); const [query, setQuery] = useState("");
   const [loaded, setLoaded] = useState(false); const [safetyOpen, setSafetyOpen] = useState(false);
   const scroller = useRef<ScrollView>(null);
+  const [cards, setCards] = useState<Record<string, ChatPaymentCard>>({}); const [listing, setListing] = useState<any>(null); const [asking, setAsking] = useState(false);
   const pull = usePull(load);
 
   async function showMessages(c: any, id: string) {
     const r = await listMessages(c, id); const list = (r.data ?? []) as any[]; setMsgs(list);
+    if (list.some(m => m.payment_offer_id)) void listChatPaymentCards(c, id).then(setCards); else setCards({});
     const paths = list.map(m => m.attachment_path).filter((p: any) => !!p && !media[p]);
     if (paths.length) { const urls = await chatMediaUrls(c, paths); setMedia(o => ({ ...o, ...urls })); }
   }
@@ -59,7 +62,8 @@ export default function Mensagens() {
     setPreviews(pv); setPartners(ps); setLoaded(true);
   }
   async function open(x: any) {
-    setSelected(x); setSendError(""); setBody(""); setSafetyOpen(false); const c = supabase(); setAllowDocs(false);
+    setSelected(x); setSendError(""); setBody(""); setSafetyOpen(false); const c = supabase(); setAllowDocs(false); setAsking(false); setListing(null); setCards({});
+    if (x.classified_listing_id) void c.from("classified_listings").select("id,owner_id,price,currency,status,purpose,sale_mode").eq("id", x.classified_listing_id).maybeSingle().then(({ data }: any) => setListing(data));
     void conversationAllowsDocuments(c, x).then(setAllowDocs);
     await showMessages(c, x.id);
     if (uid) { await markConversationRead(c, x.id, uid); setItems(old => old.map(r => conversationFromParticipantRow(r).id === x.id ? { ...r, last_read_at: new Date().toISOString() } : r)); }
@@ -129,6 +133,8 @@ export default function Mensagens() {
 
   // ───── Conversa ─────
   const other = partner(selected.id); const href = contextHref(selected);
+  const sellable = !!listing && listing.status === "published" && ["sale", "rent", "lease"].includes(listing.purpose);
+  const canAsk = sellable && !!uid && listing.owner_id === uid; const canBuy = sellable && !!uid && listing.owner_id !== uid;
   return <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
     <View style={s.head}>
       <Pressable onPress={() => setSelected(null)} accessibilityRole="button" accessibilityLabel={t("cg.back")} hitSlop={10} style={s.back}><Text style={s.backTx}>←</Text></Pressable>
@@ -137,7 +143,8 @@ export default function Mensagens() {
         <Text style={s.headName} numberOfLines={1}>{other?.other_name ?? t("ls.user")}</Text>
         <Text style={s.sub} numberOfLines={1}>{conversationSubject(selected) || ctxLabel(selected.context_type)}</Text>
       </View>
-      {href && <Pressable onPress={() => router.push(href as any)} accessibilityRole="link" hitSlop={8}><Text style={s.link}>{t("cg.view_listing")}</Text></Pressable>}
+      {canBuy ? <Pressable onPress={() => router.push(href as any)} accessibilityRole="link" hitSlop={8}><Text style={s.link}>{t("pay.buy")}</Text></Pressable>
+        : href && <Pressable onPress={() => router.push(href as any)} accessibilityRole="link" hitSlop={8}><Text style={s.link}>{t("cg.view_listing")}</Text></Pressable>}
       <Pressable onPress={() => setSafetyOpen(v => !v)} accessibilityRole="button" accessibilityLabel={t("cg.safety")} accessibilityState={{ expanded: safetyOpen }} hitSlop={8} style={s.back}><Text style={{ fontSize: 22 }}>🛡️</Text></Pressable>
     </View>
     {safetyOpen && <ScrollView style={s.safety} contentContainerStyle={{ gap: 8, padding: 12 }}>
@@ -158,7 +165,8 @@ export default function Mensagens() {
               {team && first && <Text style={s.teamName}>🛡️ {t("cg.team")}</Text>}
               <View style={[s.bubble, mine ? s.bubbleMine : team ? s.bubbleTeam : s.bubbleOther, corner, blocked && s.bubbleBlocked, media_ && s.bubbleMedia]}>
                 {!!m.attachment_kind && <MessageAttachment m={m} url={m.attachment_path ? media[m.attachment_path] : undefined} />}
-                {!!m.body && <Text style={[s.msg, mine && !blocked && { color: C.onAccent }, team && { color: C.yellowText }, blocked && s.msgBlocked]}>{m.body}</Text>}
+                {!!m.payment_offer_id && !!cards[m.payment_offer_id] && !!uid ? <ChatPayCard card={cards[m.payment_offer_id]} uid={uid} />
+                  : !!m.body && <Text style={[s.msg, mine && !blocked && { color: C.onAccent }, team && { color: C.yellowText }, blocked && s.msgBlocked]}>{m.body}</Text>}
                 {!blocked && !!parseMeetingPoint(m.body) && <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(parseMeetingPoint(m.body)!.url)} style={s.meetBtn}><Text style={s.meetTx}>🗺️ {t("map.open")}</Text></Pressable>}
               </View>
               {blocked && <Text style={s.noteErr}>{t("ls.chat.msg_blocked")}</Text>}
@@ -170,7 +178,9 @@ export default function Mensagens() {
       })}
     </ScrollView>
     {!!sendError && <Text accessibilityRole="alert" style={s.err}>{sendError}</Text>}
+    {asking && !!listing && <ChatPayAsk conversationId={selected.id} listing={listing} onClose={() => setAsking(false)} onSent={() => { setAsking(false); void showMessages(supabase(), selected.id); }} />}
     {!!uid && !body.trim() && <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={s.quick} accessibilityLabel={t("qr.title")}>
+      {canAsk && <Pressable accessibilityRole="button" onPress={() => setAsking(v => !v)} style={[s.qChip, { backgroundColor: C.blue, borderColor: C.blue }]}><Text style={[s.qTx, { color: C.onAccent }]}>{t("pay.ask")}</Text></Pressable>}
       <Pressable accessibilityRole="button" onPress={() => void sendMeetingPoint()} style={s.qChip}><Text style={s.qTx}>{t("qr.meet")}</Text></Pressable>
       {quickKeys(msgs, uid).map(k => <Pressable key={k} accessibilityRole="button" onPress={() => setBody(t(k))} style={s.qChip}><Text style={s.qTx}>{t(k)}</Text></Pressable>)}
     </ScrollView>}

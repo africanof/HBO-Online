@@ -4,11 +4,12 @@ import { createSupabaseClient } from "@huambo-online/supabase";
 import { useSearchParams } from "next/navigation";
 import { listConversations, listMessages, sendMessage, markConversationRead, subscribeToConversationMessages, subscribeToUserConversationMessages, conversationFromParticipantRow,
   isConversationUnread, listConversationPartners, conversationAllowsDocuments, friendlyErrorIn, messagePreview, CHAT_KIND_LABELS, chatMediaUrls,
-  chatListTime, chatDayLabel, meetingPointUrl, parseMeetingPoint, chatClock, groupChatMessages, initials, avatarColor, conversationSubject, isSupportConversation, type ChatMessage } from "@huambo-online/core";
+  chatListTime, chatDayLabel, meetingPointUrl, parseMeetingPoint, listChatPaymentCards, type ChatPaymentCard, chatClock, groupChatMessages, initials, avatarColor, conversationSubject, isSupportConversation, type ChatMessage } from "@huambo-online/core";
 import { ConversationSafety } from "../../components/Safety";
 import { ChatAttachButtons, MessageAttachment } from "../../components/ChatMedia";
 import { useT } from "../../lib/i18n";
 import { browserPosition } from "../../components/Place";
+import { ChatPayAsk, ChatPayCard } from "../../components/ChatPayment";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""; const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
 
@@ -36,6 +37,7 @@ function MensagensContent() {
   const [msgs, setMsgs] = useState<ChatMessage[]>([]); const [media, setMedia] = useState<Record<string, string>>({}); const [body, setBody] = useState(""); const [uid, setUid] = useState("");
   const [partners, setPartners] = useState<Record<string, any>>({}); const [allowDocs, setAllowDocs] = useState(false); const [sendError, setSendError] = useState(""); const [sending, setSending] = useState(false);
   const [query, setQuery] = useState(""); const [loaded, setLoaded] = useState(false);
+  const [cards, setCards] = useState<Record<string, ChatPaymentCard>>({}); const [listing, setListing] = useState<any>(null); const [asking, setAsking] = useState(false);
   const endRef = useRef<HTMLDivElement>(null); const inputRef = useRef<HTMLTextAreaElement>(null);
   const client = () => createSupabaseClient(url, key);
 
@@ -54,11 +56,13 @@ function MensagensContent() {
   }
   async function showMessages(c: ReturnType<typeof client>, id: string) {
     const r = await listMessages(c, id); const list = (r.data ?? []) as ChatMessage[]; setMsgs(list);
+    if (list.some(m => m.payment_offer_id)) void listChatPaymentCards(c, id).then(setCards); else setCards({});
     const paths = list.map(m => m.attachment_path).filter((p): p is string => !!p && !media[p]);
     if (paths.length) { const urls = await chatMediaUrls(c, paths); setMedia(old => ({ ...old, ...urls })); }
   }
   async function open(x: any) {
-    setSelected(x); setSendError(""); setBody(""); const c = client(); setAllowDocs(false);
+    setSelected(x); setSendError(""); setBody(""); const c = client(); setAllowDocs(false); setAsking(false); setListing(null); setCards({});
+    if (x.classified_listing_id) void c.from("classified_listings").select("id,owner_id,price,currency,status,purpose,sale_mode").eq("id", x.classified_listing_id).maybeSingle().then(({ data }) => setListing(data));
     void conversationAllowsDocuments(c, x).then(setAllowDocs);
     await showMessages(c, x.id); if (uid) { await markConversationRead(c, x.id, uid); setItems(old => old.map(r => conversationFromParticipantRow(r).id === x.id ? { ...r, last_read_at: new Date().toISOString() } : r)); }
     setTimeout(() => inputRef.current?.focus(), 50);
@@ -93,6 +97,7 @@ function MensagensContent() {
     if (!query.trim()) return true; const x = conversationFromParticipantRow(row);
     return ((partner(x.id)?.other_name ?? "") + " " + (conversationSubject(x) ?? "")).toLowerCase().includes(query.trim().toLowerCase());
   });
+  const canAsk = !!listing && !!uid && listing.owner_id === uid && listing.status === "published" && ["sale", "rent", "lease"].includes(listing.purpose);
   const other = selected ? partner(selected.id) : null; const href = selected ? contextHref(selected) : null;
 
   return <main className="chat-page">
@@ -127,7 +132,7 @@ function MensagensContent() {
             <Avatar name={other?.other_name} src={other?.other_avatar} seed={other?.other_user_id} size={40} />
             <div className="chat-head-text">
               <strong>{other?.other_name ?? t("ls.user")}</strong>
-              <small>{conversationSubject(selected) || ctx(selected.context_type)}{href && <> · <a href={href}>{t("cg.view_listing")}</a></>}</small>
+              <small>{conversationSubject(selected) || ctx(selected.context_type)}{href && <> · <a href={href}>{t("cg.view_listing")}</a></>}{listing && uid && listing.owner_id !== uid && listing.status === "published" && ["sale", "rent", "lease"].includes(listing.purpose) && <> · <a href={"/classificados/" + listing.id + "#comprar"}><strong>{t("pay.buy")}</strong></a></>}</small>
             </div>
           </header>
           <details className="chat-safety">
@@ -147,7 +152,7 @@ function MensagensContent() {
                     {team && first && <small className="chat-team-name">🛡️ {t("cg.team")}</small>}
                     <div className={"chat-bubble" + (blocked ? " blocked" : "") + (m.attachment_kind && !m.body ? " media" : "")} title={chatClock(m.created_at, lang)}>
                       {m.attachment_kind && <div className="chat-media"><MessageAttachment m={m} url={m.attachment_path ? media[m.attachment_path] : undefined} /></div>}
-                      {m.body && <span>{m.body}</span>}
+                      {m.payment_offer_id && cards[m.payment_offer_id] ? <ChatPayCard card={cards[m.payment_offer_id]} uid={uid} /> : m.body && <span>{m.body}</span>}
                       {!blocked && !!parseMeetingPoint(m.body) && <a className="chat-meet" href={parseMeetingPoint(m.body)!.url} target="_blank" rel="noopener noreferrer">🗺️ {t("map.open")}</a>}
                     </div>
                     {blocked && <small className="chat-note error">{t("ls.msg_blocked")}</small>}
@@ -160,7 +165,9 @@ function MensagensContent() {
             <div ref={endRef} />
           </div>
           {sendError && <p className="error chat-error" role="alert">{sendError}</p>}
+          {asking && selected && listing && <ChatPayAsk conversationId={selected.id} listing={listing} onClose={() => setAsking(false)} onSent={() => { setAsking(false); void showMessages(client(), selected.id); }} />}
           {uid && !body.trim() && <div className="chat-quick" role="group" aria-label={t("qr.title")}>
+            {canAsk && <button type="button" className="chat-qchip pay" onClick={() => setAsking(v => !v)}>{t("pay.ask")}</button>}
             <button type="button" className="chat-qchip" onClick={() => void sendMeetingPoint()}>{t("qr.meet")}</button>
             {quickKeys(msgs, uid).map(k => <button type="button" key={k} className="chat-qchip" onClick={() => { setBody(t(k)); inputRef.current?.focus(); }}>{t(k)}</button>)}
           </div>}

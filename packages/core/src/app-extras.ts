@@ -111,3 +111,30 @@ export async function nearMeListings(client: SupabaseClient, userId: string, lim
   const r = await searchClassifiedListings(client, { municipalityId: (m.data as any).id, limit });
   return { name: (m.data as any).name, items: (r.data as any[]) ?? [] };
 }
+
+// «💳 Pedir pagamento» dentro da conversa (anúncios dos classificados)
+export type ChatPaymentCard = {
+  offer_id: string; listing_id: string; title: string; photo: string | null; purpose: string; currency: string; amount: number; listing_price: number | null;
+  offer_status: "accepted" | "withdrawn" | "declined" | "pending" | "expired"; expires_at: string; is_buyer: boolean; listing_status: string;
+  order_id: string | null; order_status: string | null; escrow_status: "awaiting_payment" | "held" | "released" | "refunded" | null;
+};
+export type ChatPaymentState = "pay" | "waiting_buyer" | "awaiting_payment" | "held" | "released" | "refunded" | "cancelled" | "expired" | "unavailable";
+/** O que o cartão mostra (igual no Site e na APP). */
+export function chatPaymentState(c: ChatPaymentCard): ChatPaymentState {
+  if (c.order_id) {
+    if (c.order_status === "cancelled") return "cancelled";
+    return (c.escrow_status ?? "awaiting_payment") as ChatPaymentState;
+  }
+  if (c.offer_status !== "accepted") return "expired";
+  if (c.listing_status !== "published") return "unavailable";
+  return c.is_buyer ? "pay" : "waiting_buyer";
+}
+export function requestChatPayment(client: SupabaseClient, conversationId: string, amount: number) {
+  return client.rpc("chat_payment_request", { p_conversation_id: conversationId, p_amount: amount });
+}
+export async function listChatPaymentCards(client: SupabaseClient, conversationId: string): Promise<Record<string, ChatPaymentCard>> {
+  const r = await client.rpc("chat_payment_cards", { p_conversation_id: conversationId });
+  const out: Record<string, ChatPaymentCard> = {};
+  for (const x of (r.data ?? []) as any[]) out[x.offer_id] = { ...x, amount: Number(x.amount), listing_price: x.listing_price == null ? null : Number(x.listing_price) };
+  return out;
+}

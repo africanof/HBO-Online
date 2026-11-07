@@ -10,13 +10,13 @@ import { Button, Message } from "./Ui";
 import { useT } from "../lib/i18n";
 
 /** Compra de um anúncio com pagamento protegido (obrigatório) — igual ao Site. */
-export function ProtectedBuyBox({ item, uid, isJob }: { item: any; uid: string | null; isJob: boolean }) {
+export function ProtectedBuyBox({ item, uid, isJob, startOpen, onCancel }: { item: any; uid: string | null; isJob: boolean; startOpen?: boolean; onCancel?: () => void }) {
   const { lang, t } = useT();
   const router = useRouter();
   const kind = listingCheckoutKind(item, isJob);
   const [reserved, setReserved] = useState(false);
   const [mine, setMine] = useState<MyListingOrder | null>(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!startOpen);
   const [fulfillment, setFulfillment] = useState<"pickup" | "delivery">("pickup");
   const [phone, setPhone] = useState(""); const [address, setAddress] = useState(""); const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
@@ -69,7 +69,7 @@ export function ProtectedBuyBox({ item, uid, isJob }: { item: any; uid: string |
     <TextInput value={note} onChangeText={setNote} maxLength={500} style={ui.input} />
     <Message error={error} />
     <Button title={busy ? t("common.loading") : t("pp.continue")} disabled={busy} onPress={() => void submit()} />
-    <Button title={t("common.cancel")} variant="secondary" onPress={() => setOpen(false)} />
+    <Button title={t("common.cancel")} variant="secondary" onPress={() => { setOpen(false); onCancel?.(); }} />
     <Text style={ui.muted}>🛡️ {t("pp.never_outside")}</Text>
   </View>;
 }

@@ -10,6 +10,8 @@ export type ChatMessage = {
   id: string; conversation_id: string; sender_id: string; body: string; created_at: string; edited_at?: string | null;
   attachment_kind?: ChatAttachmentKind | null; attachment_path?: string | null; attachment_seconds?: number | null;
   handled_at?: string | null; blocked_reason?: string | null; from_team?: boolean;
+  /** Cartão «💳 Pedido de pagamento». */
+  payment_offer_id?: string | null;
 };
 
 export const CHAT_MEDIA_BUCKET = "chat-media";

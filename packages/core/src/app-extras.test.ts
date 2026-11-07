@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { screenKey, createScreenCounter, scrubErrorText, mapHtml, mapHref, shouldAskForReview, meetingPointMessage, parseMeetingPoint } from "./app-extras";
+import { chatPaymentState, screenKey, createScreenCounter, scrubErrorText, mapHtml, mapHref, shouldAskForReview, meetingPointMessage, parseMeetingPoint } from "./app-extras";
 import { getNotificationLink } from "./notifications";
 
 describe("APP 0.5.3", () => {
@@ -43,5 +43,19 @@ describe("APP 0.5.3", () => {
     const id = "1a2b3c4d-1111-4222-8333-444455556666";
     expect(getNotificationLink({ type: "price_drop" as any, title: "", data: { for: "price_drop", listing_id: id } } as any)?.href).toBe("/classificados/" + id);
     expect(getNotificationLink({ type: "price_drop" as any, title: "", data: { for: "price_drop", product_id: id } } as any)?.href).toBe("/loja/" + id);
+  });
+});
+
+describe("pedido de pagamento na conversa", () => {
+  const base = { offer_id: "o", listing_id: "l", title: "T", photo: null, purpose: "sale", currency: "AOA", amount: 100, listing_price: 120,
+    offer_status: "accepted", expires_at: "2026-11-09T00:00:00Z", is_buyer: true, listing_status: "published", order_id: null, order_status: null, escrow_status: null } as const;
+  it("mostra o estado certo a cada lado", () => {
+    expect(chatPaymentState({ ...base })).toBe("pay");
+    expect(chatPaymentState({ ...base, is_buyer: false })).toBe("waiting_buyer");
+    expect(chatPaymentState({ ...base, offer_status: "expired" })).toBe("expired");
+    expect(chatPaymentState({ ...base, listing_status: "sold" })).toBe("unavailable");
+    expect(chatPaymentState({ ...base, order_id: "x", order_status: "pending", escrow_status: "awaiting_payment" })).toBe("awaiting_payment");
+    expect(chatPaymentState({ ...base, order_id: "x", order_status: "pending", escrow_status: "held" })).toBe("held");
+    expect(chatPaymentState({ ...base, order_id: "x", order_status: "cancelled", escrow_status: "awaiting_payment" })).toBe("cancelled");
   });
 });

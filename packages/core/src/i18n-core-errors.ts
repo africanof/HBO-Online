@@ -367,5 +367,9 @@ export const CORE_ERROR_ROWS: CoreRow[] = [
   ["A mensagem de voz é curta demais. Carregue e fale um pouco mais.", "The voice message is too short. Hold the button and speak a little longer.", "语音消息太短。请按住按钮多说一会儿。", "Le message vocal est trop court. Maintenez le bouton et parlez un peu plus longtemps."],
   ["Formato de vídeo não suportado. Use MP4 ou MOV.", "Video format not supported. Use MP4 or MOV.", "不支持该视频格式。请使用 MP4 或 MOV。", "Format vidéo non pris en charge. Utilisez MP4 ou MOV."],
   ["Falha no envio da fotografia.", "The photo failed to upload.", "照片上传失败。", "L'envoi de la photo a échoué."],
-  ["Sem internet. Verifique a ligação e tente novamente.", "No internet. Check your connection and try again.", "没有网络。请检查网络连接后重试。", "Pas d'internet. Vérifiez votre connexion et réessayez."]
+  ["Sem internet. Verifique a ligação e tente novamente.", "No internet. Check your connection and try again.", "没有网络。请检查网络连接后重试。", "Pas d'internet. Vérifiez votre connexion et réessayez."],
+  ["Só quem vende pode pedir o pagamento.", "Only the seller can request payment.", "只有卖家可以请求付款。", "Seul le vendeur peut demander le paiement."],
+  ["Esta conversa não é sobre um anúncio.", "This conversation isn't about a listing.", "此对话与信息无关。", "Cette conversation ne concerne pas une annonce."],
+  ["O valor não pode ser maior que o preço do anúncio.", "The amount can't be higher than the listing price.", "金额不能高于信息价格。", "Le montant ne peut pas dépasser le prix de l'annonce."],
+  ["Não foi possível encontrar quem compra nesta conversa.", "We couldn't find the buyer in this conversation.", "无法在此对话中找到买家。", "Impossible de trouver l'acheteur dans cette conversation."],
 ];
