@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SkeletonShelf } from "../components/Skeleton";
-import { recommendedListings, searchClassifiedListings, listProducts, listProviders, listMarkets, formatPrice, ratingLabel, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted, listTrades, cardSaleTag, loadWithCache, isOfflineError, isFeatured, listEvents, priceFromText, categoryLabelIn } from "@huambo-online/core";
+import { nearMeListings, recommendedListings, searchClassifiedListings, listProducts, listProviders, listMarkets, formatPrice, ratingLabel, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted, listTrades, cardSaleTag, loadWithCache, isOfflineError, isFeatured, listEvents, priceFromText, categoryLabelIn } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ui, C, themed } from "../lib/ui";
 import { Button } from "../components/Ui";
@@ -38,7 +38,7 @@ export default function Home() {
     // «Para si»: só com sessão iniciada (com base no que a pessoa viu, pesquisou e guardou).
     void c.auth.getUser().then(({ data }) => {
       setSignedIn(!!data.user);
-      if (data.user) { void recommendedListings(c, 12).then(r => setRecs(r.data)); void nearMe(c, data.user.id).then(setNear); } else { setRecs([]); setNear(null); }
+      if (data.user) { void recommendedListings(c, 12).then(r => setRecs(r.data)); void nearMeListings(c, data.user.id).then(setNear); } else { setRecs([]); setNear(null); }
     });
     // Guarda a página inicial para a mostrar quando não houver internet.
     await loadWithCache<Shelves>(deviceStore, "inicio", async () => {
@@ -162,16 +162,6 @@ export default function Home() {
       <Button title={t("home.be_agent")} variant="secondary" onPress={() => router.push("/agente" as any)} />
     </View>
   </ScrollView>;
-}
-
-/** «Perto de si»: anúncios do município da conta. */
-async function nearMe(c: ReturnType<typeof supabase>, uid: string): Promise<{ name: string; items: any[] } | null> {
-  const p = await c.from("profiles").select("municipality").eq("id", uid).maybeSingle();
-  const name = String((p.data as any)?.municipality ?? "").trim(); if (!name) return null;
-  const m = await c.from("municipalities").select("id,name").ilike("name", name).limit(1).maybeSingle();
-  if (!m.data) return null;
-  const r = await searchClassifiedListings(c, { municipalityId: (m.data as any).id, limit: 12 });
-  return { name: (m.data as any).name, items: (r.data as any[]) ?? [] };
 }
 
 const st = themed(C => StyleSheet.create({

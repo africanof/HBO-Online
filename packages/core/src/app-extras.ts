@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { searchClassifiedListings } from "./classified-search";
 
 /** Extras da APP 0.5.3: mapa, respostas rápidas, «Baixou de preço», erros e uso (para a equipa). */
 
@@ -36,9 +37,9 @@ var C=${JSON.stringify(colors)},I=${JSON.stringify(icons)},P=${data};
 var m=L.map('m',{zoomControl:false}).setView([${center.lat},${center.lng}],${center.zoom});
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(m);
 function esc(s){return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-function go(h){window.ReactNativeWebView&&window.ReactNativeWebView.postMessage(h)}
+function go(h){if(window.ReactNativeWebView){window.ReactNativeWebView.postMessage(h);return false}return true}
 P.forEach(function(p){var i=L.divIcon({className:'',html:'<div class="pin" style="background:'+C[p.k]+'">'+I[p.k]+'</div>',iconSize:[30,30],iconAnchor:[15,15]});
-L.marker([p.a,p.o],{icon:i}).addTo(m).bindPopup('<div class="pop"><b>'+esc(p.t)+'</b>'+(p.s?'<span>'+esc(p.s)+'</span><br>':'')+'<a href="#" onclick="go(\\''+p.h+'\\');return false">Ver →</a></div>')});
+L.marker([p.a,p.o],{icon:i}).addTo(m).bindPopup('<div class="pop"><b>'+esc(p.t)+'</b>'+(p.s?'<span>'+esc(p.s)+'</span><br>':'')+'<a href="'+p.h+'" target="_top" onclick="return go(\\''+p.h+'\\')">Ver →</a></div>')});
 ${me ? `L.circleMarker([${me.lat},${me.lng}],{radius:8,color:'#fff',weight:3,fillColor:'#1e88e5',fillOpacity:1}).addTo(m);` : ""}
 </script></body></html>`;
 }
@@ -99,4 +100,14 @@ export async function adminAppHealth(client: SupabaseClient, days = 7) {
 export const REVIEW_PROMPT_KEY = "huambo:pedido-avaliacao";
 export function shouldAskForReview(lastAskedAt: number | null, goodMoments: number, now = Date.now()): boolean {
   return goodMoments >= 1 && (!lastAskedAt || now - lastAskedAt > 120 * 86400_000);
+}
+
+/** «📍 Perto de si»: anúncios do município da conta (igual no Site e na APP). */
+export async function nearMeListings(client: SupabaseClient, userId: string, limit = 12): Promise<{ name: string; items: any[] } | null> {
+  const p = await client.from("profiles").select("municipality").eq("id", userId).maybeSingle();
+  const name = String((p.data as any)?.municipality ?? "").trim(); if (!name) return null;
+  const m = await client.from("municipalities").select("id,name").ilike("name", name).limit(1).maybeSingle();
+  if (!m.data) return null;
+  const r = await searchClassifiedListings(client, { municipalityId: (m.data as any).id, limit });
+  return { name: (m.data as any).name, items: (r.data as any[]) ?? [] };
 }

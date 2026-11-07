@@ -24,7 +24,7 @@ const SCOPE_BY_PATH: [string, SearchScope][] = [["/loja", "loja"], ["/pracas", "
 const CATEGORY_LINKS: [string, string, string][] = [
   ["", "nav.home", "/"], ["", "scope.classificados", "/explorar"], ["🏠", "cat.Imóveis", "/imoveis"], ["🚗", "cat.Viaturas", "/viaturas"], ["🌾", "cat.Campo", "/agricultura"], ["🏭", "cat.Fábricas", "/empresas?categoria=fabricas"], ["💼", "cat.Emprego", "/emprego"], ["🎟️", "cat.Eventos", "/eventos"], ["⛽", "web.fuel", "/combustivel"], ["🛎️", "nav.bookings", "/reservas"], ["✈️", "cat.Importação", "/importacao"], ["🎬", "web.videos", "/videos"],
   ["", "cat.Arrendar", "/explorar?finalidade=rent"], ["", "cat.Leilões", "/explorar?finalidade=auction"], ["", "cat.Procura-se", "/procura-se"], ["", "cat.Trocas", "/trocas"], ["", "cat.Praças", "/pracas"], ["", "cat.Loja", "/loja"],
-  ["", "cat.Profissionais", "/profissionais"], ["", "cat.Empresas", "/empresas"], ["", "web.recent", "/historico"]
+  ["", "cat.Profissionais", "/profissionais"], ["", "cat.Empresas", "/empresas"], ["🗺️", "map.title", "/mapa"], ["", "web.recent", "/historico"]
 ];
 
 /** Cabeçalho de todas as páginas: saudação, pesquisa grande, ícones e barra de categorias. */

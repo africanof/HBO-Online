@@ -7,6 +7,7 @@ import { SITE_URL, DEFAULT_OG_IMAGES } from "../lib/site";
 import { THEME_STORAGE_KEY } from "@huambo-online/core";
 import { I18nProvider } from "../lib/i18n";
 import { LANG_SCRIPT } from "../lib/lang-script";
+import { ErrorReporter } from "../components/ErrorReporter";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -44,6 +45,6 @@ const THEME_SCRIPT = `(function(){try{var p=localStorage.getItem(${JSON.stringif
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return <html lang="pt-AO" suppressHydrationWarning>
     <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /><script dangerouslySetInnerHTML={{ __html: LANG_SCRIPT }} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: SITE_JSON_LD }} /></head>
-    <body><I18nProvider><ConnectionWatcher /><ReferralCapture /><SiteHeader />{children}<SiteFooter /></I18nProvider></body>
+    <body><I18nProvider><ConnectionWatcher /><ErrorReporter /><ReferralCapture /><SiteHeader />{children}<SiteFooter /></I18nProvider></body>
   </html>;
 }

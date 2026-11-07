@@ -8,7 +8,8 @@ import { OfflineBanner } from "../components/Offline";
 import { browserStore } from "../components/Engage";
 import { LiteImg } from "../components/LiteImg";
 import { PromoCard } from "../components/Promo";
-import { recommendedListings, HUAMBO_MUNICIPALITIES } from "@huambo-online/core";
+import { recommendedListings, nearMeListings, HUAMBO_MUNICIPALITIES } from "@huambo-online/core";
+import { SkeletonCards } from "../components/Skeleton";
 
 type Shelf = { listings: any[]; auctions: any[]; rentals: any[]; products: any[]; providers: any[]; markets: any[]; wanted: any[]; trades?: any[]; events?: any[]; promos?: any[] };
 
@@ -25,11 +26,11 @@ export function HomeClient({ initialListings }: { initialListings?: any[] | null
   const [s, setS] = useState<Shelf | null>(initialListings?.length ? { listings: initialListings, auctions: [], rentals: [], products: [], providers: [], markets: [], wanted: [] } : null);
   const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
   // «Para si»: só com sessão iniciada (com base no que a pessoa viu, pesquisou e guardou).
-  const [recs, setRecs] = useState<any[]>([]);
+  const [recs, setRecs] = useState<any[]>([]); const [near, setNear] = useState<{ name: string; items: any[] } | null>(null);
   useEffect(() => {
     if (!supabaseConfigured) return;
     const c = supabase();
-    void c.auth.getUser().then(({ data }) => { if (data.user) void recommendedListings(c, 12).then(r => setRecs(r.data)); });
+    void c.auth.getUser().then(({ data }) => { if (data.user) { void recommendedListings(c, 12).then(r => setRecs(r.data)); void nearMeListings(c, data.user.id).then(setNear); } });
   }, []);
   useEffect(() => {
     if (!supabaseConfigured) { setS({ listings: [], auctions: [], rentals: [], products: [], providers: [], markets: [], wanted: [] }); return; }
@@ -71,9 +72,10 @@ export function HomeClient({ initialListings }: { initialListings?: any[] | null
       {HOME_CATEGORIES.map(c => <a key={c.href} href={c.href} className="cat"><span className="cat-circle" aria-hidden>{c.icon}</span>{categoryLabelIn(c.label, lang)}</a>)}
     </nav>
 
-    {s === null && <p className="muted" style={{ marginTop: 28 }}>{t("home.loading")}</p>}
+    {s === null && <SkeletonCards n={6} className="shelf" />}
 
     {!!recs.length && <><ShelfHead title={"✨ " + t("home.for_you")} href="/explorar" /><div className="shelf">{recs.map(listingCard)}</div></>}
+    {!!near?.items.length && <><ShelfHead title={"📍 " + t("home.near", { place: near.name })} href="/mapa" /><div className="shelf">{near.items.map(listingCard)}</div></>}
 
     {!!s?.promos?.length && <><ShelfHead title={"🎬 " + t("home.videos")} href="/videos" /><div className="shelf">{s.promos.map(x => <PromoCard key={x.id} p={x} />)}</div></>}
 

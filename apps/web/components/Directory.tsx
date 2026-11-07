@@ -16,6 +16,7 @@ import { InspectedBadge, useInspected } from "./Inspection";
 import { inspectionKindFor } from "@huambo-online/core";
 import { ProfileQr } from "./ProfileQr";
 import { ResultsToolbar, FiltersToggle } from "./ResultsTools";
+import { SkeletonCards } from "./Skeleton";
 
 type Kind = "providers" | "businesses";
 type Option = { id: string; name: string; slug?: string | null };
@@ -96,6 +97,7 @@ export function DirectoryList({ kind }: { kind: Kind }) {
         {error && <p className="error" role="alert">{error}</p>}
         {banners}
         {items?.length === 0 && <div className="card"><strong>{t.empty}</strong></div>}
+        {items === null && <SkeletonCards n={6} className="dir-grid" />}
         <div className="dir-grid">
           {sorted?.map(x => {
             const id = kind === "providers" ? x.user_id : x.id;

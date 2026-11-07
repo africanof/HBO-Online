@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createSupabaseClient } from "@huambo-online/supabase";
-import { getNotificationPreferences, saveNotificationPreferences, setInterestNotifications, setEmailDigest, setPushNotifications, INTEREST_FREQUENCIES, friendlyErrorIn, type InterestFrequency } from "@huambo-online/core";
+import { getNotificationPreferences, saveNotificationPreferences, setInterestNotifications, setEmailDigest, setPushNotifications, setPriceDropNotifications, INTEREST_FREQUENCIES, friendlyErrorIn, type InterestFrequency } from "@huambo-online/core";
 import { useT } from "../../../lib/i18n";
 
 const u = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "", k = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
@@ -31,6 +31,11 @@ export default function NotificationPreferences() {
     const r = await setPushNotifications(createSupabaseClient(u, k), on);
     if (r.error) setErr(friendlyErrorIn(r.error, lang)); else if (r.data) setP(r.data);
   }
+  async function setPriceDrop(on: boolean) {
+    setP({ ...p, price_drop: on });
+    const r = await setPriceDropNotifications(createSupabaseClient(u, k), on);
+    if (r.error) setErr(friendlyErrorIn(r.error, lang)); else if (r.data) setP(r.data);
+  }
   async function setEmail(on: boolean) {
     setP({ ...p, email_digest: on });
     const r = await setEmailDigest(createSupabaseClient(u, k), on);
@@ -44,6 +49,7 @@ export default function NotificationPreferences() {
     {err && <p>{err}</p>}
     <label><input type="checkbox" checked={p.enabled} onChange={e => void save({ ...p, enabled: e.target.checked })} /> {t("ls.notif_enabled")}</label>
     {labels.map(([key, label]) => <label key={key} style={{ display: "block", padding: "14px 0", borderBottom: "1px solid #ddd" }}><input type="checkbox" disabled={!p.enabled} checked={!!p[key]} onChange={e => void save({ ...p, [key]: e.target.checked })} /> {t(label)}</label>)}
+    <label style={{ display: "block", padding: "14px 0", borderBottom: "1px solid #ddd" }}><input type="checkbox" disabled={!p.enabled} checked={p.price_drop !== false} onChange={e => void setPriceDrop(e.target.checked)} /> {t("ls.np.price_drop")}</label>
     <label style={{ display: "block", padding: "14px 0", borderBottom: "1px solid #ddd" }}><input type="checkbox" disabled={!p.enabled} checked={!!p.system} onChange={e => void save({ ...p, system: e.target.checked })} /> {t("ls.np_system")}</label>
     <label style={{ display: "block", padding: "14px 0", borderBottom: "1px solid #ddd" }}><input type="checkbox" disabled={!p.enabled} checked={p.push ?? true} onChange={e => void setPush(e.target.checked)} /> {t("ls.np_push")}
       <br /><small>{t("ls.np_push_hint")}</small></label>

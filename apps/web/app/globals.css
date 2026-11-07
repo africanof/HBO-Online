@@ -479,3 +479,29 @@ main.chat-page { padding-top: 12px; padding-bottom: 16px; }
   .chat-input { min-width: 0; }
   .chat-col { max-width: 80%; }
 }
+
+/* 0.5.3: respostas rápidas, ponto de encontro, mapa, caixas a carregar, painel da APP */
+.chat-quick { display: flex; gap: 8px; overflow-x: auto; padding: 8px 12px 0; scrollbar-width: none; }
+.chat-quick::-webkit-scrollbar { display: none; }
+.chat-qchip { flex: none; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-size: 14px; font-weight: 600; min-height: 0; white-space: nowrap; }
+.chat-qchip:hover { background: var(--accent-soft); color: var(--accent-dark); }
+.chat-meet { display: inline-block; margin-top: 6px; background: var(--card); color: var(--accent); border-radius: 999px; padding: 5px 12px; font-weight: 700; font-size: 14px; text-decoration: none; }
+.map-page { max-width: 1200px; margin: 0 auto; }
+.map-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.map-frame { width: 100%; height: min(70vh, 640px); border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.sk-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.shelf > .sk-card { flex: 0 0 180px; }
+.sk { background: var(--placeholder); border-radius: 10px; animation: sk-pulse 1.3s ease-in-out infinite; }
+.sk-img { aspect-ratio: 1 / 1; border-radius: 14px; }
+.sk-line { height: 14px; width: 90%; }
+.sk-line.short { width: 55%; height: 16px; }
+.sk-line.tiny { width: 40%; height: 12px; }
+@keyframes sk-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+.health-days { gap: 6px; }
+.health-day { display: grid; grid-template-columns: 52px 1fr 110px; align-items: center; gap: 8px; }
+.health-bar { height: 12px; background: var(--surface); border-radius: 6px; overflow: hidden; display: block; }
+.health-bar > span { display: block; height: 100%; background: var(--accent); }
+.health-fatal { border: 2px solid var(--danger); }
+.health-stack { font-size: 12px; white-space: pre-wrap; word-break: break-word; max-height: 200px; overflow: auto; }
+.health-screen { display: flex; justify-content: space-between; gap: 8px; }

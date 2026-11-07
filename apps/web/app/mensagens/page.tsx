@@ -4,10 +4,11 @@ import { createSupabaseClient } from "@huambo-online/supabase";
 import { useSearchParams } from "next/navigation";
 import { listConversations, listMessages, sendMessage, markConversationRead, subscribeToConversationMessages, subscribeToUserConversationMessages, conversationFromParticipantRow,
   isConversationUnread, listConversationPartners, conversationAllowsDocuments, friendlyErrorIn, messagePreview, CHAT_KIND_LABELS, chatMediaUrls,
-  chatListTime, chatDayLabel, chatClock, groupChatMessages, initials, avatarColor, conversationSubject, isSupportConversation, type ChatMessage } from "@huambo-online/core";
+  chatListTime, chatDayLabel, meetingPointUrl, parseMeetingPoint, chatClock, groupChatMessages, initials, avatarColor, conversationSubject, isSupportConversation, type ChatMessage } from "@huambo-online/core";
 import { ConversationSafety } from "../../components/Safety";
 import { ChatAttachButtons, MessageAttachment } from "../../components/ChatMedia";
 import { useT } from "../../lib/i18n";
+import { browserPosition } from "../../components/Place";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""; const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
 
@@ -72,12 +73,19 @@ function MensagensContent() {
   useEffect(() => { endRef.current?.scrollIntoView({ block: "end" }); }, [msgs.length, selected?.id]);
   useEffect(() => { const el = inputRef.current; if (el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 140) + "px"; } }, [body]);
 
-  async function send() {
-    const text = body.trim(); if (!text || !selected || !uid || sending) return;
+  async function send(direct?: string) {
+    const text = (direct ?? body).trim(); if (!text || !selected || !uid || sending) return;
     setSending(true); setSendError("");
     const r = await sendMessage(client(), selected.id, uid, text); setSending(false);
     if (r.error) { setSendError(friendlyErrorIn(r.error, lang)); if (r.data) { setBody(""); void showMessages(client(), selected.id); } return; }
     setBody(""); void showMessages(client(), selected.id);
+  }
+  /** Envia o ponto onde a pessoa está (≈100 m), para combinar o encontro. */
+  async function sendMeetingPoint() {
+    setSendError("");
+    const r = await browserPosition();
+    if (!r.point) { setSendError(tc(r.error)); return; }
+    await send(t("qr.meet_msg", { url: meetingPointUrl(r.point) }));
   }
   const partner = (id?: string) => partners[id ?? ""];
   const rows = useMemo(() => groupChatMessages(msgs, uid), [msgs, uid]);
@@ -140,6 +148,7 @@ function MensagensContent() {
                     <div className={"chat-bubble" + (blocked ? " blocked" : "") + (m.attachment_kind && !m.body ? " media" : "")} title={chatClock(m.created_at, lang)}>
                       {m.attachment_kind && <div className="chat-media"><MessageAttachment m={m} url={m.attachment_path ? media[m.attachment_path] : undefined} /></div>}
                       {m.body && <span>{m.body}</span>}
+                      {!blocked && !!parseMeetingPoint(m.body) && <a className="chat-meet" href={parseMeetingPoint(m.body)!.url} target="_blank" rel="noopener noreferrer">🗺️ {t("map.open")}</a>}
                     </div>
                     {blocked && <small className="chat-note error">{t("ls.msg_blocked")}</small>}
                     {pending && <small className="chat-note">{t("ls.msg_pending")}</small>}
@@ -151,6 +160,10 @@ function MensagensContent() {
             <div ref={endRef} />
           </div>
           {sendError && <p className="error chat-error" role="alert">{sendError}</p>}
+          {uid && !body.trim() && <div className="chat-quick" role="group" aria-label={t("qr.title")}>
+            <button type="button" className="chat-qchip" onClick={() => void sendMeetingPoint()}>{t("qr.meet")}</button>
+            {quickKeys(msgs, uid).map(k => <button type="button" key={k} className="chat-qchip" onClick={() => { setBody(t(k)); inputRef.current?.focus(); }}>{t(k)}</button>)}
+          </div>}
           {uid && <div className={"chat-composer" + (body.trim() ? " typing" : "")}>
             <ChatAttachButtons compact conversationId={selected.id} uid={uid} caption={body} allowDocuments={allowDocs} onSent={() => { setBody(""); void showMessages(client(), selected.id); }} />
             <textarea ref={inputRef} rows={1} className="chat-input" aria-label={t("ls.write_message")} title={t("cg.enter_hint")} value={body} placeholder={t("ls.write_message")}
@@ -161,6 +174,12 @@ function MensagensContent() {
       </section>
     </div>
   </main>;
+}
+/** Respostas rápidas: quem começou a conversa é normalmente quem compra. */
+function quickKeys(msgs: any[], uid: string | null): string[] {
+  const first = msgs.find(m => !m.from_team);
+  const seller = !!first && first.sender_id !== uid;
+  return [1, 2, 3, 4, 5].map(n => (seller ? "qr.s" : "qr.b") + n);
 }
 function Loading() { const { t } = useT(); return <main style={{ padding: 32 }}>{t("ls.loading_messages")}</main>; }
 function Page() { return <Suspense fallback={<Loading />}><MensagensContent /></Suspense>; }

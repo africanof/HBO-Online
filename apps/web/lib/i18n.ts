@@ -9,7 +9,7 @@
 import { createContext, createElement, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import {
   COMMON_DICT, LISTING_CHECKOUT_DICT, IMPORT_DICT, CHAT_GUARD_DICT, ITEM_INSPECTION_DICT, WHATSAPP_DICT, DEFAULT_LANG, LANG_COOKIE, LANG_STORAGE_KEY, LANG_TAGS, AVG_PHOTO_KB,
-  detectLang, isLang, makeT, mergeDictionaries, tc, timeAgo, formatEventDate, savedText, type Dictionary, type Lang
+  detectLang, isLang, makeT, mergeDictionaries, EXTRAS_DICT, tc, timeAgo, formatEventDate, savedText, type Dictionary, type Lang
 } from "@huambo-online/core";
 import { DICT_LISTINGS } from "./i18n/listings";
 import { DICT_SHOP } from "./i18n/shop";
@@ -260,7 +260,7 @@ export const WEB_DICT: Dictionary = {
 };
 
 /** Todos os textos do Site (comuns + só do Site). */
-export const DICT: Dictionary = mergeDictionaries(COMMON_DICT, LISTING_CHECKOUT_DICT, IMPORT_DICT, CHAT_GUARD_DICT, ITEM_INSPECTION_DICT, WHATSAPP_DICT, WEB_DICT, DICT_LISTINGS, DICT_SHOP, DICT_SERVICES, DICT_ADMIN);
+export const DICT: Dictionary = mergeDictionaries(COMMON_DICT, LISTING_CHECKOUT_DICT, IMPORT_DICT, CHAT_GUARD_DICT, ITEM_INSPECTION_DICT, WHATSAPP_DICT, EXTRAS_DICT, WEB_DICT, DICT_LISTINGS, DICT_SHOP, DICT_SERVICES, DICT_ADMIN);
 
 export type TFunction = (key: string, vars?: Record<string, string | number>) => string;
 

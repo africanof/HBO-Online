@@ -6,6 +6,7 @@ import { useTerritory } from "../../components/Directory";
 import { ItemCard } from "../../components/ItemCard";
 import { useT } from "../../lib/i18n";
 import { ResultsToolbar, FiltersToggle, useViewMode, byPrice } from "../../components/ResultsTools";
+import { SkeletonCards } from "../../components/Skeleton";
 
 type Option = { id: string; name: string };
 
@@ -54,6 +55,7 @@ export default function Loja() {
           sorts={[{ value: "recent", label: t("ls.sort_recent") }, { value: "price_asc", label: t("ls.sort_price_asc") }, { value: "price_desc", label: t("ls.sort_price_desc") }, { value: "name", label: t("ls.sort_name") }]} />
         {error && <p className="error" role="alert">{error}</p>}
         {items?.length === 0 && <div className="card"><strong>{t("sh.shop.empty")}</strong><a href="/conta/produtos">{t("sh.shop.sell_here")} →</a></div>}
+        {items === null && <SkeletonCards />}
         <div className={"results-grid" + (view === "list" ? " list" : "")}>{sorted?.map(p => <ItemCard save={{ kind: "product", id: p.id }} key={p.id} href={"/loja/" + p.id} media={p.media} title={p.name} price={formatPrice(p.price, p.currency)}
           tag={p.stock > 0 ? undefined : t("sh.sold_out")} meta={[p.stock > 0 ? t("sh.in_stock", { n: p.stock }) : null, p.seller_name, p.municipality_name].filter(Boolean).join(" · ")} />)}</div>
       </section>
