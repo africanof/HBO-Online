@@ -3,7 +3,7 @@
     "name": "Huambo Online",
     "slug": "huambo-online",
     "owner": "africanofestos-team",
-    "version": "0.5.2",
+    "version": "0.5.3",
     "orientation": "portrait",
     "scheme": "huamboonline",
     "userInterfaceStyle": "automatic",
@@ -89,7 +89,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "O Huambo Online usa a localização só quando carrega em «Usar a minha localização», para marcar no mapa onde fica o anúncio, a empresa ou a entrega."
+          "locationWhenInUsePermission": "O Huambo Online usa a localização só quando carrega em «Usar a minha localização», para marcar no mapa onde fica o anúncio, a empresa ou a entrega, ver onde está no mapa ou enviar um ponto de encontro numa conversa."
         }
       ],
       [
@@ -111,6 +111,12 @@
           "icon": "./assets/notification-icon.png",
           "color": "#3665F3",
           "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "O Huambo Online usa o Face ID para desbloquear a APP, se escolher esta opção."
         }
       ]
     ],

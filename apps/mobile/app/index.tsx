@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { SkeletonShelf } from "../components/Skeleton";
 import { recommendedListings, searchClassifiedListings, listProducts, listProviders, listMarkets, formatPrice, ratingLabel, HOME_CATEGORIES, PURPOSE_LABELS, listingPriceLabel, listWanted, listTrades, cardSaleTag, loadWithCache, isOfflineError, isFeatured, listEvents, priceFromText, categoryLabelIn } from "@huambo-online/core";
 import { supabase, supabaseConfigured } from "../lib/supabase";
 import { ui, C, themed } from "../lib/ui";
@@ -22,7 +23,7 @@ type Shelves = { listings: any[]; auctions: any[]; rentals: any[]; products: any
 /** Atalhos: [ícone, chave do texto, endereço]. */
 const MORE: [string, string, string][] = [
   ["🌾", "more.agri", "/agricultura"], ["⛽", "cat.Combustível e gás", "/combustivel"], ["🎟️", "cat.Eventos", "/eventos"], ["✈️", "cat.Importação", "/importacao"], ["🎬", "more.videos", "/videos"], ["👥", "more.following", "/seguindo"], ["🛡️", "more.safety", "/seguranca"], ["🆘", "sp.short", "/suporte"], ["🤝", "more.agent", "/agente"], ["🎁", "more.invite", "/convidar"], ["📋", "more.my_listings", "/meus-anuncios"], ["📦", "more.orders", "/encomendas"], ["🔍", "ii.see_mine", "/inspecoes"], ["♥", "nav.saved", "/guardados"],
-  ["🕘", "more.recent", "/historico"], ["⭐", "more.saved_searches", "/pesquisas-guardadas"], ["🔔", "nav.notifications", "/notificacoes"]
+  ["🗺️", "map.title", "/mapa"], ["🕘", "more.recent", "/historico"], ["⭐", "more.saved_searches", "/pesquisas-guardadas"], ["🔔", "nav.notifications", "/notificacoes"]
 ];
 
 export default function Home() {
@@ -30,13 +31,17 @@ export default function Home() {
   const [s, setS] = useState<Shelves | null>(null);
   const [signedIn, setSignedIn] = useState<boolean | null>(null); const [recs, setRecs] = useState<any[]>([]);
   const [offline, setOffline] = useState<{ on: boolean; at: number | null }>({ on: false, at: null });
-  useFocusEffect(useCallback(() => {
+  const [near, setNear] = useState<{ name: string; items: any[] } | null>(null); const [refreshing, setRefreshing] = useState(false);
+  const load = useCallback(async () => {
     if (!supabaseConfigured) { setS({ listings: [], auctions: [], rentals: [], products: [], providers: [], markets: [], wanted: [] }); return; }
     const c = supabase();
     // «Para si»: só com sessão iniciada (com base no que a pessoa viu, pesquisou e guardou).
-    void c.auth.getUser().then(({ data }) => { setSignedIn(!!data.user); if (data.user) void recommendedListings(c, 12).then(r => setRecs(r.data)); else setRecs([]); });
+    void c.auth.getUser().then(({ data }) => {
+      setSignedIn(!!data.user);
+      if (data.user) { void recommendedListings(c, 12).then(r => setRecs(r.data)); void nearMe(c, data.user.id).then(setNear); } else { setRecs([]); setNear(null); }
+    });
     // Guarda a página inicial para a mostrar quando não houver internet.
-    void loadWithCache<Shelves>(deviceStore, "inicio", async () => {
+    await loadWithCache<Shelves>(deviceStore, "inicio", async () => {
       const all = await Promise.all([
         searchClassifiedListings(c, { limit: 12 }), searchClassifiedListings(c, { purpose: "auction", limit: 12 }),
         searchClassifiedListings(c, { purpose: "rent", limit: 12 }), listProducts(c, { limit: 12 }), listProviders(c, { limit: 12 }), listMarkets(c), listWanted(c, "", 12), listTrades(c, "", false, 12), listEvents(c, { limit: 12 })
@@ -52,13 +57,16 @@ export default function Home() {
       setOffline({ on: res.fromCache || isOfflineError(res.error), at: res.savedAt });
       setS(res.data ?? { listings: [], auctions: [], rentals: [], products: [], providers: [], markets: [], wanted: [] });
     });
-  }, []));
+  }, []);
+  useFocusEffect(useCallback(() => { void load(); }, [load]));
+  async function refresh() { setRefreshing(true); await load(); setRefreshing(false); }
 
   const listing = (x: any) => <ItemCard save={{ kind: "listing", id: x.id }} key={x.id} featured={isFeatured(x)} video={!!x.video_url} href={"/classificados/" + x.id} media={x.media} title={x.title} price={coreText(listingPriceLabel(x), t) ?? ""}
     icon={LISTING_ICON[x.listing_type] ?? "🏷️"} tag={x.purpose === "auction" ? t("tag.auction") : coreText(x.purpose !== "sale" ? PURPOSE_LABELS[x.purpose as keyof typeof PURPOSE_LABELS] : cardSaleTag(x), t)}
     tagRed={x.purpose === "auction"} meta={timeAgoIn(x.published_at ?? x.created_at, t, lang)} />;
 
-  return <ScrollView contentContainerStyle={[ui.screen, { gap: 22 }]} keyboardShouldPersistTaps="handled">
+  return <ScrollView contentContainerStyle={[ui.screen, { gap: 22 }]} keyboardShouldPersistTaps="handled"
+    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} colors={[C.blue]} tintColor={C.blue} />}>
     <View style={st.top}><Logo /><NotificationBell /></View>
     <View style={{ flexDirection: "row", justifyContent: "flex-end", flexWrap: "wrap", gap: 8, marginTop: -14 }}><DataSaverToggle /><ThemeToggle /></View>
     <LanguagePicker compact />
@@ -89,8 +97,9 @@ export default function Home() {
       </Link>)}
     </View>
 
-    {s === null && <Text style={ui.muted}>{t("home.loading")}</Text>}
+    {s === null && <><SkeletonShelf /><SkeletonShelf /></>}
     {!!recs.length && <Shelf title={"✨ " + t("home.for_you")} href="/explorar">{recs.map(listing)}</Shelf>}
+    {!!near?.items.length && <Shelf title={"📍 " + t("home.near", { place: near.name })} href="/mapa">{near.items.map(listing)}</Shelf>}
     <PromoShelf title={t("home.videos")} />
     {!!s?.events?.length && <Shelf title={"🎟️ " + t("home.events")} href="/eventos">{s.events.map(e => <ItemCard key={e.id} href={"/eventos/" + e.id} media={e.cover_url ? [e.cover_url] : null} icon="🎟️"
       title={e.title} price={coreText(priceFromText(e.price_from), t) ?? ""} featured={e.featured} meta={`📅 ${formatDateTimeIn(e.starts_at, lang)}`} />)}</Shelf>}
@@ -153,6 +162,16 @@ export default function Home() {
       <Button title={t("home.be_agent")} variant="secondary" onPress={() => router.push("/agente" as any)} />
     </View>
   </ScrollView>;
+}
+
+/** «Perto de si»: anúncios do município da conta. */
+async function nearMe(c: ReturnType<typeof supabase>, uid: string): Promise<{ name: string; items: any[] } | null> {
+  const p = await c.from("profiles").select("municipality").eq("id", uid).maybeSingle();
+  const name = String((p.data as any)?.municipality ?? "").trim(); if (!name) return null;
+  const m = await c.from("municipalities").select("id,name").ilike("name", name).limit(1).maybeSingle();
+  if (!m.data) return null;
+  const r = await searchClassifiedListings(c, { municipalityId: (m.data as any).id, limit: 12 });
+  return { name: (m.data as any).name, items: (r.data as any[]) ?? [] };
 }
 
 const st = themed(C => StyleSheet.create({

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-export type NotificationPreferences={user_id:string;enabled:boolean;saved_search:boolean;messages:boolean;rentals:boolean;auctions:boolean;marketplace:boolean;reviews:boolean;system:boolean;interests_frequency?:InterestFrequency;email_digest?:boolean;push?:boolean;updated_at:string};
+export type NotificationPreferences={user_id:string;enabled:boolean;saved_search:boolean;messages:boolean;rentals:boolean;auctions:boolean;marketplace:boolean;reviews:boolean;system:boolean;interests_frequency?:InterestFrequency;email_digest?:boolean;push?:boolean;price_drop?:boolean;updated_at:string};
 export async function getNotificationPreferences(client:SupabaseClient){return client.rpc("get_notification_preferences").maybeSingle<NotificationPreferences>();}
 export async function saveNotificationPreferences(client:SupabaseClient,p:Omit<NotificationPreferences,"user_id"|"updated_at">){const r=await client.rpc("upsert_notification_preferences",{p_enabled:p.enabled,p_saved_search:p.saved_search,p_messages:p.messages,p_rentals:p.rentals,p_auctions:p.auctions,p_marketplace:p.marketplace,p_reviews:p.reviews,p_system:p.system});return{data:(r.data??null) as NotificationPreferences|null,error:r.error};}
 

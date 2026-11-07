@@ -1,4 +1,5 @@
 import { PlaceView } from "./Place";
+import { usePull } from "./Pull";
 import { useEffect, useState } from "react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image, Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native";
@@ -57,6 +58,7 @@ export function DirectoryList({ kind }: { kind: Kind }) {
       void search(cat);
     });
   }, []);
+  const pull = usePull(() => search());
   async function search(category = categoryId) {
     setError("");
     const f = { query: q, categoryId: category, municipalityId };
@@ -64,7 +66,7 @@ export function DirectoryList({ kind }: { kind: Kind }) {
     if (r.error) setError(friendlyErrorIn(r.error, lang)); else setItems(r.data ?? []);
   }
 
-  return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
+  return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled" refreshControl={pull}>
     <Text style={ui.h1}>{tx.title}</Text>
     <TextInput value={q} onChangeText={setQ} placeholder={tx.search} style={ui.input} returnKeyType="search" onSubmitEditing={() => void search()} />
     {categories.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false}>

@@ -1,4 +1,5 @@
 import { OrderPoint } from "../components/Place";
+import { usePull } from "../components/Pull";
 import { TeamRequestStatus } from "../components/TeamRequestStatus";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -38,6 +39,7 @@ export default function Encomendas() {
     if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(msg); await load(); }
   }
   useFocusEffect(useCallback(() => { void currentUserId().then(id => { setUid(id); if (id) void load(); }); }, [role]));
+  const pull = usePull(load);
   async function act(id: string, status: OrderStatus, paid?: boolean) {
     setError(""); setNotice("");
     const r = await changeOrderStatus(supabase(), id, status, paid);
@@ -45,7 +47,7 @@ export default function Encomendas() {
   }
   if (uid === undefined) return <View style={ui.screen}><Text style={ui.text}>{t("common.loading")}</Text></View>;
   if (!uid) return <View style={ui.screen}><Text style={ui.h1}>{t("sh.orders")}</Text><Button title={t("auth.login")} onPress={() => router.push("/login")} /></View>;
-  return <ScrollView contentContainerStyle={ui.screen}>
+  return <ScrollView contentContainerStyle={ui.screen} refreshControl={pull}>
     <Link href={"/loja" as any} style={ui.link}>{"← " + t("nav.shop")}</Link>
     <Text style={ui.h1}>{t("sh.orders")}</Text>
     <TeamRequestStatus />

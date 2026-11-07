@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { success } from "../lib/haptics";
+import { askForReviewAfterGoodMoment } from "../lib/review";
 import { Link } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Alert, Image, Linking, Share, Switch, Text, TextInput, View } from "react-native";
@@ -90,7 +92,7 @@ export function OrderEscrowPanel({ order, role, uid, settings, provider, hasActi
     setBusy(true);
     const r = await confirmOrderReceived(supabase(), order.id);
     setBusy(false);
-    if (r.error) onChanged(friendlyErrorIn(r.error, lang), true); else onChanged(t("sh.thanks_released"));
+    if (r.error) onChanged(friendlyErrorIn(r.error, lang), true); else { success(); onChanged(t("sh.thanks_released")); void askForReviewAfterGoodMoment(); }
   }
   return <View style={[ui.card, { borderWidth: 2 }]}>
     <Text style={ui.label}>{order.status === "cancelled" && order.escrow_status === "awaiting_payment" ? t("sh.protected_cancelled") : tc(ESCROW_STATUS_LABELS[order.escrow_status])}</Text>

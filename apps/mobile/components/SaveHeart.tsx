@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { mySavedMap, toggleSaved, type SavedKind } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { useT } from "../lib/i18n";
+import { tap } from "../lib/haptics";
 
 // Os favoritos de cada tipo carregam uma só vez, para todos os corações ♡ da lista.
 type Store = { uid: string | null; map: Record<string, string>; ready: Promise<void> | null; subs: Set<() => void> };
@@ -32,7 +33,7 @@ export function SaveHeart({ kind, id, title }: { kind: SavedKind; id: string; ti
   async function press() {
     await s.ready;
     if (!s.uid) { router.push("/login"); return; }
-    setBusy(true);
+    setBusy(true); tap();
     const r = await toggleSaved(supabase(), s.uid, kind, id, s.map[id] ?? null);
     setBusy(false);
     if (r.error) return;

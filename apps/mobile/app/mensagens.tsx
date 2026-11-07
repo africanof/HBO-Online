@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { tap } from "../lib/haptics";
+import { Linking } from "react-native";
+import { devicePosition } from "../components/Place";
+import { meetingPointUrl, parseMeetingPoint } from "@huambo-online/core";
+import { usePull } from "../components/Pull";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { BackHandler, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { listConversations, listMessages, sendMessage, markConversationRead, subscribeToConversationMessages, subscribeToUserConversationMessages, conversationFromParticipantRow,
@@ -34,6 +39,7 @@ export default function Mensagens() {
   const [media, setMedia] = useState<Record<string, string>>({}); const [allowDocs, setAllowDocs] = useState(false); const [query, setQuery] = useState("");
   const [loaded, setLoaded] = useState(false); const [safetyOpen, setSafetyOpen] = useState(false);
   const scroller = useRef<ScrollView>(null);
+  const pull = usePull(load);
 
   async function showMessages(c: any, id: string) {
     const r = await listMessages(c, id); const list = (r.data ?? []) as any[]; setMsgs(list);
@@ -72,12 +78,20 @@ export default function Mensagens() {
     return () => sub.remove();
   }, [selected?.id]);
 
-  async function send() {
-    const text = body.trim(); if (!text || !selected || !uid || sending) return;
+  async function send(direct?: string) {
+    const text = (direct ?? body).trim(); if (!text || !selected || !uid || sending) return;
+    tap();
     const c = supabase(); setSending(true); setSendError("");
     const r = await sendMessage(c, selected.id, uid, text); setSending(false);
     if (r.error) { setSendError(friendlyErrorIn(r.error, lang)); if (r.data) { setBody(""); void showMessages(c, selected.id); } return; }
     setBody(""); void showMessages(c, selected.id);
+  }
+  /** Envia o ponto onde a pessoa está, para combinar o encontro. */
+  async function sendMeetingPoint() {
+    const r = await devicePosition();
+    if (!r.point) { setSendError(tc(r.error)); return; }
+    const url = meetingPointUrl(r.point);
+    await send(t("qr.meet_msg", { url }));
   }
   const partner = (id?: string) => partners[id ?? ""];
   const ctxLabel = (v: string) => { const k = "cg.ctx." + v; const r = t(k); return r === k ? "" : r; };
@@ -89,7 +103,7 @@ export default function Mensagens() {
       if (!query.trim()) return true; const x = conversationFromParticipantRow(row);
       return ((partner(x.id)?.other_name ?? "") + " " + (conversationSubject(x) ?? "")).toLowerCase().includes(query.trim().toLowerCase());
     });
-    return <ScrollView contentContainerStyle={s.listWrap} keyboardShouldPersistTaps="handled">
+    return <ScrollView contentContainerStyle={s.listWrap} keyboardShouldPersistTaps="handled" refreshControl={pull}>
       <Text style={s.title}>{t("nav.messages")}</Text>
       <TextInput value={query} onChangeText={setQuery} placeholder={"🔎 " + t("cg.search")} placeholderTextColor={C.muted} style={s.search} accessibilityLabel={t("cg.search")} />
       {loaded && !items.length && <Text style={s.muted}>{t("cg.empty")}</Text>}
@@ -145,6 +159,7 @@ export default function Mensagens() {
               <View style={[s.bubble, mine ? s.bubbleMine : team ? s.bubbleTeam : s.bubbleOther, corner, blocked && s.bubbleBlocked, media_ && s.bubbleMedia]}>
                 {!!m.attachment_kind && <MessageAttachment m={m} url={m.attachment_path ? media[m.attachment_path] : undefined} />}
                 {!!m.body && <Text style={[s.msg, mine && !blocked && { color: C.onAccent }, team && { color: C.yellowText }, blocked && s.msgBlocked]}>{m.body}</Text>}
+                {!blocked && !!parseMeetingPoint(m.body) && <Pressable accessibilityRole="link" onPress={() => void Linking.openURL(parseMeetingPoint(m.body)!.url)} style={s.meetBtn}><Text style={s.meetTx}>🗺️ {t("map.open")}</Text></Pressable>}
               </View>
               {blocked && <Text style={s.noteErr}>{t("ls.chat.msg_blocked")}</Text>}
               {pending && <Text style={s.note}>{t("ls.chat.msg_pending")}</Text>}
@@ -155,6 +170,10 @@ export default function Mensagens() {
       })}
     </ScrollView>
     {!!sendError && <Text accessibilityRole="alert" style={s.err}>{sendError}</Text>}
+    {!!uid && !body.trim() && <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={s.quick} accessibilityLabel={t("qr.title")}>
+      <Pressable accessibilityRole="button" onPress={() => void sendMeetingPoint()} style={s.qChip}><Text style={s.qTx}>{t("qr.meet")}</Text></Pressable>
+      {quickKeys(msgs, uid).map(k => <Pressable key={k} accessibilityRole="button" onPress={() => setBody(t(k))} style={s.qChip}><Text style={s.qTx}>{t(k)}</Text></Pressable>)}
+    </ScrollView>}
     {!!uid && <View style={s.composer}>
       {<ChatAttachButtons compact iconsHidden={!!body.trim()} allowDocuments={allowDocs} conversationId={selected.id} uid={uid} caption={body} onSent={() => { setBody(""); void showMessages(supabase(), selected.id); }} />}
       <TextInput accessibilityLabel={t("ls.chat.write")} value={body} onChangeText={setBody} placeholder={t("ls.chat.write")} placeholderTextColor={C.muted} multiline style={s.input} />
@@ -164,7 +183,19 @@ export default function Mensagens() {
   </KeyboardAvoidingView>;
 }
 
+/** Respostas rápidas: quem começou a conversa é normalmente quem compra. */
+function quickKeys(msgs: any[], uid: string | null): string[] {
+  const first = msgs.find(m => !m.from_team);
+  const seller = !!first && first.sender_id !== uid;
+  return [1, 2, 3, 4, 5].map(n => (seller ? "qr.s" : "qr.b") + n);
+}
+
 const s = themed(C => StyleSheet.create({
+  quick: { gap: 8, paddingHorizontal: 10, paddingVertical: 6 },
+  qChip: { borderWidth: 1, borderColor: C.line, backgroundColor: C.surface, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8 },
+  qTx: { color: C.ink, fontSize: 14, fontWeight: "600" },
+  meetBtn: { marginTop: 6, alignSelf: "flex-start", backgroundColor: C.white, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  meetTx: { color: C.blue, fontWeight: "700", fontSize: 14 },
   listWrap: { paddingTop: 54, paddingHorizontal: 12, paddingBottom: 24, gap: 4 },
   title: { color: C.ink, fontSize: 30, fontWeight: "800", paddingHorizontal: 4 },
   search: { backgroundColor: C.surface, color: C.ink, borderRadius: 999, paddingHorizontal: 18, minHeight: 46, fontSize: 16, marginVertical: 8 },

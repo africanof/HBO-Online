@@ -1,4 +1,5 @@
 import { themed, C } from "../lib/ui";
+import { usePull } from "../components/Pull";
 import { useT, formatDateTimeIn } from "../lib/i18n";
 import { useEffect,useState } from "react";
 import { Link } from "expo-router";
@@ -9,9 +10,9 @@ const url=process.env.EXPO_PUBLIC_SUPABASE_URL??"";const key=process.env.EXPO_PU
 export default function Notificacoes(){
  const {t,tc,lang}=useT();
  const [items,setItems]=useState<any[]>([]); const [unread,setUnread]=useState(0); const [error,setError]=useState("");
- async function load(){const c=supabase();const a=await listNotifications(c);const b=await countUnreadNotifications(c);if(a.error) setError(friendlyErrorIn(a.error,lang)); setItems(a.data??[]);setUnread(b.count??0);}
+ const pull=usePull(load);async function load(){const c=supabase();const a=await listNotifications(c);const b=await countUnreadNotifications(c);if(a.error) setError(friendlyErrorIn(a.error,lang)); setItems(a.data??[]);setUnread(b.count??0);}
  useEffect(()=>{void load();const c=supabase();let stop=()=>{};void c.auth.getUser().then(({data})=>{if(data.user)stop=subscribeToNotifications(c,data.user.id,()=>{void load();});});return()=>stop();},[]);
- return <ScrollView contentContainerStyle={s.container}><Link style={s.lk} href="/">← Huambo Online</Link><Link style={s.lk} href="/notificacoes-preferencias">⚙️ {t("ls.np.title")}</Link>{!!error&&<Text style={s.tx}>{error}</Text>}<Text style={s.title}>{t("nav.notifications")} {unread>0?t("ls.notif.new",{n:unread}):""}</Text>
+ return <ScrollView contentContainerStyle={s.container} refreshControl={pull}><Link style={s.lk} href="/">← Huambo Online</Link><Link style={s.lk} href="/notificacoes-preferencias">⚙️ {t("ls.np.title")}</Link>{!!error&&<Text style={s.tx}>{error}</Text>}<Text style={s.title}>{t("nav.notifications")} {unread>0?t("ls.notif.new",{n:unread}):""}</Text>
  <Pressable onPress={async()=>{const c=supabase();await markAllNotificationsRead(c);await load();}}><Text style={s.tx}>{t("ls.notif.read_all")}</Text></Pressable>
  {items.map(n=><View key={n.id} style={s.card}><Text style={s.strong}>{tc(n.title)}</Text><Text style={s.tx}>{tc(n.body)}</Text><Text style={s.tx}>{formatDateTimeIn(n.created_at,lang)}</Text>
  {!n.read_at&&<Pressable onPress={async()=>{const c=supabase();await markNotificationRead(c,n.id);await load();}}><Text style={s.tx}>{t("ls.notif.read")}</Text></Pressable>}

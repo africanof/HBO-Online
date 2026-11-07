@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { success } from "../lib/haptics";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 import { listingCheckoutKind, listingReserved, myListingOrder, buyListingProtected, validateListingCheckout, formatPrice, friendlyErrorIn,
@@ -43,6 +44,7 @@ export function ProtectedBuyBox({ item, uid, isJob }: { item: any; uid: string |
     const r = await buyListingProtected(supabase(), item.id, { fulfillment, phone, deliveryText: address, note });
     setBusy(false);
     if (r.error) { setError(friendlyErrorIn(r.error, lang)); return; }
+    success();
     goOrders(true);
   }
 

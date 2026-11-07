@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
-import { Alert, Linking, ScrollView, Text, View } from "react-native";
+import { Alert, Linking, ScrollView, Switch, Text, View } from "react-native";
+import { lockAvailable, lockEnabled, setLockEnabled } from "../../components/AppLock";
 import { listTotpFactors, startTotpEnrollment, verifyTotp, disableTotp, mfaRequired, mfaErrorIn, formatTotpSecret,
   MFA_STEPS, LANG_TAGS, type MfaEnrollment, type MfaFactor } from "@huambo-online/core";
 import { supabase, currentUserId } from "../../lib/supabase";
@@ -17,7 +18,14 @@ export default function SegurancaConta() {
   const [enroll, setEnroll] = useState<MfaEnrollment | null>(null); const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [notice, setNotice] = useState("");
 
+  const [lock, setLock] = useState<{ can: boolean; on: boolean } | null>(null);
+  async function toggleLock(v: boolean) {
+    setError("");
+    const ok = await setLockEnabled(v, t("lock.prompt"));
+    if (ok) setLock(l => l && { ...l, on: v }); else if (v) setError(t("lock.unavailable"));
+  }
   async function load() {
+    void Promise.all([lockAvailable(), lockEnabled()]).then(([can, on]) => setLock({ can, on }));
     const c = supabase();
     const [f, need] = await Promise.all([listTotpFactors(c), mfaRequired(c)]);
     if (f.error) setError(mfaErrorIn(f.error, lang));
@@ -109,6 +117,13 @@ export default function SegurancaConta() {
       <Text style={ui.label}>{t("sv.how_it_works_plain")}</Text>
       {MFA_STEPS.map((s, i) => <Text key={i} style={ui.text}>{i + 1}. {tc(s)}</Text>)}
       <Button title={busy ? t("sv.wait") : t("sv.turn_on")} disabled={busy} onPress={() => void start()} />
+    </View>}
+    {!!lock && <View style={[ui.card, { gap: 6 }]}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <Text style={[ui.label, { flex: 1 }]}>👆 {t("lock.title")}</Text>
+        <Switch value={lock.on} disabled={!lock.can && !lock.on} onValueChange={v => void toggleLock(v)} accessibilityLabel={t("lock.title")} />
+      </View>
+      <Text style={ui.muted}>{lock.can ? t("lock.desc") : t("lock.unavailable")}</Text>
     </View>}
   </ScrollView>;
 }

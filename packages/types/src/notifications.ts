@@ -1,4 +1,4 @@
-export type NotificationType="order"|"auction"|"bid"|"message"|"delivery"|"review"|"system"|"saved_search"|"interests";
+export type NotificationType="order"|"auction"|"bid"|"message"|"delivery"|"review"|"system"|"saved_search"|"interests"|"price_drop";
 export interface Notification {
   id:string; userId:string; type:NotificationType; title:string; body:string;
   data:Record<string,unknown>; readAt?:string; createdAt:string;

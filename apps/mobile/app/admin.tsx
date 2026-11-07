@@ -14,6 +14,7 @@ import { Button, Chips, Message } from "../components/Ui";
 import { AdminCouriers } from "../components/AdminCouriers";
 import { AdminMessages } from "../components/AdminMessages";
 import { AdminWhatsapp } from "../components/AdminWhatsapp";
+import { AdminAppHealth } from "../components/AdminAppHealth";
 import { AdminAiFlags } from "../components/AiTools";
 import { TeamWhatsappSettings } from "../components/Engage";
 import { AdminRequests } from "../components/AdminRequests";
@@ -36,8 +37,8 @@ import { AdminVenues } from "../components/Venues";
 import { AdminInspections } from "../components/Inspection";
 import { MfaPrompt, useMfaCheck } from "../components/Mfa";
 
-type Tab = "stats" | "proofs" | "provinces" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "whatsapp" | "imports" | "item_inspections" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
-const TABS: Tab[] = ["stats", "proofs", "provinces", "requests", "messages", "whatsapp", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "imports", "item_inspections", "inspections", "disputes", "verifications", "listings",
+type Tab = "stats" | "proofs" | "provinces" | "requests" | "messages" | "reports" | "revenue" | "protected" | "plans" | "safety" | "agents" | "events" | "videos" | "fuel" | "venues" | "whatsapp" | "app" | "imports" | "item_inspections" | "inspections" | "disputes" | "verifications" | "listings" | "users" | "categories" | "couriers" | "markets" | "audit";
+const TABS: Tab[] = ["stats", "proofs", "provinces", "requests", "messages", "whatsapp", "app", "reports", "revenue", "protected", "plans", "safety", "agents", "events", "videos", "fuel", "venues", "imports", "item_inspections", "inspections", "disputes", "verifications", "listings",
   "users", "categories", "couriers", "markets", "audit"];
 
 export default function Admin() {
@@ -62,7 +63,7 @@ export default function Admin() {
 
   async function load(t: Tab) {
     setError("");
-    if (t === "messages" || t === "requests" || t === "whatsapp") return;
+    if (t === "messages" || t === "requests" || t === "whatsapp" || t === "app") return;
     if (t === "couriers" || t === "markets" || t === "verifications" || t === "audit" || t === "disputes" || t === "plans" || t === "safety" || t === "agents" || t === "events" || t === "videos" || t === "fuel" || t === "venues" || t === "imports" || t === "item_inspections" || t === "inspections" || t === "revenue" || t === "protected") return;
     const c = supabase();
     const r: any = t === "stats" ? await getAdminStats(c) : t === "reports" ? await listReportsV2(c, reportFilter || undefined)
@@ -99,6 +100,7 @@ export default function Admin() {
     {tab === "listings" && <AdminAiFlags />}
     {tab === "messages" && <AdminMessages />}
     {tab === "whatsapp" && <AdminWhatsapp />}
+    {tab === "app" && <AdminAppHealth />}
     {tab === "couriers" && <AdminCouriers />}
     {tab === "markets" && <AdminMarkets />}
     {tab === "verifications" && <AdminVerifications />}

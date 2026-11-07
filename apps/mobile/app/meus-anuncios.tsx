@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { usePull } from "../components/Pull";
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Alert, Image, ScrollView, Text, View } from "react-native";
 import { listMyClassifiedListings, deleteClassifiedListing, updateClassifiedStatus, publishClassifiedListing, removeClassifiedMedia,
@@ -29,6 +30,7 @@ export default function MeusAnuncios() {
     const [b, s] = await Promise.all([listMyBoosts(supabase()), getPlatformSettings(supabase())]); setBoosts(b.data); setSettings(s.data);
   }
   useFocusEffect(useCallback(() => { void load(); }, []));
+  const pull = usePull(load);
 
   async function act(id: string, fn: () => Promise<{ error: any }>) {
     setBusy(id); setError("");
@@ -40,7 +42,7 @@ export default function MeusAnuncios() {
     Alert.alert(t("ls.mine.delete_title"), t("ls.sure_undo"), [{ text: t("common.cancel"), style: "cancel" }, { text: t("common.delete"), style: "destructive", onPress: () => void act(x.id, async () => { const r = await deleteClassifiedListing(supabase(), x.id); if (!r.error) await removeClassifiedMedia(supabase(), x.media ?? []); return r; }) }]);
   }
 
-  return <ScrollView contentContainerStyle={ui.screen}>
+  return <ScrollView contentContainerStyle={ui.screen} refreshControl={pull}>
     <Link href="/" style={ui.link}>← Huambo Online</Link>
     <Text style={ui.h1}>{t("more.my_listings")}</Text>
     <Button title={t("ls.mine.stats")} variant="secondary" onPress={() => router.push("/conta/estatisticas" as any)} />
