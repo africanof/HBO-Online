@@ -518,3 +518,9 @@ main.chat-page { padding-top: 12px; padding-bottom: 16px; }
 .chat-pay-head strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chat-pay-amount { font-size: 20px; font-weight: 800; }
 .chat-bubble.paycard { background: transparent !important; padding: 0 !important; box-shadow: none; }
+
+/* Valores rápidos do leilão (como no eBay) */
+.quick-bids { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.quick-bid { background: var(--card); color: var(--accent); border: 2px solid var(--accent); border-radius: 999px; padding: 10px 6px; font-weight: 700; min-height: 48px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.quick-bid:hover { background: var(--accent-soft); color: var(--accent-dark); }
+.quick-bid.on { background: var(--accent); color: var(--on-accent); }

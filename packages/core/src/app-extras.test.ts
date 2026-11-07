@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { quickBids } from "./listing-auctions";
 import { chatPaymentState, screenKey, createScreenCounter, scrubErrorText, mapHtml, mapHref, shouldAskForReview, meetingPointMessage, parseMeetingPoint } from "./app-extras";
 import { getNotificationLink } from "./notifications";
 
@@ -57,5 +58,18 @@ describe("pedido de pagamento na conversa", () => {
     expect(chatPaymentState({ ...base, order_id: "x", order_status: "pending", escrow_status: "awaiting_payment" })).toBe("awaiting_payment");
     expect(chatPaymentState({ ...base, order_id: "x", order_status: "pending", escrow_status: "held" })).toBe("held");
     expect(chatPaymentState({ ...base, order_id: "x", order_status: "cancelled", escrow_status: "awaiting_payment" })).toBe("cancelled");
+  });
+});
+
+describe("valores rápidos do leilão", () => {
+  it("mínimo arredondado e mais dois saltos", () => {
+    expect(quickBids({ bid_count: 0, starting_price: 20000, current_price: 20000, min_increment: 0 })).toEqual([20000, 20250, 21000]);
+    expect(quickBids({ bid_count: 3, starting_price: 20000, current_price: 30000, min_increment: 250 })).toEqual([30500, 31000, 32500]);
+  });
+  it("não passa do «Comprar já»", () => {
+    expect(quickBids({ bid_count: 0, starting_price: 20000, current_price: 20000, min_increment: 0, buy_now_price: 20500, buy_now_available: true })).toEqual([20000, 20250]);
+  });
+  it("quem ganha só sobe o seu máximo", () => {
+    expect(quickBids({ bid_count: 2, starting_price: 1000, current_price: 1500, min_increment: 0, leader_is_me: true, my_best: 2000 })[0]).toBeGreaterThan(2000);
   });
 });

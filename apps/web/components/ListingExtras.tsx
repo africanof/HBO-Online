@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { requestRental, getListingAuction, startListingAuction, bidOnAuction, cancelAuction, nextMinimumBid, timeLeft,
+import { requestRental, getListingAuction, startListingAuction, bidOnAuction, cancelAuction, nextMinimumBid, quickBids, timeLeft,
   formatPrice, parsePrice, friendlyErrorIn, LANG_TAGS, buyAuctionNow, listBidsForAuction, retractMyBid, cancelBidAsSeller, canRetractBid, RETRACT_REASON_LABELS,
   type ListingAuction, type AuctionBid, type RetractReason } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
@@ -91,10 +91,13 @@ export function AuctionPanel({ listingId, uid, mine, canStart }: { listingId: st
       {a.leader_is_me ? <span className="ok">✔ {t("ls.auc_winning")} <strong>{formatPrice(a.my_best)}</strong>. {t("ls.auc_can_raise")}</span>
         : a.my_best != null ? <span className="error">{t("ls.auc_outbid")}</span> : null}
       <p style={{ margin: 0 }}>💡 {t("ls.auc_proxy_help")}</p>
-      <form className="row" onSubmit={e => { e.preventDefault(); if (!uid) { window.location.href = "/conta/login?voltar=" + encodeURIComponent(window.location.pathname); return; } void placeMax(); }}>
-        <label style={{ flex: "1 1 220px" }}>{a.leader_is_me ? t("ls.auc_new_max") : t("ls.auc_your_max")}
+      <form className="stack" style={{ gap: 10 }} onSubmit={e => { e.preventDefault(); if (!uid) { window.location.href = "/conta/login?voltar=" + encodeURIComponent(window.location.pathname); return; } void placeMax(); }}>
+        <label>{a.leader_is_me ? t("ls.auc_new_max") : t("ls.auc_your_max")}
           <input inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder={t("ls.minimum", { price: formatPrice(nextMinimumBid(a)) })} /></label>
-        <button disabled={busy} style={{ alignSelf: "end" }}>{a.leader_is_me ? t("ls.auc_raise_max") : t("ls.auc_bid")}</button>
+        {quickBids(a).length > 0 && <div className="quick-bids" role="group" aria-label={a.leader_is_me ? t("ls.auc_new_max") : t("ls.auc_your_max")}>
+          {quickBids(a).map(v => <button key={v} type="button" className={"quick-bid" + (parsePrice(amount) === v ? " on" : "")} aria-pressed={parsePrice(amount) === v} onClick={() => setAmount(String(v))}>{formatPrice(v)}</button>)}
+        </div>}
+        <button disabled={busy} style={{ width: "100%" }}>{a.leader_is_me ? t("ls.auc_raise_max") : t("ls.auc_bid")}</button>
       </form>
     </>}
     {a.status !== "scheduled" && <BidHistory auctionId={a.id} auction={a} mine={mine} uid={uid} version={a.current_price + ":" + a.bid_count} onChanged={(m) => { setOk(m); void load(); }} />}

@@ -39,6 +39,19 @@ export function nextMinimumBid(a: Pick<ListingAuction, "bid_count" | "starting_p
   return Number(a.bid_count) === 0 ? Number(a.starting_price) : Number(a.current_price) + Math.max(Number(a.min_increment), 1);
 }
 
+/**
+ * Valores rápidos para licitar (como no eBay): o mínimo arredondado e mais dois saltos (1 e 4 incrementos).
+ * Ficam de fora os valores iguais ou acima do «Comprar já» (aí compensa comprar).
+ */
+export function quickBids(a: Pick<ListingAuction, "bid_count" | "starting_price" | "current_price" | "min_increment"> & Partial<Pick<ListingAuction, "leader_is_me" | "my_best" | "buy_now_price" | "buy_now_available">>): number[] {
+  const min = nextMinimumBid(a);
+  if (!(min > 0)) return [];
+  const inc = bidIncrement(min, Number(a.min_increment) || 0);
+  const first = Math.ceil(min / inc) * inc;
+  const cap = a.buy_now_available && Number(a.buy_now_price) > 0 ? Number(a.buy_now_price) : Infinity;
+  return [...new Set([first, first + inc, first + 4 * inc])].filter(v => v >= min && v < cap);
+}
+
 /** "2 d 4 h", "35 min", "Terminado" */
 export function timeLeft(endsAt: string, now = Date.now()): string {
   const ms = new Date(endsAt).getTime() - now;

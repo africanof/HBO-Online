@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
-import { Alert, Text, TextInput, View } from "react-native";
-import { requestRental, getListingAuction, startListingAuction, bidOnAuction, cancelAuction, nextMinimumBid, timeLeft,
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { requestRental, getListingAuction, startListingAuction, bidOnAuction, cancelAuction, nextMinimumBid, quickBids, timeLeft,
   formatPrice, parsePrice, friendlyErrorIn, buyAuctionNow, listBidsForAuction, retractMyBid, cancelBidAsSeller, canRetractBid, RETRACT_REASON_LABELS,
   type ListingAuction, type AuctionBid, type RetractReason } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
-import { ui } from "../lib/ui";
+import { ui, C } from "../lib/ui";
 import { Button, Chips, Message } from "./Ui";
 import { useT, formatDateTimeIn } from "../lib/i18n";
 
@@ -104,6 +104,11 @@ export function AuctionPanel({ listingId, uid, mine, canStart }: { listingId: st
       <Text style={ui.text}>{t("ls.auc.how")}</Text>
       <Text style={ui.label}>{a.leader_is_me ? t("ls.auc.new_max") : t("ls.auc.your_max")}</Text>
       <TextInput style={ui.input} keyboardType="decimal-pad" value={amount} onChangeText={setAmount} placeholder={t("ls.auc.min", { price: formatPrice(nextMinimumBid(a)) })} accessibilityLabel={a.leader_is_me ? t("ls.auc.new_max") : t("ls.auc.your_max")} />
+      {quickBids(a).length > 0 && <View style={{ flexDirection: "row", gap: 8 }}>
+        {quickBids(a).map(v => { const on = parsePrice(amount) === v; return <Pressable key={v} accessibilityRole="button" accessibilityState={{ selected: on }} onPress={() => setAmount(String(v))}
+          style={{ flex: 1, minHeight: 46, borderRadius: 999, borderWidth: 2, borderColor: C.blue, backgroundColor: on ? C.blue : C.white, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 }}>
+          <Text numberOfLines={1} adjustsFontSizeToFit style={{ color: on ? C.onAccent : C.blue, fontWeight: "800", fontSize: 15 }}>{formatPrice(v)}</Text></Pressable>; })}
+      </View>}
       <Button title={a.leader_is_me ? t("ls.auc.raise") : t("ls.auc.bid")} disabled={busy} onPress={() => { if (!uid) { router.push("/login" as any); return; } void placeMax(); }} />
     </>}
     {a.status !== "scheduled" && <BidHistory auction={a} mine={mine} uid={uid} version={a.current_price + ":" + a.bid_count} onChanged={m => { setOk(m); void load(); }} />}
