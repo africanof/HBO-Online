@@ -2,6 +2,13 @@ import type { Dictionary } from "./i18n";
 
 /** Textos das novidades 0.5.3 (Site e APP): mapa, respostas rápidas, ponto de encontro, apresentação, desbloqueio, painel da APP. */
 export const EXTRAS_DICT: Dictionary = {
+  "social.or": { pt: "ou", en: "or", zh: "或", fr: "ou" },
+  "social.continue": { pt: "Continuar com {name}", en: "Continue with {name}", zh: "使用 {name} 继续", fr: "Continuer avec {name}" },
+  "social.wait": { pt: "A abrir {name}…", en: "Opening {name}…", zh: "正在打开 {name}…", fr: "Ouverture de {name}…" },
+  "social.note": { pt: "Recebemos só o seu nome, email e fotografia. Nunca publicamos nada na sua conta.", en: "We only receive your name, email and photo. We never post anything to your account.", zh: "我们只获取您的姓名、邮箱和照片，绝不会在您的账户上发布任何内容。", fr: "Nous recevons seulement votre nom, e-mail et photo. Nous ne publions jamais rien sur votre compte." },
+  "social.cancelled": { pt: "A entrada foi cancelada. Tente outra vez.", en: "Sign-in was cancelled. Please try again.", zh: "登录已取消，请重试。", fr: "La connexion a été annulée. Réessayez." },
+  "social.finishing": { pt: "A entrar…", en: "Signing in…", zh: "正在登录…", fr: "Connexion…" },
+  "social.failed": { pt: "Não foi possível entrar: {error}", en: "Couldn't sign in: {error}", zh: "无法登录：{error}", fr: "Connexion impossible : {error}" },
   "pay.ask": { pt: "💳 Pedir pagamento", en: "💳 Request payment", zh: "💳 请求付款", fr: "💳 Demander le paiement" },
   "pay.ask_title": { pt: "Pedir pagamento protegido", en: "Request protected payment", zh: "请求保障支付", fr: "Demander un paiement protégé" },
   "pay.ask_hint": { pt: "Escreva o preço combinado (até {price}). Quem compra recebe um cartão para pagar com pagamento protegido; vale 48 horas e só é para esta pessoa.", en: "Enter the agreed price (up to {price}). The buyer gets a card to pay with protected payment; it lasts 48 hours and is only for this person.", zh: "输入商定的价格（最高 {price}）。买家会收到一张用保障支付付款的卡片，有效期48小时，仅限此人使用。", fr: "Saisissez le prix convenu (jusqu'à {price}). L'acheteur reçoit une carte pour payer avec le paiement protégé ; valable 48 heures et uniquement pour cette personne." },

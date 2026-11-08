@@ -5,6 +5,7 @@ import { authErrorMessage, validateNewPassword, validateProfileInput, isReferral
 import { browserStore } from "../../../components/Engage";
 import { supabase, supabaseConfigured } from "../../../lib/supabase";
 import { useT } from "../../../lib/i18n";
+import { SocialLogin } from "../../../components/SocialLogin";
 
 export default function CriarContaPage() {
   const { t } = useT();
@@ -33,6 +34,7 @@ export default function CriarContaPage() {
 
   return <main style={{ maxWidth: 480 }}>
     <a href="/">← Huambo Online</a><h1>{t("auth.signup")}</h1><p>{t("signup.intro")}</p>
+    <SocialLogin back="/conta" />
     <form onSubmit={submit} className="stack" noValidate>
       <label>{t("auth.full_name")}<input autoComplete="name" value={form.fullName} onChange={set("fullName")} /></label>
       <label>{t("auth.email")}<input type="email" autoComplete="email" value={form.email} onChange={set("email")} /></label>

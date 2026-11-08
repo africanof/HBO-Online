@@ -528,3 +528,16 @@ main.chat-page { padding-top: 12px; padding-bottom: 16px; }
 /* Contagem do leilão ao segundo */
 .countdown { font-variant-numeric: tabular-nums; }
 .countdown.urgent { color: var(--danger); }
+
+/* Entrar com Google, Facebook ou Apple */
+.social-login { gap: 10px; margin-bottom: 8px; }
+.social-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 50px; border-radius: 999px; font-weight: 700; font-size: 16px; }
+.social-btn.google { background: #fff; color: #1f1f1f; border: 1px solid #747775; }
+.social-btn.google:hover { background: #f2f2f2; color: #1f1f1f; }
+.social-btn.facebook { background: #1877f2; color: #fff; border: 0; }
+.social-btn.facebook:hover { background: #166fe5; color: #fff; }
+.social-btn.apple { background: #000; color: #fff; border: 0; }
+.social-btn.apple:hover { background: #222; color: #fff; }
+.social-ic { width: 22px; display: inline-flex; align-items: center; justify-content: center; }
+.social-or { display: flex; align-items: center; gap: 12px; color: var(--muted); margin-top: 6px; }
+.social-or::before, .social-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }

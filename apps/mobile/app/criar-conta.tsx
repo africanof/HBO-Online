@@ -8,6 +8,7 @@ import { supabase, supabaseConfigured, siteUrl } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
 import { useT } from "../lib/i18n";
+import { SocialLogin } from "../components/SocialLogin";
 
 export default function CriarConta() {
   const [f, setF] = useState({ fullName: "", email: "", phone: "", municipality: "", password: "", confirm: "" });
@@ -37,6 +38,7 @@ export default function CriarConta() {
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/" style={ui.link}>← Huambo Online</Link>
     <Text style={ui.h1}>{t("auth.signup")}</Text>
+    <SocialLogin onDone={() => router.replace("/conta" as any)} />
     <Text style={ui.label}>{t("auth.full_name")}</Text><TextInput accessibilityLabel={t("auth.full_name")} autoComplete="name" value={f.fullName} onChangeText={set("fullName")} style={ui.input} />
     <Text style={ui.label}>{t("auth.email")}</Text><TextInput accessibilityLabel={t("auth.email")} autoCapitalize="none" autoComplete="email" keyboardType="email-address" value={f.email} onChangeText={set("email")} style={ui.input} />
     <Text style={ui.label}>{t("signup.phone_opt")}</Text><TextInput accessibilityLabel={t("signup.phone_opt")} keyboardType="phone-pad" value={f.phone} onChangeText={set("phone")} placeholder="923 000 000" style={ui.input} />

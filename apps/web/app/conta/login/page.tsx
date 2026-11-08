@@ -5,6 +5,7 @@ import { requestPasswordReset, authErrorMessage, mfaRequired, signOutCurrentUser
 import { supabase } from "../../../lib/supabase";
 import { MfaPrompt } from "../../../components/Mfa";
 import { useT } from "../../../lib/i18n";
+import { SocialLogin } from "../../../components/SocialLogin";
 
 function goBack() {
   const back = new URLSearchParams(window.location.search).get("voltar");
@@ -44,6 +45,7 @@ export default function LoginPage() {
   return <main style={{ maxWidth: 480 }}>
     <a href="/">← Huambo Online</a>
     <h1>{forgot ? t("login.recover_title") : t("auth.login")}</h1>
+    {!forgot && <SocialLogin back={typeof window === "undefined" ? "/" : new URLSearchParams(window.location.search).get("voltar") ?? "/"} />}
     <form onSubmit={submit} className="stack">
       <label>{t("auth.email")}<input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></label>
       {!forgot && <label>{t("auth.password")}<input required type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} /></label>}

@@ -8,6 +8,7 @@ import { ui } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
 import { MfaPrompt } from "../components/Mfa";
 import { useT } from "../lib/i18n";
+import { SocialLogin } from "../components/SocialLogin";
 
 export default function Login() {
   const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
@@ -48,6 +49,7 @@ export default function Login() {
   return <ScrollView contentContainerStyle={ui.screen} keyboardShouldPersistTaps="handled">
     <Link href="/" style={ui.link}>← Huambo Online</Link>
     <Text style={ui.h1}>{forgot ? t("login.recover_title") : t("auth.login")}</Text>
+    {!forgot && <SocialLogin onDone={() => router.replace("/")} onNeedCode={() => setNeedCode(true)} />}
     <Text style={ui.label}>{t("auth.email")}</Text>
     <TextInput autoCapitalize="none" autoComplete="email" keyboardType="email-address" value={email} onChangeText={setEmail} accessibilityLabel={t("auth.email")} style={ui.input} />
     {!forgot && <><Text style={ui.label}>{t("auth.password")}</Text><TextInput secureTextEntry autoComplete="password" value={password} onChangeText={setPassword} accessibilityLabel={t("auth.password")} style={ui.input} /></>}
