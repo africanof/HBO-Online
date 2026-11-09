@@ -4,18 +4,20 @@ import { searchClassifiedListings } from "./classified-search";
 /** Extras da APP 0.5.3: mapa, respostas rápidas, «Baixou de preço», erros e uso (para a equipa). */
 
 // Mapa
-export type MapKind = "listing" | "business" | "provider" | "fuel" | "event";
+export type MapKind = "listing" | "business" | "provider" | "fuel" | "event" | "pickup";
 export type MapPoint = { kind: MapKind; id: string; title: string; subtitle: string | null; lat: number; lng: number };
 export const MAP_KINDS: { value: MapKind; label: string; icon: string; color: string }[] = [
   { value: "listing", label: "Anúncios", icon: "🏷️", color: "#e65100" },
   { value: "business", label: "Empresas", icon: "🏪", color: "#1565c0" },
   { value: "provider", label: "Profissionais", icon: "🧰", color: "#2e7d32" },
   { value: "fuel", label: "Combustível e gás", icon: "⛽", color: "#6a1b9a" },
-  { value: "event", label: "Eventos", icon: "🎟️", color: "#c62828" }
+  { value: "event", label: "Eventos", icon: "🎟️", color: "#c62828" },
+  { value: "pickup", label: "Pontos de recolha", icon: "📦", color: "#00897b" }
 ];
 /** Centro do mapa: cidade do Huambo. */
 export const MAP_CENTER = { lat: -12.7765, lng: 15.7398, zoom: 13 };
 export function mapHref(p: Pick<MapPoint, "kind" | "id">): string {
+  if (p.kind === "pickup") return "";
   return { listing: "/classificados/", business: "/empresas/", provider: "/profissionais/", fuel: "/combustivel/", event: "/eventos/" }[p.kind] + p.id;
 }
 export async function listMapPoints(client: SupabaseClient, kind?: MapKind | "") {
@@ -39,7 +41,7 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribu
 function esc(s){return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function go(h){if(window.ReactNativeWebView){window.ReactNativeWebView.postMessage(h);return false}return true}
 P.forEach(function(p){var i=L.divIcon({className:'',html:'<div class="pin" style="background:'+C[p.k]+'">'+I[p.k]+'</div>',iconSize:[30,30],iconAnchor:[15,15]});
-L.marker([p.a,p.o],{icon:i}).addTo(m).bindPopup('<div class="pop"><b>'+esc(p.t)+'</b>'+(p.s?'<span>'+esc(p.s)+'</span><br>':'')+'<a href="'+p.h+'" target="_top" onclick="return go(\\''+p.h+'\\')">Ver →</a></div>')});
+L.marker([p.a,p.o],{icon:i}).addTo(m).bindPopup('<div class="pop"><b>'+esc(p.t)+'</b>'+(p.s?'<span>'+esc(p.s)+'</span><br>':'')+(p.h?'<a href="'+p.h+'" target="_top" onclick="return go(\\''+p.h+'\\')">Ver →</a>':'')+'</div>')});
 ${me ? `L.circleMarker([${me.lat},${me.lng}],{radius:8,color:'#fff',weight:3,fillColor:'#1e88e5',fillOpacity:1}).addTo(m);` : ""}
 </script></body></html>`;
 }

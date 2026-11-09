@@ -541,3 +541,30 @@ main.chat-page { padding-top: 12px; padding-bottom: 16px; }
 .social-ic { width: 22px; display: inline-flex; align-items: center; justify-content: center; }
 .social-or { display: flex; align-items: center; gap: 12px; color: var(--muted); margin-top: 6px; }
 .social-or::before, .social-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* Propostas: valores rápidos como na Vinted */
+.offer-quick { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.offer-chip { display: grid; gap: 2px; text-align: left; background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-height: 72px; align-content: start; }
+.offer-chip small { color: var(--accent); font-weight: 600; }
+.offer-chip:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--fg); }
+.offer-chip.on { border: 2px solid var(--accent); background: var(--accent-soft); }
+
+/* Compra: opções de entrega, pontos de recolha e resumo */
+.co-opt, .co-point { display: flex; gap: 12px; align-items: flex-start; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; cursor: pointer; background: var(--card); }
+.co-opt.on, .co-point.on { border: 2px solid var(--accent); background: var(--accent-soft); }
+.co-opt input, .co-point input { margin-top: 4px; width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+.co-opt span, .co-point span { display: grid; gap: 2px; }
+.co-opt small, .co-point small { color: var(--muted); }
+.co-map { width: 100%; height: 280px; border: 1px solid var(--line); border-radius: 14px; }
+.co-sum { display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 10px; }
+.co-sum > div { display: flex; justify-content: space-between; gap: 12px; }
+.co-sum .co-total { font-weight: 800; font-size: 18px; border-top: 1px dashed var(--line); padding-top: 6px; }
+
+/* Administração: preços de entrega */
+.adm-fees { display: grid; gap: 6px; overflow-x: auto; }
+.adm-fee { display: grid; grid-template-columns: minmax(110px, 1.4fr) 1fr 1fr 1.4fr 60px auto; gap: 8px; align-items: center; min-width: 640px; }
+.adm-fee.head { font-weight: 700; color: var(--muted); font-size: 14px; }
+.adm-fee input[type=checkbox] { width: 22px; height: 22px; }
+.offer-chip { padding: 10px; min-width: 0; }
+.offer-chip strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(14px, 3.8vw, 17px); }
+.offer-chip small { font-size: 13px; }

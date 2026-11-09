@@ -4,14 +4,14 @@ import { isInAngola, type GeoPoint } from "./places";
 /** Marketplace: produtos, carrinho e encomendas — mesma lógica no Site e na APP. */
 
 export type ProductInput = { name: string; description?: string; price: number; stock: number; categoryId?: string; municipalityId?: string; businessId?: string; marketId?: string; videoUrl?: string; media?: string[]; active?: boolean; /** Declaração de conformidade (obrigatória para pôr à venda). */ conformity?: boolean };
-export type Fulfillment = "delivery" | "pickup";
+export type Fulfillment = "delivery" | "pickup" | "point";
 export type PaymentMethod = "cash_on_delivery" | "bank_transfer" | "mobile_money" | "reference";
 export type OrderStatus = "pending" | "confirmed" | "processing" | "ready" | "completed" | "cancelled";
 
 export const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   cash_on_delivery: "Pagar na entrega", bank_transfer: "Transferência bancária", mobile_money: "Multicaixa Express", reference: "Pagamento por referência"
 };
-export const FULFILLMENT_LABELS: Record<Fulfillment, string> = { delivery: "Entrega", pickup: "Levantar no vendedor" };
+export const FULFILLMENT_LABELS: Record<Fulfillment, string> = { delivery: "Entrega", pickup: "Levantar no vendedor", point: "Ponto de recolha" };
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   pending: "Pendente", confirmed: "Confirmada", processing: "Em preparação", ready: "Pronta", completed: "Concluída", cancelled: "Cancelada"
 };

@@ -181,9 +181,9 @@ export default function ClassifiedDetail() {
         {item.description && <section className="card"><h2 style={{ margin: 0 }}>{t("ls.description")}</h2><p style={{ whiteSpace: "pre-wrap", margin: 0 }}>{tr?.description ?? item.description}</p></section>}
         <PlaceView directions={item.directions} lat={item.geo_lat} lng={item.geo_lng} approximate />
         <ListingGuarantee listingId={id} uid={uid} mine={mine} wanted={item.purpose === "wanted"} />
-        {mine && item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} />}
+        {mine && item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} price={item.price} />}
         {!mine && <>
-          {(can.offerMoney || can.offerTrade) && <OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} />}
+          {(can.offerMoney || can.offerTrade) && <OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} price={item.price} currency={item.currency} />}
           <section className="card" id="contactar">
             <h2 style={{ margin: 0 }}>{item.purpose === "wanted" ? t("ls.reply_buyer") : t("ls.contact_advertiser")}</h2>
             <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder={t("ls.ph_contact")} rows={4} />

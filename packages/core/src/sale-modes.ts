@@ -76,16 +76,32 @@ export function validateOffer(input: { amount?: number; tradeItem?: string }, op
   return null;
 }
 
-export type OfferStatus = "pending" | "accepted" | "declined" | "withdrawn";
-export const OFFER_STATUS_LABELS: Record<OfferStatus, string> = { pending: "À espera de resposta", accepted: "Aceite ✔", declined: "Recusada", withdrawn: "Retirada" };
-export type ListingOffer = { id: string; buyer_id: string; buyer_name: string; amount: number | null; trade_item: string | null; message: string | null; status: OfferStatus; seller_note: string | null; created_at: string };
-export type MyOffer = { id: string; listing_id: string; listing_title: string; listing_status: string; amount: number | null; trade_item: string | null; message: string | null; status: OfferStatus; seller_note: string | null; created_at: string };
+export type OfferStatus = "pending" | "accepted" | "declined" | "withdrawn" | "countered";
+export const OFFER_STATUS_LABELS: Record<OfferStatus, string> = { pending: "À espera de resposta", accepted: "Aceite ✔", declined: "Recusada", withdrawn: "Retirada", countered: "Contraproposta recebida" };
+export type ListingOffer = { id: string; buyer_id: string; buyer_name: string; amount: number | null; trade_item: string | null; message: string | null; status: OfferStatus; seller_note: string | null; created_at: string; counter_amount?: number | null };
+export type MyOffer = { id: string; listing_id: string; listing_title: string; listing_status: string; amount: number | null; trade_item: string | null; message: string | null; status: OfferStatus; seller_note: string | null; created_at: string; counter_amount?: number | null; listing_price?: number | null; currency?: string };
 
 export function makeOffer(client: SupabaseClient, listingId: string, input: { amount?: number; tradeItem?: string; message?: string }) {
   return client.rpc("make_offer", { p_listing_id: listingId, p_amount: input.amount ?? null, p_trade_item: input.tradeItem?.trim() || null, p_message: input.message?.trim() || null });
 }
 export function respondOffer(client: SupabaseClient, offerId: string, accept: boolean, note?: string) {
   return client.rpc("respond_offer", { p_offer_id: offerId, p_accept: accept, p_note: note?.trim() || null });
+}
+/** Quem vende responde com outro valor (maior que a proposta, até ao preço do anúncio). */
+export function counterOffer(client: SupabaseClient, offerId: string, amount: number, note?: string) {
+  return client.rpc("counter_offer", { p_offer_id: offerId, p_amount: amount, p_note: note?.trim() || null });
+}
+/** Quem compra aceita a contraproposta (fica uma compra protegida com esse valor). */
+export function acceptCounterOffer(client: SupabaseClient, offerId: string) { return client.rpc("accept_counter_offer", { p_offer_id: offerId }); }
+/** Propostas que ainda pode fazer hoje (máximo 20 por dia). */
+export async function offersLeftToday(client: SupabaseClient): Promise<number | null> {
+  const r = await client.rpc("offers_left_today"); return typeof r.data === "number" ? r.data : null;
+}
+/** Botões rápidos como na Vinted: 5% e 10% de desconto, arredondados para baixo a 100 Kz. */
+export function offerQuickAmounts(price: number | null | undefined): { pct: number; amount: number }[] {
+  const p = Number(price);
+  if (!(p > 0)) return [];
+  return [5, 10].map(pct => ({ pct, amount: Math.floor(p * (1 - pct / 100) / 100) * 100 })).filter(x => x.amount > 0 && x.amount < p);
 }
 export function withdrawOffer(client: SupabaseClient, offerId: string) { return client.rpc("withdraw_offer", { p_offer_id: offerId }); }
 export async function listOffersFor(client: SupabaseClient, listingId: string) {

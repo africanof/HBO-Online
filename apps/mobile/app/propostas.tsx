@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Link, useFocusEffect, useRouter } from "expo-router";
 import { Alert, ScrollView, Text, View } from "react-native";
-import { listMyOffers, withdrawOffer, offerLabel, friendlyErrorIn, OFFER_STATUS_LABELS, type MyOffer } from "@huambo-online/core";
+import { listMyOffers, withdrawOffer, acceptCounterOffer, formatPrice, offerLabel, friendlyErrorIn, OFFER_STATUS_LABELS, type MyOffer } from "@huambo-online/core";
 import { currentUserId, supabase } from "../lib/supabase";
 import { ui } from "../lib/ui";
 import { Button, Message } from "../components/Ui";
@@ -19,6 +19,10 @@ export default function Propostas() {
       if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(t("ls.offers.withdrawn")); await load(); }
     } }]);
   }
+  async function acceptCounter(o: MyOffer) {
+    setError(""); const r = await acceptCounterOffer(supabase(), o.id);
+    if (r.error) setError(friendlyErrorIn(r.error, lang)); else { setNotice(t("off.accepted_go_pay")); router.push(("/classificados/" + o.listing_id) as any); }
+  }
   if (uid === undefined) return <ScrollView contentContainerStyle={ui.screen}><Text style={ui.text}>{t("common.loading")}</Text></ScrollView>;
   if (!uid) return <ScrollView contentContainerStyle={ui.screen}><Text style={ui.h1}>{t("ls.offers.title")}</Text><Button title={t("auth.login")} onPress={() => router.push("/login")} /></ScrollView>;
   return <ScrollView contentContainerStyle={ui.screen}>
@@ -34,6 +38,12 @@ export default function Propostas() {
       <Text style={ui.label}>{tc(OFFER_STATUS_LABELS[o.status])}</Text>
       {!!o.seller_note && <Text style={ui.text}>{t("ls.offers.seller_reply", { note: o.seller_note })}</Text>}
       <Text style={ui.muted}>{formatDateTimeIn(o.created_at, lang)}</Text>
+      {o.status === "countered" && o.counter_amount != null && <View style={[ui.card, { gap: 8 }]}>
+        <Text style={ui.label}>{t("off.counter_from_seller", { amount: formatPrice(o.counter_amount, o.currency ?? "AOA") })}</Text>
+        <Button title={t("off.accept_counter", { amount: formatPrice(o.counter_amount, o.currency ?? "AOA") })} onPress={() => void acceptCounter(o)} />
+        <Button title={t("off.decline_counter")} variant="secondary" onPress={() => withdraw(o.id)} />
+      </View>}
+      {o.status === "accepted" && o.listing_status === "published" && <Button title={t("pay.pay_now")} onPress={() => router.push(("/classificados/" + o.listing_id) as any)} />}
       {o.status === "pending" && <Button title={t("ls.offers.withdraw")} variant="secondary" onPress={() => withdraw(o.id)} />}
     </View>)}
   </ScrollView>;

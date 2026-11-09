@@ -188,9 +188,9 @@ export default function ClassifiedDetail() {
     {item.purpose !== "wanted" && <DeliveryPolicyBox sellerId={item.owner_id} />}
     <PlaceView directions={item.directions} lat={item.geo_lat} lng={item.geo_lng} approximate />
     <ListingGuarantee listingId={id} uid={uid} mine={mine} wanted={item.purpose === "wanted"} />
-    {mine && item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} />}
+    {mine && item.purpose !== "wanted" && item.purpose !== "auction" && <OffersList listingId={id} price={item.price} />}
     {!mine && <>
-      {(can.offerMoney || can.offerTrade) && <View onLayout={mark("offer")}><OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} /></View>}
+      {(can.offerMoney || can.offerTrade) && <View onLayout={mark("offer")}><OfferBox listingId={id} uid={uid} offerMoney={can.offerMoney} offerTrade={can.offerTrade} tradeOnly={item.sale_mode === "trade"} tradeWants={item.trade_wants} price={item.price} currency={item.currency} /></View>}
       <View style={ui.card} onLayout={mark("contact")}>
         <Text style={ui.h2}>{item.purpose === "wanted" ? t("ls.detail.reply_buyer") : t("ls.detail.contact")}</Text>
         <TextInput value={message} onChangeText={setMessage} placeholder={t("ls.detail.msg_ph")} multiline style={[ui.input, ui.area]} />

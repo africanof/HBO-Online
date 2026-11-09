@@ -69,7 +69,7 @@ function Encomendas() {
         <strong>{o.ref_no ? formatRef("order", o.ref_no) + " · " : ""}{formatPrice(o.total, o.currency)} · <span className="badge">{o.protected && o.status === "completed" && o.escrow_status === "held" ? t("sh.ord.delivered") : tc(ORDER_STATUS_LABELS[o.status as OrderStatus] ?? o.status)}</span>{o.payment_status === "paid" ? " · ✅ " + t("sh.ord.paid") : o.payment_status === "refunded" ? " · ↩️ " + t("sh.ord.refunded") : ""}</strong>
         <span>{role === "seller" ? t("sh.customer") : t("sh.seller")}: {o.other_name} · {new Date(o.created_at).toLocaleString(LANG_TAGS[lang])}</span>
         <OrderAmounts order={o} />
-        <span>{o.fulfillment_type === "pickup" ? "🏪 " : "🚚 "}{tc(FULFILLMENT_LABELS[o.fulfillment_type as Fulfillment])} · {o.protected ? "🛡️ " + t("sh.protected") : tc(PAYMENT_LABELS[o.payment_method as PaymentMethod] ?? o.payment_method)}</span>
+        <span>{o.fulfillment_type === "pickup" ? "🏪 " : o.fulfillment_type === "point" ? "📦 " : "🚚 "}{tc(FULFILLMENT_LABELS[o.fulfillment_type as Fulfillment])} · {o.protected ? "🛡️ " + t("sh.protected") : tc(PAYMENT_LABELS[o.payment_method as PaymentMethod] ?? o.payment_method)}</span>
         <OrderEscrowPanel order={o} role={role} uid={uid} settings={settings} provider={provider} hasActiveDispute={!!lastDispute[o.id] && isActiveDispute(lastDispute[o.id].status)}
           onChanged={(m, bad) => { if (bad) { setError(m); setNotice(""); } else { setError(""); setNotice(m); void load(); } }} />
         {o.status !== "cancelled" || role === "buyer" ? <OrderTrackingPanel orderId={o.id} role={role} defaultOpen={role === "buyer" && openId === o.id} /> : null}

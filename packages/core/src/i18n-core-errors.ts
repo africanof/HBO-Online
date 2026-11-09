@@ -372,4 +372,7 @@ export const CORE_ERROR_ROWS: CoreRow[] = [
   ["Esta conversa não é sobre um anúncio.", "This conversation isn't about a listing.", "此对话与信息无关。", "Cette conversation ne concerne pas une annonce."],
   ["O valor não pode ser maior que o preço do anúncio.", "The amount can't be higher than the listing price.", "金额不能高于信息价格。", "Le montant ne peut pas dépasser le prix de l'annonce."],
   ["Não foi possível encontrar quem compra nesta conversa.", "We couldn't find the buyer in this conversation.", "无法在此对话中找到买家。", "Impossible de trouver l'acheteur dans cette conversation."],
+  ["A contraproposta tem de ser maior que a proposta recebida.", "The counter-offer must be higher than the offer received.", "还价必须高于收到的出价。", "La contre-offre doit être supérieure à l'offre reçue."],
+  ["Escolha o ponto de recolha.", "Choose the pickup point.", "请选择自提点。", "Choisissez le point de retrait."],
+  ["Ainda não fazemos entregas para esse município. Escolha outra opção.", "We don't deliver to that municipality yet. Choose another option.", "我们暂时不向该市送货，请选择其他方式。", "Nous ne livrons pas encore dans cette commune. Choisissez une autre option."],
 ];

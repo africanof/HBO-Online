@@ -49,6 +49,9 @@ export const CORE_LABEL_ROWS: CoreRow[] = [
 
   // --- Alugueres (rentals.ts) ---
   ["À espera de resposta", "Awaiting reply", "等待回复", "En attente de réponse"],
+  ["Ponto de recolha", "Pickup point", "自提点", "Point de retrait"],
+  ["Pontos de recolha", "Pickup points", "自提点", "Points de retrait"],
+  ["Contraproposta recebida", "Counter-offer received", "收到还价", "Contre-offre reçue"],
   ["Aceite", "Accepted", "已接受", "Acceptée"],
   ["Recusado", "Declined", "已拒绝", "Refusée"],
   ["Expirado", "Expired", "已过期", "Expirée"],

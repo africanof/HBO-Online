@@ -4,6 +4,7 @@ import { listingCheckoutKind, listingReserved, myListingOrder, buyListingProtect
   type MyListingOrder } from "@huambo-online/core";
 import { supabase } from "../lib/supabase";
 import { useT } from "../lib/i18n";
+import { CheckoutForm } from "./Checkout";
 
 /**
  * Compra de um anúncio com pagamento protegido (obrigatório): comprar, arrendar ou alugar cria uma encomenda
@@ -52,22 +53,5 @@ export function ProtectedBuyBox({ item, uid, isJob, startOpen, onCancel }: { ite
     <small className="muted">{t("pp.how")}{kind === "rent" ? " " + t("pp.rent_first") : ""}</small>
   </div>;
 
-  return <form className="card stack" style={{ gap: 10 }} onSubmit={e => { e.preventDefault(); void submit(); }}>
-    <strong>{label} · {formatPrice(item.price, item.currency)}</strong>
-    <small className="muted">{t("pp.how")}{kind === "rent" ? " " + t("pp.rent_first") : ""}</small>
-    <fieldset className="stack" style={{ gap: 4, border: 0, padding: 0, margin: 0 }}>
-      <legend style={{ fontWeight: 700 }}>{t("pp.handover")}</legend>
-      <label className="check"><input type="radio" name="pp-f" checked={fulfillment === "pickup"} onChange={() => setFulfillment("pickup")} /> {t("pp.in_person")}</label>
-      <label className="check"><input type="radio" name="pp-f" checked={fulfillment === "delivery"} onChange={() => setFulfillment("delivery")} /> {t("pp.delivery")}</label>
-    </fieldset>
-    <label>{t("pp.phone")}<input type="tel" value={phone} onChange={e => setPhone(e.target.value)} autoComplete="tel" required /></label>
-    {fulfillment === "delivery" && <label>{t("pp.address")}<input value={address} onChange={e => setAddress(e.target.value)} required /></label>}
-    <label>{t("pp.note")}<input value={note} onChange={e => setNote(e.target.value)} maxLength={500} /></label>
-    {error && <p className="error" role="alert">{error}</p>}
-    <div className="row">
-      <button type="submit" disabled={busy}>{busy ? t("common.loading") : t("pp.continue")}</button>
-      <button type="button" className="secondary" onClick={() => { setOpen(false); onCancel?.(); }}>{t("common.cancel")}</button>
-    </div>
-    <small className="muted">🛡️ {t("pp.never_outside")}</small>
-  </form>;
+  return <CheckoutForm item={item} uid={uid!} label={label} onCancel={() => { setOpen(false); onCancel?.(); }} />;
 }

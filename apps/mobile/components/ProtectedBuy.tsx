@@ -8,6 +8,7 @@ import { supabase } from "../lib/supabase";
 import { ui, C } from "../lib/ui";
 import { Button, Message } from "./Ui";
 import { useT } from "../lib/i18n";
+import { CheckoutForm } from "./Checkout";
 
 /** Compra de um anúncio com pagamento protegido (obrigatório) — igual ao Site. */
 export function ProtectedBuyBox({ item, uid, isJob, startOpen, onCancel }: { item: any; uid: string | null; isJob: boolean; startOpen?: boolean; onCancel?: () => void }) {
@@ -55,21 +56,5 @@ export function ProtectedBuyBox({ item, uid, isJob, startOpen, onCancel }: { ite
     <Text style={ui.muted}>{how}</Text>
   </View>;
 
-  const choice = (v: "pickup" | "delivery", text: string) => <Pressable accessibilityRole="radio" accessibilityState={{ checked: fulfillment === v }}
-    onPress={() => setFulfillment(v)} style={fulfillment === v ? ui.chipOn : ui.chip}><Text style={fulfillment === v ? ui.chipTextOn : ui.chipText}>{text}</Text></Pressable>;
-  return <View style={ui.card}>
-    <Text style={ui.label}>{label}</Text>
-    <Text style={ui.muted}>{how}</Text>
-    <Text style={ui.label}>{t("pp.handover")}</Text>
-    <View style={ui.row}>{choice("pickup", t("pp.in_person"))}{choice("delivery", t("pp.delivery"))}</View>
-    <Text style={ui.label}>{t("pp.phone")}</Text>
-    <TextInput value={phone} onChangeText={setPhone} keyboardType="phone-pad" autoComplete="tel" style={ui.input} />
-    {fulfillment === "delivery" && <><Text style={ui.label}>{t("pp.address")}</Text><TextInput value={address} onChangeText={setAddress} style={ui.input} /></>}
-    <Text style={ui.label}>{t("pp.note")}</Text>
-    <TextInput value={note} onChangeText={setNote} maxLength={500} style={ui.input} />
-    <Message error={error} />
-    <Button title={busy ? t("common.loading") : t("pp.continue")} disabled={busy} onPress={() => void submit()} />
-    <Button title={t("common.cancel")} variant="secondary" onPress={() => { setOpen(false); onCancel?.(); }} />
-    <Text style={ui.muted}>🛡️ {t("pp.never_outside")}</Text>
-  </View>;
+  return <CheckoutForm item={item} label={label} onCancel={() => { setOpen(false); onCancel?.(); }} />;
 }

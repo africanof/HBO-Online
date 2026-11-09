@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { quickBids, timeLeftLive } from "./listing-auctions";
+import { offerQuickAmounts } from "./sale-modes";
 import { chatPaymentState, screenKey, createScreenCounter, scrubErrorText, mapHtml, mapHref, shouldAskForReview, meetingPointMessage, parseMeetingPoint } from "./app-extras";
 import { getNotificationLink } from "./notifications";
 
@@ -84,5 +85,13 @@ describe("contagem ao segundo", () => {
     expect(timeLeftLive(new Date(now + (2 * 86400 + 4 * 3600 + 7) * 1000).toISOString(), now).text).toBe("2 d 4 h 00 min 07 s");
     expect(timeLeftLive(new Date(now + 9_000).toISOString(), now).text).toBe("9 s");
     expect(timeLeftLive(new Date(now - 1).toISOString(), now).ended).toBe(true);
+  });
+});
+
+describe("propostas como na Vinted", () => {
+  it("5% e 10% de desconto arredondados a 100 Kz", () => {
+    expect(offerQuickAmounts(60000)).toEqual([{ pct: 5, amount: 57000 }, { pct: 10, amount: 54000 }]);
+    expect(offerQuickAmounts(185000)).toEqual([{ pct: 5, amount: 175700 }, { pct: 10, amount: 166500 }]);
+    expect(offerQuickAmounts(0)).toEqual([]);
   });
 });
