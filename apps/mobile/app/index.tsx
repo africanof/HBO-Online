@@ -87,11 +87,12 @@ export default function Home() {
       <Pressable accessibilityRole="button" onPress={() => router.push("/classificados/publicar" as any)} style={st.heroBtn}><Text style={st.heroBtnText}>{t("home.sell_now")}</Text></Pressable>
     </View>
 
-    {/* Todas as categorias à vista (grelha de 4 colunas), por ordem alfabética na língua escolhida. */}
+    {/* Todas as categorias à vista (grelha de 4 colunas), pela mesma ordem e com o mesmo título do site. */}
+    <Text style={st.catTitle}>{t("home.explore_cats")}</Text>
     <View style={st.catGrid}>
-      {HOME_CATEGORIES.map(c => ({ ...c, name: categoryLabelIn(c.label, lang) })).sort((a, b) => a.name.localeCompare(b.name, lang)).map(c => <Link key={c.href} href={c.href as any} asChild>
+      {HOME_CATEGORIES.map(c => ({ ...c, name: categoryLabelIn(c.label, lang) })).map(c => <Link key={c.href} href={c.href as any} asChild>
         <Pressable accessibilityRole="link" accessibilityLabel={c.name} style={st.cat}>
-          <View style={st.catCircle}><Text style={{ fontSize: 28 }}>{c.icon}</Text></View>
+          <View style={st.catCircle}><Text style={{ fontSize: 32 }}>{c.icon}</Text></View>
           <Text style={st.catLabel} numberOfLines={2}>{c.name}</Text>
         </Pressable>
       </Link>)}
@@ -172,10 +173,11 @@ const st = themed(C => StyleSheet.create({
   heroText: { color: "#FFFFFF", fontSize: 16 },
   heroBtn: { alignSelf: "flex-start", maxWidth: "100%", backgroundColor: "#FFFFFF", borderRadius: 999, paddingHorizontal: 20, minHeight: 46, justifyContent: "center", marginTop: 6 },
   heroBtnText: { color: "#191919", fontWeight: "800", fontSize: 16, textAlign: "center" },
+  catTitle: { fontSize: 21, fontWeight: "800", color: C.ink },
   catGrid: { flexDirection: "row", flexWrap: "wrap", rowGap: 14 },
-  cat: { alignItems: "center", gap: 6, width: "25%", paddingHorizontal: 2 },
-  catCircle: { width: 62, height: 62, borderRadius: 31, backgroundColor: C.surface, alignItems: "center", justifyContent: "center" },
-  catLabel: { fontSize: 12, fontWeight: "700", color: C.ink, textAlign: "center" },
+  cat: { alignItems: "center", gap: 8, width: "25%", paddingHorizontal: 2 },
+  catCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: C.surface, alignItems: "center", justifyContent: "center" },
+  catLabel: { fontSize: 13, fontWeight: "700", color: C.ink, textAlign: "center" },
   banner: { borderRadius: 20, padding: 18, gap: 10 },
   marketImg: { width: "100%", aspectRatio: 1, borderRadius: 16, backgroundColor: C.surface, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   rowLink: { flexDirection: "row", alignItems: "center", minHeight: 52, borderBottomWidth: 1, borderBottomColor: C.line }

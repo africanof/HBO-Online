@@ -89,6 +89,7 @@ export const APP_DICT: Dictionary = {
 
   // Página inicial
   "home.welcome": { pt: "Entre para comprar, vender e guardar favoritos.", en: "Sign in to buy, sell and save favourites.", zh: "登录后即可买卖商品并收藏喜欢的内容。", fr: "Connectez-vous pour acheter, vendre et enregistrer des favoris." },
+  "home.explore_cats": { pt: "Explore as categorias", en: "Explore the categories", zh: "浏览分类", fr: "Explorer les catégories" },
   "home.hero_title": { pt: "Compre, venda e encontre tudo no Huambo.", en: "Buy, sell and find everything in Huambo.", zh: "在万博买卖、寻找一切。", fr: "Achetez, vendez et trouvez de tout au Huambo." },
   "home.hero_text": { pt: "Classificados, loja, leilões, profissionais e empresas.", en: "Classifieds, shop, auctions, professionals and businesses.", zh: "分类信息、商店、拍卖、专业人士和企业。", fr: "Petites annonces, boutique, enchères, professionnels et entreprises." },
   "home.sell_now": { pt: "Vender agora", en: "Sell now", zh: "立即出售", fr: "Vendre maintenant" },
