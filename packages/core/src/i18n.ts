@@ -195,6 +195,7 @@ export const COMMON_DICT: Dictionary = {
   "cat.Leilões": { pt: "Leilões", en: "Auctions", zh: "拍卖", fr: "Enchères" },
   "cat.Procura-se": { pt: "Procura-se", en: "Wanted", zh: "求购", fr: "Recherche" },
   "cat.Trocas": { pt: "Trocas", en: "Swaps", zh: "以物易物", fr: "Échanges" },
+  "cat.Perdidos e achados": { pt: "Perdidos e achados", en: "Lost and found", zh: "失物招领", fr: "Objets perdus" },
   "cat.Produtos": { pt: "Produtos", en: "Products", zh: "商品", fr: "Produits" },
   "cat.Profissionais": { pt: "Profissionais", en: "Professionals", zh: "专业人士", fr: "Professionnels" },
   "cat.Empresas": { pt: "Empresas", en: "Businesses", zh: "企业", fr: "Entreprises" }

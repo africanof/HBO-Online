@@ -75,6 +75,7 @@ export const HOME_CATEGORIES: { label: string; icon: string; href: string }[] = 
   { label: "Leilões", icon: "🔨", href: "/explorar?finalidade=auction" },
   { label: "Procura-se", icon: "🔎", href: "/procura-se" },
   { label: "Trocas", icon: "🔁", href: "/trocas" },
+  { label: "Perdidos e achados", icon: "🧳", href: "/perdidos-achados" },
   { label: "Produtos", icon: "📦", href: "/explorar?tipo=product" },
   { label: "Profissionais", icon: "👷", href: "/profissionais" },
   { label: "Empresas", icon: "🏢", href: "/empresas" }

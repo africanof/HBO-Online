@@ -22,7 +22,7 @@ type Shelves = { listings: any[]; auctions: any[]; rentals: any[]; products: any
 
 /** Atalhos: [ícone, chave do texto, endereço]. */
 const MORE: [string, string, string][] = [
-  ["🌾", "more.agri", "/agricultura"], ["⛽", "cat.Combustível e gás", "/combustivel"], ["🎟️", "cat.Eventos", "/eventos"], ["✈️", "cat.Importação", "/importacao"], ["🎬", "more.videos", "/videos"], ["👥", "more.following", "/seguindo"], ["🛡️", "more.safety", "/seguranca"], ["🆘", "sp.short", "/suporte"], ["🤝", "more.agent", "/agente"], ["🎁", "more.invite", "/convidar"], ["📋", "more.my_listings", "/meus-anuncios"], ["📦", "more.orders", "/encomendas"], ["🔍", "ii.see_mine", "/inspecoes"], ["♥", "nav.saved", "/guardados"],
+  ["🌾", "more.agri", "/agricultura"], ["⛽", "cat.Combustível e gás", "/combustivel"], ["🎟️", "cat.Eventos", "/eventos"], ["✈️", "cat.Importação", "/importacao"], ["🧳", "cat.Perdidos e achados", "/perdidos-achados"], ["🎬", "more.videos", "/videos"], ["👥", "more.following", "/seguindo"], ["🛡️", "more.safety", "/seguranca"], ["🆘", "sp.short", "/suporte"], ["🤝", "more.agent", "/agente"], ["🎁", "more.invite", "/convidar"], ["📋", "more.my_listings", "/meus-anuncios"], ["📦", "more.orders", "/encomendas"], ["🔍", "ii.see_mine", "/inspecoes"], ["♥", "nav.saved", "/guardados"],
   ["🗺️", "map.title", "/mapa"], ["🕘", "more.recent", "/historico"], ["⭐", "more.saved_searches", "/pesquisas-guardadas"], ["🔔", "nav.notifications", "/notificacoes"]
 ];
 

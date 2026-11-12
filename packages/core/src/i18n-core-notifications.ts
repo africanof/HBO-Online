@@ -13,6 +13,7 @@ export const CORE_NOTIFICATION_ROWS: CoreRow[] = [
   ["Novo anúncio encontrado", "New listing found", "发现新信息", "Nouvelle annonce trouvée"],
   ["Um novo anúncio corresponde à sua pesquisa guardada.", "A new listing matches your saved search.", "有一条新信息符合您保存的搜索。", "Une nouvelle annonce correspond à votre recherche enregistrée."],
   ["Nova mensagem", "New message", "新消息", "Nouveau message"],
+  ["🔎 Alguém encontrou algo parecido com o que perdeu", "🔎 Someone found something like what you lost", "🔎 有人捡到了与您丢失物品相似的东西", "🔎 Quelqu'un a trouvé quelque chose qui ressemble à ce que vous avez perdu"],
   ["Nova avaliação", "New review", "新评价", "Nouvelle évaluation"],
   ["Nova encomenda", "New order", "新订单", "Nouvelle commande"],
   ["📦 Nova encomenda", "📦 New order", "📦 新订单", "📦 Nouvelle commande"],

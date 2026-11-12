@@ -158,6 +158,7 @@ export const CORE_LABEL_ROWS: CoreRow[] = [
   ["Leilões", "Auctions", "拍卖", "Enchères"],
   ["Procura-se", "Wanted", "求购", "Recherche"],
   ["Trocas", "Swaps", "以物易物", "Échanges"],
+  ["Perdidos e achados", "Lost and found", "失物招领", "Objets perdus et trouvés"],
 
   // --- Praças (markets.ts) ---
   ["Visível", "Visible", "可见", "Visible"],
@@ -708,6 +709,7 @@ export const CORE_LABEL_ROWS: CoreRow[] = [
   ["⛽ Ver o posto →", "⛽ See the station →", "⛽ 查看站点 →", "⛽ Voir la station →"],
   ["🔍 Ver as minhas inspeções →", "🔍 See my inspections →", "🔍 查看我的检验 →", "🔍 Voir mes inspections →"],
   ["✈️ Ver a importação →", "✈️ See the import →", "✈️ 查看进口代购 →", "✈️ Voir l'importation →"],
+  ["🔎 Ver perdidos e achados →", "🔎 See lost and found →", "🔎 查看失物招领 →", "🔎 Voir objets perdus et trouvés →"],
   ["⛽ Ver as minhas reservas →", "⛽ See my reservations →", "⛽ 查看我的预订 →", "⛽ Voir mes réservations →"],
   ["⛽ Gerir o posto →", "⛽ Manage the station →", "⛽ 管理站点 →", "⛽ Gérer la station →"],
   ["🏨 Gerir o estabelecimento →", "🏨 Manage the venue →", "🏨 管理商家 →", "🏨 Gérer l'établissement →"],

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { I18nManager, NativeModules } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { COMMON_DICT, LISTING_CHECKOUT_DICT, IMPORT_DICT, CHAT_GUARD_DICT, ITEM_INSPECTION_DICT, WHATSAPP_DICT, DEFAULT_LANG, LANG_STORAGE_KEY, LANG_TAGS, AVG_PHOTO_KB, detectLang, formatEventDate, isLang, makeT, mergeDictionaries, EXTRAS_DICT, tc, type Dictionary, type Lang } from "@huambo-online/core";
+import { COMMON_DICT, LISTING_CHECKOUT_DICT, IMPORT_DICT, LOST_FOUND_DICT, CHAT_GUARD_DICT, ITEM_INSPECTION_DICT, WHATSAPP_DICT, DEFAULT_LANG, LANG_STORAGE_KEY, LANG_TAGS, AVG_PHOTO_KB, detectLang, formatEventDate, isLang, makeT, mergeDictionaries, EXTRAS_DICT, tc, type Dictionary, type Lang } from "@huambo-online/core";
 import { DICT_LISTINGS } from "./i18n/listings";
 import { DICT_SHOP } from "./i18n/shop";
 import { DICT_SERVICES } from "./i18n/services";
@@ -230,7 +230,7 @@ export const APP_DICT: Dictionary = {
 };
 
 /** Todos os textos da APP (comuns + só da APP). */
-export const DICT: Dictionary = mergeDictionaries(COMMON_DICT, LISTING_CHECKOUT_DICT, IMPORT_DICT, CHAT_GUARD_DICT, ITEM_INSPECTION_DICT, WHATSAPP_DICT, EXTRAS_DICT, APP_DICT, DICT_LISTINGS, DICT_SHOP, DICT_SERVICES, DICT_ADMIN);
+export const DICT: Dictionary = mergeDictionaries(COMMON_DICT, LISTING_CHECKOUT_DICT, IMPORT_DICT, LOST_FOUND_DICT, CHAT_GUARD_DICT, ITEM_INSPECTION_DICT, WHATSAPP_DICT, EXTRAS_DICT, APP_DICT, DICT_LISTINGS, DICT_SHOP, DICT_SERVICES, DICT_ADMIN);
 
 export type TFn = (key: string, vars?: Record<string, string | number>) => string;
 

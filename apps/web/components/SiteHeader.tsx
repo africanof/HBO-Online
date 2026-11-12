@@ -23,7 +23,7 @@ const SCOPE_BY_PATH: [string, SearchScope][] = [["/loja", "loja"], ["/pracas", "
 /** [ícone, chave do texto, endereço] */
 const CATEGORY_LINKS: [string, string, string][] = [
   ["", "nav.home", "/"], ["", "scope.classificados", "/explorar"], ["🏠", "cat.Imóveis", "/imoveis"], ["🚗", "cat.Viaturas", "/viaturas"], ["🌾", "cat.Campo", "/agricultura"], ["🏭", "cat.Fábricas", "/empresas?categoria=fabricas"], ["💼", "cat.Emprego", "/emprego"], ["🎟️", "cat.Eventos", "/eventos"], ["⛽", "web.fuel", "/combustivel"], ["🛎️", "nav.bookings", "/reservas"], ["✈️", "cat.Importação", "/importacao"], ["🎬", "web.videos", "/videos"],
-  ["", "cat.Arrendar", "/explorar?finalidade=rent"], ["", "cat.Leilões", "/explorar?finalidade=auction"], ["", "cat.Procura-se", "/procura-se"], ["", "cat.Trocas", "/trocas"], ["", "cat.Praças", "/pracas"], ["", "cat.Loja", "/loja"],
+  ["", "cat.Arrendar", "/explorar?finalidade=rent"], ["", "cat.Leilões", "/explorar?finalidade=auction"], ["", "cat.Procura-se", "/procura-se"], ["", "cat.Trocas", "/trocas"], ["🧳", "cat.Perdidos e achados", "/perdidos-achados"], ["", "cat.Praças", "/pracas"], ["", "cat.Loja", "/loja"],
   ["", "cat.Profissionais", "/profissionais"], ["", "cat.Empresas", "/empresas"], ["🗺️", "map.title", "/mapa"], ["", "web.recent", "/historico"]
 ];
 
@@ -103,7 +103,7 @@ export function SiteFooter() {
   useEffect(() => { const m = window.matchMedia("(max-width: 760px)"); setCompact(m.matches); const on = () => setCompact(m.matches); m.addEventListener("change", on); return () => m.removeEventListener("change", on); }, []);
   // Textos já traduzidos: [título, [texto, endereço][]]
   const cols: [string, [string, string][]][] = [
-    [t("ft.buy"), [[t("scope.classificados"), "/explorar"], [t("ft.wanted_requests"), "/procura-se"], [t("ft.post_wanted"), "/classificados/publicar?finalidade=wanted"], [t("cat.Trocas"), "/trocas"], [t("ft.farming"), "/agricultura"], [t("nav.markets"), "/pracas"], [t("nav.shop"), "/loja"], [t("cat.Leilões"), "/explorar?finalidade=auction"], [t("ft.cart"), "/carrinho"], [t("ft.orders"), "/encomendas"]]],
+    [t("ft.buy"), [[t("scope.classificados"), "/explorar"], [t("ft.wanted_requests"), "/procura-se"], [t("ft.post_wanted"), "/classificados/publicar?finalidade=wanted"], [t("cat.Trocas"), "/trocas"], [t("cat.Perdidos e achados"), "/perdidos-achados"], [t("ft.farming"), "/agricultura"], [t("nav.markets"), "/pracas"], [t("nav.shop"), "/loja"], [t("cat.Leilões"), "/explorar?finalidade=auction"], [t("ft.cart"), "/carrinho"], [t("ft.orders"), "/encomendas"]]],
     [t("nav.sell"), [[t("ft.post_ad"), "/classificados/publicar"], [t("ft.my_ads"), "/meus-anuncios"], [t("ft.sell_products"), "/conta/produtos"], [t("ft.rentals"), "/alugueres"]]],
     [t("nav.services"), [[t("cat.Profissionais"), "/profissionais"], [t("nav.businesses"), "/empresas"], [t("ft.be_pro"), "/conta/profissional"], [t("ft.be_courier"), "/entregas"], [t("ft.be_agent"), "/agente"], [t("ft.organize_event"), "/eventos/meus"], [t("ft.post_video"), "/videos/meus"], [t("ft.register_fuel"), "/combustivel/meus"], [t("ft.register_venue"), "/reservas/painel"], [t("cat.Importação"), "/importacao"], [t("ft.invite"), "/convidar"]]],
     [t("nav.account"), [[t("nav.account_short"), "/conta"], [t("nav.messages"), "/mensagens"], [t("nav.notifications"), "/notificacoes"], [t("sp.short"), "/suporte"], [t("ii.see_mine"), "/inspecoes"], [t("nav.saved"), "/guardados"], [t("ft.my_bids"), "/licitacoes"], [t("ft.saved_searches"), "/pesquisas-guardadas"]]],

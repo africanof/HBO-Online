@@ -37,6 +37,7 @@ export function getNotificationLink(n: Pick<AppNotification, "data" | "type" | "
   if (isUuid(d.support_conversation_id)) return { href: "/admin", label: "🆘 Responder ao pedido de suporte →" };
   if (d.for === "inspections") return { href: "/inspecoes", label: "🔍 Ver as minhas inspeções →" };
   if (d.for === "imports") return { href: "/importacao", label: "✈️ Ver a importação →" };
+  if (d.for === "lost_found") return { href: isUuid(d.lost_found_id) ? "/perdidos-achados?aviso=" + d.lost_found_id : "/perdidos-achados", label: "🔎 Ver perdidos e achados →" };
   if (d.for === "admin" && (isUuid(d.item_inspection_id) || isUuid(d.import_request_id))) return { href: "/admin", label: "🛡️ Ver na administração →" };
   if (d.for === "inspection") return { href: "/inspecao", label: "🏅 Ver a inspeção →" };
   if (isUuid(d.inspection_id)) return { href: "/admin", label: "🛡️ Ver na administração →" };
